@@ -9,15 +9,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        'selection-red': {
-          primary: '#b54653',
-          secondary: '#eac4c7',
-          metal: "#52525b",
-        },
-      },
       fontFamily: {
         'rubik': ["Medium 500"]
       }
@@ -29,7 +20,7 @@ const config: Config = {
   daisyui: {
     themes: [
       {
-        mytheme: {
+        light: {
           "primary": "#b54653",
           "secondary": "#eac4c7",
           "metal": "#52525b",

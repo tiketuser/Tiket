@@ -21,8 +21,10 @@ const NavBar = () => {
                     
                     />
                 </button>
-                <button className="btn btn-secondary w-24 text-primary">מכור</button>
-                <button className="btn btn-primary w-24 text-gray-50">קנה</button>
+
+                <button className="btn btn-secondary w-24 text-primary">הירשם</button>
+                <button className="btn btn-primary w-24 text-gray-50">התחבר</button>
+                
 
                 <div className="dropdown dropdown-end dropdown-hover">
                     <button tabIndex={0} role="btn" className="btn btn-ghost btn-circle avatar hover:bg-red-100">

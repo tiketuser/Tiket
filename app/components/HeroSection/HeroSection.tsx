@@ -15,8 +15,8 @@ const HeroSection = () => {
           הזדמנות נוספת לכרטיסים - קנו ומכרו בקלות ובאופן מאובטח.
         </p>
         <div className="space-x-4 space-x-reverse">
-          <button className="btn btn-secondary w-24 text-primary">מכור</button>
           <button className="btn btn-primary w-24 text-gray-50">קנה</button>
+          <button className="btn btn-secondary w-24 text-primary">מכור</button>          
         </div>
       </div>
 
