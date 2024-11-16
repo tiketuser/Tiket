@@ -1,5 +1,5 @@
 // components/Card.tsx
-import React from 'react';
+import React from "react";
 
 interface CardProps {
   title: string;
@@ -9,7 +9,13 @@ interface CardProps {
   soldOut: boolean;
 }
 
-const Card: React.FC<CardProps> = ({ title, date, location, price, soldOut }) => {
+const Card: React.FC<CardProps> = ({
+  title,
+  date,
+  location,
+  price,
+  soldOut,
+}) => {
   return (
     <div className="relative p-4 bg-white shadow-lg rounded-lg">
       {soldOut && (
