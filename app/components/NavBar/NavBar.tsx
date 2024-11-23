@@ -9,7 +9,7 @@ const NavBar = () => {
   return (
     <div
       dir="ltr"
-      className="relative navbar bg-white shadow-md flex justify-between items-center px-4 z-50 h-20"
+      className="relative navbar bg-white flex justify-between items-center px-4 z-50 h-20"
     >
       {/* Left Side */}
       <div>
