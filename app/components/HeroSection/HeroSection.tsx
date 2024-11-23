@@ -29,14 +29,14 @@ const HeroSection = () => {
       <Image
         src={SecondaryHalfCircle}
         alt="SecondaryHalfCircle"
-        className="absolute bottom-0 -left-4"
-        style={{ width: '200px', height: '200px' }} 
+        className="absolute bottom-0 -left-6"
+        style={{ width: '240px', height: '240px' }} 
       />
 
       <Image
         src={GuitarThing}
         alt="GuitarThing"
-        className="absolute bottom-4 left-9"
+        className="absolute bottom-4 left-16"
         style={{ width: '148px', height: '180px' }} 
       />
 
