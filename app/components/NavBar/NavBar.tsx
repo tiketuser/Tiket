@@ -2,12 +2,14 @@ import Image from "next/image";
 import React from "react";
 
 import HeartIcon from "../../../public/images/heart-icon.svg";
+import Arrow from '../../../public/images/Home Page/Web/Arrow.svg'; 
+import ProfileButton from '../../../public/images/Home Page/ProfileButton.svg';
 
 const NavBar = () => {
   return (
     <div
       dir="ltr"
-      className="relative navbar bg-white shadow-md flex justify-between items-center px-4 z-50"
+      className="relative navbar bg-white flex justify-between items-center px-4 z-50 h-20"
     >
       {/* Left Side */}
       <div>
@@ -16,6 +18,14 @@ const NavBar = () => {
 
       {/* Right Side */}
       <div className="flex space-x-6">
+        <button className="flex items-center space-x-2 rtl:space-x-reverse hover:text-gray-600 focus:outline-none">
+          <Image
+              src={Arrow}
+              alt="Arrow"
+            />
+          <span className="text-text-large font-normal">הכרטיסים שלי</span>
+        </button>
+
         <button
           role="btn"
           className="btn btn-ghost btn-circle avatar hover:bg-red-200"
@@ -27,33 +37,20 @@ const NavBar = () => {
           />
         </button>
 
-        <button className="btn btn-secondary w-24 text-primary">הירשם</button>
-        <button className="btn btn-primary w-24 text-gray-50">התחבר</button>
-
-        <div className="dropdown dropdown-end dropdown-hover">
-          <button
+        <button className="btn btn-secondary w-24 text-primary text-text-large font-normal">הירשם</button>
+        <button className="btn btn-primary w-24 text-gray-50 text-text-large font-normal">התחבר</button>
+        
+        <button
             tabIndex={0}
             role="btn"
             className="btn btn-ghost btn-circle avatar hover:bg-red-100"
           >
-            <img
-              alt="user"
-              src="https://img.icons8.com/fluency-systems-regular/50/user--v1.png"
-              style={{ width: "35px", height: "35px" }}
+            <Image
+              src={ProfileButton}
+              alt="Profile"
+              style={{ width: "25px", height: "25px", overflow: "visible" }}
             />
-          </button>
-          <ul
-            tabIndex={0}
-            className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
-          >
-            <li>
-              <a>התחבר</a>
-            </li>
-            <li>
-              <a>הירשם</a>
-            </li>
-          </ul>
-        </div>
+        </button>
       </div>
     </div>
   );
