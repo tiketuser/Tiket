@@ -31,6 +31,7 @@ const config: Config = {
         'text-small': ['0.875rem', { lineHeight: '1.5' }], // 14px
         'text-extra-small': ['0.75rem', { lineHeight: '1.5' }], // 12px
       },
+      
       fontWeight: {
         regular: '400',
         semiBold: '600',
@@ -45,7 +46,38 @@ const config: Config = {
         strongText: "#3C3E5F",   // טקסט חזק
         weakText: "#CCCCCC",     // טקסט חלש מאוד
         mutedText: "#667085",    // טקסט חלש
-      }
+      },
+
+      boxShadow: {
+        'xxsmall': '0px 1px 2px 0px rgba(0, 0, 0, 0.05)',
+        'xsmall': '0px 1px 2px 0px rgba(0, 0, 0, 0.06), 0px 1px 3px 0px rgba(0, 0, 0, 0.1)',
+        'small': '0px 2px 4px -2px rgba(0, 0, 0, 0.06), 0px 4px 8px -2px rgba(0, 0, 0, 0.1)',
+        'medium': '0px 4px 6px -2px rgba(0, 0, 0, 0.03), 0px 12px 16px -4px rgba(0, 0, 0, 0.08)',
+        'large': '0px 8px 8px -4px rgba(0, 0, 0, 0.03), 0px 20px 24px -4px rgba(0, 0, 0, 0.08)',
+        'xlarge': '0px 24px 48px -12px rgba(0, 0, 0, 0.18)',
+        'xxlarge': '0px 32px 64px -12px rgba(0, 0, 0, 0.14)',
+
+        'xxsmall-inner': '0px 1px 4px 0px rgba(0, 0, 0, 0.05) inset',
+        'xsmall-inner': '0px 1px 2px 0px rgba(0, 0, 0, 0.06) inset, 0px 1px 3px 0px rgba(0, 0, 0, 0.1) inset',
+        'small-inner': '0px 2px 4px -2px rgba(0, 0, 0, 0.06) inset, 0px 4px 8px -2px rgba(0, 0, 0, 0.1) inset',
+        'medium-inner': '0px 4px 6px -2px rgba(0, 0, 0, 0.03) inset, 0px 12px 16px -4px rgba(0, 0, 0, 0.08) inset',
+        'large-inner': '0px 8px 8px -4px rgba(0, 0, 0, 0.03) inset, 0px 20px 20px -4px rgba(0, 0, 0, 0.08) inset',
+        'xlarge-inner': '0px 24px 48px -12px rgba(0, 0, 0, 0.18) inset',
+        'xxlarge-inner': '0px 32px 64px -12px rgba(0, 0, 0, 0.14) inset',
+      },
+      
+      // spacing: {
+      //   8: '8px',
+      //   16: '16px',
+      //   24: '24px',
+      //   32: '32px',
+      //   40: '40px',
+      //   48: '48px',
+      //   56: '56px',
+      //   64: '64px',
+      //   72: '72px',
+      //   80: '80px',
+      // },
     },
   },
 
