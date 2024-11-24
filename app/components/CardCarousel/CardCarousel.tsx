@@ -31,7 +31,7 @@ const cardsData = [
   {
     imageSrc: "/images/Artist/Noa_Kirel.png",
     id: 3,
-    title: "נועה קירל",
+    title: "נועה נועה נועה נועה קירל",
     date: "שלישי, 13 אוק’",
     location: "פארק הירקון - תל אביב",
     ticketsLeft: 17,
@@ -52,57 +52,110 @@ const cardsData = [
     soldOut: false,
     timeLeft: "3d 42m",
   },
-
-  // { id: 4, title: 'אמן נוסף', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: false },
-  // { id: 5, title: 'אמן אחר', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: false },
-  // { id: 6, title: 'אמנית נוספת', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: false },
-  // Add more cards as needed
+  {
+    imageSrc: "/images/Artist/Noa_Kirel.png",
+    id: 5,
+    title: "נועה קירל",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 250,
+    price: 210,
+    soldOut: false,
+    timeLeft: "5d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Alma_Gov.png",
+    id: 6,
+    title: "עלמה גוב",
+    date: "חמישי, 15 אוק’",
+    location: "היכל התרבות - תל אביב",
+    ticketsLeft: 42,
+    priceBefore: 457,
+    price: 358,
+    soldOut: false,
+    timeLeft: "2d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Omer_Adam.png",
+    id: 7,
+    title: "עומר אדם",
+    date: "שני, 05 דצמ'",
+    location: "היכל מנורה - תל אביב",
+    ticketsLeft: 19,
+    priceBefore: 420,
+    price: 400,
+    soldOut: false,
+    timeLeft: "3d 42m",
+  },
 ];
 
 const CardCarousel: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const visibleCards = 4;
 
   const nextSlide = () => {
-    setCurrentIndex((prevIndex) =>
-      Math.min(prevIndex + 1, cardsData.length - 1)
-    );
+    if (currentIndex < cardsData.length - visibleCards) {
+      setCurrentIndex(currentIndex + 1);
+    }
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
   };
 
   return (
-    <div className="relative w-full pt-4 mb-24 mt-4">
+    <div className="relative overflow-hidden">
+      {/* Left Arrow */}
       {currentIndex > 0 && (
         <button
           onClick={prevSlide}
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 text-xl bg-white p-2 rounded-full shadow-md z-10"
+          className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xl bg-white p-2 rounded-full shadow-md z-10"
         >
           &#8592;
         </button>
       )}
 
+      {/* Cards Container */}
       <div
-        className="flex justify-between transition-transform duration-300 ease-in-out"
-        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        dir="ltr"
+        className="mb-10 mt-10 flex-wrap justify-between h-full items-center w-full transition-transform duration-300 ease-in-out"
+        style={{
+          // change the number for a bigger leap
+          transform: `translateX(-${currentIndex * (100 / visibleCards)}%)`,
+        }}
       >
-        <div className="flex gap-[15%] relative left-[3%]">
-          {cardsData.map((card) => (
-            <div
-              key={card.id}
-              className="flex-grow min-w-[250px] max-w-[300px]"
-            >
-              <Card {...card} />
-            </div>
-          ))}
-        </div>
+        {cardsData.map((card) => (
+          // Increase percentage to hide the next card
+          <div dir="rtl" key={card.id} className="min-w-[24%]">
+            <Card {...card} />
+          </div>
+        ))}
       </div>
-
-      {currentIndex < cardsData.length - 1 && (
+      {/* Navigation Dots */}
+      <div
+        dir="ltr"
+        className="absolute bottom-4 left-0 right-0 flex justify-center items-center"
+      >
+        {cardsData.map((_, index) => (
+          <button
+            key={index + 2}
+            className={`mx-1 rounded-full transition-all duration-300 ${
+              index === currentIndex + 2
+                ? "w-3 h-3 bg-mutedText"
+                : "w-2 h-2 bg-weakText"
+            }`}
+            onClick={() => setCurrentIndex(index - 2)}
+          />
+        ))}
+      </div>
+      {/* Right Arrow */}
+      {currentIndex < cardsData.length - visibleCards && (
         <button
           onClick={nextSlide}
-          className="absolute right-[3%] top-1/2 transform -translate-y-1/2 text-xl bg-white p-2 rounded-full shadow-md z-10"
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xl bg-white p-2 rounded-full shadow-md z-10"
         >
           &#8594;
         </button>
