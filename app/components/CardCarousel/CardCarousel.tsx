@@ -127,22 +127,19 @@ const CardCarousel: React.FC = () => {
     <Carousel
       opts={{
         align: "start",
-        loop: false
+        loop: true
       }}
       dir="ltr"
-      className="flex justify-center items-center w-full m-4"
+      className="flex justify-center items-center w-full"
     >
       
-      <CarouselContent className="gap-5">
+      <CarouselContent>
         {cardsData.map((card) => (
           <CarouselItem
             key={card.id}
-            className="sm:basis-full md:basis-1/2 xl:basis-1/3 2xl:basis-1/4 max-w-[392px]"
+            className="sm:basis-1/1 md:basis-1/2 xl:basis-1/3 2xl:basis-1/4 p-14"
           >
-            <div>
-              <Card {...card} />
-            </div>
-            
+            <Card {...card} />
           </CarouselItem>
         ))}
       </CarouselContent>
