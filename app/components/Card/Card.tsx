@@ -29,7 +29,7 @@ const Card: React.FC<CardProps> = ({
   timeLeft,
 }) => {
   return (
-    <div className="relative w-[392px] h-[568px] border-b-[3px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] gap-[24px] shadow-xlarge">
+    <div className="relative w-[392px] h-[568px] border-b-[3px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] shadow-xlarge">
       {/* Last Chance */}
       {soldOut && (
         <div className="absolute top-0 left-0 bg-red-600 text-white text-xs p-1 rounded-tr-lg rounded-bl-lg">
