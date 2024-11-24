@@ -29,7 +29,8 @@ const Card: React.FC<CardProps> = ({
   timeLeft,
 }) => {
   return (
-    <div className="relative mr-48 w-[392px] h-[568px] border-b-[3px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] gap-[24px] shadow-xlarge">
+    //
+    <div className="sm:scale-50 md:scale-75 lg:scale-95 lg-md:scale-90 transition-transform relative w-[392px] h-[568px] border-b-[3px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] gap-[24px] shadow-xlarge hover:duration-500 hover:scale-105">
       {/* Last Chance */}
       {soldOut && (
         <div className="absolute top-0 left-0 bg-red-600 text-white text-xs p-1 rounded-tr-lg rounded-bl-lg">
@@ -71,10 +72,7 @@ const Card: React.FC<CardProps> = ({
           </p>
         </div>
         {/* Price and time section */}
-        <div
-          dir="ltr"
-          className="flex items-center space-x-4 rtl:space-x-reverse "
-        >
+        <div dir="ltr" className="flex items-center gap-4 rtl:space-x-reverse ">
           <Image
             src={PriceIcon}
             alt="Price icon"
