@@ -121,7 +121,7 @@ const CardCarousel: React.FC = () => {
       {/* Cards Container */}
       <div
         dir="ltr"
-        className="mb-10 mt-10 flex-wrap justify-between h-full items-center w-full transition-transform duration-300 ease-in-out"
+        className="mb-10 mt-10 flex justify-between h-full items-center w-full transition-transform duration-300 ease-in-out"
         style={{
           // change the number for a bigger leap
           transform: `translateX(-${currentIndex * (100 / visibleCards)}%)`,
