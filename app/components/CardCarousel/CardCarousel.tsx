@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useState } from "react";
 import Card from "../Card/Card";
 
 import {
@@ -124,28 +125,32 @@ const cardsData = [
 
 const CardCarousel: React.FC = () => {
   return (
-    <Carousel
-      opts={{
-        align: "start",
-        loop: true
-      }}
-      dir="ltr"
-      className="flex justify-center items-center w-full"
-    >
-      
-      <CarouselContent>
-        {cardsData.map((card) => (
-          <CarouselItem
-            key={card.id}
-            className="sm:basis-1/1 md:basis-1/2 xl:basis-1/3 2xl:basis-1/4 p-14"
-          >
-            <Card {...card} />
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      <CarouselPrevious className="absolute left-5"/>
-      <CarouselNext className="absolute right-5"/>
-    </Carousel>
+    <>
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true
+        }}
+        dir="ltr"
+        className="flex justify-center items-center w-full"
+      >
+        
+        <CarouselContent>
+          {cardsData.map((card) => (
+            <CarouselItem
+              key={card.id}
+              className="sm:basis-1/1 md:basis-1/2 xl:basis-1/3 2xl:basis-1/4 p-14"
+            >
+              <Card {...card} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="absolute left-5">
+
+        </CarouselPrevious>
+        <CarouselNext className="absolute right-5"/>
+      </Carousel> 
+    </>    
   );
 };
 

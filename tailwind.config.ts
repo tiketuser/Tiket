@@ -39,14 +39,6 @@ const config: Config = {
   			extraBold: '800'
   		},
   		colors: {
-  			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
-  			secondary: {
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
-  			},
   			highlight: '#8C5A5F',
   			strongText: '#3C3E5F',
   			weakText: '#CCCCCC',
