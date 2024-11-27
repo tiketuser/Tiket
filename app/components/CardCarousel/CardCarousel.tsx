@@ -4,6 +4,9 @@ import React from "react";
 import { useState } from "react";
 import Card from "../Card/Card";
 
+import Image from "next/image";
+import NextButton from "../../../public/images/Home Page/Web/Next Button.svg";
+
 import {
   Carousel,
   CarouselContent,
@@ -129,7 +132,7 @@ const CardCarousel: React.FC = () => {
       <Carousel
         opts={{
           align: "start",
-          loop: true
+          loop: false
         }}
         dir="ltr"
         className="flex justify-center items-center w-full"
@@ -146,7 +149,7 @@ const CardCarousel: React.FC = () => {
           ))}
         </CarouselContent>
         <CarouselPrevious className="absolute left-5">
-
+          <Image src={NextButton} alt="TiktokIcon" />
         </CarouselPrevious>
         <CarouselNext className="absolute right-5"/>
       </Carousel> 
