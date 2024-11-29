@@ -148,23 +148,21 @@ const cardsData = [
 
 const CardCarousel: React.FC = () => {
   return (
-    <>
-      <Carousel dir="ltr" className=" ">
-        <CarouselContent className="w-full flex justify-start gap-3 mt-8 mb-10">
+    <div className="w-full px-8">
+      {" "}
+      {/* Adds 32px padding on the edges */}
+      <Carousel dir="ltr" className="w-full relative">
+        <CarouselContent className="flex justify-center mt-8 mb-10 gap-8">
           {cardsData.map((card) => (
-            <CarouselItem
-              key={card.id}
-              className="sm:basis-1/2 md:basis-1/3 lg:basis-1/5"
-              dir="rtl"
-            >
+            <CarouselItem key={card.id} className="" dir="rtl">
               <Card {...card} />
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-5"></CarouselPrevious>
+        <CarouselPrevious className="absolute left-5" />
         <CarouselNext className="absolute right-5" />
       </Carousel>
-    </>
+    </div>
   );
 };
 

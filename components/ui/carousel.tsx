@@ -5,7 +5,7 @@ import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -158,15 +158,7 @@ const CarouselContent = React.forwardRef<
 
   return (
     <div ref={carouselRef} className="overflow-hidden">
-      <div
-        ref={ref}
-        className={cn(
-          "flex",
-          orientation === "horizontal" ? "-ml-2" : "-mt-4 flex-col",
-          className
-        )}
-        {...props}
-      />
+      <div ref={ref} className={cn("flex", className)} {...props} />
     </div>
   );
 });
@@ -184,8 +176,8 @@ const CarouselItem = React.forwardRef<
       role="group"
       aria-roledescription="slide"
       className={cn(
-        "min-w-0 shrink-0",
-        orientation === "horizontal" ? "basis-auto" : "pt-4", // Set dynamic basis
+        "",
+        orientation === "horizontal" ? "" : "pt-4", // Set dynamic basis
         className
       )}
       {...props}
@@ -202,21 +194,24 @@ const CarouselPrevious = React.forwardRef<
 
   return (
     <Button
-      ref={ref}
-      variant={variant}
-      size={size}
       className={cn(
-        "absolute  h-8 w-8 rounded-full",
+        "absolute w-11 h-11 rounded-full bg-highlight",
         orientation === "horizontal"
           ? "-left-12 top-1/2 -translate-y-1/2"
-          : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
+          : "-top-12 left-1/2 -translate-x-1/2",
         className
       )}
       disabled={!canScrollPrev}
       onClick={scrollPrev}
       {...props}
     >
-      <ArrowLeft className="h-4 w-4" />
+      <img
+        src="/images/Home Page/Web/CarusleArrow.svg"
+        alt="ArrowLeftIcon"
+        width={22}
+        height={24}
+        className="rotate-180 max-w-[22px]"
+      />
       <span className="sr-only">Previous slide</span>
     </Button>
   );
@@ -231,21 +226,21 @@ const CarouselNext = React.forwardRef<
 
   return (
     <Button
-      ref={ref}
-      variant={variant}
       size={size}
       className={cn(
-        "absolute h-8 w-8 rounded-full",
-        orientation === "horizontal"
-          ? "-right-12 top-1/2 -translate-y-1/2"
-          : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
+        "absolute h-11 w-11 rounded-full bg-highlight right-12 top-1/2 -translate-y-1/2",
         className
       )}
       disabled={!canScrollNext}
       onClick={scrollNext}
       {...props}
     >
-      <ArrowRight className="h-4 w-4" />
+      <img
+        src="/images/Home Page/Web/CarusleArrow.svg"
+        alt="ArrowRightIcon"
+        width={22}
+        height={24}
+      />
       <span className="sr-only">Next slide</span>
     </Button>
   );
