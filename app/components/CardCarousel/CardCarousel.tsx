@@ -96,37 +96,75 @@ const cardsData = [
     soldOut: false,
     timeLeft: "3d 42m",
   },
+  {
+    imageSrc: "/images/Artist/Omer_Adam.png",
+    id: 8,
+    title: "עומר אדם",
+    date: "שני, 05 דצמ'",
+    location: "היכל מנורה - תל אביב",
+    ticketsLeft: 19,
+    priceBefore: 420,
+    price: 400,
+    soldOut: false,
+    timeLeft: "3d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Noa_Kirel.png",
+    id: 9,
+    title: "נועה קירל",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 250,
+    price: 210,
+    soldOut: false,
+    timeLeft: "5d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Alma_Gov.png",
+    id: 10,
+    title: "עלמה גוב",
+    date: "חמישי, 15 אוק’",
+    location: "היכל התרבות - תל אביב",
+    ticketsLeft: 42,
+    priceBefore: 457,
+    price: 358,
+    soldOut: false,
+    timeLeft: "2d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Omer_Adam.png",
+    id: 11,
+    title: "עומר אדם",
+    date: "שני, 05 דצמ'",
+    location: "היכל מנורה - תל אביב",
+    ticketsLeft: 19,
+    priceBefore: 420,
+    price: 400,
+    soldOut: false,
+    timeLeft: "3d 42m",
+  },
 ];
 
 const CardCarousel: React.FC = () => {
   return (
-<>
-      <Carousel
-        opts={{
-          align: "start",
-          loop: false
-        }}
-        dir="ltr"
-        className="flex justify-center items-center w-full"
-      >
-        
-        <CarouselContent>
+    <>
+      <Carousel dir="ltr" className=" ">
+        <CarouselContent className="w-full flex justify-start gap-3 mt-8 mb-10">
           {cardsData.map((card) => (
             <CarouselItem
               key={card.id}
-              className="sm:basis-1/1 md:basis-1/2 xl:basis-1/3 2xl:basis-1/4 p-14"
+              className="sm:basis-1/2 md:basis-1/3 lg:basis-1/5"
               dir="rtl"
             >
               <Card {...card} />
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-5">
-
-        </CarouselPrevious>
-        <CarouselNext className="absolute right-5"/>
-      </Carousel> 
-    </>       
+        <CarouselPrevious className="absolute left-5"></CarouselPrevious>
+        <CarouselNext className="absolute right-5" />
+      </Carousel>
+    </>
   );
 };
 
