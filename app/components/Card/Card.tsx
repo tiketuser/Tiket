@@ -30,7 +30,7 @@ const Card: React.FC<CardProps> = ({
 }) => {
   return (
     //sm:scale-50 md:scale-75 lg:scale-95 lg-md:scale-90
-    <div className="sm:scale-90 md:scale-95 lg:scale-100 select-none transition-transform relative w-[392px] h-[568px] border-b-[4px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] shadow-xlarge hover:duration-500 hover:scale-110">
+    <div className="select-none transition-transform relative w-[392px] h-[568px] border-b-[4px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] shadow-xlarge hover:duration-500 hover:scale-110">
       {/* Last Chance */}
       {soldOut && (
         <div className="absolute top-0 left-0 bg-red-600 text-white text-xs p-1 rounded-tr-lg rounded-bl-lg">

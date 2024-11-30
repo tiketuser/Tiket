@@ -51,7 +51,7 @@ const cardsData = [
   {
     imageSrc: "/images/Artist/Omer_Adam.png",
     id: 4,
-    title: "עומר אדם",
+    title: "טונה",
     date: "שני, 05 דצמ'",
     location: "היכל מנורה - תל אביב",
     ticketsLeft: 19,
@@ -85,16 +85,16 @@ const cardsData = [
     timeLeft: "2d 42m",
   },
   {
-    imageSrc: "/images/Artist/Omer_Adam.png",
-    id: 7,
-    title: "עומר אדם",
-    date: "שני, 05 דצמ'",
-    location: "היכל מנורה - תל אביב",
-    ticketsLeft: 19,
-    priceBefore: 420,
-    price: 400,
+    imageSrc: "/images/Artist/Noa_Kirel.png",
+    id: 9,
+    title: "נועה קירל",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 290,
+    price: 210,
     soldOut: false,
-    timeLeft: "3d 42m",
+    timeLeft: "5d 42m",
   },
   {
     imageSrc: "/images/Artist/Omer_Adam.png",
@@ -157,7 +157,7 @@ const cardsData = [
     timeLeft: "2d 42m",
   },
   {
-    imageSrc: "/images/Artist/Shlomo_Artzi.jpg",
+    imageSrc: "/images/Artist/Shlomo_Artzi.png",
     id: 2,
     title: "שלמה ארצי",
     date: "שבת, 17 אוק’",
@@ -189,15 +189,19 @@ const CardCarousel: React.FC = () => {
       {/* Adds 32px padding on the edges */}
       <Carousel dir="ltr" className="w-full relative">
         {/* Change gap property for changing distance between the cards */}
-        <CarouselContent className="flex mt-8 mb-10 gap-8">
+        <CarouselContent className="flex mt-8 mb-10 sm:gap-0 md:gap-4 lg:gap-8">
           {cardsData.map((card) => (
-            <CarouselItem key={card.id} className="" dir="rtl">
+            <CarouselItem
+              key={card.id}
+              className="sm:scale-90 md:scale-95 lg:scale-100"
+              dir="rtl"
+            >
               <Card {...card} />
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-0" />
-        <CarouselNext className="absolute right-0" />
+        <CarouselPrevious className="absolute left-[-16px] mt-4" />
+        <CarouselNext className="absolute right-[-16px] mt-4" />
       </Carousel>
     </div>
   );
