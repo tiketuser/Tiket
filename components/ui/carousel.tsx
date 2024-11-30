@@ -158,7 +158,7 @@ const CarouselContent = React.forwardRef<
 
   return (
     <div ref={carouselRef} className="overflow-hidden">
-      <div ref={ref} className={cn("flex", className)} {...props} />
+      <div ref={ref} className={cn("flex ", className)} {...props} />
     </div>
   );
 });
@@ -195,7 +195,7 @@ const CarouselPrevious = React.forwardRef<
   return (
     <Button
       className={cn(
-        "absolute w-11 h-11 rounded-full bg-highlight",
+        "absolute w-11 h-11 rounded-full bg-highlight hover:scale-110 transition-transform hover:duration-500",
         orientation === "horizontal"
           ? "-left-12 top-1/2 -translate-y-1/2"
           : "-top-12 left-1/2 -translate-x-1/2",
@@ -228,7 +228,7 @@ const CarouselNext = React.forwardRef<
     <Button
       size={size}
       className={cn(
-        "absolute h-11 w-11 rounded-full bg-highlight right-12 top-1/2 -translate-y-1/2",
+        "absolute h-11 w-11 rounded-full bg-highlight right-12 top-1/2 -translate-y-1/2 hover:scale-110 transition-transform hover:duration-300",
         className
       )}
       disabled={!canScrollNext}

@@ -20,7 +20,7 @@ const cardsData = [
     location: "היכל התרבות - תל אביב",
     ticketsLeft: 42,
     priceBefore: 457,
-    price: 358,
+    price: 788,
     soldOut: false,
     timeLeft: "2d 42m",
   },
@@ -80,7 +80,7 @@ const cardsData = [
     location: "היכל התרבות - תל אביב",
     ticketsLeft: 42,
     priceBefore: 457,
-    price: 358,
+    price: 289,
     soldOut: false,
     timeLeft: "2d 42m",
   },
@@ -115,7 +115,7 @@ const cardsData = [
     date: "שלישי, 13 אוק’",
     location: "פארק הירקון - תל אביב",
     ticketsLeft: 17,
-    priceBefore: 250,
+    priceBefore: 290,
     price: 210,
     soldOut: false,
     timeLeft: "5d 42m",
@@ -144,6 +144,42 @@ const cardsData = [
     soldOut: false,
     timeLeft: "3d 42m",
   },
+  {
+    imageSrc: "/images/Artist/Alma_Gov.png",
+    id: 1,
+    title: "עלמה גוב",
+    date: "חמישי, 15 אוק’",
+    location: "היכל התרבות - תל אביב",
+    ticketsLeft: 42,
+    priceBefore: 457,
+    price: 788,
+    soldOut: false,
+    timeLeft: "2d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Shlomo_Artzi.jpg",
+    id: 2,
+    title: "שלמה ארצי",
+    date: "שבת, 17 אוק’",
+    location: "קיסריה",
+    ticketsLeft: 34,
+    priceBefore: 350,
+    price: 320,
+    soldOut: false,
+    timeLeft: "12d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Noa_Kirel.png",
+    id: 3,
+    title: "נועה נועה נועה נועה קירל",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 250,
+    price: 210,
+    soldOut: false,
+    timeLeft: "5d 42m",
+  },
 ];
 
 const CardCarousel: React.FC = () => {
@@ -152,15 +188,16 @@ const CardCarousel: React.FC = () => {
       {" "}
       {/* Adds 32px padding on the edges */}
       <Carousel dir="ltr" className="w-full relative">
-        <CarouselContent className="flex justify-center mt-8 mb-10 gap-8">
+        {/* Change gap property for changing distance between the cards */}
+        <CarouselContent className="flex mt-8 mb-10 gap-8">
           {cardsData.map((card) => (
             <CarouselItem key={card.id} className="" dir="rtl">
               <Card {...card} />
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-5" />
-        <CarouselNext className="absolute right-5" />
+        <CarouselPrevious className="absolute left-0" />
+        <CarouselNext className="absolute right-0" />
       </Carousel>
     </div>
   );
