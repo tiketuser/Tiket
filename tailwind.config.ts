@@ -39,6 +39,8 @@ const config: Config = {
   			extraBold: '800'
   		},
   		colors: {
+			primary: '#B54653',
+			secondary: "#EAC4C7",
   			highlight: '#8C5A5F',
   			strongText: '#3C3E5F',
   			weakText: '#CCCCCC',

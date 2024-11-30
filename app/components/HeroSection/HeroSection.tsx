@@ -18,10 +18,10 @@ const HeroSection = () => {
         </p>
 
         <div className="space-x-14 space-x-reverse">
-          <button className="btn btn-primary w-28 h-16 text-gray-50 font-regular text-heading-4-desktop">
+          <button className="btn  btn-primary w-28 h-16 text-gray-50 font-regular text-heading-4-desktop">
             קנה
           </button>
-          <button className="btn btn-secondary w-28 h-16 text-primary font-regular text-heading-4-desktop">
+          <button className="btn b border-[px] btn-secondary w-28 h-16 text-primary font-regular text-heading-4-desktop">
             מכור
           </button>
         </div>
