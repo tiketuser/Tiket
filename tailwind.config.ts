@@ -2,7 +2,8 @@ import type { Config } from "tailwindcss";
 const colors = require('tailwindcss/colors')
 
 const config: Config = {
-  content: [
+    darkMode: ["class"],
+    content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -42,6 +43,7 @@ const config: Config = {
       colors: {
         primary: "#b54653",      // ראשי
         secondary: "#eac4c7",    // משני
+        subtext: "#08050A",
         highlight: "#8C5A5F",    // הדגשה
         strongText: "#3C3E5F",   // טקסט חזק
         weakText: "#CCCCCC",     // טקסט חלש מאוד
@@ -84,7 +86,8 @@ const config: Config = {
   
   plugins: [
     require('daisyui'),
-  ],
+      require("tailwindcss-animate")
+],
   daisyui: {
     themes: [
       {

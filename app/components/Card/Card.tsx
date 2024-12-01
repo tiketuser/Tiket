@@ -29,8 +29,8 @@ const Card: React.FC<CardProps> = ({
   timeLeft,
 }) => {
   return (
-    //
-    <div className="sm:scale-50 md:scale-75 lg:scale-95 lg-md:scale-90 transition-transform relative w-[392px] h-[568px] border-b-[3px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] gap-[24px] shadow-xlarge hover:duration-500 hover:scale-105">
+    //sm:scale-50 md:scale-75 lg:scale-95 lg-md:scale-90
+    <div className="select-none transition-transform relative w-[392px] h-[568px] border-b-[4px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] shadow-xlarge hover:duration-500 hover:scale-110">
       {/* Last Chance */}
       {soldOut && (
         <div className="absolute top-0 left-0 bg-red-600 text-white text-xs p-1 rounded-tr-lg rounded-bl-lg">
@@ -47,12 +47,12 @@ const Card: React.FC<CardProps> = ({
       />
       {/* Heart Icon */}
       <div className="absolute top-4 right-8 btn btn-ghost btn-circle hover:transition-transform hover:duration-300 hover:scale-125">
-        <Image src={HeartIcon} alt="Heart Icon" />
+        <Image src={HeartIcon} alt="Heart Icon" width={90} height={90} />
       </div>
       {/* Title and show details section */}
       <div className="grid pt-6 pb-2 gap-3">
         <div className="flex items-center gap-12">
-          <span className="text-heading-3-mobile font-extrabold gap-[10px] whitespace-nowrap truncate max-w-[280px]">
+          <span className="text-heading-3-mobile font-extrabold gap-[10px] text-strongText whitespace-nowrap truncate max-w-[280px]">
             {title}
           </span>
           <span className="relative bg-strongText flex-grow h-[3px] rounded-lg"></span>
