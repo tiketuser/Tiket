@@ -1,61 +1,208 @@
 "use client";
 
-import React, { useState } from 'react';
-import Card from '../Card/Card';
+import React from "react";
+import Card from "../Card/Card";
+
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const cardsData = [
-  { id: 1, title: 'אלמה דוג', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: true },
-  { id: 2, title: 'שלמה ארצי', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: false },
-  { id: 3, title: 'נועה קירל', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: false },
-  { id: 4, title: 'אמן נוסף', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: false },
-  { id: 5, title: 'אמן אחר', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: false },
-  { id: 6, title: 'אמנית נוספת', date: '15 אוקטובר', location: 'היכל התרבות - תל אביב', price: 358, soldOut: false },
-  // Add more cards as needed
+  {
+    imageSrc: "/images/Artist/Alma_Gov.png",
+    id: 1,
+    title: "עלמה גוב",
+    date: "חמישי, 15 אוק’",
+    location: "היכל התרבות - תל אביב",
+    ticketsLeft: 42,
+    priceBefore: 457,
+    price: 788,
+    soldOut: false,
+    timeLeft: "2d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Shlomo_Artzi.png",
+    id: 2,
+    title: "שלמה ארצי",
+    date: "שבת, 17 אוק’",
+    location: "קיסריה",
+    ticketsLeft: 34,
+    priceBefore: 350,
+    price: 320,
+    soldOut: false,
+    timeLeft: "12d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Noa_Kirel.png",
+    id: 3,
+    title: "נועה נועה נועה נועה קירל",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 250,
+    price: 210,
+    soldOut: false,
+    timeLeft: "5d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Omer_Adam.png",
+    id: 4,
+    title: "עומר אדם",
+    date: "שני, 05 דצמ'",
+    location: "היכל מנורה - תל אביב",
+    ticketsLeft: 19,
+    priceBefore: 420,
+    price: 400,
+    soldOut: false,
+    timeLeft: "3d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Tuna.png",
+    id: 5,
+    title: "טונה",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 300,
+    price: 290,
+    soldOut: false,
+    timeLeft: "5d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Keren_Peles.png",
+    id: 6,
+    title: "קרן פלס",
+    date: "חמישי, 15 אוק’",
+    location: "היכל התרבות - תל אביב",
+    ticketsLeft: 42,
+    priceBefore: 457,
+    price: 289,
+    soldOut: false,
+    timeLeft: "2d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Ravid_Plotnik.png",
+    id: 9,
+    title: "רביד פלוטניק",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 290,
+    price: 210,
+    soldOut: false,
+    timeLeft: "5d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Ron_Asael.png",
+    id: 8,
+    title: "מי זה",
+    date: "שני, 05 דצמ'",
+    location: "היכל מנורה - תל אביב",
+    ticketsLeft: 19,
+    priceBefore: 420,
+    price: 400,
+    soldOut: false,
+    timeLeft: "3d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Shlomo_Artzi.png",
+    id: 9,
+    title: "שלמה ארצי",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 290,
+    price: 210,
+    soldOut: false,
+    timeLeft: "5d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Alma_Gov.png",
+    id: 10,
+    title: "עלמה גוב",
+    date: "חמישי, 15 אוק’",
+    location: "היכל התרבות - תל אביב",
+    ticketsLeft: 42,
+    priceBefore: 457,
+    price: 358,
+    soldOut: false,
+    timeLeft: "2d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Omer_Adam.png",
+    id: 11,
+    title: "עומר אדם",
+    date: "שני, 05 דצמ'",
+    location: "היכל מנורה - תל אביב",
+    ticketsLeft: 19,
+    priceBefore: 420,
+    price: 400,
+    soldOut: false,
+    timeLeft: "3d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Alma_Gov.png",
+    id: 1,
+    title: "עלמה גוב",
+    date: "חמישי, 15 אוק’",
+    location: "היכל התרבות - תל אביב",
+    ticketsLeft: 42,
+    priceBefore: 457,
+    price: 788,
+    soldOut: false,
+    timeLeft: "2d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Shlomo_Artzi.png",
+    id: 2,
+    title: "שלמה ארצי",
+    date: "שבת, 17 אוק’",
+    location: "קיסריה",
+    ticketsLeft: 34,
+    priceBefore: 350,
+    price: 320,
+    soldOut: false,
+    timeLeft: "12d 42m",
+  },
+  {
+    imageSrc: "/images/Artist/Noa_Kirel.png",
+    id: 3,
+    title: "נועה נועה נועה נועה קירל",
+    date: "שלישי, 13 אוק’",
+    location: "פארק הירקון - תל אביב",
+    ticketsLeft: 17,
+    priceBefore: 250,
+    price: 210,
+    soldOut: false,
+    timeLeft: "5d 42m",
+  },
 ];
 
 const CardCarousel: React.FC = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, cardsData.length - 1));
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
-  };
-
   return (
-    <div className="relative w-full max-w-[90%] mx-auto overflow-hidden pt-4">
-      {currentIndex > 0 && (
-        <button
-          onClick={prevSlide}
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 text-xl bg-white p-2 rounded-full shadow-md z-10"
-        >
-          &#8592;
-        </button>
-      )}
-
-      <div
-        className="flex transition-transform duration-300 ease-in-out"
-        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-      >
-        <div className="flex gap-4">
+    <div className="w-full px-8 ">
+      {" "}
+      {/* Adds 32px padding on the edges */}
+      <Carousel dir="ltr" className="w-full relative">
+        {/* Change gap property for changing distance between the cards */}
+        <CarouselContent className="flex mt-8 mb-10 sm:gap-0 md:gap-4 lg:gap-8">
           {cardsData.map((card) => (
-            <div key={card.id} className="flex-grow min-w-[250px] max-w-[300px]">
+            <CarouselItem
+              key={card.id}
+              className="sm:scale-90 md:scale-95 lg:scale-100"
+              dir="rtl"
+            >
               <Card {...card} />
-            </div>
+            </CarouselItem>
           ))}
-        </div>
-      </div>
-
-      {currentIndex < cardsData.length - 1 && (
-        <button
-          onClick={nextSlide}
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 text-xl bg-white p-2 rounded-full shadow-md z-10"
-        >
-          &#8594;
-        </button>
-      )}
+        </CarouselContent>
+        <CarouselPrevious className="absolute left-[-16px] mt-4" />
+        <CarouselNext className="absolute right-[-16px] mt-4" />
+      </Carousel>
     </div>
   );
 };
