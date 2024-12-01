@@ -25,7 +25,7 @@ const cardsData = [
     timeLeft: "2d 42m",
   },
   {
-    imageSrc: "/images/Artist/Shlomo_Artzi.jpg",
+    imageSrc: "/images/Artist/Shlomo_Artzi.png",
     id: 2,
     title: "שלמה ארצי",
     date: "שבת, 17 אוק’",
