@@ -1,63 +1,65 @@
-import React from 'react';
-import Image from 'next/image';
+import React from "react";
+import Image from "next/image";
 
-import SecondaryHalfCircle from '../../../public/images/Home Page/Web/Secondary Half Circle.svg'
-import Eclipse from '../../../public/images/Home Page/Web/Ellipse 13.svg'
-import ButtonStar from '../../../public/images/Home Page/Web/Buttom Star.svg';
-import GuitarThing from '../../../public/images/Home Page/Web/Guitar Thing.svg';
+import SecondaryHalfCircle from "../../../public/images/Home Page/Web/Secondary Half Circle.svg";
+import Eclipse from "../../../public/images/Home Page/Web/Ellipse 13.svg";
+import ButtonStar from "../../../public/images/Home Page/Web/Buttom Star.svg";
+import GuitarThing from "../../../public/images/Home Page/Web/Guitar Thing.svg";
 
 const HeroSection = () => {
   return (
-    <div className="relative bg-white mx-auto w-full shadow-xsmall-inner z-30 h-72 flex justify-center items-center overflow-x-hidden">
-      
-      <div className="flex flex-col items-center text-right" dir="rtl">
-
-        <h1 className="text-heading-1-desktop font-extrabold">
-          הופעה סולד-אאוט? / לא יכולים להגיע?
+    <div className="h-[400px] sm:h-[400px] md:h-80 lg:h-72 relative bg-white mx-auto w-full shadow-xsmall-inner z-30 flex justify-center items-center overflow-x-hidden">
+      <div className="flex flex-col justify-center text-center z-30 " dir="rtl">
+        <h1 className="text-subtext text-heading-1-mobile sm:text-heading-1-desktop md:text-heading-1-desktop  lg:text-heading-1-desktop font-extrabold z-30">
+          <span className="sm:block md:block lg:inline md-sm:block block">
+            הופעה סולד-אאוט? /{" "}
+          </span>
+          <span>לא יכולים להגיע?</span>
         </h1>
-        <p className="text-text-large font-light mb-8">
+        <p className="text-subtext text-text-medium sm:text-text-large md:text-text-large lg:text-text-large font-light sm:mb-8 md:mb-8 lg:mb-8 mb-5">
           הזדמנות נוספת לכרטיסים - קנו ומכרו בקלות ובאופן מאובטח.
         </p>
 
-        <div className="space-x-14 space-x-reverse">
-          <button className="btn btn-primary w-28 h-16 text-gray-50 font-regular text-heading-4-desktop">קנה</button>
-          <button className="btn btn-secondary w-28 h-16 text-primary font-regular text-heading-4-desktop">מכור</button>          
+        <div className="flex justify-center gap-8 sm:gap-8 md:gap-9 lg:gap-10">
+          <button className="btn btn-primary w-28 h-16 text-gray-50 font-regular text-heading-4-desktop sm:scale-90 md:scale-95 lg:scale-100 scale-90">
+            קנה
+          </button>
+          <button className="btn btn-secondary w-28 h-16 text-primary font-regular text-heading-4-desktop sm:scale-90 md:scale-95 lg:scale-100 scale-90">
+            מכור
+          </button>
         </div>
-        
       </div>
 
       <Image
         src={SecondaryHalfCircle}
         alt="SecondaryHalfCircle"
-        className="absolute bottom-0 -left-6"
-        style={{ width: '240px', height: '240px' }} 
+        className="absolute bottom-0 z-[-1] -left-6 lg:w-[240px] lg:h-[240px] md:w-[180px] md:h-[180px] sm:w-[140px] sm:h-[140px] h-[110px] w-[110px]"
       />
 
       <Image
         src={GuitarThing}
         alt="GuitarThing"
-        className="absolute bottom-4 left-16"
-        style={{ width: '148px', height: '180px' }} 
+        className="absolute bottom-4 left-4 sm:left-8 md:left-12 lg:left-16 z-[-1] lg:w-[148px] lg:h-[180px] md:w-[118px] md:h-[150px] sm:w-[108px] sm:h-[140px] h-[90px] w-[58px]"
       />
 
       <Image
         src={Eclipse}
         alt="Eclipse"
-        className="absolute top-0 right-0"
-        style={{ width: '100px', height: '100px' }} 
+        className="absolute top-0 right-0 z-0"
+        style={{ width: "100px", height: "100px" }}
       />
 
       <Image
         src={ButtonStar}
         alt="Circle Drawing"
-        className="absolute bottom-14 right-14" 
+        className="absolute bottom-14 right-14 z-0"
       />
 
       <Image
         src={ButtonStar}
         alt="Circle Drawing"
-        className="absolute top-14 right-44"
-        style={{ width: '15px', height: '15px' }}
+        className="absolute top-14 right-44 z-0"
+        style={{ width: "15px", height: "15px" }}
       />
     </div>
   );
