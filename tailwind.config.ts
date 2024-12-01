@@ -42,6 +42,7 @@ const config: Config = {
       colors: {
         primary: "#b54653",      // ראשי
         secondary: "#eac4c7",    // משני
+        subtext: "#08050A",
         highlight: "#8C5A5F",    // הדגשה
         strongText: "#3C3E5F",   // טקסט חזק
         weakText: "#CCCCCC",     // טקסט חלש מאוד
