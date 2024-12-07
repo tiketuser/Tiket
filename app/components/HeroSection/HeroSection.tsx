@@ -10,21 +10,19 @@ const HeroSection = () => {
   return (
     <div className="h-[400px] sm:h-[400px] md:h-80 lg:h-72 relative bg-white mx-auto w-full shadow-xsmall-inner z-30 flex justify-center items-center overflow-x-hidden">
       <div className="flex flex-col justify-center text-center z-30 " dir="rtl">
-        <h1 className="text-subtext text-heading-1-mobile sm:text-heading-1-desktop md:text-heading-1-desktop  lg:text-heading-1-desktop font-extrabold z-30">
-          <span className="sm:block md:block lg:inline md-sm:block block">
-            הופעה סולד-אאוט? /{" "}
-          </span>
+        <h1 className="text-subtext text-heading-2-mobile sm:text-heading-1-desktop font-extrabold z-30">
+          <span className="lg:inline block">הופעה סולד-אאוט? / </span>
           <span>לא יכולים להגיע?</span>
         </h1>
-        <p className="text-subtext text-text-medium sm:text-text-large md:text-text-large lg:text-text-large font-light sm:mb-8 md:mb-8 lg:mb-8 mb-5">
+        <p className="text-subtext text-text-small font-light mb-5 sm:text-text-large sm:mb-8 ">
           הזדמנות נוספת לכרטיסים - קנו ומכרו בקלות ובאופן מאובטח.
         </p>
 
-        <div className="flex justify-center gap-8 sm:gap-8 md:gap-9 lg:gap-10">
-          <button className="btn btn-primary w-28 h-16 text-gray-50 font-regular text-heading-4-desktop sm:scale-90 md:scale-95 lg:scale-100 scale-90">
+        <div className="flex justify-center gap-8 md:gap-9 lg:gap-10">
+          <button className="btn btn-primary text-heading-5-desktop w-[100px] h-[50px] sm:w-28 sm:h-16 text-gray-50 font-regular sm:text-heading-4-desktop sm:scale-90 md:scale-95 lg:scale-100 ">
             קנה
           </button>
-          <button className="btn btn-secondary w-28 h-16 text-primary font-regular text-heading-4-desktop sm:scale-90 md:scale-95 lg:scale-100 scale-90">
+          <button className="btn btn-secondary border-primary border-[2px] bg-white text-primary  text-heading-5-desktop w-[107px] h-[50px] sm:w-28 sm:h-16 font-regular sm:text-heading-4-desktop sm:scale-90 md:scale-95 lg:scale-100 ">
             מכור
           </button>
         </div>
