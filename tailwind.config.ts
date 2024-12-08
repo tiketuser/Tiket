@@ -67,6 +67,10 @@ const config: Config = {
         'xlarge-inner': '0px 24px 48px -12px rgba(0, 0, 0, 0.18) inset',
         'xxlarge-inner': '0px 32px 64px -12px rgba(0, 0, 0, 0.14) inset',
       },
+      scale: {
+        '45': '0.45', // Custom scale for 45%
+        '48': '0.45', // Custom scale for 45%
+      },
       
       // spacing: {
       //   8: '8px',
