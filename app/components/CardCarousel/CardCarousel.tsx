@@ -184,25 +184,35 @@ const cardsData = [
 
 const CardCarousel: React.FC = () => {
   return (
-    <div className="w-full px-8 ">
-      {" "}
-      {/* Adds 32px padding on the edges */}
-      <Carousel dir="ltr" className="w-full relative">
-        {/* Change gap property for changing distance between the cards */}
-        <CarouselContent className="flex mt-8 mb-10 sm:gap-0 md:gap-4 lg:gap-8">
-          {cardsData.map((card) => (
-            <CarouselItem
-              key={card.id}
-              className="sm:scale-90 md:scale-95 lg:scale-100"
-              dir="rtl"
-            >
+    <div className="w-full px-1 sm:px-8">
+      {/* Carousel for screens >= sm */}
+      <div className="hidden sm:block">
+        <Carousel dir="ltr" className="w-full relative">
+          <CarouselContent className="flex flex-nowrap gap-4">
+            {cardsData.map((card) => (
+              <CarouselItem key={card.id} dir="rtl">
+                <Card {...card} />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="absolute left-[-16px]" />
+          <CarouselNext className="absolute right-[-16px]" />
+        </Carousel>
+      </div>
+
+      {/* layout for screens < sm (SmartPhoens) */}
+      <div className="sm:hidden gap-2 w-full flex flex-wrap justify-center">
+        {cardsData.map((card) => (
+          <div
+            key={card.id}
+            className="max-w-[180px] max-h-[280px] flex justify-center items-center"
+          >
+            <div className="scale-48">
               <Card {...card} />
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="absolute left-[-16px] mt-4" />
-        <CarouselNext className="absolute right-[-16px] mt-4" />
-      </Carousel>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
