@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
 import Card from "../Card/Card";
 import Arrow from "../../../public/images/Home Page/Web/Arrow-1.svg";
 import Image from "next/image";
