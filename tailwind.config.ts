@@ -71,6 +71,10 @@ const config: Config = {
         '45': '0.45', // Custom scale for 45%
         '48': '0.45', // Custom scale for 45%
       },
+      screens: {
+        'xxs': '320px', // Custom breakpoint for extra small screens
+        'xs': '376px',  // Custom breakpoint for slightly larger small screens
+      },
       
       // spacing: {
       //   8: '8px',

@@ -1,7 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Card from "../Card/Card";
+import Arrow from "../../../public/images/Home Page/Web/Arrow-1.svg";
+import Image from "next/image";
+import Link from "next/link";
 
 import {
   Carousel,
@@ -9,6 +12,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  NavigationDotes,
 } from "@/components/ui/carousel";
 
 const cardsData = [
@@ -183,11 +187,26 @@ const cardsData = [
 ];
 
 const CardCarousel: React.FC = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const visibleCards = 4;
+
+  const nextSlide = () => {
+    if (currentIndex < cardsData.length - visibleCards) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const prevSlide = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
   return (
-    <div className="w-full px-1 sm:px-8">
+    <div className="w-full px-1 sm:px-8 ">
       {/* Carousel for screens >= sm */}
-      <div className="hidden sm:block">
-        <Carousel dir="ltr" className="w-full relative">
+      <div className="hidden sm:block ">
+        <Carousel dir="ltr" className="w-full relative-">
           <CarouselContent className="flex flex-nowrap gap-4">
             {cardsData.map((card) => (
               <CarouselItem key={card.id} dir="rtl">
@@ -197,17 +216,27 @@ const CardCarousel: React.FC = () => {
           </CarouselContent>
           <CarouselPrevious className="absolute left-[-16px]" />
           <CarouselNext className="absolute right-[-16px]" />
+          <NavigationDotes />
         </Carousel>
+
+        <div className="flex justify-center mt-6 mb-14">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-text-medium font-light text-center">
+              גלה עוד
+            </span>
+            <Image src={Arrow} alt="Arrow Icon" width={9} height={16} />
+          </Link>
+        </div>
       </div>
 
       {/* layout for screens < sm (SmartPhoens) */}
-      <div className="sm:hidden gap-2 w-full flex flex-wrap justify-center">
+      <div className="sm:hidden flex flex-wrap justify-center gap-2 w-full ">
         {cardsData.map((card) => (
           <div
             key={card.id}
-            className="max-w-[180px] max-h-[280px] flex justify-center items-center"
+            className="xs:max-w-[180px] xs:max-h-[270px] flex justify-center items-center max-w-[150px] max-h-[220px]"
           >
-            <div className="scale-48">
+            <div className="xs:scale-48 scale-[0.38]">
               <Card {...card} />
             </div>
           </div>
