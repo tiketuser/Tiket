@@ -187,21 +187,6 @@ const cardsData = [
 ];
 
 const CardCarousel: React.FC = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const visibleCards = 4;
-
-  const nextSlide = () => {
-    if (currentIndex < cardsData.length - visibleCards) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  const prevSlide = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
-
   return (
     <div className="w-full px-1 sm:px-8 ">
       {/* Carousel for screens >= sm */}
