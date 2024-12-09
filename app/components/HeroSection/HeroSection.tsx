@@ -14,7 +14,7 @@ const HeroSection = () => {
           <span className="lg:inline block">הופעה סולד-אאוט? / </span>
           <span>לא יכולים להגיע?</span>
         </h1>
-        <p className="text-subtext text-text-small font-light mb-5 sm:text-text-large sm:mb-8 ">
+        <p className="text-subtext leading-[27px] text-text-small font-light mb-5 sm:text-text-large sm:mb-8 ">
           הזדמנות נוספת לכרטיסים - קנו ומכרו בקלות ובאופן מאובטח.
         </p>
 

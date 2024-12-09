@@ -47,7 +47,7 @@ const Card: React.FC<CardProps> = ({
       />
       {/* Heart Icon */}
       <div className="absolute top-4 right-8 btn btn-ghost btn-circle hover:transition-transform hover:duration-300 hover:scale-125">
-        <Image src={HeartIcon} alt="Heart Icon" width={90} height={90} />
+        <Image src={HeartIcon} alt="Heart Icon" width={130} height={130} />
       </div>
       {/* Title and show details section */}
       <div className="grid pt-6 pb-2 gap-3">
@@ -67,7 +67,11 @@ const Card: React.FC<CardProps> = ({
 
           <p className="flex items-center text-text-regular font-light text-strongText">
             <span className="ml-4">כרטיסים זמינים</span>
-            <Image src={TicketIcon} alt="heart icon" className="h-4 w-4 ml-1" />
+            <Image
+              src={TicketIcon}
+              alt="Ticket icon"
+              className="h-4 w-4 ml-1"
+            />
             <span>{ticketsLeft} </span>
           </p>
         </div>
