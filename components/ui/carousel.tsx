@@ -259,7 +259,7 @@ const CarouselNext = React.forwardRef<
     </Button>
   );
 });
-CarouselPrevious.displayName = "CarouselPrevious";
+CarouselNext.displayName = "CarouselNext";
 
 const NavigationDotes = React.forwardRef<
   HTMLDivElement,
