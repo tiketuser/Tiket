@@ -46,8 +46,8 @@ const Card: React.FC<CardProps> = ({
         className="w-full h-[264px] mb-4 object-cover"
       />
       {/* Heart Icon */}
-      <div className="absolute top-4 right-8 btn btn-ghost btn-circle hover:transition-transform hover:duration-300 hover:scale-125">
-        <Image src={HeartIcon} alt="Heart Icon" width={130} height={130} />
+      <div className="absolute w-[100px] h-[100px] top-0 right-4 btn btn-ghost btn-circle hover:transition-transform hover:duration-300 hover:scale-125">
+        <Image src={HeartIcon} alt="Heart Icon" width={80} />
       </div>
       {/* Title and show details section */}
       <div className="grid pt-6 pb-2 gap-3">
