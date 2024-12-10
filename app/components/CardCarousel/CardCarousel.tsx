@@ -187,11 +187,11 @@ const cardsData = [
 
 const CardCarousel: React.FC = () => {
   return (
-    <div className="w-full px-1 sm:px-8 ">
+    <div className="w-full px-1 sm:px-8 mt-10">
       {/* Carousel for screens >= sm */}
       <div className="hidden sm:block ">
-        <Carousel dir="ltr" className="w-full relative-">
-          <CarouselContent className="flex flex-nowrap gap-4">
+        <Carousel dir="ltr" className="w-full relative">
+          <CarouselContent className="flex flex-nowrap gap-6 h-[600px]">
             {cardsData.map((card) => (
               <CarouselItem key={card.id} dir="rtl">
                 <Card {...card} />
