@@ -214,13 +214,13 @@ const CardCarousel: React.FC = () => {
       </div>
 
       {/* layout for screens < sm (SmartPhoens) */}
-      <div className="sm:hidden flex flex-wrap justify-center gap-4 w-full mt-6 mb-8">
+      <div className="sm:hidden flex flex-wrap justify-center gap-3 xs:gap-5 w-full mt-6 mb-8">
         {cardsData.map((card) => (
           <div
             key={card.id}
-            className="xs:max-w-[180px] xs:max-h-[270px] flex justify-center items-center max-w-[160px] max-h-[265px]"
+            className="xs:max-w-[160px] xs:max-h-[260px] flex justify-center items-center max-w-[155px] max-h-[245px]"
           >
-            <div className="xs:scale-48 scale-[0.42]">
+            <div className="xs:scale-[0.43] scale-[0.39]">
               <Card {...card} />
             </div>
           </div>
