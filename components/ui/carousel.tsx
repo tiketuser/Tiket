@@ -203,7 +203,7 @@ CarouselItem.displayName = "CarouselItem";
 const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, ...props }) => {
+>(({ className, ...props }, _ref) => {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
   return (
@@ -235,7 +235,7 @@ CarouselPrevious.displayName = "CarouselPrevious";
 const CarouselNext = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, size = "icon", ...props }) => {
+>(({ className, size = "icon", ...props }, _ref) => {
   const { scrollNext, canScrollNext } = useCarousel();
 
   return (
