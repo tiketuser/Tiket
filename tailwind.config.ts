@@ -56,7 +56,7 @@ const config: Config = {
         'small': '0px 2px 4px -2px rgba(0, 0, 0, 0.06), 0px 4px 8px -2px rgba(0, 0, 0, 0.1)',
         'medium': '0px 4px 6px -2px rgba(0, 0, 0, 0.03), 0px 12px 16px -4px rgba(0, 0, 0, 0.08)',
         'large': '0px 8px 8px -4px rgba(0, 0, 0, 0.03), 0px 20px 24px -4px rgba(0, 0, 0, 0.08)',
-        'xlarge': '0px 24px 48px -12px rgba(0, 0, 0, 0.18)',
+        'xlarge': '0px 24px 48px -20px rgba(0, 0, 0, 0.18)',
         'xxlarge': '0px 32px 64px -12px rgba(0, 0, 0, 0.14)',
 
         'xxsmall-inner': '0px 1px 4px 0px rgba(0, 0, 0, 0.05) inset',
