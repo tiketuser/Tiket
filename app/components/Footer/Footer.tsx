@@ -8,7 +8,7 @@ import TiktokIcon from "../../../public/images/Home Page/Web/TiktokIcon.svg";
 
 const Footer = () => {
   return (
-    <footer className="relative bottom-0 w-full bg-white flex justify-between items-center px-4 h-20 shadow-xsmall-inner ">
+    <footer className="relative bottom-0 w-full bg-white flex justify-center items-center px-4 h-20 shadow-xsmall-inner ">
       <div className="flex items-center gap-3">
         <button className="flex items-center">
           <Image src={YoutubeIcon} alt="YouTubeIcon" />
@@ -26,11 +26,11 @@ const Footer = () => {
           <Image src={TwitterIcon} alt="TwitterIcon" />
         </button>
 
-        <button className="flex items-center">
+        <button className="flex items-center ml-7">
           <Image src={InstagramIcon} alt="InstagramIcon" />
         </button>
       </div>
-      <div className="flex items-center gap-7 px-32">
+      <div className="flex items-center gap-7 ">
         <a href="#" className="link link-hover text-text-medium font-light">
           צור קשר
         </a>
@@ -45,7 +45,7 @@ const Footer = () => {
         </a>
       </div>
 
-      <div className="border-t-2 border-gray-300 flex-grow"></div>
+      <div className="relative border-t-2 border-gray-300 flex-grow mr-7"></div>
     </footer>
   );
 };
