@@ -26,6 +26,9 @@ type CarouselContextProps = {
   scrollNext: () => void;
   canScrollPrev: boolean;
   canScrollNext: boolean;
+  selectedIndex: number;
+  scrollToIndex: (index: number) => void;
+  itemCount: number;
 } & CarouselProps;
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
@@ -65,6 +68,8 @@ const Carousel = React.forwardRef<
     );
     const [canScrollPrev, setCanScrollPrev] = React.useState(false);
     const [canScrollNext, setCanScrollNext] = React.useState(false);
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
+    const [itemCount, setItemCount] = React.useState(0);
 
     const onSelect = React.useCallback((api: CarouselApi) => {
       if (!api) {
@@ -73,7 +78,15 @@ const Carousel = React.forwardRef<
 
       setCanScrollPrev(api.canScrollPrev());
       setCanScrollNext(api.canScrollNext());
+      setSelectedIndex(api.selectedScrollSnap());
     }, []);
+
+    const scrollToIndex = React.useCallback(
+      (index: number) => {
+        api?.scrollTo(index);
+      },
+      [api]
+    );
 
     const scrollPrev = React.useCallback(() => {
       api?.scrollPrev();
@@ -108,7 +121,7 @@ const Carousel = React.forwardRef<
       if (!api) {
         return;
       }
-
+      setItemCount(api.slideNodes().length); // Update item count
       onSelect(api);
       api.on("reInit", onSelect);
       api.on("select", onSelect);
@@ -130,6 +143,9 @@ const Carousel = React.forwardRef<
           scrollNext,
           canScrollPrev,
           canScrollNext,
+          selectedIndex,
+          scrollToIndex,
+          itemCount,
         }}
       >
         <div
@@ -156,7 +172,7 @@ const CarouselContent = React.forwardRef<
 
   return (
     <div ref={carouselRef} className="overflow-hidden">
-      <div ref={ref} className={cn("flex ", className)} {...props} />
+      <div ref={ref} className={cn("flex", className)} {...props} />
     </div>
   );
 });
@@ -187,11 +203,12 @@ CarouselItem.displayName = "CarouselItem";
 const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, ...props }) => {
+>(({ className, ...props }, ref) => {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
   return (
     <Button
+      ref={ref}
       className={cn(
         "absolute w-11 h-11 rounded-full bg-highlight hover:scale-110 transition-transform hover:duration-500",
         orientation === "horizontal"
@@ -219,11 +236,12 @@ CarouselPrevious.displayName = "CarouselPrevious";
 const CarouselNext = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, size = "icon", ...props }) => {
+>(({ className, size = "icon", ...props }, ref) => {
   const { scrollNext, canScrollNext } = useCarousel();
 
   return (
     <Button
+      ref={ref}
       size={size}
       className={cn(
         "absolute h-11 w-11 rounded-full bg-highlight right-12 top-1/2 -translate-y-1/2 hover:scale-110 transition-transform hover:duration-300",
@@ -245,6 +263,55 @@ const CarouselNext = React.forwardRef<
 });
 CarouselNext.displayName = "CarouselNext";
 
+const NavigationDotes = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { selectedIndex, scrollToIndex, itemCount } = useCarousel();
+
+  const dotsCount = 4; // Fixed number of dots
+  const slidesPerDot = Math.ceil(itemCount / dotsCount); // Number of slides per dot
+
+  // Ensure selectedIndex is normalized to an integer
+  const normalizedIndex = Math.round(selectedIndex);
+
+  const isActiveDot = (dotIndex: number) => {
+    const start = dotIndex * slidesPerDot;
+    const end = Math.min((dotIndex + 1) * slidesPerDot - 1, itemCount - 1);
+    return normalizedIndex >= start && normalizedIndex <= end;
+  };
+
+  const handleDotClick = (dotIndex: number) => {
+    const targetIndex = Math.min(dotIndex * slidesPerDot, itemCount - 1);
+    scrollToIndex(targetIndex);
+  };
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "flex justify-center items-center mt-8 space-x-[12px]",
+        className
+      )}
+      {...props}
+    >
+      {Array.from({ length: dotsCount }).map((_, dotIndex) => (
+        <button
+          key={dotIndex}
+          className={cn(
+            "rounded-full transition-all duration-300",
+            isActiveDot(dotIndex)
+              ? "w-3 h-3 bg-mutedText"
+              : "w-2 h-2 bg-weakText"
+          )}
+          onClick={() => handleDotClick(dotIndex)}
+        />
+      ))}
+    </div>
+  );
+});
+NavigationDotes.displayName = "NavigationDotes";
+
 export {
   type CarouselApi,
   Carousel,
@@ -252,4 +319,5 @@ export {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
+  NavigationDotes,
 };
