@@ -1,9 +1,9 @@
 import Image from "next/image";
 import React from "react";
 
-import HeartIcon from "../../../public/images/heart-icon.svg";
-import Arrow from '../../../public/images/Home Page/Web/Arrow.svg'; 
-import ProfileButton from '../../../public/images/Home Page/ProfileButton.svg';
+import HeartIcon from "../../../public/images/NavBar/Heart.svg";
+import Arrow from "../../../public/images/Home Page/Web/Arrow.svg";
+import ProfileButton from "../../../public/images/Home Page/ProfileButton.svg";
 
 const NavBar = () => {
   return (
@@ -18,14 +18,13 @@ const NavBar = () => {
 
       {/* Right Side */}
       <div className="flex space-x-6">
+        {/* Tickets Button */}
         <button className="flex items-center space-x-2 rtl:space-x-reverse hover:text-gray-600 focus:outline-none">
-          <Image
-              src={Arrow}
-              alt="Arrow"
-            />
+          <Image src={Arrow} alt="Arrow" />
           <span className="text-text-large font-normal">הכרטיסים שלי</span>
         </button>
 
+        {/* Like Button */}
         <button
           role="btn"
           className="btn btn-ghost btn-circle avatar hover:bg-red-200"
@@ -33,23 +32,28 @@ const NavBar = () => {
           <Image
             src={HeartIcon}
             alt="heart icon"
-            style={{ width: "30px", height: "30px" }}
+            style={{ width: "25px", height: "25px", overflow: "visible" }}
           />
         </button>
 
-        <button className="btn btn-secondary w-24 text-primary text-text-large font-normal">הירשם</button>
-        <button className="btn btn-primary w-24 text-gray-50 text-text-large font-normal">התחבר</button>
-        
+        {/* Hide These in Mobile */}
+        <button className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal">
+          הירשם
+        </button>
+        <button className="hidden sm:flex btn btn-primary w-24 text-gray-50 text-text-large font-normal">
+          התחבר
+        </button>
+
         <button
-            tabIndex={0}
-            role="btn"
-            className="btn btn-ghost btn-circle avatar hover:bg-red-100"
-          >
-            <Image
-              src={ProfileButton}
-              alt="Profile"
-              style={{ width: "25px", height: "25px", overflow: "visible" }}
-            />
+          tabIndex={0}
+          role="btn"
+          className="hidden sm:flex btn btn-ghost btn-circle avatar hover:bg-red-100"
+        >
+          <Image
+            src={ProfileButton}
+            alt="Profile"
+            style={{ width: "24px", height: "36px", overflow: "visible" }}
+          />
         </button>
       </div>
     </div>
