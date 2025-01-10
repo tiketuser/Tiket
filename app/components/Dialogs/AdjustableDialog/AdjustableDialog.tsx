@@ -4,12 +4,12 @@ import Image from "next/image";
 import exitIcon from "../../../../public/images/Dialogs/exitIcon.svg"
 
 interface AdjustableDialogProps {
-    width?: string;
-    height?: string;
-    isOpen: boolean;
-    onClose: () => void;
-    children: ReactNode; 
-  }
+  width?: string;
+  height?: string;
+  isOpen: boolean;
+  onClose: () => void;
+  children: ReactNode; 
+}
 
 const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
     width = "w-96",
