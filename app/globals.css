@@ -25,3 +25,7 @@ body {
     text-wrap: balance;
   }
 }
+
+:root:has(.no-doc-scroll) {
+  overflow: hidden;
+}
