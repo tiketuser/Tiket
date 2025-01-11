@@ -8,9 +8,12 @@ import Arrow from "../../../public/images/Home Page/Web/Arrow.svg";
 import ProfileButton from "../../../public/images/Home Page/ProfileButton.svg";
 
 import LoginDialog from "../../components/Dialogs/LoginDialog/LoginDialog"
+import SignUpDialog from "../Dialogs/SignUpDialog/SignUpDialog";
 
 const NavBar = () => {
   const [isLoginDialogOpen, setLoginDialogOpen] = React.useState(false);
+  const [isSignUpDialogOpen, setSignUpDialogOpen] = React.useState(false);
+  
   return (
     <>
       <div
@@ -41,7 +44,8 @@ const NavBar = () => {
           </button>
 
           {/* Hide These in Mobile */}
-          <button className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal">
+          <button className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal"
+            onClick={() => setSignUpDialogOpen(true)}>
             הירשם
           </button>
           <button className="hidden sm:flex btn btn-primary w-24 text-gray-50 text-text-large font-normal"
@@ -62,6 +66,7 @@ const NavBar = () => {
           </button>
         </div>
       </div>
+      <SignUpDialog isOpen={isSignUpDialogOpen} onClose={() => setSignUpDialogOpen(false)} />
       <LoginDialog isOpen={isLoginDialogOpen} onClose={() => setLoginDialogOpen(false)}/>
     </>
   );
