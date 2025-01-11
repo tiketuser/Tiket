@@ -8,6 +8,7 @@ const Gallery = () => {
   return (
     <div className='shadow-small-inner'>
       <CustomInput
+        className='pt-9'
         placeholder="חפש אירוע"
         image = { <Image src={SearchIcon} alt="Search Icon" width={24} height={24}/> }
       />

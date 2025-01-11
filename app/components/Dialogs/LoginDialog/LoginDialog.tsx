@@ -1,6 +1,8 @@
 import AdjustableDialog from "../AdjustableDialog/AdjustableDialog"
 import CustomInput from "../../CustomInput/CustomInput"
 import LoginRegisterButtons from "../LoginRegisterButtons/LoginRegisterButtons";
+import CheckBox from "../../CheckBox/CheckBox";
+
 
 interface LoginDialogProps {
     isOpen: boolean;
@@ -17,7 +19,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
             isOpen={isOpen}
             onClose={onClose}
         >
-            <div className="">
+            <div className="  select-none">
                 {/* Header */}
                 <h2 className="text-center text-heading-1-desktop font-extrabold text-gray-950">
                     התחברות
@@ -26,28 +28,29 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                     התחבר בכדי לקנות ולמכור כרטיסים
                 </p>
 
-                {/* Login form */}
-                <form className="">
+                <form >
+                    <CustomInput placeholder="דואר אלקטרוני / מספר טלפון" className="pt-9" />
+                    <CustomInput type="password" placeholder="סיסמא" className="pt-6"/>
+                    
 
-                    <CustomInput placeholder="דואר אלקטרוני / מספר טלפון" />
-                    <CustomInput type="password" placeholder="סיסמא" />
-                    <LoginRegisterButtons />
-
-
-
-                    {/* Remember Me and Forgot Password */}
-                    <div className="flex items-center justify-between">
-                        <label className="flex items-center text-sm text-gray-600">
-                            <input
-                                type="checkbox"
-                                className="form-checkbox h-4 w-4 text-blue-600"
-                            />
-                            <span className="ml-2">זכור אותי</span>
-                        </label>
-                        <a href="#" className="text-sm text-blue-500 hover:underline">
-                            שכחת סיסמא?
-                        </a>
+                    <div className="flex justify-center pt-9">
+                        <div className="grid grid-cols-1 w-[448px]  gap-2">
+                            <div>
+                                <button className="btn w-full btn-secondary bg-primary text-white text-text-regular">
+                                    התחבר
+                                </button>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <CheckBox />
+                                <a href="#" className="text-text-regular text-gray-950 underline ">
+                                    שכחת סיסמא?
+                                </a>
+                            </div>
+                        </div>
                     </div>
+
+                    <LoginRegisterButtons className="pt-14" />
+                    
                 </form>
             </div>
         </AdjustableDialog>

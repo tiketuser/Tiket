@@ -5,16 +5,18 @@ interface CustomInputProps {
   type?: string;
   placeholder: string;
   image?: React.ReactElement<typeof Image>;
+  className?: string;
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
   type = 'text',
   placeholder,
-  image
+  image,
+  className = ''
 }
 ) => {
   return (
-    <div className="flex justify-center items-center pt-9 sm:mx-0 mx-16">
+    <div className={"flex justify-center items-center sm:mx-0 mx-16 "+className}>
       <div className="relative w-full max-w-md">
         <input
           type={type}
