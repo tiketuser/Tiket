@@ -47,6 +47,7 @@ const config: Config = {
         highlight: "#8C5A5F",    // הדגשה
         strongText: "#3C3E5F",   // טקסט חזק
         weakText: "#CCCCCC",     // טקסט חלש מאוד
+        weakTextBluish: "#667085",
         mutedText: "#667085",    // טקסט חלש
       },
 
@@ -104,7 +105,8 @@ const config: Config = {
           secondary: "#eac4c7",    // משני
           highlight: "#8C5A5F",    // הדגשה
           strongText: "#3C3E5F",   // טקסט חזק
-          weakText: "#CCCCCC",     // טקסט חלש מאוד
+          weakText: "#CCCCCC",    
+          weakTextBluish: "#667085", // טקסט חלש מאוד
           mutedText: "#667085",    // טקסט חלש
         },
       }

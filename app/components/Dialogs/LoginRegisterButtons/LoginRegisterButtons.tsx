@@ -1,15 +1,21 @@
-const LoginRegisterButtons = () => {
+import React from "react";
+
+interface LoginRegisterButtonsProps {
+    className?: string
+}
+
+const LoginRegisterButtons: React.FC<LoginRegisterButtonsProps> = ({
+    className = ''
+}) => {
     return (
-        <>
-            <div className="relative flex justify-center items-center">
-                <button className="absolute translate-x-1/4 px-20 py-2 bg-gray-200 text-black rounded-full text-sm rtl">
-                    התחבר
-                </button>
-                <button className="absolute -translate-x-1/2 px-20 py-2 bg-primary text-white rounded-full text-sm rtl">
-                    הירשם
-                </button>
-            </div> 
-        </>
+        <div className={"flex justify-center items-center " + className}>
+            <button className="transform -translate-x-7 px-24 py-2 bg-gray-200 text-black rounded-2xl text-text-regular rtl">
+                הירשם
+            </button>
+            <button className="transform translate-x-7 px-20 py-2 bg-primary text-white rounded-2xl text-text-regular rtl">
+                התחבר
+            </button>
+        </div> 
     );
   };
   
