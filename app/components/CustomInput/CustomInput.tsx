@@ -3,30 +3,41 @@ import React from 'react';
 
 interface CustomInputProps {
   type?: string;
-  placeholder: string;
+  width?: string;
+  id: string;
+  placeholder?: string;
   image?: React.ReactElement<typeof Image>;
   className?: string;
+  required?: boolean;
+  pattern?: string
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
   type = 'text',
-  placeholder,
+  id,
+  width = '500px',
+  placeholder = '',
   image,
-  className = ''
+  className = '',
+  required = false,
+  pattern = '.*'
 }
 ) => {
   return (
-    <div className={"flex justify-center items-center sm:mx-0 mx-16 "+className}>
-      <div className="relative w-full max-w-md">
+    <div 
+      className={className}>
         <input
           type={type}
+          id={id}
+          required={required}
           placeholder={placeholder}
-          className="w-full py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300"
+          style={{width}}
+          pattern={pattern}
+          className="py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300"
         />
-        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+        <div className="relative translate-x-10">
           {image && image}
         </div>
-      </div>
     </div>
   );
 };
