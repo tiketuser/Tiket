@@ -28,20 +28,46 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                     התחבר בכדי לקנות ולמכור כרטיסים
                 </p>
 
-                <form >
-                    <CustomInput placeholder="דואר אלקטרוני / מספר טלפון" className="pt-9" />
-                    <CustomInput type="password" placeholder="סיסמא" className="pt-6"/>
+                <form 
+                    onChange={(e) => {
+                        const form = e.currentTarget;
+                        const button = document.getElementById("submitButton") as HTMLButtonElement;
+                        if (button) {
+                        button.disabled = !form.checkValidity();
+                        }
+                    }}
+                
+                >
+                    <CustomInput 
+                        id='phoneemail' 
+                        required={true}
+                        placeholder="דואר אלקטרוני / מספר טלפון" 
+                        className="pt-9"
+                         width="456px" 
+                    />
+                    <CustomInput 
+                        id='password' 
+                        required={true}
+                        type="password" 
+                        placeholder="סיסמא" 
+                        className="pt-6" 
+                        width="456px"
+                    />
                     
 
                     <div className="flex justify-center pt-9">
-                        <div className="grid grid-cols-1 w-[448px]  gap-2">
+                        <div className="grid grid-cols-1 w-[456px] gap-2">
                             <div>
-                                <button className="btn w-full btn-secondary bg-primary text-white text-text-regular">
+                                <button 
+                                    id="submitButton"
+                                    className="btn w-full btn-secondary bg-primary text-white text-text-regular disabled:bg-secondary disabled:text-white"
+                                    disabled
+                                >
                                     התחבר
                                 </button>
                             </div>
                             <div className="flex justify-between items-center">
-                                <CheckBox />
+                                <CheckBox/>
                                 <a href="#" className="text-text-regular text-gray-950 underline ">
                                     שכחת סיסמא?
                                 </a>
@@ -49,7 +75,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                         </div>
                     </div>
 
-                    <LoginRegisterButtons className="pt-14" />
+                    <LoginRegisterButtons 
+                        className="pt-14"
+                        redButton="הירשם"
+                        grayButton="התחבר"
+                    />
                     
                 </form>
             </div>
