@@ -1,19 +1,23 @@
-import React from 'react'
-import CustomInput from '../CustomInput/CustomInput';
-import CardCarousel from "../CardCarousel/CardCarousel";
+import React from "react";
+import CustomInput from "../CustomInput/CustomInput";
+import CardCarousel from "../TicketGallery/CarouselGallery";
 import SearchIcon from "../../../public/images/SearchBar/Search Icon.svg";
-import Image from 'next/image';
+import Image from "next/image";
+import CustomTicketGallery from "../TicketGallery/ResponsiveGallery";
+import ResponsiveGallery from "../TicketGallery/ResponsiveGallery";
 
 const Gallery = () => {
   return (
-    <div className='shadow-small-inner'>
+    <div className="shadow-small-inner">
       <CustomInput
         placeholder="חפש אירוע"
-        image = { <Image src={SearchIcon} alt="Search Icon" width={24} height={24}/> }
+        image={
+          <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />
+        }
       />
-      <CardCarousel/>
+      <ResponsiveGallery />
     </div>
-  )
-}
+  );
+};
 
-export default Gallery
+export default Gallery;
