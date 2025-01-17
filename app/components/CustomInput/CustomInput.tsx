@@ -15,7 +15,7 @@ interface CustomInputProps {
 const CustomInput: React.FC<CustomInputProps> = ({
   type = 'text',
   id,
-  width = '500px',
+  width = 'w-[500px]',
   placeholder = '',
   image,
   className = '',
@@ -25,15 +25,15 @@ const CustomInput: React.FC<CustomInputProps> = ({
 ) => {
   return (
     <div 
-      className={className}>
+      className={className + width}>
         <input
           type={type}
           id={id}
           required={required}
           placeholder={placeholder}
-          style={{width}}
+          //style={{width}}
           pattern={pattern}
-          className="py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300"
+          className={`py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300 ${width} !important`}
         />
         <div className="relative translate-x-10">
           {image && image}

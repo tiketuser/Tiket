@@ -14,21 +14,12 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
 }) => {
     return (
         <AdjustableDialog
-            width="w-[880px]"
-            height="h-[675px]"
+            width="sm:w-[880px] w-[400px]"
+            height="sm:h-[675px] h-[450px]"
             isOpen={isOpen}
             onClose={onClose}
         >
-            <div className="  select-none">
-                {/* Header */}
-                <h2 className="text-center text-heading-1-desktop font-extrabold text-gray-950">
-                    התחברות
-                </h2>
-                <p className="text-center text-heading-5-desktop font-bold text-strongText">
-                    התחבר בכדי לקנות ולמכור כרטיסים
-                </p>
-
-                <form 
+                <form className=""
                     onChange={(e) => {
                         const form = e.currentTarget;
                         const button = document.getElementById("submitButton") as HTMLButtonElement;
@@ -43,24 +34,24 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                         required={true}
                         placeholder="דואר אלקטרוני / מספר טלפון" 
                         className="pt-9"
-                         width="456px" 
+                        width="sm:w-[456px] w-[256px]" 
                     />
                     <CustomInput 
                         id='password' 
                         required={true}
                         type="password" 
                         placeholder="סיסמא" 
-                        className="pt-6" 
-                        width="456px"
+                        className="pt-6 w-[456px]" 
+                        width="sm:w-[456px] w-[256px]"
                     />
                     
 
                     <div className="flex justify-center pt-9">
-                        <div className="grid grid-cols-1 w-[456px] gap-2">
+                        <div className="grid grid-cols-1 gap-2">
                             <div>
                                 <button 
                                     id="submitButton"
-                                    className="btn w-full btn-secondary bg-primary text-white text-text-regular disabled:bg-secondary disabled:text-white"
+                                    className="btn sm:w-[456px] w-[256px] sm:h-[48px] h-[32px] min-h-0 btn-secondary bg-primary text-white sm:text-text-large text-text-small disabled:bg-secondary disabled:text-white"
                                     disabled
                                 >
                                     התחבר
@@ -82,7 +73,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                     />
                     
                 </form>
-            </div>
+
         </AdjustableDialog>
     )
 }

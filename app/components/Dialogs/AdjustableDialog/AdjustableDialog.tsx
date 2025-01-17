@@ -46,8 +46,17 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
               <Image src={exitIcon} alt="exitIcon" height={22} width={22}/>
             </button>
 
+            <h2 className="text-center sm:text-heading-1-desktop text-heading-1-mobile font-extrabold text-gray-950">
+              התחברות
+            </h2>
+            <p className="text-center text-heading-5-mobile font-bold text-strongText">
+              התחבר בכדי לקנות ולמכור כרטיסים
+            </p>
+
             {/* Content */}
-            <div className="flex items-center justify-center h-full">{children}</div>     
+            <div className="flex items-center justify-center h-full select-none">
+              {children}    
+            </div>     
 
             <div className={`absolute bottom-0 left-0 border-t-8 border-highlight ${width} `}></div>      
           </div>

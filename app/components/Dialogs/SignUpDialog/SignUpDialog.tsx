@@ -98,9 +98,10 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                     />
 
                     <button type="submit" 
-                            id="submitButton"
-                            className="btn w-full btn-secondary bg-primary text-white text-text-regular col-span-2 mt-10 disabled:bg-secondary disabled:text-white"
-                            disabled>
+                        id="submitButton"
+                        className="btn w-full btn-secondary bg-primary text-white text-text-regular col-span-2 mt-10 disabled:bg-secondary disabled:text-white"
+                        disabled
+                    >
                         הירשם
                     </button>
 
