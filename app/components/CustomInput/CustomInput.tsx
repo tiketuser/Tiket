@@ -1,5 +1,5 @@
-import Image from 'next/image';
-import React from 'react';
+import Image from "next/image";
+import React from "react";
 
 interface CustomInputProps {
   type?: string;
@@ -10,19 +10,20 @@ interface CustomInputProps {
   className?: string;
   required?: boolean;
   pattern?: string
+  placeholderColor?: string; // New prop for placeholder color
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
-  type = 'text',
+  type = "text",
   id,
   width = 'w-[500px]',
   placeholder = '',
   image,
   className = '',
   required = false,
-  pattern = '.*'
-}
-) => {
+  pattern = '.*',
+  placeholderColor = "text-gray-500", // Default placeholder color
+}) => {
   return (
     <div 
       className={className + width}>
