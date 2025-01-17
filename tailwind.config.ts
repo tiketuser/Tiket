@@ -49,7 +49,6 @@ const config: Config = {
         weakText: "#CCCCCC",     // טקסט חלש מאוד
         mutedText: "#667085",    // טקסט חלש
       },
-
       boxShadow: {
         'xxsmall': '0px 1px 2px 0px rgba(0, 0, 0, 0.05)',
         'xsmall': '0px 1px 2px 0px rgba(0, 0, 0, 0.06), 0px 1px 3px 0px rgba(0, 0, 0, 0.1)',
@@ -74,6 +73,12 @@ const config: Config = {
       screens: {
         'xxs': '320px', // Custom breakpoint for extra small screens
         'xs': '376px',  // Custom breakpoint for slightly larger small screens
+      },
+       // Add custom scrollbar styles here
+       scrollbar: {
+        track: "bg-gray-100",
+        thumb: "bg-gray-300 rounded-lg",
+        thumbHover: "bg-gray-400",
       },
       
       // spacing: {
@@ -106,6 +111,7 @@ const config: Config = {
           strongText: "#3C3E5F",   // טקסט חזק
           weakText: "#CCCCCC",     // טקסט חלש מאוד
           mutedText: "#667085",    // טקסט חלש
+          
         },
       }
     ]
