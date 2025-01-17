@@ -8,7 +8,7 @@ import GuitarThing from "../../../public/images/Home Page/Web/Guitar Thing.svg";
 
 const HeroSection = () => {
   return (
-    <div className=" select-none h-[300px] sm:h-[400px] md:h-80 lg:h-72 relative bg-white mx-auto w-full shadow-xsmall-inner z-30 flex justify-center items-center overflow-x-hidden">
+    <div className="select-none h-[300px] sm:h-[400px] md:h-80 lg:h-72 relative bg-white mx-auto w-full shadow-xsmall-inner z-30 flex justify-center items-center overflow-x-hidden">
       <div className="flex flex-col justify-center text-center z-30 " dir="rtl">
         <h1 className="text-subtext text-heading-2-mobile sm:text-heading-1-desktop font-extrabold z-30">
           <span className="lg:inline block">הופעה סולד-אאוט? / </span>
