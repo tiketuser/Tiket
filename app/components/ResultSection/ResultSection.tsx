@@ -13,6 +13,7 @@ import CustomSelectInput from "../CustomSelectInput/CustomSelectInput";
 import citiesData from "@/app/DemoData/citiesData";
 import venueData from "@/app/DemoData/venueData";
 import PriceFilter from "../PriceFilter/PriceFilter";
+import CustomDateInput from "../CustomDateInput/CustomDateInput";
 
 interface ResultSectionProps {
   title: string; // Prop for the dynamic title
@@ -26,7 +27,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   upperText,
   subText,
 }) => {
-  const [values, setValues] = useState<number[]>([125, 570]);
+  const [values, setValues] = useState<number[]>([20, 80]);
   return (
     <div className="w-full">
       {/* Title Section */}
@@ -39,6 +40,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
         </h1>
         <p className="text-text-large text-subtext select-none">{subText}</p>
         <CustomInput
+          id="Search artists or shows input"
           // placeholder={title}
           placeholder="עלמה גוב"
           placeholderColor="text-strongText"
@@ -107,19 +109,39 @@ const ResultSection: React.FC<ResultSectionProps> = ({
                 />
               }
             />
+            <CustomDateInput />
           </div>
 
-          <div className="w-1/2 mx-auto mt-10">
+          <div className="">
             <PriceFilter
+              placeholder="מחיר"
+              width="250px"
+              icon={
+                <Image
+                  src={PriceIcon}
+                  alt="Price Icon"
+                  width={22}
+                  height={16}
+                />
+              }
+              dropdownIcon={
+                <Image
+                  src={DropdownIcon}
+                  alt="Dropdown Icon"
+                  width={15}
+                  height={15}
+                />
+              }
               min={0}
               max={1000}
               step={1}
               defaultValue={values}
               onValueChange={(newValues) => setValues(newValues)}
             />
-            <div className="mt-4 text-center">
+            {/* will be used for backend filtering */}
+            {/* <div className="mt-4 text-center">
               Selected Price Range: ₪{values[0]} - ₪{values[1]}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
