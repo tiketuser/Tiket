@@ -46,7 +46,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
   return (
     <div
       style={{ width }}
-      className="relative flex items-center border border-gray-300 rounded-lg px-4 py-2 h-12"
+      className="relative flex items-center border border-gray-300 rounded-lg px-4 py-2 h-12 z-20"
     >
       {/* Right Icon */}
       {icon && (
@@ -75,7 +75,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
 
       {/* Slider Container */}
       {isOpen && (
-        <div className="absolute top-full mt-1 right-0 w-[390px] h-[140px] border rounded-xl p-4 bg-white shadow-xxlarge">
+        <div className="absolute top-full mt-1 right-0 w-[340px] h-[140px] border rounded-xl p-4 bg-zinc-50 shadow-xxlarge">
           <div
             className={`relative top-[74.4px] flex flex-col items-center ${className}`}
           >
@@ -88,7 +88,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
               onValueChange={handleValueChange}
             >
               {/* Slider Track */}
-              <Slider.Track className="relative w-full h-[11.2px] bg-weakText rounded-md">
+              <Slider.Track className="relative w-full h-[11.2px] bg-weakText rounded-md cursor-pointer">
                 <Slider.Range className="absolute h-full bg-primary rounded-full" />
               </Slider.Track>
 
@@ -102,30 +102,30 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
             </Slider.Root>
 
             {/* Labels */}
-            <div className="relative w-full -translate-y-10">
+            <div className="relative w-full -translate-y-7">
               {values.map((value, index) => (
                 <div
                   key={index}
                   className="absolute transform -translate-y-full"
                   style={{
                     left: `${
-                      calculatePosition(value) + (index === 0 ? -7 : -13)
+                      calculatePosition(value) + (index === 0 ? -11 : -16)
                     }%`,
-                    width: "74px",
-                    height: "50px",
+                    width: "90px",
+                    height: "75px",
                   }}
                 >
                   {/* SVG Background */}
                   <Image
                     src={PriceLabel}
                     alt="Label Background"
-                    width={84}
-                    height={60}
-                    className="relative w-[74px]"
+                    width={90}
+                    height={75}
+                    className="relative w-[100px]"
                   />
 
                   {/* Dynamic Text */}
-                  <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-strongText text-text-sm font-normal">
+                  <div className="absolute top-1/4 left-0 w-full flex items-center justify-center text-strongText text-text-medium font-normal">
                     {value}₪
                   </div>
                 </div>

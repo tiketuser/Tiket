@@ -30,7 +30,7 @@ const getSearchResults = (query: string) => {
 
 const SearchResults = async ({ params }: Props) => {
   const { query } = params;
-  const tickets = getSearchResults(query); //change later
+  const tickets = getSearchResults(" "); //change later
   return (
     <div>
       <NavBar />
