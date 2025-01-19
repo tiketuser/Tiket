@@ -17,7 +17,7 @@ import CustomDateInput from "../CustomDateInput/CustomDateInput";
 
 interface ResultSectionProps {
   title: string; // Prop for the dynamic title
-  upperText: string;
+  upperText?: string;
   subText: string;
   image?: React.ReactElement<typeof Image>;
 }
@@ -26,28 +26,40 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   title,
   upperText,
   subText,
+  image,
 }) => {
   const [values, setValues] = useState<number[]>([20, 80]);
   return (
     <div className="w-full">
       {/* Title Section */}
       <div className="text-center mb-6">
-        <h2 className="text-text-large font-light text-subtext mb-1 select-none">
-          {upperText}
-        </h2>
+        {image ? ( // Conditionally render the image or upperText
+          <div className="mb-4 flex justify-center">{image}</div>
+        ) : (
+          <h2 className="text-text-large font-light text-subtext mb-1 select-none">
+            {upperText}
+          </h2>
+        )}
         <h1 className="text-heading-1-desktop font-bold text-subtext select-none">
-          {title}עלמה גוב
+          {title}
         </h1>
         <p className="text-text-large text-subtext select-none">{subText}</p>
-        <CustomInput
-          id="Search artists or shows input"
-          // placeholder={title}
-          placeholder="עלמה גוב"
-          placeholderColor="text-strongText"
-          image={
-            <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />
-          }
-        />
+        <div className="flex justify-center mt-[27px]">
+          <CustomInput
+            id="Search artists or shows input"
+            // placeholder={title}
+            placeholder="עלמה גוב"
+            placeholderColor="text-strongText"
+            image={
+              <Image
+                src={SearchIcon}
+                alt="Search Icon"
+                width={24}
+                height={24}
+              />
+            }
+          />
+        </div>
         <div className="flex justify-center gap-4 mt-6 mb-6">
           <div>
             <CustomSelectInput
