@@ -93,10 +93,9 @@ const ResultSection: React.FC<ResultSectionProps> = ({
           </div>
 
           <div>
-            <CustomSelectInput
-              options={citiesData}
+            <CustomDateInput
               placeholder="תאריך"
-              width="250px"
+              width="300px"
               icon={
                 <Image src={DateIcon} alt="Date Icon" width={22} height={16} />
               }
@@ -109,7 +108,6 @@ const ResultSection: React.FC<ResultSectionProps> = ({
                 />
               }
             />
-            <CustomDateInput />
           </div>
 
           <div className="">

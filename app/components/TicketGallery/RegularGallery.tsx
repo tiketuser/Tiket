@@ -19,9 +19,7 @@ interface RegularGalleryProps {
   cardsData: CardData[]; // Accept cardsData as a prop
 }
 
-const RegularGallery: React.FC<RegularGalleryProps> = ({ 
-  cardsData 
-}) => {
+const RegularGallery: React.FC<RegularGalleryProps> = ({ cardsData }) => {
   return (
     <div className="w-full px-1 sm:px-8 mt-10">
       {/* layout for screens < sm (SmartPhoens) */}
