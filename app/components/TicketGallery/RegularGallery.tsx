@@ -29,7 +29,7 @@ const RegularGallery: React.FC<RegularGalleryProps> = ({ cardsData }) => {
             key={card.id}
             className="flex justify-center items-center lg:max-w-[600px] lg:max-h-[600px] sm:max-w-[155px] sm:max-h-[245px] xs:max-w-[160px] xs:max-h-[260px] "
           >
-            <div className="xs:scale-[0.43] lg:scale-[0.90]">
+            <div className="xs:scale-[0.43] lg:scale-[0.90] scale-[0.39]">
               <Card {...card} />
             </div>
           </div>

@@ -50,20 +50,22 @@ const CustomSelectInput: React.FC<CustomSelectInputProps> = ({
 
   return (
     <div
-      style={{ width }}
-      className="relative flex items-center border border-gray-300 rounded-lg px-4 py-2 h-12"
+      className="relative lg:w-[250px] sm:w-[150px] w-[120px] flex items-center border border-gray-300 rounded-lg px-4 py-2 h-12"
       ref={dropdownRef}
     >
       {/* Right Icon */}
       {icon && (
-        <div className="flex-shrink-0 cursor-pointer" onClick={toggleDropdown}>
+        <div
+          className="flex-shrink-0 cursor-pointer sm:w-6 w-4"
+          onClick={toggleDropdown}
+        >
           {icon}
         </div>
       )}
 
       {/* Selected Values / Placeholder */}
       <div
-        className="flex-grow cursor-pointer text-right mr-2 whitespace-nowrap truncate"
+        className="flex-grow cursor-pointer text-right mr-2 whitespace-nowrap truncate sm:text-text-medium text-text-small"
         onClick={toggleDropdown}
       >
         {selectedValues.length > 0 ? (
