@@ -42,8 +42,7 @@ const CustomDateInput: React.FC<CustomDateInputProps> = ({
 
   return (
     <div
-      style={{ width }}
-      className="relative flex items-center border border-gray-300 rounded-lg px-4 py-2 h-12 z-10"
+      className="relative flex items-center border lg:w-[300px] sm:w-[250px] w-[120px] border-gray-300 rounded-lg px-4 py-2 h-12 z-10"
       ref={dropdownRef}
     >
       {/* Right Icon */}
