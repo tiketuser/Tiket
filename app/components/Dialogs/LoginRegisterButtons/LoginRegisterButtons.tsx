@@ -13,14 +13,16 @@ const LoginRegisterButtons: React.FC<LoginRegisterButtonsProps> = ({
 }) => {
     return (
         <div className={"flex justify-center items-center " + className}>
-            <button className="transform -translate-x-4 w-[180px] h-[40px] bg-gray-200 text-black rounded-2xl ">
-                <label className="pl-5 text-text-regular rtl">
+            <button className="transform -translate-x-4 sm:w-[180px] sm:h-[40px] w-[125px] h-[28px] bg-gray-200 rounded-2xl ">
+                <label className="pl-5 sm:text-text-regular text-black text-text-extra-small rtl">
                     {grayButton}
                 </label>
                 
             </button>
-            <button className="transform translate-x-4 w-[167px] h-[40px] bg-primary text-white rounded-2xl text-text-regular rtl">
-                {redButton}
+            <button className="transform translate-x-4 sm:w-[167px] w-[115px] sm:h-[40px] h-[28px] bg-primary rounded-2xl">
+                <label className="text-white sm:text-text-regular text-text-extra-small rtl">
+                    {redButton}
+                </label>
             </button>
         </div> 
     );
