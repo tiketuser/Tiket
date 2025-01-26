@@ -1,3 +1,5 @@
+"use client"
+
 import React from "react";
 import Image from "next/image";
 import FacebookIcon from "../../../public/images/Home Page/Web/FacebookIcon.svg";
@@ -6,8 +8,13 @@ import TwitterIcon from "../../../public/images/Home Page/Web/TwitterIcon.svg";
 import YoutubeIcon from "../../../public/images/Home Page/Web/YoutubeIcon.svg";
 import TiktokIcon from "../../../public/images/Home Page/Web/TiktokIcon.svg";
 import ProfileIcon from "../../../public/images/Home Page/ProfileButton.svg";
+import SignUpDialog from "../Dialogs/SignUpDialog/SignUpDialog";
+import LoginDialog from "../Dialogs/LoginDialog/LoginDialog";
 
 const Footer = () => {
+  const [isLoginDialogOpen, setLoginDialogOpen] = React.useState(false);
+  const [isSignUpDialogOpen, setSignUpDialogOpen] = React.useState(false);
+
   return (
     <>
       {/* Desktop Footer */}
@@ -61,16 +68,21 @@ const Footer = () => {
         {/* Buttons Container */}
         <div className="flex h-full">
           {/* Buy Button */}
-          <button className="flex-1 bg-primary text-white text-text-large font-normal text-center rounded-t-xl">
+          <button className="flex-1 bg-primary text-white text-text-large font-normal text-center rounded-t-xl"
+            onClick={() => setLoginDialogOpen(true)}>
             התחבר
           </button>
 
           {/* Sell Button */}
-          <button className="flex-1 bg-white border-2 border-primary text-primary text-text-large font-normal text-center rounded-t-xl">
+          <button className="flex-1 bg-white border-2 border-primary text-primary text-text-large font-normal text-center rounded-t-xl"
+            onClick={() => setSignUpDialogOpen(true)}>
             הירשם
           </button>
         </div>
       </footer>
+
+      <SignUpDialog isOpen={isSignUpDialogOpen} onClose={() => setSignUpDialogOpen(false)} />
+      <LoginDialog isOpen={isLoginDialogOpen} onClose={() => setLoginDialogOpen(false)}/>
     </>
   );
 };
