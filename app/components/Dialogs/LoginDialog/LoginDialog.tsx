@@ -2,6 +2,7 @@ import AdjustableDialog from "../AdjustableDialog/AdjustableDialog"
 import CustomInput from "../../CustomInput/CustomInput"
 import LoginRegisterButtons from "../LoginRegisterButtons/LoginRegisterButtons";
 import CheckBox from "../../CheckBox/CheckBox";
+import LoginSigninButton from "../LoginSigninButton/LoginSigninButton";
 
 
 interface LoginDialogProps {
@@ -16,10 +17,12 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
         <AdjustableDialog
             width="sm:w-[880px] w-[400px]"
             height="sm:h-[675px] h-[450px]"
+            heading="התחבר"
+            description="התחבר בכדי לקנות כרטיסים"
             isOpen={isOpen}
             onClose={onClose}
         >
-                <form className=""
+                <form className="flex flex-col items-center"
                     onChange={(e) => {
                         const form = e.currentTarget;
                         const button = document.getElementById("submitButton") as HTMLButtonElement;
@@ -33,20 +36,20 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                         id='phoneemail' 
                         required={true}
                         placeholder="דואר אלקטרוני / מספר טלפון" 
-                        className="pt-9"
+                        className="sm:pt-9"
                         width="sm:w-[456px] w-[256px]" 
                     />
                     <CustomInput 
                         id='password' 
                         required={true}
-                        type="password" 
+                        type="password"
                         placeholder="סיסמא" 
-                        className="pt-6 w-[456px]" 
+                        className="pt-6" 
                         width="sm:w-[456px] w-[256px]"
                     />
                     
 
-                    <div className="flex justify-center pt-9">
+                    <div className="pt-9">
                         <div className="grid grid-cols-1 gap-2">
                             <div>
                                 <button 
@@ -67,7 +70,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                     </div>
 
                     <LoginRegisterButtons 
-                        className="pt-14"
+                        className="sm:pt-14"
                         redButton="הירשם"
                         grayButton="התחבר"
                     />
