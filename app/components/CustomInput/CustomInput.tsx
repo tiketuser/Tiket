@@ -26,7 +26,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
 }) => {
   return (
     <div 
-      className={className + width}>
+      className={className +" "+ width}>
         <input
           type={type}
           id={id}
