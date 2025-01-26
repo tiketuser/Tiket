@@ -8,12 +8,16 @@ interface AdjustableDialogProps {
   height?: string;
   isOpen: boolean;
   onClose: () => void;
+  heading?: string
+  description?: string
   children: ReactNode; 
 }
 
 const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
     width = "w-96",
     height = "h-96",
+    heading = 'כותרת',
+    description = 'תיאור',
     isOpen,
     onClose,
     children
@@ -46,15 +50,17 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
               <Image src={exitIcon} alt="exitIcon" height={22} width={22}/>
             </button>
 
-            <h2 className="text-center sm:text-heading-1-desktop text-heading-1-mobile font-extrabold text-gray-950">
-              התחברות
-            </h2>
-            <p className="text-center text-heading-5-mobile font-bold text-strongText">
-              התחבר בכדי לקנות ולמכור כרטיסים
-            </p>
+            <div className="pt-8 select-none">
+              <h2 className="text-center sm:text-heading-1-desktop text-heading-1-mobile font-extrabold text-gray-950">
+                {heading}
+              </h2>
+              <p className="text-center text-heading-5-mobile font-bold text-strongText">
+                {description}
+              </p>
+            </div>
 
             {/* Content */}
-            <div className="flex items-center justify-center h-full select-none">
+            <div className="flex flex-col items-center select-none">
               {children}    
             </div>     
 

@@ -9,7 +9,7 @@ import ResponsiveGallery from "../TicketGallery/ResponsiveGallery";
 const Gallery = () => {
   return (
     <div className="shadow-small-inner">
-      <CustomInput
+      <CustomInput id="search-bar"
         className='flex justify-center items-center pt-6'
         placeholder="חפש אירוע"
         image={
