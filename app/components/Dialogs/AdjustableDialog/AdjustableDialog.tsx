@@ -50,7 +50,7 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
               <Image src={exitIcon} alt="exitIcon" height={22} width={22}/>
             </button>
 
-            <div className="pt-8 select-none">
+            <div className="sm:pt-8 pt-4 select-none">
               <h2 className="text-center sm:text-heading-1-desktop text-heading-1-mobile font-extrabold text-gray-950">
                 {heading}
               </h2>
