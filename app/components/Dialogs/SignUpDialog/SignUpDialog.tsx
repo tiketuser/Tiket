@@ -19,22 +19,14 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
 }) => {
     return (
         <AdjustableDialog
-            width="w-[880px]"
-            height="h-[835px]"
+            width="sm:w-[880px] w-[400px]"
+            height="sm:h-[835px] h-[540px]"
             isOpen={isOpen}
             onClose={onClose}
+            heading="הירשם"
+            description="הירשם בכדי לקנות ולמכור כרטיסים"
         >
-            <div className="select-none">
-                {/* Header */}
-                <h2 className="text-center text-heading-1-desktop font-extrabold text-gray-950">
-                    הרשמה
-                </h2>
-                <p className="text-center text-heading-5-desktop font-bold text-strongText">
-                    הירשם בכדי לקנות ולמכור כרטיסים
-                </p>
-
-
-                <form className="grid place-items-center grid-cols-2 w-[456px] gap-x-7"
+                <form className="grid place-items-center grid-cols-2 sm:w-[456px] w-[256px] gap-x-7"
                     onChange={(e) => {
                         const form = e.currentTarget;
                         const button = document.getElementById("submitButton") as HTMLButtonElement;
@@ -48,8 +40,8 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         id="email" 
                         type="email" 
                         placeholder="דואר אלקטרוני" 
-                        width="456px" 
-                        className="col-span-2 mt-10"
+                        width="sm:w-[456px] w-[256px]" 
+                        className="col-span-2 sm:mt-10 mt-4"
                         required={true}
                     />
                     <CustomInput 
@@ -57,8 +49,8 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="phone"
                         pattern="^\d{10}$"
                         placeholder="מספר טלפון" 
-                        width="456px" 
-                        className="col-span-2 mt-6"
+                        width="sm:w-[456px] w-[256px]" 
+                        className="col-span-2 sm:mt-6 mt-4"
                         //image={<Image src={PhoneInputIcon} alt="PhoneInputIcon"/>}
                         required={true}
                     />
@@ -67,16 +59,16 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="text" 
                         required= {true}
                         placeholder="שם פרטי" 
-                        width="212px" 
-                        className="mt-10"
+                        width="sm:w-[212px] w-[112px]" 
+                        className="sm:mt-10 mt-4"
                         pattern="^\S+$"
                     />
                     <CustomInput 
                         id="lname" 
                         type="text" 
                         placeholder="שם משפחה" 
-                        width="212px" 
-                        className="mt-10"
+                        width="sm:w-[212px] w-[112px]" 
+                        className="sm:mt-10 mt-4"
                         required={true}
                         pattern="^\S+$"
                     />
@@ -84,22 +76,22 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         id="password" 
                         type="password" 
                         placeholder="סיסמא" 
-                        width="212px" 
-                        className="mt-6"
+                        width="sm:w-[212px] w-[112px]" 
+                        className="sm:mt-6 mt-4"
                         required={true}
                     />
                     <CustomInput 
                         id="re-password" 
                         type="password" 
                         placeholder="אשר סיסמא" 
-                        width="212px" 
-                        className="mt-6"
+                        width="sm:w-[212px] w-[112px]" 
+                        className="sm:mt-6 mt-4"
                         required={true}
                     />
 
                     <button type="submit" 
                         id="submitButton"
-                        className="btn w-full btn-secondary bg-primary text-white text-text-regular col-span-2 mt-10 disabled:bg-secondary disabled:text-white"
+                        className="btn sm:w-[456px] w-[256px] sm:h-[48px] h-[32px] min-h-0 sm:mt-10 mt-4 btn-secondary bg-primary text-white text-text-regular col-span-2 disabled:bg-secondary disabled:text-white"
                         disabled
                     >
                         הירשם
@@ -113,9 +105,9 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
 
                 </form>
 
-                <LoginRegisterButtons className="mt-14" />
+                <LoginRegisterButtons className="sm:mt-14" />
 
-            </div>
+
 
         </AdjustableDialog>
     )
