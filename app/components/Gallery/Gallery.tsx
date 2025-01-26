@@ -10,7 +10,7 @@ const Gallery = () => {
   return (
     <div className="shadow-small-inner">
       <CustomInput id="search-bar"
-        className='flex justify-center items-center pt-6'
+        className='flex justify-center items-center w-full pt-6'
         placeholder="חפש אירוע"
         image={
           <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />
