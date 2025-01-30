@@ -51,7 +51,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         placeholder="מספר טלפון" 
                         width="sm:w-[456px] w-[256px]" 
                         className="col-span-2 sm:mt-6 mt-4"
-                        //image={<Image src={PhoneInputIcon} alt="PhoneInputIcon"/>}
+                        image={<Image src={PhoneInputIcon} alt="PhoneInputIcon"/>}
                         required={true}
                     />
                     <CustomInput 
