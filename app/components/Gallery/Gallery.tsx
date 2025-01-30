@@ -8,9 +8,9 @@ import ResponsiveGallery from "../TicketGallery/ResponsiveGallery";
 
 const Gallery = () => {
   return (
-    <div className="shadow-small-inner">
+    <div className="shadow-small-inner flex flex-col items-center pt-6">
       <CustomInput id="search-bar"
-        className='flex justify-center items-center w-full pt-6'
+        className=''
         placeholder="חפש אירוע"
         image={
           <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />

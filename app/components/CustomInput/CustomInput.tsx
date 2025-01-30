@@ -25,21 +25,20 @@ const CustomInput: React.FC<CustomInputProps> = ({
   placeholderColor = "text-gray-500", // Default placeholder color
 }) => {
   return (
-    <div 
-      className={className +" "+ width}>
-        <input
-          type={type}
-          id={id}
-          required={required}
-          placeholder={placeholder}
-          //style={{width}}
-          pattern={pattern}
-          className={`py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300 ${width} !important`}
-        />
-        <div className="relative translate-x-10">
-          {image && image}
-        </div>
-    </div>
+<div className={`${className} relative ${width}`}>
+  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+    {image && image}
+  </div>
+  <input
+    type={type}
+    id={id}
+    required={required}
+    placeholder={placeholder}
+    pattern={pattern}
+    className={`w-full py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300`}
+  />
+</div>
+
   );
 };
 
