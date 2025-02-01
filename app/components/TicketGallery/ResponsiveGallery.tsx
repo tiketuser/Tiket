@@ -23,7 +23,9 @@ const ResponsiveGallery: React.FC = () => {
           <CarouselContent className="flex flex-nowrap gap-6 h-[600px]">
             {cardsData.map((card) => (
               <CarouselItem key={card.id} dir="rtl">
-                <Card {...card} />
+                <Link href="/EventPage">
+                  <Card {...card} />
+                </Link>
               </CarouselItem>
             ))}
           </CarouselContent>

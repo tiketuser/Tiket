@@ -23,7 +23,7 @@ const SeatingMap: React.FC<SeatingMapProps> = ({
           {title}
         </span>
       </div>
-      <p className="text-heading-5-desktop  font-bold leading-[33px] text-strongText flex items-center justify-between">
+      <p className="text-heading-5-desktop font-bold leading-[33px] text-strongText flex items-center justify-between">
         {venueName}
         <Image
           src={DropdownIcon}
