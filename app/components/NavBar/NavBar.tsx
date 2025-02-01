@@ -29,10 +29,12 @@ const NavBar = () => {
         {/* Right Side */}
         <div className="flex space-x-6">
           {/* Tickets Button */}
-          <button className="flex items-center space-x-2 rtl:space-x-reverse hover:text-gray-600 focus:outline-none">
-            <Image src={Arrow} alt="Arrow" />
-            <span className="text-text-large font-normal">הכרטיסים שלי</span>
-          </button>
+          <Link href="/MyTickets">
+            <button className="flex items-center space-x-2 rtl:space-x-reverse hover:text-gray-600 focus:outline-none">
+              <Image src={Arrow} alt="Arrow" />
+              <span className="text-text-large font-normal">הכרטיסים שלי</span>
+            </button>
+          </Link>
 
           {/* Like Button */}
           <Link href="/Favorites">
