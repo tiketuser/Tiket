@@ -114,7 +114,7 @@ const MyTickets = ({ params }: Props) => {
                     date={card.date}
                     title={card.title}
                     price={card.price}
-                    expired={true}
+                    tag="Expired"
                     buttonAction="צפייה בכרטיס"
                   />
                 </div>
