@@ -2,6 +2,7 @@ import React from "react";
 import PriceIcon from "../../../public/images/Home Page/Web/Price Icon.svg";
 import TimeLeftIcon from "../../../public/images/Home Page/Web/TimeLeft.svg";
 import Image from "next/image";
+import Link from "next/link";
 
 interface SingleCardProps {
   imageSrc?: string;
@@ -88,9 +89,11 @@ const SingleCard: React.FC<SingleCardProps> = ({
         <Image src={PriceIcon} alt="Price icon" className="h-[40px] w-[21px]" />
       </div>
       {/* Action Button */}
+      <Link href="/EventPage">
       <button className="btn btn-primary w-auto h-11 text-white text-text-large font-normal">
         {buttonAction}
       </button>
+      </Link>
     </div>
   );
 };
