@@ -11,7 +11,7 @@ interface SingleCardProps {
   priceBefore?: number;
   price: number;
   soldOut?: boolean;
-  expired?: boolean;
+  tag?: string;
   ticketsLeft?: number;
   timeLeft?: string;
   buttonAction: string;
@@ -20,7 +20,7 @@ interface SingleCardProps {
 const SingleCard: React.FC<SingleCardProps> = ({
   title,
   date,
-  expired,
+  tag,
   location,
   ticketsLeft,
   priceBefore,
@@ -47,9 +47,9 @@ const SingleCard: React.FC<SingleCardProps> = ({
       {/* Event Title Section */}
       <div className="text-center whitespace-nowrap truncate max-w-[200px]">
         <div className="flex items-center justify-center w-[200px]">
-          {expired && (
+          {tag && (
             <span className="flex justify-center items-center bg-highlight bg-opacity-80 w-14 h-6 text-white text-text-extra-small leading-[18px] font-semibold text-center">
-              Expired
+              {tag}
             </span>
           )}
         </div>

@@ -28,18 +28,18 @@ interface CardData {
   timeLeft: string;
 }
 
-const MyTickets = ({ params }: Props) => {
-  const [showUpcoming, setShowUpcoming] = useState(true);
-  const [showPurchases, setShowPurchases] = useState(true);
+const MyListings = ({ params }: Props) => {
+  const [showLivePosts, setShowLivePosts] = useState(true);
+  const [showSold, setShowSold] = useState(true);
 
-  // Function to toggle visibility of Upcoming cards
-  const toggleUpcomingCardsVisibility = () => {
-    setShowUpcoming((prevUpcoming) => !prevUpcoming);
+  // Function to toggle visibility of LivePosts cards
+  const toggleLivePostsCardsVisibility = () => {
+    setShowLivePosts((prevLivePosts) => !prevLivePosts);
   };
 
-  // Function to toggle visibility of Upcoming cards
-  const togglePurchasesCardsVisibility = () => {
-    setShowPurchases((prevPurchases) => !prevPurchases);
+  // Function to toggle visibility of LivePosts cards
+  const toggleSoldCardsVisibility = () => {
+    setShowSold((prevSold) => !prevSold);
   };
 
   // Use useEffect if you need to fetch data asynchronously
@@ -57,23 +57,23 @@ const MyTickets = ({ params }: Props) => {
   return (
     <div>
       <NavBar />
-      <TitleSubtitle title="אירועים קרובים" subtitle="אירועים שיתקיימו בקרוב" />
+      <TitleSubtitle title="המודעות שלי" subtitle="מודעות שבאוויר" />
 
       <div className="pt-14 pr-32 pb-14 pl-32 gap-8 shadow-small-inner">
         <Image
           src={ArrowIcon}
           alt="Arrow icon"
-          onClick={toggleUpcomingCardsVisibility}
+          onClick={toggleLivePostsCardsVisibility}
           className={`h-[18px] w-[32px] float-end cursor-pointer transition-transform duration-700 ${
-            showUpcoming ? "rotate-0" : "rotate-180"
+            showLivePosts ? "rotate-0" : "rotate-180"
           }`}
         />
         <div
           className={`mt-14 transition-all duration-700 ease-in-out ${
-            showUpcoming ? "opacity-100 h-auto" : "opacity-0 h-0"
+            showLivePosts ? "opacity-100 h-auto" : "opacity-0 h-0"
           }`}
         >
-          {showUpcoming &&
+          {showLivePosts &&
             cardsData.map((card) => (
               <div key={card.id} className="flex items-center justify-center">
                 <div className="flex mb-8 w-full justify-center items-center">
@@ -83,29 +83,29 @@ const MyTickets = ({ params }: Props) => {
                     title={card.title}
                     price={card.price}
                     timeLeft={card.timeLeft}
-                    buttonAction="צפייה בכרטיס"
+                    buttonAction="ביטול מכירה"
                   />
                 </div>
               </div>
             ))}
         </div>
       </div>
-      <TitleSubtitle title="היסטוריית רכישות" subtitle="אירועים שהסתיימו" />
+      <TitleSubtitle title="היסטוריית מכירות" subtitle="אירועים שנמכרו" />
       <div className="pt-14 pr-32 pb-14 pl-32 gap-8 shadow-small-inner">
         <Image
           src={ArrowIcon}
           alt="Arrow icon"
-          onClick={togglePurchasesCardsVisibility}
+          onClick={toggleSoldCardsVisibility}
           className={`h-[18px] w-[32px] float-end cursor-pointer transition-transform duration-700 ${
-            showPurchases ? "rotate-0" : "rotate-180"
+            showSold ? "rotate-0" : "rotate-180"
           }`}
         />
         <div
           className={`transition-all duration-700 ease-in-out mt-14 ${
-            showPurchases ? "opacity-100 h-auto" : "opacity-0 h-0"
+            showSold ? "opacity-100 h-auto" : "opacity-0 h-0"
           }`}
         >
-          {showPurchases &&
+          {showSold &&
             cardsData.map((card) => (
               <div key={card.id} className="flex items-center justify-center">
                 <div className="flex mb-10 w-full justify-center items-center">
@@ -114,7 +114,7 @@ const MyTickets = ({ params }: Props) => {
                     date={card.date}
                     title={card.title}
                     price={card.price}
-                    tag="Expired"
+                    tag="Sold"
                     buttonAction="צפייה בכרטיס"
                   />
                 </div>
@@ -127,4 +127,4 @@ const MyTickets = ({ params }: Props) => {
   );
 };
 
-export default MyTickets;
+export default MyListings;
