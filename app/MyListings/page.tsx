@@ -114,7 +114,7 @@ const MyListings = ({ params }: Props) => {
                     date={card.date}
                     title={card.title}
                     price={card.price}
-                    tag=
+                    tag="Sold"
                     buttonAction="צפייה בכרטיס"
                   />
                 </div>
