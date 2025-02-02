@@ -1,7 +1,7 @@
 import React from "react";
 import cardsData from "../DemoData/cardsData";
 import NavBar from "../components/NavBar/NavBar";
-import VerticalCard from "../components/VerticalCard/VerticallCard";
+import SingleCard from "../components/SingleCard/SingleCard";
 import Footer from "../components/Footer/Footer";
 import EventUpperSection from "../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../components/SeatingMap/SeatingMap";
@@ -47,7 +47,7 @@ const EventPage = async ({ params }: Props) => {
         {cardsData.map((card) => (
           <div key={card.id} className="flex items-center justify-center">
             <div className="flex mb-10 w-full justify-center items-center">
-              <VerticalCard {...card} buttonAction="קנה" />
+              <SingleCard {...card} buttonAction="קנה" />
             </div>
           </div>
         ))}

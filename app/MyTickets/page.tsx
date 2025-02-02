@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import cardsData from "../DemoData/cardsData"; // Assuming you have static data
 import NavBar from "../components/NavBar/NavBar";
-import VerticalCard from "../components/VerticalCard/VerticallCard";
+import SingleCard from "../components/SingleCard/SingleCard";
 import Footer from "../components/Footer/Footer";
 import TitleSubtitle from "../components/TitleSubtitle/TitleSubtitle";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
@@ -69,15 +69,15 @@ const MyTickets = ({ params }: Props) => {
           }`}
         />
         <div
-          className={`transition-all duration-700 ease-in-out ${
+          className={`mt-14 transition-all duration-700 ease-in-out ${
             showUpcoming ? "opacity-100 h-auto" : "opacity-0 h-0"
           }`}
         >
           {showUpcoming &&
             cardsData.map((card) => (
               <div key={card.id} className="flex items-center justify-center">
-                <div className="flex mb-10 w-full justify-center items-center">
-                  <VerticalCard
+                <div className="flex mb-8 w-full justify-center items-center">
+                  <SingleCard
                     location={card.location}
                     date={card.date}
                     title={card.title}
@@ -101,7 +101,7 @@ const MyTickets = ({ params }: Props) => {
           }`}
         />
         <div
-          className={`transition-all duration-700 ease-in-out ${
+          className={`transition-all duration-700 ease-in-out mt-14 ${
             showPurchases ? "opacity-100 h-auto" : "opacity-0 h-0"
           }`}
         >
@@ -109,7 +109,7 @@ const MyTickets = ({ params }: Props) => {
             cardsData.map((card) => (
               <div key={card.id} className="flex items-center justify-center">
                 <div className="flex mb-10 w-full justify-center items-center">
-                  <VerticalCard
+                  <SingleCard
                     location={card.location}
                     date={card.date}
                     title={card.title}
