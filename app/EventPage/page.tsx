@@ -1,60 +1,59 @@
-import React from "react";
-import cardsData from "../DemoData/cardsData";
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import NavBar from "../components/NavBar/NavBar";
 import SingleCard from "../components/SingleCard/SingleCard";
 import Footer from "../components/Footer/Footer";
 import EventUpperSection from "../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../components/SeatingMap/SeatingMap";
-interface Props {
-  params: {
-    query: string;
-  };
-}
+import cardsData from "../DemoData/cardsData";
 
-interface CardData {
-  id: string | number;
-  imageSrc: string;
-  title: string;
-  date: string;
-  location: string;
-  priceBefore: number;
-  price: number;
-  soldOut: boolean;
-  ticketsLeft: number;
-  timeLeft: string;
-}
+const EventPage = () => {
+  const searchParams = useSearchParams();
+  const title = searchParams.get("title");
 
-const getEventPage = (query: number) => {
-  // Filter the tickets by the given query ID
-  return cardsData.filter((CardData: any) => CardData.id === query);
-};
+  // חיפוש כל הכרטיסים עם אותו שם אירוע
+  const matchingEvents = cardsData.filter((card) => card.title === title);
 
-const EventPage = async ({ params }: Props) => {
-  const { query } = params;
-  const tickets = getEventPage(1); //Enter Id of card
+  // אם לא נמצאו אירועים
+  if (matchingEvents.length === 0) {
+    return (
+      <div>
+        <NavBar />
+        <div className="text-center text-red-500 text-xl mt-20">
+          לא נמצאו כרטיסים לאירוע הזה 😢
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div>
       <NavBar />
       <EventUpperSection
-        imageSrc={"/images/Artist/Alma_Gov.png"}
-        title={"עלמה גוב"}
-        date={"חמישי, 15 אוק’"}
-        location={"היכל התרבות - תל אביב"}
+        imageSrc={matchingEvents[0].imageSrc}
+        title={matchingEvents[0].title}
+        date={matchingEvents[0].date}
+        location={matchingEvents[0].location}
         time={"20:00"}
-        availableTickets={3}
+        availableTickets={matchingEvents.reduce(
+          (sum, event) => sum + event.ticketsLeft,
+          0
+        )}
       />
       <div className="pt-14 pr-32 pb-14 pl-32 gap-8 shadow-small-inner">
-        {cardsData.map((card) => (
-          <div key={card.id} className="flex items-center justify-center">
+        {matchingEvents.map((event) => (
+          <div key={event.id} className="flex items-center justify-center">
             <div className="flex mb-10 w-full justify-center items-center">
-              <SingleCard {...card} buttonAction="קנה" />
+              <SingleCard {...event} buttonAction="קנה" />
             </div>
           </div>
         ))}
       </div>
       <SeatingMap
         title={"מפת ישיבה"}
-        venueName={"היכל התרבות - תל אביב"}
+        venueName={matchingEvents[0].location}
         SeatingMapsvg="/images/Event Page/Web/Seats.svg"
       />
       <Footer />

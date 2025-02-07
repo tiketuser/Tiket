@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import DropdownIcon from "../../../public/images/Event Page/Web/Arrow.svg";
 
@@ -15,6 +15,13 @@ const SeatingMap: React.FC<SeatingMapProps> = ({
   venueName,
   SeatingMapsvg,
 }) => {
+  const [showSeatingMap, setSeatingMap] = useState(true);
+
+  // Function to toggle visibility of SeatingMap
+  const toggleSeatingMapVisibility = () => {
+    setSeatingMap((prevSeatingMap) => !prevSeatingMap);
+  };
+
   return (
     <div className="w-full shadow-small-inner pt-14 pr-72 pl-32 pb-14">
       {/* Header */}
@@ -30,20 +37,30 @@ const SeatingMap: React.FC<SeatingMapProps> = ({
           alt="Dropdown icon"
           width={29}
           height={16}
+          onClick={toggleSeatingMapVisibility}
           className="cursor-pointer"
         />
       </p>
 
       <div className="w-[100%] h-[3px] bg-mutedText flex mt-3 mb-3"></div>
+
       {/* Seating Map */}
-      <div className="mt-20 flex justify-center items-center jus">
-        <Image
-          src={SeatingMapsvg}
-          alt="Event image"
-          width={1190}
-          height={730}
-          className="cursor-pointer"
-        />
+      <div
+        className={`mt-14 transition-all duration-700 ease-in-out ${
+          showSeatingMap ? "opacity-100 h-auto" : "opacity-0 h-0"
+        }`}
+      >
+        {showSeatingMap && (
+          <div className="mt-20 flex justify-center items-center">
+            <Image
+              src={SeatingMapsvg}
+              alt="Event seating map"
+              width={1190}
+              height={730}
+              className="cursor-pointer"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
