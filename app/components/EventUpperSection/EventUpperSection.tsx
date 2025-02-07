@@ -26,7 +26,7 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
       {/* Right: Event Details */}
       <div className="flex flex-col gap-2 pt-8 w-[382px] h-[264px]">
         {/* Event Title */}
-        <span className="text-heading-1-desktop font-bold text-subtext leading-[67px]">
+        <span className="text-heading-1-desktop font-bold text-subtext leading-[67px] w-[900px]">
           {title}
         </span>
         <div className="w-[382px] h-[3px] bg-mutedText"></div>
