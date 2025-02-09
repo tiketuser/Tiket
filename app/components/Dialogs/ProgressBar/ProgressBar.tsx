@@ -1,6 +1,11 @@
 import { Progress } from "@/components/ui/progress";
 
-const ProgressBar = ({ step }: { step: number }) => {
+interface ProgressBarInterface{
+    step?: number
+}
+const ProgressBar: React.FC<ProgressBarInterface> = ({
+    step = 0 //1-4
+}) => {
     return (
         <div className="grid grid-cols-4 gap-4 w-[668px]" dir="ltr">
             {Array.from({ length: 4 }).map((_, index) => {
