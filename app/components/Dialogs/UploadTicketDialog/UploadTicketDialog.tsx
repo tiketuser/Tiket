@@ -5,6 +5,7 @@ import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
 import ProgressBar from "../ProgressBar/ProgressBar";
 
 import StepOneUploadTicket from "./UploadTicketSteps/StepOneUploadTicket";
+import StepTwoUploadTicket from "./UploadTicketSteps/StepTwoUploadTicket";
 
 interface UploadTicketInterface {
     isOpen: boolean;
@@ -30,9 +31,9 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
         {
             heading: "תמחר את הכרטיס שלך",
             description: "ציין את המחיר המבוקש",
-            height: "h-[912px]",
-            width: "w-[704px]",
-            content: <div><p>Step 2 Content Here</p></div>
+            height: "h-[704px]",
+            width: "w-[880px]",
+            content: <StepTwoUploadTicket nextStep={nextStep} prevStep={prevStep}/>  
         },
         {
             heading: "אשר את הפרטים",

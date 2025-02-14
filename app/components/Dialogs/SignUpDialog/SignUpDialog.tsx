@@ -97,7 +97,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         הירשם
                     </button>
 
-                    <div className="col-span-2">
+                    <div className="col-span-2 p-3">
                         <CheckBox 
                             text="אני מאשר את תנאי השימוש"
                             required={true}/>
