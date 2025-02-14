@@ -1,3 +1,4 @@
 export interface UploadTicketInterface {
-    nextStep: () => void;
+    nextStep?: () => void;
+    prevStep?: () => void;
 }
