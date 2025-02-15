@@ -26,7 +26,7 @@ const cardsData = [
     {
       imageSrc: "/images/Artist/Noa_Kirel.png",
       id: 3,
-      title: "נועה נועה נועה נועה קירל",
+      title: "נועה קירל",
       date: "שלישי, 13 אוק’",
       location: "פארק הירקון - תל אביב",
       ticketsLeft: 17,

@@ -14,6 +14,8 @@ import citiesData from "@/app/DemoData/citiesData";
 import venueData from "@/app/DemoData/venueData";
 import PriceFilter from "../PriceFilter/PriceFilter";
 import CustomDateInput from "../CustomDateInput/CustomDateInput";
+import { useRouter } from "next/navigation";
+import cardsData from "@/app/DemoData/cardsData";
 
 interface ResultSectionProps {
   title: string; // Prop for the dynamic title
@@ -28,6 +30,12 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   subText,
   image,
 }) => {
+  const router = useRouter();
+  const artistNames = [...new Set(cardsData.map((card) => card.title))];
+  const handleSearch = (query: string) => {
+    router.push(`/SearchResults?query=${encodeURIComponent(query)}`);
+  };
+
   const [values, setValues] = useState<number[]>([20, 80]);
   return (
     <div className="w-full">
@@ -47,9 +55,10 @@ const ResultSection: React.FC<ResultSectionProps> = ({
         <div className="flex justify-center mt-[27px]">
           <CustomInput
             id="Search artists or shows input"
-            // placeholder={title}
-            placeholder="עלמה גוב"
+            placeholder={title}
             placeholderColor="text-strongText"
+            onEnter={handleSearch} // Redirects user to search results page
+            suggestions={artistNames} // מעביר את רשימת האמנים
             image={
               <Image
                 src={SearchIcon}
