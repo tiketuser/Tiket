@@ -1,36 +1,23 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import React from "react";
 import cardsData from "../DemoData/cardsData";
 import RegularGallery from "../components/TicketGallery/RegularGallery";
 import NavBar from "../components/NavBar/NavBar";
 import ResultSection from "../components/ResultSection/ResultSection";
-interface Props {
-  params: {
-    query: string;
+
+const SearchResults = () => {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("query") || "";
+
+  // Filter tickets based on search query
+  const getSearchResults = (query: string) => {
+    return cardsData.filter((card) => card.title.includes(query));
   };
-}
 
-interface CardData {
-  id: string | number;
-  imageSrc: string;
-  title: string;
-  date: string;
-  location: string;
-  priceBefore: number;
-  price: number;
-  soldOut: boolean;
-  ticketsLeft: number;
-  timeLeft: string;
-}
+  const tickets = getSearchResults(query);
 
-// To be replaced with something smarter in the future
-const getSearchResults = (query: string) => {
-  // Filter the tickets by the search query
-  return cardsData.filter((CardData: any) => CardData.title.includes(query));
-};
-
-const SearchResults = async ({ params }: Props) => {
-  const { query } = params;
-  const tickets = getSearchResults(" "); //change later
   return (
     <div>
       <NavBar />
