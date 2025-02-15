@@ -14,7 +14,14 @@ import {
   NavigationDotes,
 } from "@/components/ui/carousel";
 
+import { useRouter } from "next/navigation";
+
 const ResponsiveGallery: React.FC = () => {
+  const router = useRouter();
+  const handleSearch = (query: string) => {
+    router.push(`/SearchResults?query=${encodeURIComponent(query)}`);
+  };
+
   return (
     <div className="w-full px-1 sm:px-8 mt-10">
       {/* Carousel for screens >= sm */}

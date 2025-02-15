@@ -23,6 +23,7 @@ const SearchResults = () => {
       <NavBar />
       <div className="shadow-small-inner py-14 px-24">
         <ResultSection
+          withUpperSection={true}
           title={query}
           upperText="חיפשת"
           subText="אלו המופעים הקרובים של האמן שחיפשת"

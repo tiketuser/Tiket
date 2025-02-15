@@ -12,19 +12,6 @@ interface Props {
   };
 }
 
-interface CardData {
-  id: string | number;
-  imageSrc: string;
-  title: string;
-  date: string;
-  location: string;
-  priceBefore: number;
-  price: number;
-  soldOut: boolean;
-  ticketsLeft: number;
-  timeLeft: string;
-}
-
 // To be replaced with something smarter in the future
 const getFavorites = (query: string) => {
   // Filter the tickets by the search query
@@ -39,6 +26,7 @@ const Favorites = async ({ params }: Props) => {
       <NavBar />
       <div className="shadow-small-inner py-14 px-24">
         <ResultSection
+          withUpperSection={true}
           title="המועדפים שלי"
           image={
             <Image src={HeartIcon} alt="Example Icon" width={22} height={20} />
