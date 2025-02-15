@@ -6,6 +6,8 @@ import ProgressBar from "../ProgressBar/ProgressBar";
 
 import StepOneUploadTicket from "./UploadTicketSteps/StepOneUploadTicket";
 import StepTwoUploadTicket from "./UploadTicketSteps/StepTwoUploadTicket";
+import StepThreeUploadTicket from "./UploadTicketSteps/StepThreeUploadTicket";
+import StepFourUploadTicket from "./UploadTicketSteps/StepFourUploadTicket";
 
 interface UploadTicketInterface {
     isOpen: boolean;
@@ -40,14 +42,14 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
             description: "בדוק את פרטי הכרטיס",
             height: "h-[830px]",
             width: "w-[880px]",
-            content: <div><p>Step 3 Content Here</p></div>
+            content: <StepThreeUploadTicket nextStep={nextStep} prevStep={prevStep}/>
         },
         {
             heading: "פורסם בהצלחה!",
             description: "הכרטיס שלך פורסם בהצלחה!",
-            height: "h-[638px]",
+            height: "h-[766px]",
             width: "w-[880px]",
-            content: <div><p>Step 4 Content Here</p></div>
+            content: <StepFourUploadTicket nextStep={nextStep} prevStep={prevStep}/>
         }
     ];
 
