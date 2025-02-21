@@ -5,6 +5,7 @@ import InstagramIcon from "../../../public/images/Home Page/Web/InstagramIcon.sv
 import TwitterIcon from "../../../public/images/Home Page/Web/TwitterIcon.svg";
 import YoutubeIcon from "../../../public/images/Home Page/Web/YoutubeIcon.svg";
 import TiktokIcon from "../../../public/images/Home Page/Web/TiktokIcon.svg";
+import Link from "next/link";
 
 const DesktopFooter = () => {
   return (
@@ -27,9 +28,12 @@ const DesktopFooter = () => {
         </button>
       </div>
       <div className="flex items-center gap-7">
-        <a href="#" className="link link-hover text-text-medium font-light">
+        <Link
+          href="/ContactUs"
+          className="link link-hover text-text-medium font-light"
+        >
           צור קשר
-        </a>
+        </Link>
         <a href="#" className="link link-hover text-text-medium font-light">
           תנאי שימוש
         </a>
