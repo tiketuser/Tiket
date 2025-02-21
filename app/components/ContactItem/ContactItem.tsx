@@ -17,7 +17,7 @@ const ContactItem: React.FC<ContactItemProps> = ({
   return (
     <div className="text-center flex flex-col items-center max-w-[286px]">
       {icon}
-      <h3 className="text-heading-4-desktop font-extraBold leading-10d text-subtext">
+      <h3 className="text-heading-4-desktop font-extraBold leading-10d text-subtext mt-6">
         {title}
       </h3>
       <p className="text-text-large text-subtext leading-8">{description[0]}</p>
