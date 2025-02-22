@@ -10,10 +10,12 @@ import ProfileButton from "../../../public/images/Home Page/ProfileButton.svg";
 
 import LoginDialog from "../../components/Dialogs/LoginDialog/LoginDialog";
 import SignUpDialog from "../Dialogs/SignUpDialog/SignUpDialog";
+import ProfileDialog from "../Dialogs/ProfileDialog/ProfileDialog";
 
 const NavBar = () => {
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
   const [isSignUpDialogOpen, setSignUpDialogOpen] = useState(false);
+  const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   let closeTimeout: NodeJS.Timeout;
@@ -128,6 +130,7 @@ const NavBar = () => {
               src={ProfileButton}
               alt="Profile"
               style={{ width: "24px", height: "36px", overflow: "visible" }}
+              onClick={() => setProfileDialogOpen(true)}
             />
           </button>
         </div>
@@ -140,6 +143,10 @@ const NavBar = () => {
       <LoginDialog
         isOpen={isLoginDialogOpen}
         onClose={() => setLoginDialogOpen(false)}
+      />
+      <ProfileDialog
+        isOpen={isProfileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
       />
     </>
   );
