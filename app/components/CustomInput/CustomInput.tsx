@@ -71,48 +71,17 @@ const CustomInput: React.FC<CustomInputProps> = ({
 
   return (
     <div className={`${className} relative ${width}`}>
-      {/* Search Icon (Clickable) */}
-      {image && (
-        <div
-          className="absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer"
-          onClick={triggerSearch}
-        >
-          {image}
-        </div>
-      )}
-
-      {/* Input Field */}
+      <div className="absolute left-4 top-1/2 -translate-y-1/2">
+        {image && image}
+      </div>
       <input
         type={type}
         id={id}
         required={required}
         placeholder={placeholder}
         pattern={pattern}
-        value={inputValue}
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck="false"
-        autoCapitalize="none"
-        name="ignore"
-        onChange={handleChange}
-        onKeyDown={(e) => e.key === "Enter" && triggerSearch()}
-        className="w-full py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300"
+        className={`w-full py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300`}
       />
-
-      {/* Suggestions List */}
-      {showSuggestions && (
-        <ul className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-          {filteredSuggestions.map((suggestion, index) => (
-            <li
-              key={index}
-              onClick={() => handleSelectSuggestion(suggestion)}
-              className="px-4 py-2 text-right cursor-pointer hover:bg-gray-100"
-            >
-              {suggestion}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 };
