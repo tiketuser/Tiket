@@ -3,7 +3,7 @@
 import React from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
-import CustomInput from "../components/CustomInput/CustomInput";
+import CustomSearchInput from "../components/CustomSearchInput/CustomSearchInput";
 import SearchIcon from "../../public/images/SearchBar/Search Icon.svg";
 import Image from "next/image";
 import cardsData from "../DemoData/cardsData"; // ייבוא רשימת הכרטיסים
@@ -25,7 +25,7 @@ const ViewMore = () => {
       <NavBar />
       <div className="pt-14 pb-14 pr-6 pl-6 shadow-small-inner">
         <div className="flex justify-center">
-          <CustomInput
+          <CustomSearchInput
             id="search-bar"
             placeholder="חפש אירוע"
             image={
