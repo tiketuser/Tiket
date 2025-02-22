@@ -95,3 +95,4 @@ git pull origin dev
 ```
 Avoid working directly on the dev branch. Always create a feature or bug branch for your work.
 
+Benny is the king
