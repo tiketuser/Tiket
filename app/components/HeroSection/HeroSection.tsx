@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 
 import UploadTicketDialog from "../Dialogs/UploadTicketDialog/UploadTicketDialog";
+import PaymentDialog from "../Dialogs/PaymentDialogs/PaymentDialog";
 
 import SecondaryHalfCircle from "../../../public/images/Home Page/Web/Secondary Half Circle.svg";
 import Eclipse from "../../../public/images/Home Page/Web/Ellipse 13.svg";
@@ -12,6 +13,7 @@ import GuitarThing from "../../../public/images/Home Page/Web/Guitar Thing.svg";
 
 const HeroSection = () => {
   const [isUploadTicketDialogOpen, setUploadTicketDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   return (
     <>
@@ -26,7 +28,8 @@ const HeroSection = () => {
           </p>
 
           <div className="flex justify-center gap-4 sm:gap-8 md:gap-9 lg:gap-10">
-            <button className="btn btn-primary text-heading-5-desktop w-[100px] h-[50px] sm:w-28 sm:h-16 text-gray-50 font-regular sm:text-heading-4-desktop scale-[0.87] sm:scale-90 md:scale-95 lg:scale-100 ">
+            <button className="btn btn-primary text-heading-5-desktop w-[100px] h-[50px] sm:w-28 sm:h-16 text-gray-50 font-regular sm:text-heading-4-desktop scale-[0.87] sm:scale-90 md:scale-95 lg:scale-100 "
+              onClick={() => setPaymentDialogOpen(true)}>
               קנה
             </button>
             <button className="btn btn-secondary border-primary border-[2px] bg-white text-primary  text-heading-5-desktop w-[107px] h-[50px] sm:w-28 sm:h-16 font-regular sm:text-heading-4-desktop scale-[0.87] sm:scale-90 md:scale-95 lg:scale-100 "
@@ -68,6 +71,7 @@ const HeroSection = () => {
       </div>
 
       <UploadTicketDialog isOpen={isUploadTicketDialogOpen} onClose={() => setUploadTicketDialogOpen(false)}/>
+      <PaymentDialog isOpen={isPaymentDialogOpen} onClose={() => setPaymentDialogOpen(false)}/>
     </>
   );
 };
