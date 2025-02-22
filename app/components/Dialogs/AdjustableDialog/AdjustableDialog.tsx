@@ -10,6 +10,7 @@ interface AdjustableDialogProps {
   onClose: () => void;
   heading?: string
   description?: string
+  topChildren?: ReactNode;
   children: ReactNode; 
 }
 
@@ -20,6 +21,7 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
     description = 'תיאור',
     isOpen,
     onClose,
+    topChildren,
     children
 }) => {
 
@@ -49,6 +51,10 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
             >
               <Image src={exitIcon} alt="exitIcon" height={22} width={22}/>
             </button>
+            
+            <div className="flex justify-center items-center w-full mt-5">
+              {topChildren && topChildren}
+            </div>
 
             <div className="sm:pt-8 pt-4 select-none">
               <h2 className="text-center sm:text-heading-1-desktop text-heading-1-mobile font-extrabold text-gray-950">
