@@ -47,16 +47,16 @@ const config: Config = {
         highlight: "#8C5A5F",    // הדגשה
         strongText: "#3C3E5F",   // טקסט חזק
         weakText: "#CCCCCC",     // טקסט חלש מאוד
+        weakTextBluish: "#667085",
         mutedText: "#667085",    // טקסט חלש
       },
-
       boxShadow: {
         'xxsmall': '0px 1px 2px 0px rgba(0, 0, 0, 0.05)',
         'xsmall': '0px 1px 2px 0px rgba(0, 0, 0, 0.06), 0px 1px 3px 0px rgba(0, 0, 0, 0.1)',
         'small': '0px 2px 4px -2px rgba(0, 0, 0, 0.06), 0px 4px 8px -2px rgba(0, 0, 0, 0.1)',
         'medium': '0px 4px 6px -2px rgba(0, 0, 0, 0.03), 0px 12px 16px -4px rgba(0, 0, 0, 0.08)',
         'large': '0px 8px 8px -4px rgba(0, 0, 0, 0.03), 0px 20px 24px -4px rgba(0, 0, 0, 0.08)',
-        'xlarge': '0px 24px 48px -12px rgba(0, 0, 0, 0.18)',
+        'xlarge': '0px 24px 48px -20px rgba(0, 0, 0, 0.18)',
         'xxlarge': '0px 32px 64px -12px rgba(0, 0, 0, 0.14)',
 
         'xxsmall-inner': '0px 1px 4px 0px rgba(0, 0, 0, 0.05) inset',
@@ -66,6 +66,20 @@ const config: Config = {
         'large-inner': '0px 8px 8px -4px rgba(0, 0, 0, 0.03) inset, 0px 20px 20px -4px rgba(0, 0, 0, 0.08) inset',
         'xlarge-inner': '0px 24px 48px -12px rgba(0, 0, 0, 0.18) inset',
         'xxlarge-inner': '0px 32px 64px -12px rgba(0, 0, 0, 0.14) inset',
+      },
+      scale: {
+        '45': '0.45', // Custom scale for 45%
+        '48': '0.45', // Custom scale for 45%
+      },
+      screens: {
+        'xxs': '320px', // Custom breakpoint for extra small screens
+        'xs': '376px',  // Custom breakpoint for slightly larger small screens
+      },
+       // Add custom scrollbar styles here
+       scrollbar: {
+        track: "bg-gray-100",
+        thumb: "bg-gray-300 rounded-lg",
+        thumbHover: "bg-gray-400",
       },
       
       // spacing: {
@@ -96,8 +110,10 @@ const config: Config = {
           secondary: "#eac4c7",    // משני
           highlight: "#8C5A5F",    // הדגשה
           strongText: "#3C3E5F",   // טקסט חזק
-          weakText: "#CCCCCC",     // טקסט חלש מאוד
+          weakText: "#CCCCCC",    
+          weakTextBluish: "#667085", // טקסט חלש מאוד
           mutedText: "#667085",    // טקסט חלש
+          
         },
       }
     ]
