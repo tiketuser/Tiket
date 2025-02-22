@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import CustomInput from "../CustomInput/CustomInput";
+import CustomSearchInput from "../CustomSearchInput/CustomSearchInput";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import SearchIcon from "../../../public/images/SearchBar/Search Icon.svg";
@@ -20,10 +20,12 @@ const Gallery = () => {
 
   return (
     <div className="shadow-small-inner flex flex-col items-center pt-6">
-      <CustomInput
+      <CustomSearchInput
         id="search-bar"
         placeholder="חפש אירוע"
-        image={<Image src={SearchIcon} alt="Search Icon" width={24} height={24} />}
+        image={
+          <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />
+        }
         onEnter={handleSearch} // מבצע חיפוש ומעביר לדף התוצאות
         suggestions={artistNames} // מעביר את רשימת האמנים
       />

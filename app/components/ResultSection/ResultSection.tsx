@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import CustomInput from "../CustomInput/CustomInput";
+import CustomSearchInput from "../CustomSearchInput/CustomSearchInput";
 import SearchIcon from "../../../public/images/SearchBar/SearchIconBold.svg";
 import CityIcon from "../../../public/images/SearchResult/City Icon.svg";
 import LocationIcon from "../../../public/images/SearchResult/Venue Icon.svg";
@@ -64,7 +64,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
 
       {/* Search Input */}
       <div className="flex justify-center mt-[27px]">
-        <CustomInput
+        <CustomSearchInput
           id="Search artists or shows input"
           placeholder={title}
           placeholderColor="text-strongText"
