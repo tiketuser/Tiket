@@ -43,7 +43,7 @@ const ContactSection = () => {
                 height={80}
               />
             }
-            title="Email"
+            title="Whatsapp"
             description={[
               "מוזמנים לשלוח לנו וואטסאפ בכל שעה.",
               "אנחנו משתדלים להגיב בתוך 48 שעות.",

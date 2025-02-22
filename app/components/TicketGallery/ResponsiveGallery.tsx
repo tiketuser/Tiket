@@ -44,7 +44,7 @@ const ResponsiveGallery: React.FC = () => {
         </Carousel>
 
         <div className="flex justify-center mt-6 mb-14">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/ViewMore" className="flex items-center gap-2">
             <span className="text-text-medium font-light text-center">
               גלה עוד
             </span>
