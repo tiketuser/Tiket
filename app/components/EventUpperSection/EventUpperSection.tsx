@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import TicketIcon from "../../../public/images/Event Page/Web/Ticket.svg";
+import ClockIcon from "../../../public/images/Event Page/Web/Clock.svg";
 
 interface EventUpperSectionProps {
   imageSrc: string;
@@ -37,10 +38,17 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
         </div>
 
         {/* Time and Tickets */}
-        <div className="flex gap-8 items-center text-strongText font-normal text-text-large">
-          <span className="">התחלת המופע:</span> {time}
+        <div className="flex gap-[20px] items-center text-strongText font-normal text-text-large w-[700px]">
+          <span className="">תחילת המופע:</span>
+          <span className="flex items-center gap-2">
+            <Image src={ClockIcon} alt="Price icon" />
+            {time}
+          </span>
           <span>כרטיסים זמינים:</span>
-          <span>{availableTickets}</span>
+          <span className="flex items-center gap-2">
+            <Image src={TicketIcon} alt="Ticket icon" />
+            {availableTickets}
+          </span>
         </div>
       </div>
       {/* Left: Image */}

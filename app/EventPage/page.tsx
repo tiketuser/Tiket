@@ -7,6 +7,7 @@ import Footer from "../components/Footer/Footer";
 import EventUpperSection from "../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../components/SeatingMap/SeatingMap";
 import cardsData from "../DemoData/cardsData";
+import MinimalCard from "../components/MinimalCard/MinimalCard";
 
 const EventPage = () => {
   const searchParams = useSearchParams();

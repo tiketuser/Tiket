@@ -10,6 +10,7 @@ const cardsData = [
       price: 788,
       soldOut: false,
       timeLeft: "2d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Shlomo_Artzi.png",
@@ -22,6 +23,7 @@ const cardsData = [
       price: 320,
       soldOut: false,
       timeLeft: "12d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Noa_Kirel.png",
@@ -34,6 +36,7 @@ const cardsData = [
       price: 210,
       soldOut: false,
       timeLeft: "5d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Omer_Adam.png",
@@ -46,6 +49,7 @@ const cardsData = [
       price: 400,
       soldOut: false,
       timeLeft: "3d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Tuna.png",
@@ -58,6 +62,7 @@ const cardsData = [
       price: 290,
       soldOut: false,
       timeLeft: "5d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Keren_Peles.png",
@@ -70,6 +75,7 @@ const cardsData = [
       price: 289,
       soldOut: false,
       timeLeft: "2d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Ravid_Plotnik.png",
@@ -82,6 +88,7 @@ const cardsData = [
       price: 210,
       soldOut: false,
       timeLeft: "5d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Ron_Asael.png",
@@ -94,6 +101,7 @@ const cardsData = [
       price: 400,
       soldOut: false,
       timeLeft: "3d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Shlomo_Artzi.png",
@@ -106,6 +114,7 @@ const cardsData = [
       price: 210,
       soldOut: false,
       timeLeft: "5d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Alma_Gov.png",
@@ -118,6 +127,7 @@ const cardsData = [
       price: 358,
       soldOut: false,
       timeLeft: "2d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Omer_Adam.png",
@@ -130,6 +140,7 @@ const cardsData = [
       price: 400,
       soldOut: false,
       timeLeft: "3d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Alma_Gov.png",
@@ -142,6 +153,7 @@ const cardsData = [
       price: 788,
       soldOut: false,
       timeLeft: "2d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Shlomo_Artzi.png",
@@ -154,6 +166,7 @@ const cardsData = [
       price: 320,
       soldOut: false,
       timeLeft: "12d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
     {
       imageSrc: "/images/Artist/Noa_Kirel.png",
@@ -166,6 +179,7 @@ const cardsData = [
       price: 210,
       soldOut: false,
       timeLeft: "5d 42m",
+      seatLocation: "יציע 4, שורה 21 כיסא 3",
     },
   ];
 
