@@ -2,19 +2,17 @@
 
 import { Calendar } from "@/components/ui/calendar";
 import React, { useState, useRef, useEffect } from "react";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 interface CustomDateInputProps {
   placeholder: string;
-  width: string;
   icon?: React.ReactElement;
   dropdownIcon?: React.ReactElement;
 }
 
 const CustomDateInput: React.FC<CustomDateInputProps> = ({
   placeholder,
-  width = "200px",
   icon,
   dropdownIcon,
 }) => {

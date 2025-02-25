@@ -1,13 +1,11 @@
 import React from "react"
 
 interface ToggleCheckBoxProps {
-    text?: string
     required?: boolean
     className?: string
 }
 
 const ToggleCheckBox: React.FC<ToggleCheckBoxProps> = ({
-    text = "זכור אותי",
     required = false,
     className = "p-0"
 }) => {
