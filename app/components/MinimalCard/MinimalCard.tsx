@@ -8,6 +8,7 @@ interface MinimalCardProps {
   seatLocation: string;
   priceBefore?: number;
   price: number;
+  width?: string;
 }
 
 const MinimalCard: React.FC<MinimalCardProps> = ({
@@ -16,9 +17,10 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
   seatLocation,
   priceBefore,
   price,
+  width = "w-auto"
 }) => {
   return (
-    <div className="flex items-center justify-between border-b-4 border-highlight pt-4 pr-12 pb-4 pl-8 gap-14 shadow-large w-auto h-[128px] bg-white">
+    <div className={'flex items-center justify-between pt-4 pr-12 pb-4 pl-8 gap-14 h-[128px] bg-white ' + width}>
       {/* Date Section */}
       <div className="flex flex-col items-center">
         <span className="text-text-large leading-[30px] font-normal text-strongText">
