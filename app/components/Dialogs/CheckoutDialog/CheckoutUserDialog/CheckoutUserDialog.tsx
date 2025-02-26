@@ -31,7 +31,7 @@ const CheckoutUserDialog: React.FC<CheckoutUserDialogInterface> = ({
             <div className="flex flex-col items-center space-y-5 w-full">
                 <BoxThing>
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold">כרטיס אשראי</h2>
+                        <h2 className="font-bold text-heading-5-desktop">כרטיס אשראי</h2>
 
                             <div className="flex gap-2">
                                 <Image src={VisaIcon} alt="Visa" />

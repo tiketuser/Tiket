@@ -14,7 +14,8 @@ const CheckoutDialog: React.FC<CheckoutDialogInterface> = ({
     onClose
 }) => {
     return isUserConnected ? 
-        <CheckoutUserDialog isOpen={isOpen} onClose={onClose}/> : <CheckoutGuestDialog />;
+        <CheckoutUserDialog isOpen={isOpen} onClose={onClose}/> : 
+        <CheckoutGuestDialog isOpen={isOpen} onClose={onClose}/>;
 };
 
 export default CheckoutDialog;
