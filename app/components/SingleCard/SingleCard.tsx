@@ -3,6 +3,8 @@ import PriceIcon from "../../../public/images/Home Page/Web/Price Icon.svg";
 import TimeLeftIcon from "../../../public/images/Home Page/Web/TimeLeft.svg";
 import Image from "next/image";
 import Link from "next/link";
+import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
+import { useState } from "react";
 
 interface SingleCardProps {
   imageSrc?: string;
@@ -30,6 +32,7 @@ const SingleCard: React.FC<SingleCardProps> = ({
   timeLeft,
   buttonAction,
 }) => {
+  const [isCheckoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   return (
     <div className="flex items-center justify-between border-b-4 border-highlight pt-4 pr-12 pb-4 pl-8 gap-14 shadow-large w-auto h-[128px] bg-white select-none transition-transform duration-700  hover:scale-[1.01] cursor-pointer">
       {/* Date Section */}
@@ -89,11 +92,13 @@ const SingleCard: React.FC<SingleCardProps> = ({
         <Image src={PriceIcon} alt="Price icon" className="h-[40px] w-[21px]" />
       </div>
       {/* Action Button */}
-      <Link href="/EventPage">
-      <button className="btn btn-primary w-auto h-11 text-white text-text-large font-normal">
-        {buttonAction}
-      </button>
-      </Link>
+
+        <button className="btn btn-primary w-auto h-11 text-white text-text-large font-normal"
+                onClick={() => setCheckoutDialogOpen(true)}>
+          {buttonAction}
+        </button>
+
+      <CheckoutDialog isOpen={isCheckoutDialogOpen} onClose={() => setCheckoutDialogOpen(false)} isUserConnected={false}/>
     </div>
   );
 };
