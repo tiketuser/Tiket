@@ -46,9 +46,9 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
                     id="nextStep"
                     className="btn w-[340px] h-[48px] min-h-0 btn-secondary bg-secondary text-primary text-text-large font-normal disabled:bg-secondary disabled:text-white mx-auto block"
                 >
-                    <div>
-                        <label>שתף</label>
+                    <div className="flex items-center justify-center gap-2">                        
                         <Image src={ShareIcon} alt="ShareIcon" />
+                        <label>שתף</label>
                     </div>
                 </button>
 
