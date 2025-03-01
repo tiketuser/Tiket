@@ -7,7 +7,6 @@ import Footer from "../components/Footer/Footer";
 import EventUpperSection from "../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../components/SeatingMap/SeatingMap";
 import cardsData from "../DemoData/cardsData";
-import MinimalCard from "../components/MinimalCard/MinimalCard";
 
 const EventPage = () => {
   const searchParams = useSearchParams();
@@ -32,6 +31,9 @@ const EventPage = () => {
   return (
     <div>
       <NavBar />
+
+      {/* Event Upper Section (Responsive) */}
+
       <EventUpperSection
         imageSrc={matchingEvents[0].imageSrc}
         title={matchingEvents[0].title}
@@ -43,20 +45,27 @@ const EventPage = () => {
           0
         )}
       />
-      <div className="pt-14 pr-32 pb-14 pl-32 gap-8 shadow-small-inner">
+
+      {/* Ticket List Section (Responsive)*/}
+      <div className="flex flex-col items-center justify-center sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 pt-8 pr-4 pb-8 pl-4 gap-4 shadow-small-inner">
         {matchingEvents.map((event) => (
           <div key={event.id} className="flex items-center justify-center">
-            <div className="flex mb-10 w-full justify-center items-center">
-              <SingleCard {...event} buttonAction="קנה" />
+            <div className="w-full">
+              <SingleCard {...event} timeLeft="" buttonAction="קנה" />
             </div>
           </div>
         ))}
       </div>
-      <SeatingMap
-        title={"מפת ישיבה"}
-        venueName={matchingEvents[0].location}
-        SeatingMapsvg="/images/Event Page/Web/Seats.svg"
-      />
+
+      {/* Seating Map (Responsive) */}
+      {/* <div className="">
+        <SeatingMap
+          title={"מפת ישיבה"}
+          venueName={matchingEvents[0].location}
+          SeatingMapsvg="/images/Event Page/Web/Seats.svg"
+        />
+      </div> */}
+
       <Footer />
     </div>
   );
