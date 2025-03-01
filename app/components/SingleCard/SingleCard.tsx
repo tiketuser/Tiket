@@ -13,6 +13,7 @@ interface SingleCardProps {
   price: number;
   soldOut?: boolean;
   tag?: string;
+  seatLocation: string;
   ticketsLeft?: number;
   timeLeft?: string;
   buttonAction: string;
@@ -25,74 +26,83 @@ const SingleCard: React.FC<SingleCardProps> = ({
   location,
   ticketsLeft,
   priceBefore,
+  seatLocation,
   price,
   soldOut,
   timeLeft,
   buttonAction,
 }) => {
   return (
-    <div className="flex items-center justify-between border-b-4 border-highlight pt-4 pr-12 pb-4 pl-8 gap-14 shadow-large w-auto h-[128px] bg-white select-none transition-transform duration-700  hover:scale-[1.01] cursor-pointer">
+    <div className="flex items-center justify-between sm:border-b-4 border-b-2 border-highlight sm:pt-4 sm:pr-12 sm:pb-4 sm:pl-8 sm:gap-14 xs:pt-2 xs:pr-4 xs:pb-2 xs:pl-4 pt-2 pr-1 pb-2 pl-1 gap-2 shadow-large w-[300px] xs:w-[400px] sm:w-auto sm:h-[128px] xs:h-[100px] h-[85px] bg-white select-none transition-transform duration-700  hover:scale-[1.01] cursor-pointer">
       {/* Date Section */}
       <div className="flex flex-col items-center">
-        <span className="text-text-large leading-[30px] font-normal text-strongText">
+        <span className="sm:text-text-large xs:text-text-small text-text-extra-small sm:leading-[30px] mt-2 font-normal text-strongText">
           חמישי
         </span>
-        <span className="text-heading-3-desktop font-bold text-strongText leading-[40px]">
+        <span className="sm:text-heading-3-desktop xs:text-heading-5-desktop text-heading-6-mobile  font-bold text-strongText sm:leading-[40px]">
           15
         </span>
-        <span className="text-text-large leading-[30px]  font-normal text-strongText">
+        <span className="sm:text-text-large xs:text-text-small text-text-extra-small sm:leading-[30px]  font-normal text-strongText">
           אוק׳
         </span>
       </div>
-      <div className="w-[3px] h-24 bg-strongText"></div> {/* Divider */}
+      {/* Divider */}
+      <div className="sm:w-[3px] sm:h-24 w-[2px] h-[56px] bg-strongText"></div>
       {/* Event Title Section */}
-      <div className="text-center whitespace-nowrap truncate max-w-[200px]">
-        <div className="flex items-center justify-center w-[200px]">
+      <div className="text-center mt-1 whitespace-nowrap truncate sm:max-w-[250px] xs:max-w-[90px] max-w-[60px]">
+        <div className="flex items-center justify-center sm:w-[250px] w-[90px]">
           {tag && (
-            <span className="flex justify-center items-center bg-highlight bg-opacity-80 w-14 h-6 text-white text-text-extra-small leading-[18px] font-semibold text-center">
+            <span className="flex justify-center items-center bg-highlight mt-2 w-14 h-6 text-white text-text-extra-small leading-[18px] font-semibold text-center">
               {tag}
             </span>
           )}
         </div>
-        <span className="text-heading-3-desktop font-bold text-strongText ">
+        <span className="sm:text-heading-3-desktop xs:text-heading-6-desktop text-text-small font-bold text-strongText ">
           {title}
         </span>
 
         {timeLeft && (
-          <div className="flex items-center justify-center text-weakTextBluish text-text-medium mt-2">
+          <div className="flex sm:flex-nowrap flex-wrap items-center justify-center text-weakTextBluish sm:text-text-medium xs:text-text-extra-small text-text-extra-small sm:mt-2">
             <span className="ml-2">זמן לאירוע</span>
+
+            <span>{timeLeft}</span>
             <Image
               src={TimeLeftIcon}
               alt="Time Left"
-              className="h-[19px] w-[17px] ml-1"
+              className="sm:h-[19px] sm:w-[17px] h-[19px] w-[17px] mr-1"
             />
-            <span>{timeLeft}</span>
           </div>
         )}
       </div>
-      <div className="w-[3px] h-24 bg-weakText"></div> {/* Divider */}
+      <div className="sm:w-[3px] sm:h-24 w-[1.5px] h-[56px] bg-weakText"></div>{" "}
+      {/* Divider */}
       {/* Location Section */}
-      <div className="text-center text-heading-6-desktop font-bold text-weakTextBluish w-[200px]">
-        <span>{location}</span>
+      <div className="text-center mt-2 sm:text-heading-5-desktop xs:text-text-regular text-text-small  font-bold text-weakTextBluish sm:w-[250px] w-[90px]">
+        <span>{seatLocation}</span>
       </div>
-      <div className="w-[3px] h-24 bg-weakText"></div> {/* Divider */}
+      {/* Divider */}
+      <div className="sm:w-[3px] sm:h-24 h-[56px] w-[1.5px] bg-weakText"></div>
       {/* Price Section */}
-      <div className="flex items-center text-center gap-4">
-        <span className="text-strongText text-heading-4-desktop font-extraBold leading-10">
+      <div className="flex sm:flex-row flex-col h-[50px] items-center text-center sm:mt-0 mt-3 sm:gap-4 gap-0">
+        <span className="text-strongText sm:text-heading-4-desktop text-heading-6-mobile font-extraBold sm:leading-10">
           ₪{price}
         </span>
         {priceBefore && (
-          <span className="text-weakTextBluish font-bold text-text-large line-through leading-7">
+          <span className="text-weakTextBluish font-bold sm:text-text-large text-text-small line-through sm:leading-7">
             ₪{priceBefore}
           </span>
         )}
-        <Image src={PriceIcon} alt="Price icon" className="h-[40px] w-[21px]" />
+        <Image
+          src={PriceIcon}
+          alt="Price icon"
+          className="sm:h-[40px] sm:w-[21px] h-[30px] w-[12px] hidden sm:block"
+        />
       </div>
       {/* Action Button */}
       <Link href="/EventPage">
-      <button className="btn btn-primary w-auto h-11 text-white text-text-large font-normal">
-        {buttonAction}
-      </button>
+        <button className="btn sm:mt-0 mt-4 btn-primary min-h-0 sm:w-[78px] sm:h-[46px] xs:h-9 xs:w-[50px] h-7 w-[40px] text-white sm:text-text-large xs:text-text-small text-text-extra-small  font-normal">
+          {buttonAction}
+        </button>
       </Link>
     </div>
   );
