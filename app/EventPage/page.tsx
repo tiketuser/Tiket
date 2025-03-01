@@ -58,13 +58,13 @@ const EventPage = () => {
       </div>
 
       {/* Seating Map (Responsive) */}
-      {/* <div className="">
+      <div className="">
         <SeatingMap
           title={"מפת ישיבה"}
           venueName={matchingEvents[0].location}
           SeatingMapsvg="/images/Event Page/Web/Seats.svg"
         />
-      </div> */}
+      </div>
 
       <Footer />
     </div>
