@@ -108,18 +108,22 @@ const NavBar = () => {
           </Link>
 
           {/* Hide These in Mobile */}
-          <button
-            className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal"
-            onClick={() => setSignUpDialogOpen(true)}
-          >
-            הירשם
-          </button>
-          <button
-            className="hidden sm:flex btn btn-primary w-24 text-gray-50 text-text-large font-normal"
-            onClick={() => setLoginDialogOpen(true)}
-          >
-            התחבר
-          </button>
+
+          <Link href="/SignUp">          
+            <button
+              className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal"
+            >
+              הירשם
+            </button>
+          </Link>
+
+          <Link href="/Login">
+            <button
+              className="hidden sm:flex btn btn-primary w-24 text-gray-50 text-text-large font-normal"
+            >
+              התחבר
+            </button>
+          </Link>
 
           <button
             tabIndex={0}
@@ -136,14 +140,14 @@ const NavBar = () => {
         </div>
       </div>
 
-      <SignUpDialog
+      {/* <SignUpDialog
         isOpen={isSignUpDialogOpen}
         onClose={() => setSignUpDialogOpen(false)}
-      />
-      <LoginDialog
+      /> */}
+      {/* <LoginDialog
         isOpen={isLoginDialogOpen}
         onClose={() => setLoginDialogOpen(false)}
-      />
+      /> */}
       <ProfileDialog
         isOpen={isProfileDialogOpen}
         onClose={() => setProfileDialogOpen(false)}

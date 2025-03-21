@@ -45,6 +45,7 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
           {/* Dialog Box */}
           <div className={`relative bg-white shadow-lg p-6 ${width} ${height}`}>
             {/* Exit Button */}
+            
             <button
               className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 p-4"
               onClick={onClose}
