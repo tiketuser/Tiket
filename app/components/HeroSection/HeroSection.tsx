@@ -65,7 +65,7 @@ const HeroSection = () => {
         <Image
           src={ButtonStar}
           alt="bottom star"
-          className="absolute right-4 top-20 sm:top-[178px] sm:right-[70px] z-0 h-[10.62px] w-[9.91px] sm:h-[16.53px] sm:w-[14.42px]"
+          className="absolute right-2 xs:right-4 top-20 sm:top-[178px] sm:right-[70px] z-0 h-[10.62px] w-[9.91px] sm:h-[16.53px] sm:w-[14.42px]"
         />
 
         <Image

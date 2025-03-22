@@ -23,14 +23,14 @@ const SeatingMap: React.FC<SeatingMapProps> = ({
   };
 
   return (
-    <div className="w-full shadow-small-inner pt-14 pr-72 pl-32 pb-14">
+    <div className="w-full shadow-small-inner pt-8 pr-4 pl-4 pb-8 sm:pt-4 sm:pr-72 sm:pl-32 sm:pb-14 mb-28">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-heading-1-desktop font-bold text-subtext leading-[67px]">
+        <span className="sm:text-heading-1-desktop xs:text-heading-1-mobile text-heading-2-mobile font-bold text-subtext leading-[67px]">
           {title}
         </span>
       </div>
-      <p className="text-heading-5-desktop font-bold leading-[33px] text-strongText flex items-center justify-between">
+      <p className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-medium font-bold leading-[33px] text-strongText flex items-center justify-between">
         {venueName}
         <Image
           src={DropdownIcon}
@@ -38,11 +38,13 @@ const SeatingMap: React.FC<SeatingMapProps> = ({
           width={29}
           height={16}
           onClick={toggleSeatingMapVisibility}
-          className="cursor-pointer"
+          className={`h-[15px] w-[16pxpx] float-end cursor-pointer transition-transform duration-700 ${
+            showSeatingMap ? "rotate-0" : "rotate-180"
+          }`}
         />
       </p>
 
-      <div className="w-[100%] h-[3px] bg-mutedText flex mt-3 mb-3"></div>
+      <div className="w-full h-[3px] bg-mutedText flex mt-3 mb-3"></div>
 
       {/* Seating Map */}
       <div
