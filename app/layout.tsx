@@ -17,10 +17,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-  auth,
+  dialogs,
 }: Readonly<{
   children: React.ReactNode;
-  auth: React.ReactNode;
+  dialogs: React.ReactNode;
 }>) {
   return (
     <html lang="en">
@@ -28,7 +28,7 @@ export default function RootLayout({
         className={`${assistant.variable}`}
       >
         {children}
-        {auth}
+        {dialogs}
       </body>
     </html>
   );

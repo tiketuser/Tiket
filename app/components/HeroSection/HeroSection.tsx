@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 import UploadTicketDialog from "../Dialogs/UploadTicketDialog/UploadTicketDialog";
 import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
@@ -35,12 +36,13 @@ const HeroSection = () => {
               onClick={() => setCheckoutDialogOpen(true)}>
               קנה
             </button>
-            <button
-              className="btn btn-secondary border-primary border-[2px] bg-white text-primary  text-heading-5-desktop w-[107px] h-[50px] sm:w-28 sm:h-16 font-regular sm:text-heading-4-desktop scale-[0.87] sm:scale-90 md:scale-95 lg:scale-100 "
-              onClick={() => setUploadTicketDialogOpen(true)}
-            >
-              מכור
-            </button>
+
+            <Link href="/upload-ticket">
+              <button
+                className="btn btn-secondary border-primary border-[2px] bg-white text-primary  text-heading-5-desktop w-[107px] h-[50px] sm:w-28 sm:h-16 font-regular sm:text-heading-4-desktop scale-[0.87] sm:scale-90 md:scale-95 lg:scale-100 ">
+                מכור
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -74,9 +76,7 @@ const HeroSection = () => {
           className="absolute top-7 right-[87px] sm:top-14 sm:right-[133px] z-0 h-[7.62px] w-[6.91px] sm:h-[13.53px] sm:w-[11.42px]"
         />
       </div>
-
-      <UploadTicketDialog isOpen={isUploadTicketDialogOpen} onClose={() => setUploadTicketDialogOpen(false)}/>
-      <CheckoutDialog isUserConnected={false} isOpen={isCheckoutDialogOpen} onClose={() => setCheckoutDialogOpen(false)}/>
+      
     </>
   );
 };

@@ -8,14 +8,7 @@ import HeartIcon from "../../../public/images/NavBar/Heart.svg";
 import Arrow from "../../../public/images/Home Page/Web/Arrow.svg";
 import ProfileButton from "../../../public/images/Home Page/ProfileButton.svg";
 
-import LoginDialog from "../../components/Dialogs/LoginDialog/LoginDialog";
-import SignUpDialog from "../Dialogs/SignUpDialog/SignUpDialog";
-import ProfileDialog from "../Dialogs/ProfileDialog/ProfileDialog";
-
 const NavBar = () => {
-  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
-  const [isSignUpDialogOpen, setSignUpDialogOpen] = useState(false);
-  const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   let closeTimeout: NodeJS.Timeout;
@@ -109,7 +102,7 @@ const NavBar = () => {
 
           {/* Hide These in Mobile */}
 
-          <Link href="/SignUp">          
+          <Link href="/sign-up">          
             <button
               className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal"
             >
@@ -117,7 +110,7 @@ const NavBar = () => {
             </button>
           </Link>
 
-          <Link href="/Login">
+          <Link href="/login">
             <button
               className="hidden sm:flex btn btn-primary w-24 text-gray-50 text-text-large font-normal"
             >
@@ -125,33 +118,21 @@ const NavBar = () => {
             </button>
           </Link>
 
-          <button
-            tabIndex={0}
-            role="btn"
-            className="hidden sm:flex btn btn-ghost btn-circle avatar hover:bg-red-100"
-          >
-            <Image
-              src={ProfileButton}
-              alt="Profile"
-              style={{ width: "24px", height: "36px", overflow: "visible" }}
-              onClick={() => setProfileDialogOpen(true)}
-            />
-          </button>
+          <Link href="/profile">
+            <button
+              tabIndex={0}
+              role="btn"
+              className="hidden sm:flex btn btn-ghost btn-circle avatar hover:bg-red-100"
+            >
+              <Image
+                src={ProfileButton}
+                alt="Profile"
+                style={{ width: "24px", height: "36px", overflow: "visible" }}
+              />
+            </button>
+          </Link>
         </div>
       </div>
-
-      {/* <SignUpDialog
-        isOpen={isSignUpDialogOpen}
-        onClose={() => setSignUpDialogOpen(false)}
-      /> */}
-      {/* <LoginDialog
-        isOpen={isLoginDialogOpen}
-        onClose={() => setLoginDialogOpen(false)}
-      /> */}
-      <ProfileDialog
-        isOpen={isProfileDialogOpen}
-        onClose={() => setProfileDialogOpen(false)}
-      />
     </>
   );
 };
