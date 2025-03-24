@@ -23,7 +23,7 @@ const ResponsiveGallery: React.FC = () => {
   };
 
   return (
-    <div className="w-full px-1 sm:px-8 mt-10">
+    <div className="w-full px-1 sm:px-8 sm:mt-10 sm:mb-0 mb-20">
       {/* Carousel for screens >= sm */}
       <div className="hidden sm:block ">
         <Carousel dir="ltr" className="w-full relative">

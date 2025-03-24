@@ -2,6 +2,9 @@ import Image from "next/image";
 
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 
+import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
+
+import ShareIcon from "@/public/images/Dialogs/ShareIcon.svg"
 
 const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
     nextStep,
@@ -33,7 +36,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
                 </label>
             </div>
 
-            <div className="flex flex-col items-center gap-2 w-[340px]">
+            <div className="flex flex-col items-center gap-2 mt-12">
 
                 <p className="text-heading-5-desktop font-bold">
                     שתף את הכרטיס ברשתות החברתיות
@@ -41,11 +44,25 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
 
                 <button 
                     id="nextStep"
-                    className="btn w-full h-[48px] min-h-0 btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white mt-12 mx-auto block"
+                    className="btn w-[340px] h-[48px] min-h-0 btn-secondary bg-secondary text-primary text-text-large font-normal disabled:bg-secondary disabled:text-white mx-auto block"
                 >
-                    המודעות שלי  
+                    <div className="flex items-center justify-center gap-2">                        
+                        <Image src={ShareIcon} alt="ShareIcon" />
+                        <label>שתף</label>
+                    </div>
                 </button>
 
+            </div>
+
+            <div className="absolute bottom-1 left-0">
+                <MinimalCard 
+                    price={500}
+                    priceBefore={600}
+                    title="עלמה גוב"
+                    date="15 אוק׳"
+                    seatLocation="היכל התרבות - תל אביב"
+                    width="w-[880px]"
+                />
             </div>
          
         </div>

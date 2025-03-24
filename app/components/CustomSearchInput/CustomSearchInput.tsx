@@ -20,7 +20,7 @@ interface CustomSearchInputProps {
 const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
   type = "text",
   id,
-  width = "w-[500px]",
+  width = "sm:w-[500px]",
   placeholder = "",
   image,
   className = "",
