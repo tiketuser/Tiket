@@ -9,7 +9,7 @@ interface CustomInputProps {
   image?: React.ReactElement<typeof Image>;
   className?: string;
   required?: boolean;
-  pattern?: string
+  pattern?: string;
   placeholderColor?: string; // New prop for placeholder color
 }
 
@@ -35,7 +35,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
         required={required}
         placeholder={placeholder}
         pattern={pattern}
-        className={`w-full py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300`}
+        className={`w-full py-3 pl-12 pr-3 rounded-lg border border-gray-300 text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300`}
       />
     </div>
   );

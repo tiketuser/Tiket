@@ -15,8 +15,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
 }) => {
     return (
         <AdjustableDialog
-            width="sm:w-[880px] w-[400px]"
-            height="sm:h-[675px] h-[450px]"
+            width="sm:w-[880px] w-[360px]"
+            height="sm:h-[675px] h-[460px]"
             heading="התחבר"
             description="התחבר בכדי לקנות כרטיסים"
             isOpen={isOpen}
@@ -36,7 +36,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                         id='phoneemail' 
                         required={true}
                         placeholder="דואר אלקטרוני / מספר טלפון" 
-                        className="sm:pt-9"
+                        className="sm:pt-9 pt-6"
                         width="sm:w-[456px] w-[256px]" 
                     />
                     <CustomInput 
@@ -49,7 +49,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                     />
                     
 
-                    <div className="pt-9">
+                    <div className="sm:pt-9 pt-6">
                         <div className="grid grid-cols-1 gap-2">
                             <div>
                                 <button 
@@ -70,7 +70,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                     </div>
 
                     <LoginRegisterButtons 
-                        className="sm:pt-14"
+                        className="sm:pt-14 pt-9"
                         redButton="הירשם"
                         grayButton="התחבר"
                     />
