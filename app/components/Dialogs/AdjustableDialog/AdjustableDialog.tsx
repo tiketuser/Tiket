@@ -57,8 +57,8 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
               {topChildren && topChildren}
             </div>
 
-            <div className="sm:pt-8 pt-4 select-none">
-              <h2 className="text-center sm:text-heading-1-desktop text-heading-1-mobile font-extrabold text-gray-950">
+            <div className="xlg:pt-8 pt-4 select-none">
+              <h2 className="text-center lg:text-heading-1-desktop text-heading-1-mobile font-extrabold text-gray-950">
                 {heading}
               </h2>
               <p className="text-center text-heading-5-mobile font-bold text-strongText">

@@ -15,8 +15,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
 }) => {
     return (
         <AdjustableDialog
-            width="sm:w-[880px] w-[360px]"
-            height="sm:h-[675px] h-[460px]"
+            width="w-[360px] lg:w-[680px] xlg:w-[880px] "
+            height="h-[460px] lg:h-[560px] xlg:h-[675px] "
             heading="התחבר"
             description="התחבר בכדי לקנות כרטיסים"
             isOpen={isOpen}
@@ -36,8 +36,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                         id='phoneemail' 
                         required={true}
                         placeholder="דואר אלקטרוני / מספר טלפון" 
-                        className="sm:pt-9 pt-6"
-                        width="sm:w-[456px] w-[256px]" 
+                        className="lg:pt-9 pt-6"
+                        width="lg:w-[456px] w-[256px]" 
                     />
                     <CustomInput 
                         id='password' 
@@ -45,16 +45,16 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                         type="password"
                         placeholder="סיסמא" 
                         className="pt-6" 
-                        width="sm:w-[456px] w-[256px]"
+                        width="w-[256px] lg:w-[456px] "
                     />
                     
 
-                    <div className="sm:pt-9 pt-6">
+                    <div className="lg:pt-9 pt-6">
                         <div className="grid grid-cols-1 gap-2">
                             <div>
                                 <button 
                                     id="submitButton"
-                                    className="btn sm:w-[456px] w-[256px] sm:h-[48px] h-[32px] min-h-0 btn-secondary bg-primary text-white sm:text-text-large text-text-small disabled:bg-secondary disabled:text-white"
+                                    className="btn lg:w-[456px] w-[256px] lg:h-[48px] h-[32px] min-h-0 btn-secondary bg-primary text-white sm:text-text-large text-text-small disabled:bg-secondary disabled:text-white"
                                     disabled
                                 >
                                     התחבר
@@ -70,7 +70,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                     </div>
 
                     <LoginRegisterButtons 
-                        className="sm:pt-14 pt-9"
+                        className="lg:pt-14 pt-9"
                         redButton="הירשם"
                         grayButton="התחבר"
                     />

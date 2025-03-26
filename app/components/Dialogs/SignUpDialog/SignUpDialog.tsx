@@ -19,8 +19,8 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
 }) => {
     return (
         <AdjustableDialog
-            width="sm:w-[880px] w-[360px]"
-            height="sm:h-[835px] h-[560px]"
+            width="xlg:w-[880px] lg:w-[750px] w-[360px]"
+            height="xlg:h-[835px] h-[560px]"
             isOpen={isOpen}
             onClose={onClose}
             heading="הירשם"
@@ -41,7 +41,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="email" 
                         placeholder="דואר אלקטרוני" 
                         width="sm:w-[456px] w-[256px]" 
-                        className="col-span-2 sm:mt-10 mt-4"
+                        className="col-span-2 xlg:mt-10 mt-4"
                         required={true}
                     />
                     <CustomInput 
@@ -50,7 +50,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         pattern="^\d{10}$"
                         placeholder="מספר טלפון" 
                         width="sm:w-[456px] w-[256px]" 
-                        className="col-span-2 sm:mt-6 mt-4"
+                        className="col-span-2 xlg:mt-6 mt-4"
                         image={<Image src={PhoneInputIcon} alt="PhoneInputIcon"/>}
                         required={true}
                     />
@@ -60,7 +60,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         required= {true}
                         placeholder="שם פרטי" 
                         width="w-full" 
-                        className="sm:mt-10 mt-4"
+                        className="xlg:mt-10 mt-4"
                         pattern="^\S+$"
                     />
                     <CustomInput 
@@ -68,7 +68,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="text" 
                         placeholder="שם משפחה" 
                         width=" w-full" 
-                        className="sm:mt-10 mt-4"
+                        className="xlg:mt-10 mt-4"
                         required={true}
                         pattern="^\S+$"
                     />
@@ -77,7 +77,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="password" 
                         placeholder="סיסמא" 
                         width="w-full" 
-                        className="sm:mt-6 mt-4"
+                        className="xlg:mt-6 mt-4"
                         required={true}
                     />
                     <CustomInput 
@@ -85,16 +85,16 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="password" 
                         placeholder="אשר סיסמא" 
                         width="w-full" 
-                        className="sm:mt-6 mt-4"
+                        className="xlg:mt-6 mt-4"
                         required={true}
                     />
 
                     <button type="submit" 
                         id="submitButton"
-                        className="btn sm:w-[456px] w-[256px] sm:h-[48px] h-[32px] min-h-0 sm:mt-10 mt-4 btn-secondary bg-primary col-span-2 disabled:bg-secondary disabled:text-white"
+                        className="btn sm:w-[456px] w-[256px] xlg:h-[48px] h-[32px] min-h-0 xlg:mt-10 mt-4 btn-secondary bg-primary col-span-2 disabled:bg-secondary disabled:text-white"
                         disabled
                     >
-                        <label className="text-white font-light sm:text-text-large text-text-small">
+                        <label className="text-white font-light xlg:text-text-large text-text-small">
                             הירשם
                         </label>
                     </button>
@@ -107,7 +107,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
 
                 </form>
 
-                <LoginRegisterButtons className="sm:mt-14" />
+                <LoginRegisterButtons className="xlg:mt-14" />
 
 
 
