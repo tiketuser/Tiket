@@ -19,14 +19,14 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
 }) => {
     return (
         <AdjustableDialog
-            width="xlg:w-[880px] lg:w-[750px] w-[360px]"
-            height="xlg:h-[835px] h-[560px]"
+            width="lg:w-[880px] md:w-[750px] w-[360px]"
+            height="lg:h-[835px] md:h-[670px] h-[560px]"
             isOpen={isOpen}
             onClose={onClose}
-            heading="הירשם"
+            heading="הרשמה"
             description="הירשם בכדי לקנות ולמכור כרטיסים"
         >
-                <form className="grid place-items-center grid-cols-2 sm:w-[456px] w-[256px] sm:gap-x-7 gap-x-2"
+                <form className="grid place-items-center grid-cols-2 md:w-[456px] w-[256px] md:gap-x-7 gap-x-2"
                     onChange={(e) => {
                         const form = e.currentTarget;
                         const button = document.getElementById("submitButton") as HTMLButtonElement;
@@ -40,8 +40,8 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         id="email" 
                         type="email" 
                         placeholder="דואר אלקטרוני" 
-                        width="sm:w-[456px] w-[256px]" 
-                        className="col-span-2 xlg:mt-10 mt-4"
+                        width="md:w-[456px] w-[256px]" 
+                        className="col-span-2 lg:mt-10 mt-4"
                         required={true}
                     />
                     <CustomInput 
@@ -49,8 +49,8 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="phone"
                         pattern="^\d{10}$"
                         placeholder="מספר טלפון" 
-                        width="sm:w-[456px] w-[256px]" 
-                        className="col-span-2 xlg:mt-6 mt-4"
+                        width="md:w-[456px] w-[256px]" 
+                        className="col-span-2 lg:mt-6 mt-4"
                         image={<Image src={PhoneInputIcon} alt="PhoneInputIcon"/>}
                         required={true}
                     />
@@ -60,15 +60,15 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         required= {true}
                         placeholder="שם פרטי" 
                         width="w-full" 
-                        className="xlg:mt-10 mt-4"
+                        className="md:mt-10 mt-4"
                         pattern="^\S+$"
                     />
                     <CustomInput 
                         id="lname" 
                         type="text" 
                         placeholder="שם משפחה" 
-                        width=" w-full" 
-                        className="xlg:mt-10 mt-4"
+                        width="w-full" 
+                        className="md:mt-10 mt-4"
                         required={true}
                         pattern="^\S+$"
                     />
@@ -77,7 +77,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="password" 
                         placeholder="סיסמא" 
                         width="w-full" 
-                        className="xlg:mt-6 mt-4"
+                        className="lg:mt-6 mt-4"
                         required={true}
                     />
                     <CustomInput 
@@ -85,16 +85,16 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
                         type="password" 
                         placeholder="אשר סיסמא" 
                         width="w-full" 
-                        className="xlg:mt-6 mt-4"
+                        className="lg:mt-6 mt-4"
                         required={true}
                     />
 
                     <button type="submit" 
                         id="submitButton"
-                        className="btn sm:w-[456px] w-[256px] xlg:h-[48px] h-[32px] min-h-0 xlg:mt-10 mt-4 btn-secondary bg-primary col-span-2 disabled:bg-secondary disabled:text-white"
+                        className="btn md:w-[456px] w-[256px] md:h-[48px] h-[32px] min-h-0 md:mt-6 mt-4 btn-secondary bg-primary col-span-2 disabled:bg-secondary disabled:text-white"
                         disabled
                     >
-                        <label className="text-white font-light xlg:text-text-large text-text-small">
+                        <label className="text-white font-light md:text-text-large text-text-small">
                             הירשם
                         </label>
                     </button>
@@ -107,9 +107,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
 
                 </form>
 
-                <LoginRegisterButtons className="xlg:mt-14" />
-
-
+                <LoginRegisterButtons className="lg:mt-14 md:mt-8 mt-4" />
 
         </AdjustableDialog>
     )
