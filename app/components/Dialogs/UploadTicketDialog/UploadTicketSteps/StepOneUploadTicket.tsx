@@ -9,11 +9,11 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     nextStep
 }) => {
     return (
-        <div className="w-[668px] h-[236px] mt-12">
+        <div className="lg:w-[668px] w-[320px] md:mt-12 mt-5">
 
-            <p className="text-heading-5-desktop font-bold">תמונת כרטיס</p>
-            <p className="text-text-medium font-bold">גרור או בחר תמונה של הכרטיס מהמכשיר</p>
-            <p className="text-text-medium font-light">ודא שהתמונה ברורה ושכל פרטי הכרטיס נראים היטב.</p>
+            <p className="text-heading-5-mobile md:text-text-medium font-bold">תמונת כרטיס</p>
+            <p className="text-text-small md:text-text-medium font-bold">גרור או בחר תמונה של הכרטיס מהמכשיר</p>
+            <p className="text-text-small sm:text-text-medium font-light">ודא שהתמונה ברורה ושכל פרטי הכרטיס נראים היטב.</p>
 
             <div className="w-full flex items-center justify-between h-[100px] mt-3">
 
@@ -25,16 +25,16 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                         className="hidden" 
                     />
 
-                    <button className="btn btn-secondary border-primary border-[2px] bg-white text-primary">
+                    <button className="btn min-h-0 h-[27px] md::h-[46px] btn-secondary border-primary border-[2px] bg-white text-primary ">
                         <label 
                             htmlFor="fileUpload" 
-                            className="text-text-large font-normal"
+                            className="text-text-small md:text-text-large font-normal"
                         >
                             בחר קובץ
                         </label>
                     </button>
 
-                    <p className="text-text-medium font-normal">
+                    <p className="text-text-small sm:text-text-medium font-normal">
                         לא זוהה קובץ
                     </p>
                 </div>
@@ -42,7 +42,10 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 <div>
                     <Image 
                     src={EmptyImage}
-                    alt="Placeholder" 
+                    alt="Placeholder"
+                    width={100}
+                    height={100}
+                    sizes="(max-width: 1280px) 100vw, 50vw" 
                     />
                 </div>
             </div>

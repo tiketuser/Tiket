@@ -7,7 +7,7 @@ const ProgressBar: React.FC<ProgressBarInterface> = ({
     step = 0 //1-4
 }) => {
     return (
-        <div className="grid grid-cols-4 gap-4 w-[668px]" dir="ltr">
+        <div className="grid grid-cols-4 gap-4 lg:w-[668px] w-[250px]" dir="ltr">
             {Array.from({ length: 4 }).map((_, index) => {
                 let value = 0;
                 if (index < step - 1) value = 100; // Full progress for previous steps

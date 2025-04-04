@@ -25,9 +25,9 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
     const steps = [
         {
             heading: "העלה את הכרטיס שלך למכירה",
-            description: "בחר אחת מהדרכים",
-            height: "h-[912px]",
-            width: "w-[880px]",
+            description: "בחר את הדרך הנוחה לך בכדי להעלות את הכרטיס",
+            height: "lg:h-[912px] md:h-[670px] h-[560px]",
+            width: "lg:w-[880px] md:w-[750px] w-[360px]",
             content: <StepOneUploadTicket nextStep={nextStep}/>
         },
         {

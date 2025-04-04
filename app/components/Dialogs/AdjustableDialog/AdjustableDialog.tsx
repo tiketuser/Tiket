@@ -53,7 +53,7 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
               <Image src={exitIcon} alt="exitIcon" height={22} width={22}/>
             </button>
             
-            <div className="flex justify-center items-center w-full mt-5">
+            <div className="flex justify-center items-center w-full lg:mt-5 mt-10">
               {topChildren && topChildren}
             </div>
 
