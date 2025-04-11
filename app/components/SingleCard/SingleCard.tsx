@@ -80,14 +80,14 @@ const SingleCard: React.FC<SingleCardProps> = ({
       <div className="sm:w-[3px] sm:h-24 w-[1.5px] h-[56px] bg-weakText"></div>{" "}
       {/* Divider */}
       {/* Location Section */}
-      <div className="text-center mt-2 sm:text-heading-5-desktop xs:text-text-regular text-text-small  font-bold text-weakTextBluish sm:w-[250px] w-[90px]">
-        <span>{seatLocation}</span>
+      <div className="text-center mt-2 sm:text-heading-5-desktop xs:text-text-regular text-text-small font-bold text-weakTextBluish sm:w-[250px] w-[90px]">
+        <span>{seatLocation || location}</span>
       </div>
       {/* Divider */}
       <div className="sm:w-[3px] sm:h-24 h-[56px] w-[1.5px] bg-weakText"></div>
       {/* Price Section */}
       <div className="flex sm:flex-row flex-col h-[50px] items-center text-center sm:mt-0 mt-3 sm:gap-4 gap-0">
-        <span className="text-strongText sm:text-heading-4-desktop text-heading-6-mobile font-extraBold sm:leading-10">
+        <span className="text-strongText mt-2 mr-2 sm:text-heading-4-desktop text-heading-6-mobile font-extraBold sm:leading-10">
           ₪{price}
         </span>
         {priceBefore && (
@@ -103,9 +103,18 @@ const SingleCard: React.FC<SingleCardProps> = ({
       </div>
       {/* Action Button */}
       <Link href="/EventPage">
-        <button className="btn sm:mt-0 mt-4 btn-primary min-h-0 sm:w-[78px] sm:h-[46px] xs:h-9 xs:w-[50px] h-7 w-[40px] text-white sm:text-text-large xs:text-text-small text-text-extra-small  font-normal">
+        <button
+          className="btn mt-4 mr-2 btn-primary min-h-0 sm:w-auto sm:h-auto xs:h-auto xs:w-auto h-auto w-auto text-white sm:text-text-large xs:text-text-extra-small  font-normal"
+          onClick={() => setCheckoutDialogOpen(true)}
+        >
           {buttonAction}
         </button>
+
+        <CheckoutDialog
+          isOpen={isCheckoutDialogOpen}
+          onClose={() => setCheckoutDialogOpen(false)}
+          isUserConnected={false}
+        />
       </Link>
     </div>
   );

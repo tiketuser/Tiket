@@ -83,6 +83,7 @@ const MyTickets = ({ params }: Props) => {
                     title={card.title}
                     price={card.price}
                     timeLeft={card.timeLeft}
+                    seatLocation=""
                     buttonAction="צפייה בכרטיס"
                   />
                 </div>
