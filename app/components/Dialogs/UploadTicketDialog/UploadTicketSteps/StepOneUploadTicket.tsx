@@ -15,7 +15,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             <p className="text-text-small md:text-text-medium font-bold">גרור או בחר תמונה של הכרטיס מהמכשיר</p>
             <p className="text-text-small sm:text-text-medium font-light">ודא שהתמונה ברורה ושכל פרטי הכרטיס נראים היטב.</p>
 
-            <div className="w-full flex items-center justify-between h-[100px] mt-3">
+            <div className="w-full flex items-center justify-between lg:mt-3">
 
                 {/* Right side: File input, label, and status text */}
                 <div className="flex items-center gap-4">
@@ -25,7 +25,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                         className="hidden" 
                     />
 
-                    <button className="btn min-h-0 h-[27px] md::h-[46px] btn-secondary border-primary border-[2px] bg-white text-primary ">
+                    <button className="btn min-h-0 h-[27px] md:h-[46px] btn-secondary border-primary border-[2px] bg-white text-primary ">
                         <label 
                             htmlFor="fileUpload" 
                             className="text-text-small md:text-text-large font-normal"
@@ -39,22 +39,22 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     </p>
                 </div>
 
-                <div>
+                <div className="w-[50px] h-[50px] lg:w-[100px] lg:h-[100px] relative">
                     <Image 
-                    src={EmptyImage}
-                    alt="Placeholder"
-                    width={100}
-                    height={100}
-                    sizes="(max-width: 1280px) 100vw, 50vw" 
-                    />
+                        src={EmptyImage}
+                        alt="Placeholder"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-contain"
+                        />
                 </div>
             </div>
 
-            <div className="border-t-4 mt-6 border-highlight w-full"></div>
+            <div className="lg:border-t-4 border-t-2 lg:mt-6 mt-3 border-highlight w-full"></div>
 
-            <p className="text-heading-5-desktop font-bold mt-16">קוד ידני</p>
-            <p className="text-text-medium font-bold">הכנס את קוד הברקוד שעל הכרטיס</p>
-            <p className="text-text-medium font-light">ודא את המספר כמה פעמים לפני שליחה</p>
+            <p className="lg:text-heading-5-desktop text-heading-5-mobile font-bold lg:mt-16">קוד ידני</p>
+            <p className="lg:text-text-medium text-text-small font-bold">הכנס את קוד הברקוד שעל הכרטיס</p>
+            <p className="lg:text-text-medium text-text-small font-light">ודא את המספר כמה פעמים לפני שליחה</p>
 
             <div className="flex items-center gap-4 mt-6">
                 <CustomInput id="barcode" width="w-[392px]" placeholder="מספר ברקוד"/>
@@ -72,7 +72,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 
             <button 
                 id="nextStep"
-                className="btn w-[456px] h-[48px] min-h-0 btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white mt-12 mx-auto block"
+                className="btn w-[456px] min-h-0 h-[48px]  btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white mt-12 mx-auto block"
                 onClick={nextStep}
             >
                 לשלב הבא   
