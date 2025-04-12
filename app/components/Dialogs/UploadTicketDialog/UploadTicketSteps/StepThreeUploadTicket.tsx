@@ -10,7 +10,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 }) => {
     return (
         <>
-            <div className="lg:w-[668px] w-[320px] lg:mt-12">
+            <div className="lg:w-[668px] w-[320px] lg:mt-12 mt-6">
 
                 {/* Title and Subtitle */}
                 <p className="lg:text-heading-5-desktop text-heading-5-mobile font-bold">
@@ -31,19 +31,19 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                 />
             </div>
 
-            <div className="w-[600px] mt-8">
-                <p className="text-text-medium font-bold text-strongText">
+            <div className="lg:w-[600px] w-[350px] lg:mt-8 mt-4">
+                <p className="lg:text-text-medium text-text-small font-bold text-strongText">
                     פרט לא תקין? שלח את הכרטיס לבדיקה כדי שנתקן את הפרטים.
                 </p>
 
-                <div className="flex flex-col items-center gap-2 ">
+                <div className="flex flex-col items-center lg:gap-2 gap-1">
                     <button 
-                        className="btn w-full h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[1px] text-text-large font-normal"
+                        className="btn lg:w-full w-[256px] min-h-0 lg:h-[46px] h-[32px] btn-secondary bg-white text-primary border-primary border-[1px] lg:text-text-large text-text-small font-normal"
                     >
                         הוסף כרטיס
                     </button>
 
-                    <label className="link link-hover text-primary border-transparent text-text-large font-normal cursor-pointer">
+                    <label className="link link-hover text-primary border-transparent lgtext-text-large text-text-small font-normal cursor-pointer">
                         שלח לבדיקה
                     </label>
                 </div>
@@ -52,7 +52,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
             <div className="flex justify-center gap-10 mt-14">
                 <button 
-                    className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-text-large font-normal"
+                    className="btn lg:w-[140px] w-[130px] min-h-0 lg:h-[46px] h-[32px] btn-secondary bg-white text-primary border-primary border-[2px] lg:text-text-large text-text-small font-normal"
                     onClick={prevStep}
                 >
                     לשלב הקודם
@@ -60,7 +60,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
                 <button 
                     id="nextStep"
-                    className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white"
+                    className="btn lg:w-[140px] w-[130px] lg:h-[46px] h-[32px] min-h-0 btn-secondary bg-primary text-white lg:text-text-large text-text-small font-normal disabled:bg-secondary disabled:text-white"
                     onClick={nextStep}
                 >
                     פרסום כרטיס  

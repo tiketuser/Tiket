@@ -11,40 +11,40 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
     prevStep 
 }) => {
     return (
-        <div>
-            <div className="w-[668px] mt-12">
+        <>
+            <div className="lg:w-[668px] w-[320px] lg:mt-12 mt-6">
 
                 {/* Title and Subtitle */}
-                <p className="text-heading-5-desktop font-bold">
+                <p className="lg:text-heading-5-desktop text-heading-5-mobile font-bold">
                     בהצלחה במכירה!
                 </p>
-                <p className="text-text-medium font-bold text-strongText">
+                <p className="lg:text-text-medium text-text-small font-bold text-strongText">
                     תוכל לראות את הכרטיס ביחד עם שאר הכרטיסים במודעות שלך.            
                 </p>         
             </div> 
 
-            <div className="flex flex-col items-center gap-2 w-[668px]">
+            <div className="flex flex-col items-center lg:gap-2 gap-1 lg:w-[668px] w-[256px]">
                 <button 
                     id="nextStep"
-                    className="btn w-full h-[48px] min-h-0 btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white mt-12 mx-auto block"
+                    className="btn w-full min-h-0 lg:h-[48px] h-[32px]  btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white mt-12 mx-auto block"
                 >
                     המודעות שלי  
                 </button>
 
-                <label className="link link-hover text-primary border-transparent text-text-large font-normal cursor-pointer">
+                <label className="link link-hover text-primary border-transparent lg:text-text-large text-text-medium font-normal cursor-pointer">
                     לדף הבית
                 </label>
             </div>
 
-            <div className="flex flex-col items-center gap-2 mt-12">
+            <div className="flex flex-col items-center lg:gap-2 gap-1 lg:mt-12 mt-6">
 
-                <p className="text-heading-5-desktop font-bold">
+                <p className="lg:text-heading-5-desktop text-text-small lg:font-bold">
                     שתף את הכרטיס ברשתות החברתיות
                 </p>
 
                 <button 
                     id="nextStep"
-                    className="btn w-[340px] h-[48px] min-h-0 btn-secondary bg-secondary text-primary text-text-large font-normal disabled:bg-secondary disabled:text-white mx-auto block"
+                    className="btn lg:w-[340px] w-[188px] min-h-0 lg:h-[48px] h-[32px] btn-secondary bg-secondary text-primary lg:text-text-large text-text-small font-normal disabled:bg-secondary disabled:text-white mx-auto block"
                 >
                     <div className="flex items-center justify-center gap-2">                        
                         <Image src={ShareIcon} alt="ShareIcon" />
@@ -65,7 +65,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
                 />
             </div>
          
-        </div>
+        </>
         
     );
 };
