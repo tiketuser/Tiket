@@ -9,7 +9,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     nextStep
 }) => {
     return (
-        <div className="lg:w-[668px] w-[320px] md:mt-12 mt-5">
+        <div className="lg:w-[668px] w-[320px] md:mt-12 mt-2">
 
             <p className="text-heading-5-mobile md:text-text-medium font-bold">תמונת כרטיס</p>
             <p className="text-text-small md:text-text-medium font-bold">גרור או בחר תמונה של הכרטיס מהמכשיר</p>
@@ -52,27 +52,27 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 
             <div className="lg:border-t-4 border-t-2 lg:mt-6 mt-3 border-highlight w-full"></div>
 
-            <p className="lg:text-heading-5-desktop text-heading-5-mobile font-bold lg:mt-16">קוד ידני</p>
+            <p className="lg:text-heading-5-desktop text-heading-5-mobile font-bold lg:mt-16 mt-3">קוד ידני</p>
             <p className="lg:text-text-medium text-text-small font-bold">הכנס את קוד הברקוד שעל הכרטיס</p>
             <p className="lg:text-text-medium text-text-small font-light">ודא את המספר כמה פעמים לפני שליחה</p>
 
-            <div className="flex items-center gap-4 mt-6">
-                <CustomInput id="barcode" width="w-[392px]" placeholder="מספר ברקוד"/>
+            <div className="flex items-center gap-4 lg:mt-6 mt-3">
+                <CustomInput id="barcode" width="w-[392px]" className="h-[27px] md:h-[46px]" placeholder="מספר ברקוד"/>
 
-                <button className="btn btn-secondary border-primary border-[2px] bg-white text-primary">
+                <button className="btn min-h-0 h-[27px] md:h-[46px] btn-secondary border-primary border-[2px] bg-white text-primary">
                     <label 
-                        className="text-text-large font-normal"
+                        className="text-text-small md:text-text-large font-normal"
                     >
                         העלה כרטיס
                     </label>
                 </button> 
             </div>
 
-            <div className="border-t-4 mt-6 border-highlight w-full shadow-2xl"/>
+            <div className="lg:border-t-4 border-t-2 lg:mt-6 mt-3 border-highlight w-full shadow-2xl"/>
 
             <button 
                 id="nextStep"
-                className="btn w-[456px] min-h-0 h-[48px]  btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white mt-12 mx-auto block"
+                className="btn lg:w-[456px] w-[256px] min-h-0 lg:h-[48px] h-[32px]  btn-secondary bg-primary text-white lg:text-text-large text-text-small font-normal disabled:bg-secondary disabled:text-white lg:mt-12 mt-5 mx-auto block"
                 onClick={nextStep}
             >
                 לשלב הבא   

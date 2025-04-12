@@ -26,22 +26,22 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
         {
             heading: "העלה את הכרטיס שלך למכירה",
             description: "בחר את הדרך הנוחה לך בכדי להעלות את הכרטיס",
-            height: "lg:h-[912px] md:h-[670px] h-[560px]",
+            height: "lg:h-[912px] md:h-[670px] h-[580px]",
             width: "lg:w-[880px] md:w-[750px] w-[360px]",
             content: <StepOneUploadTicket nextStep={nextStep}/>
         },
         {
             heading: "תמחר את הכרטיס שלך",
             description: "ציין את המחיר המבוקש",
-            height: "h-[704px]",
-            width: "w-[880px]",
+            height: "lg:h-[704px] h-[555px]",
+            width: "lg:w-[880px] w-[360px]",
             content: <StepTwoUploadTicket nextStep={nextStep} prevStep={prevStep}/>  
         },
         {
             heading: "אשר את הפרטים",
             description: "בדוק את פרטי הכרטיס",
-            height: "h-[830px]",
-            width: "w-[880px]",
+            height: "lg:h-[830px] h-[541px]",
+            width: "lg:w-[880px] w-[360px]",
             content: <StepThreeUploadTicket nextStep={nextStep} prevStep={prevStep}/>
         },
         {

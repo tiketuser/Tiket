@@ -35,7 +35,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
         required={required}
         placeholder={placeholder}
         pattern={pattern}
-        className={`w-full py-3 pl-12 pr-3 rounded-lg border border-gray-300 text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300`}
+        className={`w-full h-full py-3 pl-12 pr-3 rounded-lg border border-gray-300 text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300`}
       />
     </div>
   );

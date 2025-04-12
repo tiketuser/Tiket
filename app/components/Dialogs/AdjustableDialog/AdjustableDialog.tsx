@@ -71,7 +71,7 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
               {children}    
             </div>     
 
-            <div className={`absolute bottom-0 left-0 border-t-8 border-highlight ${width} `}></div>      
+            <div className={`absolute bottom-0 left-0 lg:border-t-8 border-t-4 border-highlight ${width} `}></div>      
           </div>
         </div>
       </>

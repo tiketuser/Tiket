@@ -12,28 +12,28 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
     prevStep 
 }) => {
     return (
-        <div className="w-[518px] mt-12">
+        <div className="lg:w-[518px] w-[320px] lg:mt-12 mt-4">
 
             {/* Title and Subtitle */}
-            <p className="text-heading-5-desktop font-bold">תמחור כרטיס</p>
-            <p className="text-text-medium font-bold text-strongText">
+            <p className="lg:text-heading-5-desktop text-heading-5-mobile font-bold">תמחור כרטיס</p>
+            <p className="lg:text-text-medium text-text-small font-bold text-strongText">
                 תוכל לאפשר לקונים להציע מחירים נמוכים יותר או להציע מחיר קבוע בלבד.
             </p>           
 
-            <form className="w-[456px] mx-auto block mt-7">
+            <form className="lg:w-[456px] mx-auto block lg:mt-7 mt-4">
                 {/* Price Input */}
                 <CustomInput 
                     id="ticket-price" 
                     width="w-full" 
-                    placeholder="מחיר לכרטיס" 
+                    placeholder="מחיר לכרטיס"
                     image={<Image src={ShekelsIcon} alt="shekels-icon" />}
                 />
-                <div className="mt-4">
+                <div className="lg:mt-4 mt-2">
                     <CheckBox text="אפשר הצעת מחיר"/>
                 </div>
 
                 {/* Min - Max Price Inputs (Aligned Horizontally) */}
-                <div className="flex gap-8 mx-auto mt-4">
+                <div className="flex gap-8 mx-auto lg:mt-4 mt-2">
                     <CustomInput 
                         id="min-price" 
                         width="w-[212px]" 
@@ -50,12 +50,12 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
 
                 {/* Toggle Checkbox at the Bottom */}
                 <div className="mt-2">
-                    <ToggleCheckBox text="אפשר הצעה לכל מחיר" />
+                    <ToggleCheckBox />
                 </div>
 
-                <div className="flex justify-center gap-10 mt-14">
+                <div className="flex justify-center gap-10 lg:mt-14 mt-5">
                     <button 
-                        className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-text-large font-normal"
+                        className="btn lg:w-[140px] w-[120px] lg:h-[46px] h-[32px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] lg:text-text-large text-text-small font-normal"
                         onClick={prevStep}
                     >
                         לשלב הקודם
@@ -63,7 +63,7 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
 
                     <button 
                         id="nextStep"
-                        className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white"
+                        className="btn lg:w-[140px] w-[120px] lg:h-[46px] h-[32px] min-h-0 btn-secondary bg-primary text-white lg:text-text-large text-text-small font-normal disabled:bg-secondary disabled:text-white"
                         onClick={nextStep}
                     >
                         לשלב הבא   

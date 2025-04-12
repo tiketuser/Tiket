@@ -9,14 +9,14 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
     prevStep 
 }) => {
     return (
-        <div>
-            <div className="w-[668px] mt-12 pr-36">
+        <>
+            <div className="lg:w-[668px] w-[320px] lg:mt-12">
 
                 {/* Title and Subtitle */}
-                <p className="text-heading-5-desktop font-bold">
+                <p className="lg:text-heading-5-desktop text-heading-5-mobile font-bold">
                     פרסום כרטיס
                 </p>
-                <p className="text-text-medium font-bold text-strongText">
+                <p className="lg:text-text-medium text-text-small font-bold text-strongText">
                     בפניך מוצג הכרטיס עם כל הפרטים כפי שנרשמו במערכת. בדוק שהפרטים נכונים, אם הכל בסדר, אשר את הכרטיס להעלאה למכירה.            
                 </p>         
             </div> 
@@ -27,11 +27,11 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     title="עלמה גוב"
                     date="15 אוק׳"
                     seatLocation="יציע 4 שורה 24"
-                    width="w-[880px]"
+                    width="lg:w-[880px] w-[360px]"
                 />
             </div>
 
-            <div className="w-[600px] mr-36 mt-8">
+            <div className="w-[600px] mt-8">
                 <p className="text-text-medium font-bold text-strongText">
                     פרט לא תקין? שלח את הכרטיס לבדיקה כדי שנתקן את הפרטים.
                 </p>
@@ -66,7 +66,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     פרסום כרטיס  
                 </button>
             </div>
-        </div>
+        </>
         
     );
 };
