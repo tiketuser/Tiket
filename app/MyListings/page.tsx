@@ -59,12 +59,12 @@ const MyListings = ({ params }: Props) => {
       <NavBar />
       <TitleSubtitle title="המודעות שלי" subtitle="מודעות שבאוויר" />
 
-      <div className="pt-14 pr-32 pb-14 pl-32 gap-8 shadow-small-inner">
+      <div className="pt-5 md:pt-14 px-4 md:px-8 lg:px-32 pb-5 md:pb-14 gap-4 md:gap-8 shadow-small-inner w-full">
         <Image
           src={ArrowIcon}
           alt="Arrow icon"
           onClick={toggleLivePostsCardsVisibility}
-          className={`h-[18px] w-[32px] float-end cursor-pointer transition-transform duration-700 ${
+          className={`w-6 h-7 md:w-8 md:h-5  float-end cursor-pointer transition-transform duration-700 ${
             showLivePosts ? "rotate-0" : "rotate-180"
           }`}
         />
@@ -90,13 +90,14 @@ const MyListings = ({ params }: Props) => {
             ))}
         </div>
       </div>
+
       <TitleSubtitle title="היסטוריית מכירות" subtitle="אירועים שנמכרו" />
-      <div className="pt-14 pr-32 pb-14 pl-32 gap-8 shadow-small-inner">
+      <div className="pt-5 md:pt-14 px-4 md:px-8 lg:px-32 pb-16 md:pb-16 gap-4 md:gap-8 shadow-small-inner w-full">
         <Image
           src={ArrowIcon}
           alt="Arrow icon"
           onClick={toggleSoldCardsVisibility}
-          className={`h-[18px] w-[32px] float-end cursor-pointer transition-transform duration-700 ${
+          className={`w-6 h-7 md:w-8 md:h-5  float-end cursor-pointer transition-transform duration-700 ${
             showSold ? "rotate-0" : "rotate-180"
           }`}
         />
