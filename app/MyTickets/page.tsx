@@ -98,7 +98,7 @@ const MyTickets = ({ params }: Props) => {
         </div>
 
         <TitleSubtitle title="היסטוריית רכישות" subtitle="אירועים שהסתיימו" />
-        <div className="pt-5 md:pt-14 px-4 md:px-8 lg:px-32 pb-5 md:pb-14 gap-4 md:gap-8 shadow-small-inner">
+        <div className="pt-5 md:pt-14 px-4 md:px-8 lg:px-32 pb-16 md:pb-14 gap-4 md:gap-8 shadow-small-inner">
           <Image
             src={ArrowIcon}
             alt="Arrow Icon"
