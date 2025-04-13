@@ -71,7 +71,6 @@ const TiketFilters = () => {
         <div>
           <CustomDateInput
             placeholder="תאריך"
-            width="300px"
             icon={
               <Image src={DateIcon} alt="Date Icon" width={22} height={16} />
             }
