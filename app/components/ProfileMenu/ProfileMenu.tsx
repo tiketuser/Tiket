@@ -17,12 +17,12 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ onSelect }) => {
   ];
 
   return (
-    <div className="w-64 h-full p-6">
-      <ul className="space-y-4">
+    <div className="w-full px-4 sm:w-64 sm:h-full sm:p-6">
+      <ul className="flex flex-wrap sm:flex-col sm:space-y-4 gap-3 justify-center">
         {menuItems.map((item) => (
           <li key={item.id}>
             <button
-              className={`w-full text-center px-4 py-2 rounded-md text-text-large leading-8 font-medium ${
+              className={`sm:w-full w-auto px-4 py-2 rounded-md sm:text-text-large xs:text-text-small text-text-extra-small leading-8 font-medium ${
                 activeSection === item.id
                   ? "bg-primary text-white"
                   : "text-gray-600 hover:bg-gray-200"
