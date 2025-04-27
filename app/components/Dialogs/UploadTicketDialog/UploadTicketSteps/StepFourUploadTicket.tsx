@@ -26,12 +26,12 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
             <div className="flex flex-col items-center lg:gap-2 gap-1 lg:w-[668px] w-[256px]">
                 <button 
                     id="nextStep"
-                    className="btn w-full min-h-0 lg:h-[48px] h-[32px]  btn-secondary bg-primary text-white text-text-large font-normal disabled:bg-secondary disabled:text-white mt-12 mx-auto block"
+                    className="btn w-full min-h-0 lg:h-[48px] h-[32px]  btn-secondary bg-primary text-white lg:text-text-large text-text-small font-normal disabled:bg-secondary disabled:text-white lg:mt-12 mt-4 mx-auto block"
                 >
                     המודעות שלי  
                 </button>
 
-                <label className="link link-hover text-primary border-transparent lg:text-text-large text-text-medium font-normal cursor-pointer">
+                <label className="link link-hover text-primary border-transparent lg:text-text-large text-text-small font-normal cursor-pointer">
                     לדף הבית
                 </label>
             </div>
@@ -61,7 +61,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
                     title="עלמה גוב"
                     date="15 אוק׳"
                     seatLocation="היכל התרבות - תל אביב"
-                    width="w-[880px]"
+                    width="lg:w-[880px] w-[370px]"
                 />
             </div>
          

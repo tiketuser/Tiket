@@ -48,7 +48,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
             heading: "פורסם בהצלחה!",
             description: "הכרטיס שלך פורסם בהצלחה!",
             height: "lg:h-[766px] h-[500px]",
-            width: "lg:w-[880px] w-[360px]",
+            width: "lg:w-[880px] w-[370px]",
             content: <StepFourUploadTicket nextStep={nextStep} prevStep={prevStep}/>
         }
     ];

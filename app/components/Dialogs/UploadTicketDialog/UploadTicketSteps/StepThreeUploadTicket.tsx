@@ -21,7 +21,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                 </p>         
             </div> 
 
-            <div className="mt-8">
+            <div className="lg:mt-8 mt-4">
                 <MinimalCard 
                     price={500}
                     title="עלמה גוב"
@@ -50,7 +50,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             </div>
 
 
-            <div className="flex justify-center gap-10 mt-14">
+            <div className="flex justify-center gap-10 lg:mt-14 mt-4">
                 <button 
                     className="btn lg:w-[140px] w-[130px] min-h-0 lg:h-[46px] h-[32px] btn-secondary bg-white text-primary border-primary border-[2px] lg:text-text-large text-text-small font-normal"
                     onClick={prevStep}
