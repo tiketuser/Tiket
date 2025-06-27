@@ -13,7 +13,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ onSelect }) => {
     { id: "personal", label: "פרטים אישיים" },
     { id: "payment", label: "פרטי תשלום" },
     { id: "activity", label: "סיכום פעולות" },
-    { id: "disconnect", label: "התנתק" },
+    { id: "delete", label: "מחק חשבון" }, // changed from "disconnect"
   ];
 
   return (

@@ -8,6 +8,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
+import { setDoc, doc, getDoc } from "firebase/firestore";
+import { db } from "../../../../firebase";
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       await signInWithEmailAndPassword(auth, email, password);
       setError("");
       onClose();
+      window.location.reload(); // Refresh after login
     } catch (err) {
       setError("פרטי ההתחברות שגויים.");
     }
@@ -40,9 +43,37 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Split displayName into first and last name
+      let fname = "";
+      let lname = "";
+      if (user.displayName) {
+        const parts = user.displayName.split(" ");
+        fname = parts[0] || "";
+        lname = parts.slice(1).join(" ") || "";
+      }
+
+      // Check if user doc exists
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          displayName: user.displayName,
+          fname,
+          lname,
+          photoURL: user.photoURL,
+          createdAt: new Date().toISOString(),
+          // Add more fields as needed
+        });
+      }
+
       setError("");
       onClose();
+      window.location.reload(); // Refresh after Google login
     } catch (err) {
       setError("התחברות עם Google נכשלה.");
     }

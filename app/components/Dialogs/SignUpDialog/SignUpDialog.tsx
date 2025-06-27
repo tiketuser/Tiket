@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import Image from "next/image";
 import {
   getAuth,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
 } from "firebase/auth";
 import { db, collection, doc, setDoc } from "../../../../firebase";
 
@@ -20,6 +20,21 @@ interface LoginDialogProps {
 const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
   const [error, setError] = useState<string>("");
 
+  const firebaseErrorToHebrew = (code: string) => {
+    switch (code) {
+      case "auth/email-already-in-use":
+        return "האימייל כבר בשימוש.";
+      case "auth/invalid-email":
+        return "כתובת האימייל אינה תקינה.";
+      case "auth/weak-password":
+        return "הסיסמה חלשה מדי (לפחות 6 תווים).";
+      case "auth/missing-password":
+        return "יש להזין סיסמה.";
+      default:
+        return "אירעה שגיאה. נסה שוב.";
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,7 +45,6 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     const fname = formData.get("fname") as string;
     const lname = formData.get("lname") as string;
     const password = formData.get("password") as string;
-    // You can add more fields as needed
 
     try {
       const auth = getAuth();
@@ -44,18 +58,13 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       await updateProfile(userCredential.user, {
         displayName: `${fname} ${lname}`,
       });
-      // Save extra info to Firestore (optional)
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        email,
-        phone,
-        fname,
-        lname,
-        createdAt: new Date().toISOString(),
-      });
-      alert("ההרשמה בוצעה בהצלחה!");
+      await sendEmailVerification(userCredential.user);
+      alert(
+        "נרשמת בהצלחה! נא לאשר את כתובת האימייל שלך דרך ההודעה שנשלחה אליך."
+      );
       onClose();
     } catch (error: any) {
-      setError(error.message || "שגיאה בשמירת הנתונים. נסה שוב.");
+      setError(firebaseErrorToHebrew(error.code));
       console.error(error);
     }
   };

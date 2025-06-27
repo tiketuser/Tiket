@@ -68,6 +68,7 @@ const NavBar = () => {
     const auth = getAuth();
     await signOut(auth);
     setUser(null);
+    window.location.reload(); // Refresh the page after logout
   };
 
   return (
@@ -170,12 +171,18 @@ const NavBar = () => {
             tabIndex={0}
             role="btn"
             className="hidden sm:flex btn btn-ghost btn-circle avatar hover:bg-red-100"
+            onClick={() => {
+              if (user) {
+                setProfileDialogOpen(true);
+              } else {
+                setLoginDialogOpen(true);
+              }
+            }}
           >
             <Image
               src={ProfileButton}
               alt="Profile"
               style={{ width: "24px", height: "36px", overflow: "visible" }}
-              onClick={() => setProfileDialogOpen(true)}
             />
           </button>
         </div>
