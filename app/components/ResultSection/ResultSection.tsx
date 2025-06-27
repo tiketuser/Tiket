@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import CustomSearchInput from "../CustomSearchInput/CustomSearchInput";
 import SearchIcon from "../../../public/images/SearchBar/SearchIconBold.svg";
-import CityIcon from "../../../public/images/SearchResult/City Icon.svg";
-import LocationIcon from "../../../public/images/SearchResult/Venue Icon.svg";
-import DateIcon from "../../../public/images/SearchResult/Date Icon.svg";
-import PriceIcon from "../../../public/images/SearchResult/Price Icon.svg";
-import DropdownIcon from "../../../public/images/SearchResult/Arrow.svg";
+// import CityIcon from "../../../public/images/SearchResult/City Icon.svg";
+// import LocationIcon from "../../../public/images/SearchResult/Venue Icon.svg";
+// import DateIcon from "../../../public/images/SearchResult/Date Icon.svg";
+// import PriceIcon from "../../../public/images/SearchResult/Price Icon.svg";
+// import DropdownIcon from "../../../public/images/SearchResult/Arrow.svg";
 import Image from "next/image";
-import CustomSelectInput from "../CustomSelectInput/CustomSelectInput";
-import citiesData from "@/app/DemoData/citiesData";
-import venueData from "@/app/DemoData/venueData";
-import PriceFilter from "../PriceFilter/PriceFilter";
-import CustomDateInput from "../CustomDateInput/CustomDateInput";
+// import CustomSelectInput from "../CustomSelectInput/CustomSelectInput";
+// import citiesData from "@/app/DemoData/citiesData";
+// import venueData from "@/app/DemoData/venueData";
+// import PriceFilter from "../PriceFilter/PriceFilter";
+// import CustomDateInput from "../CustomDateInput/CustomDateInput";
 import { useRouter } from "next/navigation";
 import cardsData from "@/app/DemoData/cardsData";
 import TiketFilters from "../TiketFilters/TiketFilters";
@@ -34,9 +34,12 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   image,
 }) => {
   const router = useRouter();
+
+  // חילוץ רשימת שמות האמנים מתוך cardsData (ללא כפילויות)
   const artistNames = [...new Set(cardsData.map((card) => card.title))];
+
   const handleSearch = (query: string) => {
-    router.push(`/SearchResults?query=${encodeURIComponent(query)}`);
+    router.push(`/SearchResults/${encodeURIComponent(query)}`);
   };
 
   return (

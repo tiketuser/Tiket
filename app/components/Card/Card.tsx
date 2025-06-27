@@ -1,11 +1,23 @@
 // components/Card.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import TicketIcon from "../../../public/images/Home Page/Web/Ticket Icon.svg";
 import PriceIcon from "../../../public/images/Home Page/Web/Price Icon.svg";
 import TimeLeftIcon from "../../../public/images/Home Page/Web/TimeLeft.svg";
 import HeartIcon from "../../../public/images/Home Page/Web/Favorite Tag.svg";
 import Image from "next/image";
+import { getAuth } from "firebase/auth";
+import {
+  setDoc,
+  doc,
+  arrayUnion,
+  arrayRemove,
+  getDoc,
+} from "firebase/firestore";
+import { db } from "../../../firebase";
+import { useRouter } from "next/navigation";
+
 interface CardProps {
+  id: string | number;
   imageSrc: string;
   title: string;
   date: string;
@@ -15,9 +27,11 @@ interface CardProps {
   soldOut: boolean;
   ticketsLeft: number;
   timeLeft: string;
+  openLoginDialog: () => void;
 }
 
 const Card: React.FC<CardProps> = ({
+  id,
   imageSrc,
   title,
   date,
@@ -27,28 +41,94 @@ const Card: React.FC<CardProps> = ({
   price,
   soldOut,
   timeLeft,
+  openLoginDialog,
 }) => {
+  const [showPopup, setShowPopup] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  // Fetch favorites on mount
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const favorites = userSnap.exists()
+          ? userSnap.data().favorites || []
+          : [];
+        setIsFavorited(favorites.includes(id));
+      }
+    };
+    fetchFavorites();
+    // Optionally, add [id] to dependencies if cards can change dynamically
+  }, [id]);
+
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      openLoginDialog();
+      return;
+    }
+    const userRef = doc(db, "users", user.uid);
+    if (isFavorited) {
+      // Remove from favorites
+      await setDoc(userRef, { favorites: arrayRemove(id) }, { merge: true });
+      setIsFavorited(false);
+    } else {
+      // Add to favorites
+      await setDoc(userRef, { favorites: arrayUnion(id) }, { merge: true });
+      setIsFavorited(true);
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 2000);
+    }
+  };
+
   return (
-    //sm:scale-50 md:scale-75 lg:scale-95 lg-md:scale-90
     <div className="select-none transition-transform relative w-[392px] h-[600px] sm:w-[392px] sm:h-auto border-b-[4px] border-highlight p-[16px] pt-[16px] pr-[32px] pb-[32px] pl-[32px] shadow-xlarge hover:duration-500 hover:scale-105 cursor-pointer">
+      {/* Popup */}
+      {showPopup && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
+          נוסף למועדפים!
+        </div>
+      )}
+
       {/* Last Chance */}
       {soldOut && (
         <div className="absolute top-0 left-0 bg-red-600 text-white text-xs p-1 rounded-tr-lg rounded-bl-lg">
           Sold Out Show
         </div>
       )}
-      {/* Aartist Image */}
+      {/* Artist Image */}
       <Image
         width={300}
         height={300}
         src={imageSrc}
         alt={title}
+        unoptimized
         className="w-full h-[264px] mb-4 object-cover"
       />
       {/* Heart Icon */}
-      <div className="absolute w-[100px] h-[100px] top-0 right-4 btn btn-ghost btn-circle hover:transition-transform hover:duration-300 hover:scale-125">
-        <Image src={HeartIcon} alt="Heart Icon" width={80} />
-      </div>
+      <button
+        type="button"
+        className="absolute w-[100px] h-[100px] top-0 right-4 btn btn-ghost btn-circle hover:transition-transform hover:duration-300 hover:scale-125"
+        onClick={handleFavorite}
+        aria-label="הוסף למועדפים"
+      >
+        <Image
+          src={HeartIcon}
+          alt="Heart Icon"
+          width={80}
+          style={{
+            filter: isFavorited
+              ? "brightness(0) invert(23%) sepia(700%) saturate(7496%)"
+              : "none",
+          }}
+        />
+      </button>
       {/* Title and show details section */}
       <div className="grid pt-6 pb-2 gap-3">
         <div className="flex items-center gap-12">

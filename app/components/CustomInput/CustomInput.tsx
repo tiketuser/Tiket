@@ -5,24 +5,28 @@ interface CustomInputProps {
   type?: string;
   width?: string;
   id: string;
+  name: string; // <-- Add name prop for form data
   placeholder?: string;
   image?: React.ReactElement<typeof Image>;
   className?: string;
   required?: boolean;
-  pattern?: string
-  placeholderColor?: string; // New prop for placeholder color
+  pattern?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
   type = "text",
   id,
-  width = 'w-[500px]',
-  placeholder = '',
+  name, // <-- Destructure name
+  width = "w-[500px]",
+  placeholder = "",
   image,
-  className = '',
+  className = "",
   required = false,
-  pattern = '.*',
-  placeholderColor = "text-gray-500", // Default placeholder color
+  pattern = ".*",
+  value,
+  onChange,
 }) => {
   return (
     <div className={`${className} relative ${width}`}>
@@ -32,9 +36,12 @@ const CustomInput: React.FC<CustomInputProps> = ({
       <input
         type={type}
         id={id}
+        name={name} // <-- Add name attribute for form submission
         required={required}
         placeholder={placeholder}
         pattern={pattern}
+        value={value}
+        onChange={onChange}
         className={`w-full py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300`}
       />
     </div>

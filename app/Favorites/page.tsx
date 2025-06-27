@@ -1,26 +1,75 @@
-import React from "react";
-import cardsData from "../DemoData/cardsData";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import {
+  getAuth,
+  onAuthStateChanged,
+  User,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
 import RegularGallery from "../components/TicketGallery/RegularGallery";
 import NavBar from "../components/NavBar/NavBar";
 import ResultSection from "../components/ResultSection/ResultSection";
 import HeartIcon from "../../public/images/Favorites/Heart.svg";
 import Image from "next/image";
 
-interface Props {
-  params: {
-    query: string;
-  };
+interface CardData {
+  imageSrc: string;
+  id: string | number;
+  title: string;
+  date: string;
+  location: string;
+  ticketsLeft: number;
+  priceBefore: number;
+  price: number;
+  soldOut: boolean;
+  timeLeft: string;
 }
 
-// To be replaced with something smarter in the future
-const getFavorites = (query: string) => {
-  // Filter the tickets by the search query
-  return cardsData.filter((CardData: any) => CardData.title.includes(query));
-};
+const Favorites = () => {
+  const [favoriteCards, setFavoriteCards] = useState<CardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = not checked yet
 
-const Favorites = async ({ params }: Props) => {
-  const { query } = params;
-  const tickets = getFavorites(" "); //change later
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user === undefined) return; // Don't run until auth is checked
+    if (!user) {
+      setLoading(false);
+      setFavoriteCards([]);
+      return;
+    }
+    const fetchFavorites = async () => {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const favorites = userDoc.exists() ? userDoc.data().favorites || [] : [];
+      if (favorites.length === 0) {
+        setFavoriteCards([]);
+        setLoading(false);
+        return;
+      }
+      const ticketsSnapshot = await getDocs(collection(db, "tickets"));
+      const allTickets: CardData[] = ticketsSnapshot.docs.map((doc) => ({
+        ...(doc.data() as CardData),
+        id: doc.id,
+      }));
+      setFavoriteCards(
+        allTickets.filter((card) => favorites.includes(card.id))
+      );
+      setLoading(false);
+    };
+    fetchFavorites();
+  }, [user]);
+
   return (
     <div>
       <NavBar />
@@ -33,10 +82,21 @@ const Favorites = async ({ params }: Props) => {
           }
           subText="אלו המופעים ששמרת במועדפים"
         />
-        <RegularGallery cardsData={tickets} />
+        {user === undefined || loading ? (
+          <div>טוען...</div>
+        ) : !user ? (
+          <div className="text-center text-red-500 text-xl mt-10">
+            אנא התחבר כדי לראות את המועדפים שלך
+          </div>
+        ) : (
+          <RegularGallery cardsData={favoriteCards} />
+        )}
       </div>
     </div>
   );
 };
 
 export default Favorites;
+
+const auth = getAuth();
+setPersistence(auth, browserLocalPersistence);

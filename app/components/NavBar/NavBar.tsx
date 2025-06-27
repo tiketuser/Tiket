@@ -1,8 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  getAuth,
+  onAuthStateChanged,
+  User,
+  setPersistence,
+  browserLocalPersistence,
+  signOut,
+} from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 import HeartIcon from "../../../public/images/NavBar/Heart.svg";
 import Arrow from "../../../public/images/Home Page/Web/Arrow.svg";
@@ -13,11 +22,32 @@ import SignUpDialog from "../Dialogs/SignUpDialog/SignUpDialog";
 import ProfileDialog from "../Dialogs/ProfileDialog/ProfileDialog";
 
 const NavBar = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
   const [isSignUpDialogOpen, setSignUpDialogOpen] = useState(false);
   const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const [pendingFavoritesRedirect, setPendingFavoritesRedirect] =
+    useState(false);
   let closeTimeout: NodeJS.Timeout;
+  const router = useRouter();
+
+  useEffect(() => {
+    const auth = getAuth();
+    setPersistence(auth, browserLocalPersistence);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user && pendingFavoritesRedirect) {
+      setPendingFavoritesRedirect(false);
+      setLoginDialogOpen(false); // This will close the dialog after login is confirmed
+      router.push("/Favorites");
+    }
+  }, [user, pendingFavoritesRedirect, router]);
 
   const handleDropdownToggle = () => {
     setDropdownOpen((prev) => !prev);
@@ -32,6 +62,12 @@ const NavBar = () => {
   const handleMouseEnter = () => {
     clearTimeout(closeTimeout);
     setDropdownOpen(true);
+  };
+
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
+    setUser(null);
   };
 
   return (
@@ -84,10 +120,17 @@ const NavBar = () => {
           </div>
 
           {/* Like Button */}
-          <Link href="/Favorites">
+          <Link href={user ? "/Favorites" : "#"}>
             <button
               role="btn"
               className="btn btn-ghost btn-circle avatar hover:bg-red-200"
+              onClick={(e) => {
+                if (!user) {
+                  e.preventDefault();
+                  setPendingFavoritesRedirect(true);
+                  setLoginDialogOpen(true);
+                }
+              }}
             >
               <Image
                 src={HeartIcon}
@@ -98,18 +141,29 @@ const NavBar = () => {
           </Link>
 
           {/* Sign Up & Login */}
-          <button
-            className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal"
-            onClick={() => setSignUpDialogOpen(true)}
-          >
-            הירשם
-          </button>
-          <button
-            className="hidden sm:flex btn btn-primary w-24 text-gray-50 text-text-large font-normal"
-            onClick={() => setLoginDialogOpen(true)}
-          >
-            התחבר
-          </button>
+          {user ? (
+            <button
+              className=" btn btn-primary w-24 text-gray-50 text-text-large font-normal"
+              onClick={handleLogout}
+            >
+              התנתק
+            </button>
+          ) : (
+            <>
+              <button
+                className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal"
+                onClick={() => setSignUpDialogOpen(true)}
+              >
+                הירשם
+              </button>
+              <button
+                className="hidden sm:flex btn btn-primary w-24 text-gray-50 text-text-large font-normal"
+                onClick={() => setLoginDialogOpen(true)}
+              >
+                התחבר
+              </button>
+            </>
+          )}
 
           {/* Profile Icon */}
           <button

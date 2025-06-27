@@ -3,7 +3,7 @@ const cardsData = [
       imageSrc: "/images/Artist/Alma_Gov.png",
       id: 1,
       title: "עלמה גוב",
-      date: "חמישי, 15 אוק’",
+      date: "חמישי, 6 אוק’",
       location: "היכל התרבות - תל אביב",
       ticketsLeft: 42,
       priceBefore: 457,

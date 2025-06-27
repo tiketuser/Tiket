@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
+// import Link from "next/link";
+// import Image from "next/image";
 import NotFoundHeader from "./components/NotFoundHeader/NotFoundHeader";
 import NavBar from "./components/NavBar/NavBar";
 import ContactSection from "./components/ContactSection/ContactSection";

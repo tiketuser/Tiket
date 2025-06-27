@@ -26,7 +26,6 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
   className = "",
   required = false,
   pattern = ".*",
-  placeholderColor = "text-gray-500", // Default placeholder color
   onEnter,
   suggestions = [],
 }) => {
@@ -46,7 +45,9 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
     }
 
     // סינון הצעות שמתאימות למה שהמשתמש מקליד
-    const filtered = suggestions.filter((s) => s.includes(value.trim()));
+    const filtered = suggestions
+      .filter((s): s is string => typeof s === "string" && !!s)
+      .filter((s) => s.includes(value.trim()));
 
     setFilteredSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);

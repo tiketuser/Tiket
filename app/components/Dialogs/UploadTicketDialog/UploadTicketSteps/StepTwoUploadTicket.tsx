@@ -50,7 +50,7 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
 
                 {/* Toggle Checkbox at the Bottom */}
                 <div className="mt-2">
-                    <ToggleCheckBox text="אפשר הצעה לכל מחיר" />
+                    <ToggleCheckBox />
                 </div>
 
                 <div className="flex justify-center gap-10 mt-14">

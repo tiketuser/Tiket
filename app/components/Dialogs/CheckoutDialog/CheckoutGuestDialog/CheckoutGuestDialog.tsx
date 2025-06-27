@@ -10,7 +10,7 @@ import ApplePayIcon from "@/public/images/Dialogs/ApplePayIcon.svg";
 import VisaIcon from "@/public/images/Dialogs/VisaIcon.svg";
 import MasterCardIcon from "@/public/images/Dialogs/MasterCardIcon.svg";
 import GPayIcon from "@/public/images/Dialogs/GPayIcon.svg";
-import PayPalIcon from "@/public/images/Dialogs/PayPalIcon.svg";
+//import PayPalIcon from "@/public/images/Dialogs/PayPalIcon.svg";
 
 interface CheckoutGuestDialogInterface {
     isOpen: boolean;

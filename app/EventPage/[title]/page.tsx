@@ -1,21 +1,19 @@
-"use client";
+import NavBar from "../../components/NavBar/NavBar";
+import SingleCard from "../../components/SingleCard/SingleCard";
+import Footer from "../../components/Footer/Footer";
+import EventUpperSection from "../../components/EventUpperSection/EventUpperSection";
+import SeatingMap from "../../components/SeatingMap/SeatingMap";
+import cardsData from "../../DemoData/cardsData";
 
-import { useSearchParams } from "next/navigation";
-import NavBar from "../components/NavBar/NavBar";
-import SingleCard from "../components/SingleCard/SingleCard";
-import Footer from "../components/Footer/Footer";
-import EventUpperSection from "../components/EventUpperSection/EventUpperSection";
-import SeatingMap from "../components/SeatingMap/SeatingMap";
-import cardsData from "../DemoData/cardsData";
+export async function generateStaticParams() {
+  const titles = Array.from(new Set(cardsData.map((card) => card.title)));
+  return titles.map((title) => ({ title: encodeURIComponent(title) }));
+}
 
-const EventPage = () => {
-  const searchParams = useSearchParams();
-  const title = searchParams.get("title");
-
-  // חיפוש כל הכרטיסים עם אותו שם אירוע
+const EventPage = ({ params }: { params: { title: string } }) => {
+  const title = decodeURIComponent(params.title);
   const matchingEvents = cardsData.filter((card) => card.title === title);
 
-  // אם לא נמצאו אירועים
   if (matchingEvents.length === 0) {
     return (
       <div>
@@ -31,9 +29,6 @@ const EventPage = () => {
   return (
     <div>
       <NavBar />
-
-      {/* Event Upper Section (Responsive) */}
-
       <EventUpperSection
         imageSrc={matchingEvents[0].imageSrc}
         title={matchingEvents[0].title}
@@ -45,8 +40,6 @@ const EventPage = () => {
           0
         )}
       />
-
-      {/* Ticket List Section (Responsive)*/}
       <div className="flex flex-col items-center justify-center sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 pt-8 pr-4 pb-8 pl-4 gap-4 shadow-small-inner">
         {matchingEvents.map((event) => (
           <div key={event.id} className="flex items-center justify-center">
@@ -56,8 +49,6 @@ const EventPage = () => {
           </div>
         ))}
       </div>
-
-      {/* Seating Map (Responsive) */}
       <div className="">
         <SeatingMap
           title={"מפת ישיבה"}
@@ -65,7 +56,6 @@ const EventPage = () => {
           SeatingMapsvg="/images/Event Page/Web/Seats.svg"
         />
       </div>
-
       <Footer />
     </div>
   );

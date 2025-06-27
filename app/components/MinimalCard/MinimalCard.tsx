@@ -13,7 +13,7 @@ interface MinimalCardProps {
 
 const MinimalCard: React.FC<MinimalCardProps> = ({
   title,
-  date,
+  // date,
   seatLocation,
   priceBefore,
   price,

@@ -1,10 +1,11 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import PriceIcon from "../../../public/images/Home Page/Web/Price Icon.svg";
 import TimeLeftIcon from "../../../public/images/Home Page/Web/TimeLeft.svg";
 import Image from "next/image";
 import Link from "next/link";
 import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
-import { useState } from "react";
 
 interface SingleCardProps {
   imageSrc?: string;
@@ -23,14 +24,14 @@ interface SingleCardProps {
 
 const SingleCard: React.FC<SingleCardProps> = ({
   title,
-  date,
+  // date,
   tag,
   location,
-  ticketsLeft,
+  // ticketsLeft,
   priceBefore,
   seatLocation,
   price,
-  soldOut,
+  // soldOut,
   timeLeft,
   buttonAction,
 }) => {

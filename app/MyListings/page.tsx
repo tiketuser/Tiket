@@ -9,26 +9,26 @@ import TitleSubtitle from "../components/TitleSubtitle/TitleSubtitle";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
-interface Props {
-  params: {
-    query: string;
-  };
-}
+// interface Props {
+//   params: {
+//     query: string;
+//   };
+// }
 
-interface CardData {
-  id: string | number;
-  imageSrc: string;
-  title: string;
-  date: string;
-  location: string;
-  priceBefore: number;
-  price: number;
-  soldOut: boolean;
-  ticketsLeft: number;
-  timeLeft: string;
-}
+// interface CardData {
+//   id: string | number;
+//   imageSrc: string;
+//   title: string;
+//   date: string;
+//   location: string;
+//   priceBefore: number;
+//   price: number;
+//   soldOut: boolean;
+//   ticketsLeft: number;
+//   timeLeft: string;
+// }
 
-const MyListings = ({ params }: Props) => {
+const MyListings = () => {
   const [showLivePosts, setShowLivePosts] = useState(true);
   const [showSold, setShowSold] = useState(true);
 

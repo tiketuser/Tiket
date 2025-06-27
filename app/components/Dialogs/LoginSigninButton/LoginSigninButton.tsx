@@ -7,7 +7,7 @@ interface LoginSigninButtonInterface {
 
 const LoginSigninButton: React.FC<LoginSigninButtonInterface> = ({ 
     isDisabled = true,
-    text
+    // text
 }) => {
 
     const AbleDisableClassName = {

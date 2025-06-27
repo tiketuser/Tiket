@@ -7,8 +7,8 @@ import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
 import ShareIcon from "@/public/images/Dialogs/ShareIcon.svg"
 
 const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
-    nextStep,
-    prevStep 
+    // nextStep,
+    // prevStep 
 }) => {
     return (
         <div>

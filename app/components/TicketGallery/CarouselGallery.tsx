@@ -28,11 +28,13 @@ interface CardData {
 }
 
 interface RegularGalleryProps {
-  cardsData: CardData[]; // Accept cardsData as a prop
+  cardsData: CardData[];
+  openLoginDialog: () => void;
 }
 
 const CardCarousel: React.FC<RegularGalleryProps> = ({
-  cardsData
+  cardsData,
+  openLoginDialog,
 }) => {
   return (
     <div className="w-full px-1 sm:px-8 mt-10">
@@ -42,7 +44,9 @@ const CardCarousel: React.FC<RegularGalleryProps> = ({
           <CarouselContent className="flex flex-nowrap gap-6 h-[600px]">
             {cardsData.map((card) => (
               <CarouselItem key={card.id} dir="rtl">
-                <Card {...card} />
+                <Link href={`/EventPage/${encodeURIComponent(card.title)}`}>
+                  <Card {...card} openLoginDialog={openLoginDialog} />
+                </Link>
               </CarouselItem>
             ))}
           </CarouselContent>
