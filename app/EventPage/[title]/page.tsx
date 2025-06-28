@@ -3,16 +3,39 @@ import SingleCard from "../../components/SingleCard/SingleCard";
 import Footer from "../../components/Footer/Footer";
 import EventUpperSection from "../../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../../components/SeatingMap/SeatingMap";
-import cardsData from "../../DemoData/cardsData";
+import { db } from "../../../firebase";
+import { collection, getDocs } from "firebase/firestore";
 
-export async function generateStaticParams() {
-  const titles = Array.from(new Set(cardsData.map((card) => card.title)));
-  return titles.map((title) => ({ title: encodeURIComponent(title) }));
+interface CardData {
+  id: string;
+  title: string;
+  imageSrc: string;
+  date: string;
+  location: string;
+  priceBefore: number;
+  price: number;
+  soldOut: boolean;
+  ticketsLeft: number;
+  timeLeft: string;
 }
 
-const EventPage = ({ params }: { params: { title: string } }) => {
+const EventPage = async ({ params }: { params: { title: string } }) => {
   const title = decodeURIComponent(params.title);
-  const matchingEvents = cardsData.filter((card) => card.title === title);
+
+  // Fetch tickets from Firestore
+  const querySnapshot = await getDocs(collection(db, "tickets"));
+  const allTickets: CardData[] = querySnapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<CardData, "id">),
+    }))
+    .filter(
+      (card) => typeof card.title === "string" && card.title.trim() !== ""
+    );
+
+  const matchingEvents = allTickets.filter(
+    (card) => card.title.toLowerCase() === title.toLowerCase()
+  );
 
   if (matchingEvents.length === 0) {
     return (

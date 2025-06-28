@@ -70,6 +70,9 @@ const Favorites = () => {
     fetchFavorites();
   }, [user]);
 
+  // Define the function once
+  const openLoginDialog = () => {};
+
   return (
     <div>
       <NavBar />
@@ -89,7 +92,10 @@ const Favorites = () => {
             אנא התחבר כדי לראות את המועדפים שלך
           </div>
         ) : (
-          <RegularGallery cardsData={favoriteCards} />
+          <RegularGallery
+            cardsData={favoriteCards}
+            openLoginDialog={openLoginDialog}
+          />
         )}
       </div>
     </div>

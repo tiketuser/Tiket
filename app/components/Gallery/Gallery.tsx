@@ -9,18 +9,35 @@ import ResponsiveGallery from "../TicketGallery/ResponsiveGallery";
 import { db, collection, getDocs } from "../../../firebase";
 import LoginDialog from "../Dialogs/LoginDialog/LoginDialog";
 
+interface CardData {
+  id: string;
+  title: string;
+  imageSrc: string;
+  date: string;
+  location: string;
+  priceBefore: number;
+  price: number;
+  soldOut: boolean;
+  ticketsLeft: number;
+  timeLeft: string;
+  // Add any other fields your cards use
+}
+
 const Gallery = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [cardsData, setCardsData] = useState<any[]>([]);
+  const [cardsData, setCardsData] = useState<CardData[]>([]);
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
+
+  // Define the function once
+  const openLoginDialog = () => setLoginDialogOpen(true);
 
   // Fetch tickets from Firestore
   useEffect(() => {
     const fetchTickets = async () => {
       const querySnapshot = await getDocs(collection(db, "tickets"));
-      const tickets = querySnapshot.docs.map((doc) => ({
-        ...doc.data(),
+      const tickets: CardData[] = querySnapshot.docs.map((doc) => ({
+        ...(doc.data() as Omit<CardData, "id">),
         id: doc.id,
       }));
       setCardsData(tickets);
@@ -55,7 +72,7 @@ const Gallery = () => {
       {!loading && (
         <ResponsiveGallery
           cardsData={cardsData}
-          openLoginDialog={() => setLoginDialogOpen(true)}
+          openLoginDialog={openLoginDialog}
         />
       )}
       <LoginDialog

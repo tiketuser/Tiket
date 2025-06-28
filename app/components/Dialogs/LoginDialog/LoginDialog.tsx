@@ -32,7 +32,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       setError("");
       onClose();
       window.location.reload(); // Refresh after login
-    } catch (err) {
+    } catch {
       setError("פרטי ההתחברות שגויים.");
     }
   };
@@ -74,7 +74,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       setError("");
       onClose();
       window.location.reload(); // Refresh after Google login
-    } catch (err) {
+    } catch {
       setError("התחברות עם Google נכשלה.");
     }
   };

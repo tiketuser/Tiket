@@ -54,7 +54,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             <p className="text-text-medium font-light">ודא את המספר כמה פעמים לפני שליחה</p>
 
             <div className="flex items-center gap-4 mt-6">
-                <CustomInput id="barcode" width="w-[392px]" placeholder="מספר ברקוד"/>
+                <CustomInput name="barcode" id="barcode" width="w-[392px]" placeholder="מספר ברקוד"/>
 
                 <button className="btn btn-secondary border-primary border-[2px] bg-white text-primary">
                     <label 

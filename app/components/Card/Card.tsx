@@ -14,7 +14,6 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
-import { useRouter } from "next/navigation";
 
 interface CardProps {
   id: string | number;

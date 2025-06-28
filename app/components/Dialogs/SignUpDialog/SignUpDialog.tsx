@@ -5,7 +5,6 @@ import {
   updateProfile,
   sendEmailVerification,
 } from "firebase/auth";
-import { db, collection, doc, setDoc } from "../../../../firebase";
 
 import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
 import CustomInput from "../../CustomInput/CustomInput";
@@ -41,7 +40,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     setError("");
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
+    // const phone = formData.get("phone") as string;
     const fname = formData.get("fname") as string;
     const lname = formData.get("lname") as string;
     const password = formData.get("password") as string;
@@ -63,8 +62,12 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         "נרשמת בהצלחה! נא לאשר את כתובת האימייל שלך דרך ההודעה שנשלחה אליך."
       );
       onClose();
-    } catch (error: any) {
-      setError(firebaseErrorToHebrew(error.code));
+    } catch (error) {
+      const code =
+        error && typeof error === "object" && "code" in error
+          ? (error as { code?: string }).code
+          : "";
+      setError(firebaseErrorToHebrew(code as string));
       console.error(error);
     }
   };

@@ -24,6 +24,7 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
                 {/* Price Input */}
                 <CustomInput 
                     id="ticket-price" 
+                    name="ticket-price"
                     width="w-full" 
                     placeholder="מחיר לכרטיס" 
                     image={<Image src={ShekelsIcon} alt="shekels-icon" />}
@@ -36,12 +37,14 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
                 <div className="flex gap-8 mx-auto mt-4">
                     <CustomInput 
                         id="min-price" 
+                        name="min-price"
                         width="w-[212px]" 
                         placeholder="מ -" 
                         image={<Image src={ShekelsIcon} alt="shekels-icon" />}
                     />
                     <CustomInput 
                         id="max-price" 
+                        name="max-price"
                         width="w-[212px]" 
                         placeholder="עד -" 
                         image={<Image src={ShekelsIcon} alt="shekels-icon" />}

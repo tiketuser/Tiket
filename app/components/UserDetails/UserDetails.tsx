@@ -4,16 +4,21 @@ import React, { useEffect, useState } from "react";
 import { getAuth, deleteUser } from "firebase/auth";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
-import ClosedEyeIcon from "../../../public/images/Profile/ClosedEye.svg";
-import OpenEyeIcon from "../../../public/images/Profile/OpenEyeIcon.svg";
-import Image from "next/image";
 
 interface UserDetailsProps {
   section: string;
 }
 
+interface UserData {
+  fname?: string;
+  lname?: string;
+  phone?: string;
+  email?: string;
+  [key: string]: unknown; // For any additional fields
+}
+
 const UserDetails: React.FC<UserDetailsProps> = ({ section }) => {
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +29,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ section }) => {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          setUserData(userSnap.data());
+          setUserData(userSnap.data() as UserData);
         }
       }
       setLoading(false);
@@ -107,8 +112,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({ section }) => {
                     await deleteUser(user);
                     alert("החשבון נמחק בהצלחה.");
                     window.location.reload();
-                  } catch (err: any) {
-                    alert("מחיקת החשבון נכשלה: " + (err.message || err));
+                  } catch (err) {
+                    const msg =
+                      err && typeof err === "object" && "message" in err
+                        ? (err as { message?: string }).message
+                        : String(err);
+                    alert("מחיקת החשבון נכשלה: " + (msg || err));
                   }
                 }
               }

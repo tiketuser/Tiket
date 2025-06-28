@@ -1,27 +1,47 @@
 import React from "react";
-import cardsData from "../../DemoData/cardsData";
-import RegularGallery from "../../components/TicketGallery/RegularGallery";
 import NavBar from "../../components/NavBar/NavBar";
 import ResultSection from "../../components/ResultSection/ResultSection";
+import SearchResultsClient from "./SearchResultsClient";
+import { db } from "../../../firebase";
+import { collection, getDocs } from "firebase/firestore";
 
-// Add this function for static export!
+// Define CardData type here or import it
+interface CardData {
+  id: string;
+  title: string;
+  imageSrc: string;
+  date: string;
+  location: string;
+  priceBefore: number;
+  price: number;
+  soldOut: boolean;
+  ticketsLeft: number;
+  timeLeft: string;
+}
+
+// Static params for SSG
 export async function generateStaticParams() {
-  // Get unique artist names from cardsData
-  const artistNames = Array.from(new Set(cardsData.map((card) => card.title)));
+  // You may want to fetch artist names from Firestore here
+  const querySnapshot = await getDocs(collection(db, "tickets"));
+  const artistNames = Array.from(
+    new Set(querySnapshot.docs.map((doc) => doc.data().title))
+  );
   return artistNames.map((name) => ({
     query: encodeURIComponent(name),
   }));
 }
 
-const SearchResults = ({ params }: { params: { query: string } }) => {
+const SearchResults = async ({ params }: { params: { query: string } }) => {
   const query = decodeURIComponent(params.query);
 
-  // Filter tickets based on search query
-  const getSearchResults = (query: string) => {
-    return cardsData.filter((card) => card.title === query);
-  };
+  // Fetch tickets from Firestore
+  const querySnapshot = await getDocs(collection(db, "tickets"));
+  const allTickets: CardData[] = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<CardData, "id">),
+  }));
 
-  const tickets = getSearchResults(query);
+  const tickets = allTickets.filter((card) => card.title === query);
 
   return (
     <div>
@@ -33,7 +53,7 @@ const SearchResults = ({ params }: { params: { query: string } }) => {
           upperText="חיפשת"
           subText="אלו המופעים הקרובים של האמן שחיפשת"
         />
-        <RegularGallery cardsData={tickets} />
+        <SearchResultsClient tickets={tickets} />
       </div>
     </div>
   );

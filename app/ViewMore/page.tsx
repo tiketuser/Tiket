@@ -1,18 +1,55 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import CustomSearchInput from "../components/CustomSearchInput/CustomSearchInput";
 import SearchIcon from "../../public/images/SearchBar/Search Icon.svg";
 import Image from "next/image";
-import cardsData from "../DemoData/cardsData"; // ייבוא רשימת הכרטיסים
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase"; // Adjust the path if needed
 import { useRouter } from "next/navigation";
 import TiketFilters from "../components/TiketFilters/TiketFilters";
 import ResponsiveGallery from "../components/TicketGallery/ResponsiveGallery";
 
+interface CardData {
+  id: string;
+  title: string;
+  imageSrc: string;
+  date: string;
+  location: string;
+  priceBefore: number;
+  price: number;
+  soldOut: boolean;
+  ticketsLeft: number;
+  timeLeft: string;
+  // Add any other fields your cards use
+}
+
 const ViewMore = () => {
   const router = useRouter();
+  const [cardsData, setCardsData] = useState<CardData[]>([]);
+  // Add this state if you want to actually open a login dialog
+  // const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
+
+  // Define the function once
+  const openLoginDialog = () => {
+    // setLoginDialogOpen(true);
+    // Or leave empty if you don't have a dialog yet
+  };
+
+  // Fetch tickets from Firestore
+  useEffect(() => {
+    const fetchTickets = async () => {
+      const querySnapshot = await getDocs(collection(db, "tickets"));
+      const tickets: CardData[] = querySnapshot.docs.map((doc) => ({
+        ...(doc.data() as Omit<CardData, "id">),
+        id: doc.id,
+      }));
+      setCardsData(tickets);
+    };
+    fetchTickets();
+  }, []);
 
   // חילוץ רשימת שמות האמנים מתוך cardsData (ללא כפילויות)
   const artistNames = [...new Set(cardsData.map((card) => card.title))];
@@ -45,17 +82,32 @@ const ViewMore = () => {
         <h3 className="text-heading-3-desktop font-extrabold mr-8 text-subtext">
           נצפה לאחרונה
         </h3>
-        <ResponsiveGallery />
+        <ResponsiveGallery
+          cardsData={cardsData}
+          openLoginDialog={openLoginDialog}
+        />
         <h3 className="text-heading-3-desktop font-extrabold mr-8 text-subtext">
           דילים ברגע האחרון
         </h3>
-        <ResponsiveGallery />
+        <ResponsiveGallery
+          cardsData={cardsData}
+          openLoginDialog={openLoginDialog}
+        />
         <h3 className="text-heading-3-desktop font-extrabold mr-8 text-subtext">
           המלצות שלנו
         </h3>
-        <ResponsiveGallery />
+        <ResponsiveGallery
+          cardsData={cardsData}
+          openLoginDialog={openLoginDialog}
+        />
       </div>
       <Footer />
+      {/* 
+      <LoginDialog
+        isOpen={isLoginDialogOpen}
+        onClose={() => setLoginDialogOpen(false)}
+      /> 
+      */}
     </div>
   );
 };
