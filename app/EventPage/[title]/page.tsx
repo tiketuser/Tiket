@@ -33,6 +33,9 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       (card) => typeof card.title === "string" && card.title.trim() !== ""
     );
 
+  console.log("title:", title);
+  console.log("allTickets:", allTickets);
+
   const matchingEvents = allTickets.filter(
     (card) => card.title.trim() === title.trim()
   );
