@@ -17,12 +17,12 @@ import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth"
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCGiiy5smPnTFY7RdhsHfe12briESgTr4k",
-  authDomain: "tiket-9268c.firebaseapp.com",
-  projectId: "tiket-9268c",
-  storageBucket: "tiket-9268c.firebasestorage.app",
-  messagingSenderId: "653453593991",
-  appId: "1:653453593991:web:67009ebea86a870f735722"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase

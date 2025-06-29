@@ -34,7 +34,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     );
 
   const matchingEvents = allTickets.filter(
-    (card) => card.title.toLowerCase() === title.toLowerCase()
+    (card) => card.title.trim() === title.trim()
   );
 
   if (matchingEvents.length === 0) {
