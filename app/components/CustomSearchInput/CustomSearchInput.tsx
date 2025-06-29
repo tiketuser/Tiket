@@ -15,6 +15,7 @@ interface CustomSearchInputProps {
   placeholderColor?: string; // New prop for placeholder color
   onEnter?: (value: string) => void;
   suggestions?: string[]; // נוסיף אפשרות לקבלת רשימת הצעות
+  value?: string; // Add this
 }
 
 const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
@@ -28,6 +29,7 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
   pattern = ".*",
   onEnter,
   suggestions = [],
+  value,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -89,7 +91,7 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
         required={required}
         placeholder={placeholder}
         pattern={pattern}
-        value={inputValue}
+        value={value !== undefined ? value : inputValue}
         autoComplete="off"
         autoCorrect="off"
         spellCheck="false"

@@ -84,4 +84,18 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
   );
 };
 
+export async function generateStaticParams() {
+  const querySnapshot = await getDocs(collection(db, "tickets"));
+  const titles = Array.from(
+    new Set(
+      querySnapshot.docs
+        .map((doc) => doc.data().title)
+        .filter((title) => typeof title === "string" && title.trim() !== "")
+    )
+  );
+  return titles.map((title) => ({
+    title: encodeURIComponent(title),
+  }));
+}
+
 export default EventPage;

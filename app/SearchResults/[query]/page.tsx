@@ -52,6 +52,9 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
           title={query}
           upperText="חיפשת"
           subText="אלו המופעים הקרובים של האמן שחיפשת"
+          artistNames={Array.from(
+            new Set(allTickets.map((card) => card.title))
+          )}
         />
         <SearchResultsClient tickets={tickets} />
       </div>
