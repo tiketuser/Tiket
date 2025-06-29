@@ -84,6 +84,9 @@ const Favorites = () => {
             <Image src={HeartIcon} alt="Example Icon" width={22} height={20} />
           }
           subText="אלו המופעים ששמרת במועדפים"
+          artistNames={Array.from(
+            new Set(favoriteCards.map((card) => card.title))
+          )}
         />
         {user === undefined || loading ? (
           <div>טוען...</div>
