@@ -14,6 +14,7 @@ import {
   onSnapshot
 } from "firebase/firestore";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -29,13 +30,14 @@ const firebaseConfig = {
 const hasValidConfig = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
                       process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-let app, db, auth;
+let app, db, auth, storage;
 
 if (hasValidConfig) {
   // Initialize Firebase with real config
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   auth = getAuth();
+  storage = getStorage(app);
   setPersistence(auth, browserLocalPersistence);
 } else {
   // Use mock implementations for development
@@ -43,12 +45,14 @@ if (hasValidConfig) {
   app = null;
   db = null;
   auth = null;
+  storage = null;
 }
 
 export {
   app,
   db,
   auth,
+  storage,
   hasValidConfig,
   collection,
   getDocs,
