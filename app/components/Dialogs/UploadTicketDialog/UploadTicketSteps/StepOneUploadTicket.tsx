@@ -23,42 +23,90 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         updateTicketData({ isProcessing: true, extractionError: undefined });
 
         try {
-            // Convert file to base64 for better API compatibility
+            // Convert file to base64 for Google Vision API
             const base64 = await fileToBase64(file);
             
-            const requestBody = {
-                base64Image: base64,
-                language: 'heb',
-                isOverlayRequired: false,
-                detectOrientation: true,
-                isTable: true
+            // Try Google Cloud Vision API first (better for Hebrew)
+            const visionRequestBody = {
+                requests: [{
+                    image: {
+                        content: base64
+                    },
+                    features: [{
+                        type: 'TEXT_DETECTION',
+                        maxResults: 1
+                    }],
+                    imageContext: {
+                        languageHints: ['he', 'en'] // Hebrew and English
+                    }
+                }]
             };
 
-            // Call OCR.Space API with improved configuration
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-            const response = await fetch('https://api.ocr.space/parse/image', {
+            // Free Google Vision API endpoint (limited usage)
+            let response = await fetch('https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC8UpKk7gXODsaWQ6KvhKOOsQ6m8jKWSDw', {
                 method: 'POST',
                 headers: {
-                    'apikey': 'helloworld',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(requestBody),
+                body: JSON.stringify(visionRequestBody),
                 signal: controller.signal
             });
 
             clearTimeout(timeoutId);
 
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status}`);
+            let result;
+            let extractedText = '';
+
+            if (response.ok) {
+                result = await response.json();
+                console.log('Google Vision Result:', result);
+                
+                if (result.responses && result.responses[0] && result.responses[0].textAnnotations) {
+                    extractedText = result.responses[0].textAnnotations[0]?.description || '';
+                }
             }
 
-            const result = await response.json();
-            console.log('OCR Result:', result);
+            // Fallback to OCR.Space if Google Vision fails or returns empty
+            if (!extractedText.trim()) {
+                console.log('Falling back to OCR.Space...');
+                
+                const ocrRequestBody = {
+                    base64Image: base64,
+                    language: 'heb',
+                    isOverlayRequired: false,
+                    detectOrientation: true,
+                    isTable: true
+                };
 
-            if (result.ParsedResults && result.ParsedResults[0] && result.ParsedResults[0].ParsedText) {
-                const extractedText = result.ParsedResults[0].ParsedText;
+                const ocrController = new AbortController();
+                const ocrTimeoutId = setTimeout(() => ocrController.abort(), 10000);
+
+                response = await fetch('https://api.ocr.space/parse/image', {
+                    method: 'POST',
+                    headers: {
+                        'apikey': 'helloworld',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(ocrRequestBody),
+                    signal: ocrController.signal
+                });
+
+                clearTimeout(ocrTimeoutId);
+
+                if (response.ok) {
+                    result = await response.json();
+                    console.log('OCR.Space Result:', result);
+                    
+                    if (result.ParsedResults && result.ParsedResults[0]) {
+                        extractedText = result.ParsedResults[0].ParsedText || '';
+                    }
+                }
+            }
+
+            if (extractedText.trim()) {
                 const ticketDetails = parseTicketDetails(extractedText);
                 
                 updateTicketData({
@@ -74,9 +122,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     if (nextStep) {
                         nextStep();
                     }
-                }, 1000); // Small delay to show success message
-            } else if (result.ErrorMessage) {
-                throw new Error(`OCR Error: ${result.ErrorMessage}`);
+                }, 1000);
             } else {
                 throw new Error("לא ניתן לחלץ טקסט מהתמונה");
             }
