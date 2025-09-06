@@ -160,7 +160,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
         {
             heading: "אשר את הפרטים",
             description: "בדוק את פרטי הכרטיס",
-            height: "h-[680px]",
+            height: "h-[620px]",
             width: "w-[880px]",
             content: <StepThreeUploadTicket 
                 nextStep={nextStep} 
