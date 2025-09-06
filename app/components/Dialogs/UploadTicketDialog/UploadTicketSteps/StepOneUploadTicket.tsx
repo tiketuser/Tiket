@@ -68,6 +68,13 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 });
                 
                 setUploadStatus("OCR הושלם בהצלחה!");
+                
+                // Auto-advance to next step after successful OCR
+                setTimeout(() => {
+                    if (nextStep) {
+                        nextStep();
+                    }
+                }, 1000); // Small delay to show success message
             } else if (result.ErrorMessage) {
                 throw new Error(`OCR Error: ${result.ErrorMessage}`);
             } else {
