@@ -274,13 +274,13 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     const canProceed = ticketData?.uploadedFile || barcode.length > 0;
 
     return (
-        <div className="w-[668px] mt-12">
+        <div className="w-full max-w-[668px] mt-6 sm:mt-12 px-4 sm:px-0 mx-auto">
 
-            <p className="text-heading-5-desktop font-bold">תמונת כרטיס</p>
-            <p className="text-text-medium font-bold">גרור או בחר תמונה של הכרטיס מהמכשיר</p>
-            <p className="text-text-medium font-light">ודא שהתמונה ברורה ושכל פרטי הכרטיס נראים היטב.</p>
+            <p className="text-lg sm:text-heading-5-desktop font-bold">תמונת כרטיס</p>
+            <p className="text-sm sm:text-text-medium font-bold">גרור או בחר תמונה של הכרטיס מהמכשיר</p>
+            <p className="text-sm sm:text-text-medium font-light">ודא שהתמונה ברורה ושכל פרטי הכרטיס נראים היטב.</p>
 
-            <div className="w-full flex items-center justify-between h-[140px] mt-3">
+            <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:h-[140px] mt-3">
 
                 {/* Left side: File input, label, and status text */}
                 <div className="flex flex-col gap-2">
@@ -334,7 +334,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 </div>
 
                 {/* Right side: Image preview */}
-                <div className="w-[120px] h-[120px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden mx-auto sm:mx-0">
                     {previewUrl ? (
                         <Image 
                             src={previewUrl}
@@ -356,15 +356,15 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 
             <div className="border-t-4 mt-6 border-highlight w-full"></div>
 
-            <p className="text-heading-5-desktop font-bold mt-16">קוד ידני</p>
-            <p className="text-text-medium font-bold">הכנס את קוד הברקוד שעל הכרטיס</p>
-            <p className="text-text-medium font-light">ודא את המספר כמה פעמים לפני שליחה</p>
+            <p className="text-lg sm:text-heading-5-desktop font-bold mt-8 sm:mt-16">קוד ידני</p>
+            <p className="text-sm sm:text-text-medium font-bold">הכנס את קוד הברקוד שעל הכרטיס</p>
+            <p className="text-sm sm:text-text-medium font-light">ודא את המספר כמה פעמים לפני שליחה</p>
 
-            <div className="flex items-center gap-4 mt-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-6">
                 <CustomInput 
                     name="barcode" 
                     id="barcode" 
-                    width="w-[392px]" 
+                    width="w-full sm:w-[392px]" 
                     placeholder="מספר ברקוד"
                     value={barcode}
                     onChange={handleBarcodeChange}
@@ -393,7 +393,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 
             <button 
                 id="nextStep"
-                className={`btn w-[456px] h-[48px] min-h-0 btn-secondary text-text-large font-normal mt-12 mx-auto block ${
+                className={`btn w-full max-w-[456px] h-[48px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal mt-8 sm:mt-12 mx-auto block ${
                     canProceed && !ticketData?.isProcessing
                         ? 'bg-primary text-white hover:bg-primary/90'
                         : 'bg-secondary text-white cursor-not-allowed'

@@ -137,8 +137,8 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
         {
             heading: "העלה את הכרטיס שלך למכירה",
             description: "בחר אחת מהדרכים",
-            height: "h-[912px]",
-            width: "w-[880px]",
+            height: "h-[90vh] max-h-[912px] sm:h-[912px]",
+            width: "w-[95vw] max-w-[880px] sm:w-[880px]",
             content: <StepOneUploadTicket 
                 nextStep={nextStep} 
                 ticketData={ticketData} 
@@ -148,8 +148,8 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
         {
             heading: "תמחר את הכרטיס שלך",
             description: "ציין את המחיר המבוקש",
-            height: "h-[704px]",
-            width: "w-[880px]",
+            height: "h-[90vh] max-h-[704px] sm:h-[704px]",
+            width: "w-[95vw] max-w-[880px] sm:w-[880px]",
             content: <StepTwoUploadTicket 
                 nextStep={nextStep} 
                 prevStep={prevStep} 
@@ -160,8 +160,8 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
         {
             heading: "אשר את הפרטים",
             description: "בדוק את פרטי הכרטיס",
-            height: "h-[620px]",
-            width: "w-[880px]",
+            height: "h-[90vh] max-h-[620px] sm:h-[620px]",
+            width: "w-[95vw] max-w-[880px] sm:w-[880px]",
             content: <StepThreeUploadTicket 
                 nextStep={nextStep} 
                 prevStep={prevStep} 
@@ -172,8 +172,8 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
         {
             heading: "פורסם בהצלחה!",
             description: "הכרטיס שלך פורסם בהצלחה!",
-            height: "h-[766px]",
-            width: "w-[880px]",
+            height: "h-[90vh] max-h-[766px] sm:h-[766px]",
+            width: "w-[95vw] max-w-[880px] sm:w-[880px]",
             content: <StepFourUploadTicket 
                 nextStep={nextStep} 
                 prevStep={prevStep} 
