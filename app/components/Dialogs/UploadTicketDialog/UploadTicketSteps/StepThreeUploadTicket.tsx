@@ -73,16 +73,15 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             <div className="w-[668px] mt-12 pr-36">
                 {/* Title and Subtitle */}
                 <p className="text-heading-5-desktop font-bold">
-                    אימות פרטי כרטיס
+                    אשר את הפרטים
                 </p>
                 <p className="text-text-medium font-bold text-strongText">
-                    בדוק ותקן את הפרטים שחולצו מהכרטיס. ודא שכל המידע נכון לפני הפרסום.            
+                    בדוק את פרטי הכרטיס לפני הפרסום. ודא שכל המידע נכון ומלא.            
                 </p>         
             </div> 
 
             {/* Preview Card */}
             <div className="mt-8">
-                <p className="text-text-medium font-bold mb-4">תצוגה מקדימה:</p>
                 <MinimalCard 
                     price={ticketData?.pricing?.askingPrice || 0}
                     title={editableDetails.artist || editableDetails.title || "ללא כותרת"}
@@ -92,117 +91,108 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                 />
             </div>
 
-            {/* Essential Fields Only */}
-            <div className="space-y-6 mt-8 w-[600px]">
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">פרטי האירוע</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">כותרת האירוע *</label>
-                            <CustomInput 
-                                id="title"
-                                name="title"
-                                width="w-full"
-                                placeholder="שם האמן/אירוע"
-                                value={editableDetails.title}
-                                onChange={(e) => handleDetailChange('title', e.target.value)}
-                            />
-                        </div>
+            {/* Simple Clean Form */}
+            <div className="mt-8 w-[700px] space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">כותרת האירוע *</label>
+                        <CustomInput 
+                            id="title"
+                            name="title"
+                            width="w-full"
+                            placeholder="שם האמן/אירוע"
+                            value={editableDetails.title}
+                            onChange={(e) => handleDetailChange('title', e.target.value)}
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">תאריך *</label>
-                            <CustomInput 
-                                id="date"
-                                name="date"
-                                width="w-full"
-                                placeholder="15 אוק׳"
-                                value={editableDetails.date}
-                                onChange={(e) => handleDetailChange('date', e.target.value)}
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">תאריך *</label>
+                        <CustomInput 
+                            id="date"
+                            name="date"
+                            width="w-full"
+                            placeholder="15 אוק׳"
+                            value={editableDetails.date}
+                            onChange={(e) => handleDetailChange('date', e.target.value)}
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">מקום</label>
-                            <CustomInput 
-                                id="venue"
-                                name="venue"
-                                width="w-full"
-                                placeholder="היכל התרבות - תל אביב"
-                                value={editableDetails.venue}
-                                onChange={(e) => handleDetailChange('venue', e.target.value)}
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">מקום</label>
+                        <CustomInput 
+                            id="venue"
+                            name="venue"
+                            width="w-full"
+                            placeholder="היכל התרבות - תל אביב"
+                            value={editableDetails.venue}
+                            onChange={(e) => handleDetailChange('venue', e.target.value)}
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">שעה</label>
-                            <CustomInput 
-                                id="time"
-                                name="time"
-                                width="w-full"
-                                placeholder="20:00"
-                                value={editableDetails.time}
-                                onChange={(e) => handleDetailChange('time', e.target.value)}
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">שעה</label>
+                        <CustomInput 
+                            id="time"
+                            name="time"
+                            width="w-full"
+                            placeholder="20:00"
+                            value={editableDetails.time}
+                            onChange={(e) => handleDetailChange('time', e.target.value)}
+                        />
                     </div>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">מיקום המושב</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">יציע</label>
-                            <CustomInput 
-                                id="section"
-                                name="section"
-                                width="w-full"
-                                placeholder="4"
-                                value={editableDetails.section}
-                                onChange={(e) => handleDetailChange('section', e.target.value)}
-                            />
-                        </div>
+                <div className="grid grid-cols-3 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">יציע</label>
+                        <CustomInput 
+                            id="section"
+                            name="section"
+                            width="w-full"
+                            placeholder="4"
+                            value={editableDetails.section}
+                            onChange={(e) => handleDetailChange('section', e.target.value)}
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">שורה</label>
-                            <CustomInput 
-                                id="row"
-                                name="row"
-                                width="w-full"
-                                placeholder="24"
-                                value={editableDetails.row}
-                                onChange={(e) => handleDetailChange('row', e.target.value)}
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">שורה</label>
+                        <CustomInput 
+                            id="row"
+                            name="row"
+                            width="w-full"
+                            placeholder="24"
+                            value={editableDetails.row}
+                            onChange={(e) => handleDetailChange('row', e.target.value)}
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">מקום</label>
-                            <CustomInput 
-                                id="seat"
-                                name="seat"
-                                width="w-full"
-                                placeholder="15"
-                                value={editableDetails.seat}
-                                onChange={(e) => handleDetailChange('seat', e.target.value)}
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">מקום</label>
+                        <CustomInput 
+                            id="seat"
+                            name="seat"
+                            width="w-full"
+                            placeholder="15"
+                            value={editableDetails.seat}
+                            onChange={(e) => handleDetailChange('seat', e.target.value)}
+                        />
                     </div>
                 </div>
-            </div>
 
-            {/* Pricing Summary */}
-            {ticketData?.pricing && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6 mt-6 w-[600px]">
-                    <h3 className="text-lg font-semibold text-green-800 mb-3">💰 סיכום תמחור</h3>
-                    <div className="space-y-2">
-                        <p className="text-green-700 text-lg font-semibold">מחיר מבוקש: ₪{ticketData.pricing.askingPrice}</p>
+                {/* Pricing Summary */}
+                {ticketData?.pricing && (
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mt-6">
+                        <p className="text-primary font-semibold">מחיר מבוקש: ₪{ticketData.pricing.askingPrice}</p>
                         {ticketData.pricing.allowPriceSuggestions && (
-                            <p className="text-green-600">
-                                מאפשר הצעות מחיר: ₪{ticketData.pricing.minPrice} - ₪{ticketData.pricing.maxPrice}
+                            <p className="text-primary/70 text-sm">
+                                מאפשר הצעות: ₪{ticketData.pricing.minPrice} - ₪{ticketData.pricing.maxPrice}
                             </p>
                         )}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
 
             <div className="flex justify-center gap-10 mt-14">

@@ -22,12 +22,50 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         setUploadStatus("מעבד קובץ...");
         updateTicketData({ isProcessing: true, extractionError: undefined });
 
-        // Simulate quick OCR processing with basic text extraction
-        // In production, you'd integrate with a more reliable OCR service
-        setTimeout(() => {
-            try {
-                // For demo purposes, create some sample extracted details
-                const ticketDetails = {
+        try {
+            // Create FormData for OCR.Space API
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('language', 'heb');
+            formData.append('isOverlayRequired', 'false');
+            formData.append('detectOrientation', 'true');
+
+            // Call OCR.Space API with shorter timeout
+            const response = await Promise.race([
+                fetch('https://api.ocr.space/parse/image', {
+                    method: 'POST',
+                    headers: {
+                        'apikey': 'helloworld',
+                    },
+                    body: formData
+                }),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('timeout')), 8000)
+                )
+            ]) as Response;
+
+            const result = await response.json();
+
+            if (result.ParsedResults && result.ParsedResults[0]) {
+                const extractedText = result.ParsedResults[0].ParsedText;
+                const ticketDetails = parseTicketDetails(extractedText);
+                
+                updateTicketData({
+                    extractedText,
+                    ticketDetails,
+                    isProcessing: false
+                });
+                
+                setUploadStatus("קובץ עובד בהצלחה!");
+            } else {
+                throw new Error("לא ניתן לחלץ טקסט");
+            }
+        } catch (error) {
+            console.error('OCR Error:', error);
+            // Set basic empty details for manual entry
+            updateTicketData({
+                isProcessing: false,
+                ticketDetails: {
                     title: "",
                     artist: "",
                     date: "",
@@ -36,25 +74,13 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     seat: "",
                     row: "",
                     section: "",
+                    barcode: "",
                     originalPrice: null
-                };
-                
-                updateTicketData({
-                    extractedText: "טקסט נבחר מהתמונה...",
-                    ticketDetails,
-                    isProcessing: false
-                });
-                
-                setUploadStatus("תמונה הועלתה - מלא פרטים ידנית");
-            } catch (error) {
-                console.error('OCR Error:', error);
-                updateTicketData({
-                    isProcessing: false,
-                    extractionError: "אפשר להמשיך למילוי פרטים ידני"
-                });
-                setUploadStatus("מעבר למילוי ידני");
-            }
-        }, 1000); // Quick 1-second processing
+                },
+                extractionError: "מעבר למילוי ידני"
+            });
+            setUploadStatus("תמונה הועלתה - מלא פרטים ידנית");
+        }
     };
 
     const parseTicketDetails = (text: string) => {
