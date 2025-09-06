@@ -91,15 +91,15 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                 />
             </div>
 
-            {/* Centered Form */}
-            <div className="mt-6 w-[600px] mx-auto space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+            {/* Compact Centered Form */}
+            <div className="mt-4 w-[560px] mx-auto space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">כותרת האירוע *</label>
                         <CustomInput 
                             id="title"
                             name="title"
-                            width="w-[280px]"
+                            width="w-[270px]"
                             placeholder="שם האמן/אירוע"
                             value={editableDetails.title}
                             onChange={(e) => handleDetailChange('title', e.target.value)}
@@ -111,7 +111,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                         <CustomInput 
                             id="date"
                             name="date"
-                            width="w-[280px]"
+                            width="w-[270px]"
                             placeholder="15 אוק׳"
                             value={editableDetails.date}
                             onChange={(e) => handleDetailChange('date', e.target.value)}
@@ -123,7 +123,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                         <CustomInput 
                             id="venue"
                             name="venue"
-                            width="w-[280px]"
+                            width="w-[270px]"
                             placeholder="היכל התרבות - תל אביב"
                             value={editableDetails.venue}
                             onChange={(e) => handleDetailChange('venue', e.target.value)}
@@ -135,7 +135,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                         <CustomInput 
                             id="time"
                             name="time"
-                            width="w-[280px]"
+                            width="w-[270px]"
                             placeholder="20:00"
                             value={editableDetails.time}
                             onChange={(e) => handleDetailChange('time', e.target.value)}
@@ -143,13 +143,13 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">יציע</label>
                         <CustomInput 
                             id="section"
                             name="section"
-                            width="w-[180px]"
+                            width="w-[170px]"
                             placeholder="4"
                             value={editableDetails.section}
                             onChange={(e) => handleDetailChange('section', e.target.value)}
@@ -161,7 +161,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                         <CustomInput 
                             id="row"
                             name="row"
-                            width="w-[180px]"
+                            width="w-[170px]"
                             placeholder="24"
                             value={editableDetails.row}
                             onChange={(e) => handleDetailChange('row', e.target.value)}
@@ -173,7 +173,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                         <CustomInput 
                             id="seat"
                             name="seat"
-                            width="w-[180px]"
+                            width="w-[170px]"
                             placeholder="15"
                             value={editableDetails.seat}
                             onChange={(e) => handleDetailChange('seat', e.target.value)}
@@ -183,10 +183,10 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
                 {/* Pricing Summary */}
                 {ticketData?.pricing && (
-                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mt-4">
-                        <p className="text-primary font-semibold">מחיר מבוקש: ₪{ticketData.pricing.askingPrice}</p>
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-2 mt-3 w-[560px]">
+                        <p className="text-primary font-semibold text-sm">מחיר מבוקש: ₪{ticketData.pricing.askingPrice}</p>
                         {ticketData.pricing.allowPriceSuggestions && (
-                            <p className="text-primary/70 text-sm">
+                            <p className="text-primary/70 text-xs">
                                 מאפשר הצעות: ₪{ticketData.pricing.minPrice} - ₪{ticketData.pricing.maxPrice}
                             </p>
                         )}
@@ -195,7 +195,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             </div>
 
 
-            <div className="flex justify-center gap-10 mt-14">
+            <div className="flex justify-center gap-10 mt-8">
                 <button 
                     type="button"
                     className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-text-large font-normal"
