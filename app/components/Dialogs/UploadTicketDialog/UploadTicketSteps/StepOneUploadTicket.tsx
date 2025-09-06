@@ -23,30 +23,41 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         updateTicketData({ isProcessing: true, extractionError: undefined });
 
         try {
-            // Create FormData for OCR.Space API
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('language', 'heb');
-            formData.append('isOverlayRequired', 'false');
-            formData.append('detectOrientation', 'true');
+            // Convert file to base64 for better API compatibility
+            const base64 = await fileToBase64(file);
+            
+            const requestBody = {
+                base64Image: base64,
+                language: 'heb',
+                isOverlayRequired: false,
+                detectOrientation: true,
+                isTable: true
+            };
 
-            // Call OCR.Space API with shorter timeout
-            const response = await Promise.race([
-                fetch('https://api.ocr.space/parse/image', {
-                    method: 'POST',
-                    headers: {
-                        'apikey': 'helloworld',
-                    },
-                    body: formData
-                }),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('timeout')), 8000)
-                )
-            ]) as Response;
+            // Call OCR.Space API with improved configuration
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+            const response = await fetch('https://api.ocr.space/parse/image', {
+                method: 'POST',
+                headers: {
+                    'apikey': 'helloworld',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
 
             const result = await response.json();
+            console.log('OCR Result:', result);
 
-            if (result.ParsedResults && result.ParsedResults[0]) {
+            if (result.ParsedResults && result.ParsedResults[0] && result.ParsedResults[0].ParsedText) {
                 const extractedText = result.ParsedResults[0].ParsedText;
                 const ticketDetails = parseTicketDetails(extractedText);
                 
@@ -56,12 +67,25 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     isProcessing: false
                 });
                 
-                setUploadStatus("קובץ עובד בהצלחה!");
+                setUploadStatus("OCR הושלם בהצלחה!");
+            } else if (result.ErrorMessage) {
+                throw new Error(`OCR Error: ${result.ErrorMessage}`);
             } else {
-                throw new Error("לא ניתן לחלץ טקסט");
+                throw new Error("לא ניתן לחלץ טקסט מהתמונה");
             }
         } catch (error) {
             console.error('OCR Error:', error);
+            
+            // Provide helpful error message
+            let errorMessage = "מעבר למילוי ידני";
+            if (error instanceof Error) {
+                if (error.name === 'AbortError') {
+                    errorMessage = "OCR לוקח יותר מדי זמן - מעבר למילוי ידני";
+                } else if (error.message.includes('API Error')) {
+                    errorMessage = "שירות OCR לא זמין - מעבר למילוי ידני";
+                }
+            }
+            
             // Set basic empty details for manual entry
             updateTicketData({
                 isProcessing: false,
@@ -77,10 +101,28 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     barcode: "",
                     originalPrice: undefined
                 },
-                extractionError: "מעבר למילוי ידני"
+                extractionError: errorMessage
             });
             setUploadStatus("תמונה הועלתה - מלא פרטים ידנית");
         }
+    };
+
+    // Helper function to convert file to base64
+    const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                if (typeof reader.result === 'string') {
+                    // Remove data URL prefix (data:image/jpeg;base64,)
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                } else {
+                    reject(new Error('Failed to convert file to base64'));
+                }
+            };
+            reader.onerror = error => reject(error);
+        });
     };
 
     const parseTicketDetails = (text: string) => {
