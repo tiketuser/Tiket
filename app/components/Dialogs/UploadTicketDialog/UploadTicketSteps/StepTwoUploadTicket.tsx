@@ -82,11 +82,11 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
     const canProceed = askingPrice && parseFloat(askingPrice) > 0;
 
     return (
-        <div className="w-[518px] mt-12">
+        <div className="w-full max-w-[518px] mt-6 sm:mt-12 px-4 sm:px-0 mx-auto">
 
             {/* Title and Subtitle */}
-            <p className="text-heading-5-desktop font-bold">תמחור כרטיס</p>
-            <p className="text-text-medium font-bold text-strongText">
+            <p className="text-lg sm:text-heading-5-desktop font-bold">תמחור כרטיס</p>
+            <p className="text-sm sm:text-text-medium font-bold text-strongText">
                 תוכל לאפשר לקונים להציע מחירים נמוכים יותר או להציע מחיר קבוע בלבד.
             </p>    
             
@@ -99,7 +99,7 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
                 </div>
             )}
 
-            <div className="w-[456px] mx-auto block mt-7">
+            <div className="w-full max-w-[456px] mx-auto block mt-7">
                 {/* Price Input */}
                 <CustomInput 
                     id="ticket-price" 
@@ -119,13 +119,13 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
                     />
                 </div>
 
-                {/* Min - Max Price Inputs (Aligned Horizontally) - Only show if price suggestions are enabled */}
+                {/* Min - Max Price Inputs (Stacked on mobile, horizontal on desktop) - Only show if price suggestions are enabled */}
                 {allowPriceSuggestions && (
-                    <div className="flex gap-8 mx-auto mt-4">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mx-auto mt-4">
                         <CustomInput 
                             id="min-price" 
                             name="min-price"
-                            width="w-[212px]" 
+                            width="w-full sm:w-[212px]" 
                             placeholder="מחיר מינימום" 
                             value={minPrice}
                             onChange={(e) => handlePriceChange(e.target.value, 'min')}
@@ -134,7 +134,7 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
                         <CustomInput 
                             id="max-price" 
                             name="max-price"
-                            width="w-[212px]" 
+                            width="w-full sm:w-[212px]" 
                             placeholder="מחיר מקסימום" 
                             value={maxPrice}
                             onChange={(e) => handlePriceChange(e.target.value, 'max')}
@@ -148,10 +148,10 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
                     <ToggleCheckBox />
                 </div>
 
-                <div className="flex justify-center gap-10 mt-14">
+                <div className="flex justify-center gap-4 sm:gap-10 mt-8 sm:mt-14">
                     <button 
                         type="button"
-                        className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-text-large font-normal"
+                        className="btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm sm:text-text-large font-normal"
                         onClick={() => prevStep && prevStep()}
                     >
                         לשלב הקודם
@@ -159,7 +159,7 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
 
                     <button 
                         type="button"
-                        className={`btn w-[140px] h-[46px] min-h-0 btn-secondary text-text-large font-normal ${
+                        className={`btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
                             canProceed 
                                 ? 'bg-primary text-white hover:bg-primary/90'
                                 : 'bg-secondary text-white cursor-not-allowed'

@@ -165,10 +165,10 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                 )}
             </div>
 
-            <div className="flex justify-center gap-10 mt-6">
+            <div className="flex justify-center gap-4 sm:gap-10 mt-6">
                 <button 
                     type="button"
-                    className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-text-large font-normal"
+                    className="btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm sm:text-text-large font-normal"
                     onClick={() => prevStep && prevStep()}
                 >
                     לשלב הקודם
@@ -176,7 +176,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
                 <button 
                     type="button"
-                    className={`btn w-[140px] h-[46px] min-h-0 btn-secondary text-text-large font-normal ${
+                    className={`btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
                         canProceed 
                             ? 'bg-primary text-white hover:bg-primary/90'
                             : 'bg-secondary text-white cursor-not-allowed'
