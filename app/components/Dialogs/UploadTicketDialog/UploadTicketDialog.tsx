@@ -33,6 +33,11 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
             return false;
         }
 
+        if (!db || !storage) {
+            setPublishError("מסד הנתונים לא זמין כרגע");
+            return false;
+        }
+
         setIsPublishing(true);
         setPublishError(null);
 
@@ -40,7 +45,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
             let imageUrl = null;
 
             // Upload image if available
-            if (ticketData.uploadedFile) {
+            if (ticketData.uploadedFile && storage) {
                 const imageRef = ref(storage, `ticket-images/${Date.now()}-${ticketData.uploadedFile.name}`);
                 const snapshot = await uploadBytes(imageRef, ticketData.uploadedFile);
                 imageUrl = await getDownloadURL(snapshot.ref);
@@ -82,7 +87,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
             };
 
             // Add to Firestore
-            const docRef = await addDoc(collection(db, 'tickets'), ticketDoc);
+            const docRef = await addDoc(collection(db!, 'tickets'), ticketDoc);
             
             // Update ticket data with the document ID
             setTicketData(prev => ({ ...prev, ticketId: docRef.id }));
@@ -155,7 +160,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
         {
             heading: "אשר את הפרטים",
             description: "בדוק את פרטי הכרטיס",
-            height: "h-[830px]",
+            height: "h-[750px]",
             width: "w-[880px]",
             content: <StepThreeUploadTicket 
                 nextStep={nextStep} 

@@ -75,7 +75,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     row: "",
                     section: "",
                     barcode: "",
-                    originalPrice: null
+                    originalPrice: undefined
                 },
                 extractionError: "מעבר למילוי ידני"
             });

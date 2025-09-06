@@ -70,7 +70,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
     return (
         <div>
-            <div className="w-[668px] mt-12 pr-36">
+            <div className="w-[668px] mt-8 pr-36">
                 {/* Title and Subtitle */}
                 <p className="text-heading-5-desktop font-bold">
                     אשר את הפרטים
