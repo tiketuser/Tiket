@@ -22,6 +22,11 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         setUploadStatus("מעבד קובץ...");
         updateTicketData({ isProcessing: true, extractionError: undefined });
 
+        // Create timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('OCR processing timeout')), 15000); // 15 second timeout
+        });
+
         try {
             // Create FormData for OCR.Space API
             const formData = new FormData();
@@ -31,8 +36,8 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             formData.append('detectOrientation', 'true');
             formData.append('isTable', 'true');
 
-            // Call OCR.Space API (using free tier)
-            const response = await fetch('https://api.ocr.space/parse/image', {
+            // Call OCR.Space API with timeout
+            const fetchPromise = fetch('https://api.ocr.space/parse/image', {
                 method: 'POST',
                 headers: {
                     'apikey': 'helloworld', // Free tier API key
@@ -40,6 +45,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 body: formData
             });
 
+            const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
             const result = await response.json();
 
             if (result.ParsedResults && result.ParsedResults[0]) {
@@ -62,9 +68,11 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             console.error('OCR Error:', error);
             updateTicketData({
                 isProcessing: false,
-                extractionError: "שגיאה בעיבוד התמונה. נסה שוב."
+                extractionError: error instanceof Error && error.message === 'OCR processing timeout' 
+                    ? "עיבוד התמונה לוקח יותר מדי זמן. תוכל להמשיך ללא OCR." 
+                    : "שגיאה בעיבוד התמונה. תוכל להמשיך ללא OCR."
             });
-            setUploadStatus("שגיאה בעיבוד");
+            setUploadStatus("אפשר להמשיך ללא OCR");
         }
     };
 
@@ -196,9 +204,22 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     </div>
                     
                     {ticketData?.isProcessing && (
-                        <div className="flex items-center gap-2">
-                            <div className="loading loading-spinner loading-sm"></div>
-                            <span className="text-sm text-blue-600">מעבד עם OCR...</span>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="loading loading-spinner loading-sm"></div>
+                                <span className="text-sm text-blue-600">מעבד עם OCR...</span>
+                            </div>
+                            <button 
+                                className="btn btn-sm btn-outline"
+                                onClick={() => {
+                                    if (updateTicketData) {
+                                        updateTicketData({ isProcessing: false });
+                                        setUploadStatus("דילוג על OCR - אפשר להמשיך");
+                                    }
+                                }}
+                            >
+                                דלג על OCR
+                            </button>
                         </div>
                     )}
                 </div>
