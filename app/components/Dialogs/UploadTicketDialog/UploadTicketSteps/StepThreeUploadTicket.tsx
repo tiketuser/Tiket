@@ -91,15 +91,15 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                 />
             </div>
 
-            {/* Simple Clean Form */}
-            <div className="mt-8 w-[700px] space-y-6">
-                <div className="grid grid-cols-2 gap-6">
+            {/* Centered Form */}
+            <div className="mt-6 w-[600px] mx-auto space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">כותרת האירוע *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">כותרת האירוע *</label>
                         <CustomInput 
                             id="title"
                             name="title"
-                            width="w-full"
+                            width="w-[280px]"
                             placeholder="שם האמן/אירוע"
                             value={editableDetails.title}
                             onChange={(e) => handleDetailChange('title', e.target.value)}
@@ -107,11 +107,11 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">תאריך *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">תאריך *</label>
                         <CustomInput 
                             id="date"
                             name="date"
-                            width="w-full"
+                            width="w-[280px]"
                             placeholder="15 אוק׳"
                             value={editableDetails.date}
                             onChange={(e) => handleDetailChange('date', e.target.value)}
@@ -119,11 +119,11 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">מקום</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">מקום</label>
                         <CustomInput 
                             id="venue"
                             name="venue"
-                            width="w-full"
+                            width="w-[280px]"
                             placeholder="היכל התרבות - תל אביב"
                             value={editableDetails.venue}
                             onChange={(e) => handleDetailChange('venue', e.target.value)}
@@ -131,11 +131,11 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">שעה</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">שעה</label>
                         <CustomInput 
                             id="time"
                             name="time"
-                            width="w-full"
+                            width="w-[280px]"
                             placeholder="20:00"
                             value={editableDetails.time}
                             onChange={(e) => handleDetailChange('time', e.target.value)}
@@ -143,13 +143,13 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">יציע</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">יציע</label>
                         <CustomInput 
                             id="section"
                             name="section"
-                            width="w-full"
+                            width="w-[180px]"
                             placeholder="4"
                             value={editableDetails.section}
                             onChange={(e) => handleDetailChange('section', e.target.value)}
@@ -157,11 +157,11 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">שורה</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">שורה</label>
                         <CustomInput 
                             id="row"
                             name="row"
-                            width="w-full"
+                            width="w-[180px]"
                             placeholder="24"
                             value={editableDetails.row}
                             onChange={(e) => handleDetailChange('row', e.target.value)}
@@ -169,11 +169,11 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">מקום</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">מקום</label>
                         <CustomInput 
                             id="seat"
                             name="seat"
-                            width="w-full"
+                            width="w-[180px]"
                             placeholder="15"
                             value={editableDetails.seat}
                             onChange={(e) => handleDetailChange('seat', e.target.value)}
@@ -183,7 +183,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
                 {/* Pricing Summary */}
                 {ticketData?.pricing && (
-                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mt-6">
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mt-4">
                         <p className="text-primary font-semibold">מחיר מבוקש: ₪{ticketData.pricing.askingPrice}</p>
                         {ticketData.pricing.allowPriceSuggestions && (
                             <p className="text-primary/70 text-sm">
