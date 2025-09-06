@@ -73,36 +73,43 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             if (!extractedText.trim()) {
                 console.log('Falling back to OCR.Space...');
                 
-                const ocrRequestBody = {
-                    base64Image: base64,
-                    language: 'heb',
-                    isOverlayRequired: false,
-                    detectOrientation: true,
-                    isTable: true
-                };
+                try {
+                    const ocrRequestBody = {
+                        base64Image: base64,
+                        language: 'heb',
+                        isOverlayRequired: false,
+                        detectOrientation: true,
+                        isTable: true
+                    };
 
-                const ocrController = new AbortController();
-                const ocrTimeoutId = setTimeout(() => ocrController.abort(), 10000);
+                    const ocrController = new AbortController();
+                    const ocrTimeoutId = setTimeout(() => {
+                        ocrController.abort();
+                    }, 10000);
 
-                response = await fetch('https://api.ocr.space/parse/image', {
-                    method: 'POST',
-                    headers: {
-                        'apikey': 'helloworld',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(ocrRequestBody),
-                    signal: ocrController.signal
-                });
+                    response = await fetch('https://api.ocr.space/parse/image', {
+                        method: 'POST',
+                        headers: {
+                            'apikey': 'helloworld',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(ocrRequestBody),
+                        signal: ocrController.signal
+                    });
 
-                clearTimeout(ocrTimeoutId);
+                    clearTimeout(ocrTimeoutId);
 
-                if (response.ok) {
-                    result = await response.json();
-                    console.log('OCR.Space Result:', result);
-                    
-                    if (result.ParsedResults && result.ParsedResults[0]) {
-                        extractedText = result.ParsedResults[0].ParsedText || '';
+                    if (response.ok) {
+                        result = await response.json();
+                        console.log('OCR.Space Result:', result);
+                        
+                        if (result.ParsedResults && result.ParsedResults[0]) {
+                            extractedText = result.ParsedResults[0].ParsedText || '';
+                        }
                     }
+                } catch (fallbackError) {
+                    console.log('OCR.Space also failed:', fallbackError);
+                    // Continue to manual entry
                 }
             }
 
