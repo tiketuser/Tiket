@@ -8,6 +8,7 @@ import StepOneUploadTicket from "./UploadTicketSteps/StepOneUploadTicket";
 import StepTwoUploadTicket from "./UploadTicketSteps/StepTwoUploadTicket";
 import StepThreeUploadTicket from "./UploadTicketSteps/StepThreeUploadTicket";
 import StepFourUploadTicket from "./UploadTicketSteps/StepFourUploadTicket";
+import { TicketData } from "./UploadTicketSteps/UploadTicketInterface.types";
 
 interface UploadTicketInterface {
     isOpen: boolean;
@@ -16,10 +17,16 @@ interface UploadTicketInterface {
 
 const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }) => {
     const [step, setStep] = useState(1);
+    const [ticketData, setTicketData] = useState<TicketData>({});
 
     // Callback functions to change steps
     const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+    // Function to update ticket data
+    const updateTicketData = (updates: Partial<TicketData>) => {
+        setTicketData(prev => ({ ...prev, ...updates }));
+    };
 
     // Define steps as objects containing heading, description, and content
     const steps = [
@@ -28,28 +35,47 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({ isOpen, onClose }
             description: "בחר אחת מהדרכים",
             height: "h-[912px]",
             width: "w-[880px]",
-            content: <StepOneUploadTicket nextStep={nextStep}/>
+            content: <StepOneUploadTicket 
+                nextStep={nextStep} 
+                ticketData={ticketData} 
+                updateTicketData={updateTicketData} 
+            />
         },
         {
             heading: "תמחר את הכרטיס שלך",
             description: "ציין את המחיר המבוקש",
             height: "h-[704px]",
             width: "w-[880px]",
-            content: <StepTwoUploadTicket nextStep={nextStep} prevStep={prevStep}/>  
+            content: <StepTwoUploadTicket 
+                nextStep={nextStep} 
+                prevStep={prevStep} 
+                ticketData={ticketData} 
+                updateTicketData={updateTicketData} 
+            />  
         },
         {
             heading: "אשר את הפרטים",
             description: "בדוק את פרטי הכרטיס",
             height: "h-[830px]",
             width: "w-[880px]",
-            content: <StepThreeUploadTicket nextStep={nextStep} prevStep={prevStep}/>
+            content: <StepThreeUploadTicket 
+                nextStep={nextStep} 
+                prevStep={prevStep} 
+                ticketData={ticketData} 
+                updateTicketData={updateTicketData} 
+            />
         },
         {
             heading: "פורסם בהצלחה!",
             description: "הכרטיס שלך פורסם בהצלחה!",
             height: "h-[766px]",
             width: "w-[880px]",
-            content: <StepFourUploadTicket nextStep={nextStep} prevStep={prevStep}/>
+            content: <StepFourUploadTicket 
+                nextStep={nextStep} 
+                prevStep={prevStep} 
+                ticketData={ticketData} 
+                updateTicketData={updateTicketData} 
+            />
         }
     ];
 
