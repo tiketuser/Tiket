@@ -12,6 +12,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { hasValidConfig } from "../../../firebase";
 
 import HeartIcon from "../../../public/images/NavBar/Heart.svg";
 import Arrow from "../../../public/images/Home Page/Web/Arrow.svg";
@@ -33,6 +34,11 @@ const NavBar = () => {
   const router = useRouter();
 
   useEffect(() => {
+    if (!hasValidConfig) {
+      // Firebase not configured, skip auth setup
+      return;
+    }
+    
     const auth = getAuth();
     setPersistence(auth, browserLocalPersistence);
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {

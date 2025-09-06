@@ -17,25 +17,39 @@ import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth"
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "demo-key",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-project",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:123456789:web:abc123def456",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Check if we have real Firebase config
+const hasValidConfig = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
+                      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-// Initialize Firestore
-const db = getFirestore(app);
-const auth = getAuth();
-setPersistence(auth, browserLocalPersistence);
+let app, db, auth;
+
+if (hasValidConfig) {
+  // Initialize Firebase with real config
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth();
+  setPersistence(auth, browserLocalPersistence);
+} else {
+  // Use mock implementations for development
+  console.warn("Firebase not configured - using mock implementations for development");
+  app = null;
+  db = null;
+  auth = null;
+}
 
 export {
   app,
   db,
+  auth,
+  hasValidConfig,
   collection,
   getDocs,
   setDoc,
