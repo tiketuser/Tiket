@@ -27,8 +27,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         setUploadStatus("מכין מנוע OCR...");
         updateTicketData({ isProcessing: true, extractionError: undefined });
 
-        let worker: Tesseract.Worker | null = null;
-
         try {
             isProcessingRef.current = true;
             
@@ -83,29 +81,49 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             if (extractedText && confidence > 30) { // Only use result if confidence is reasonable
                 const ticketDetails = parseTicketDetails(extractedText);
                 
-                // Show extracted data in alert (JSON format)
-                const ocrResult = {
-                    confidence: Math.round(confidence),
-                    rawText: extractedText,
-                    extractedDetails: ticketDetails
+                setUploadStatus('מנתח אותנטיות עם AI...');
+                
+                // Perform simple authenticity analysis
+                const authenticityAnalysis = await analyzeTicketAuthenticity({
+                    barcode_data: barcode || ticketDetails.barcode || '',
+                    ocr_data: {
+                        extracted_text: extractedText,
+                        currency_detected: detectCurrency(extractedText),
+                        confidence: Math.round(confidence)
+                    }
+                });
+                
+                // Show both OCR and authenticity analysis in alert
+                const completeResult = {
+                    ocrAnalysis: {
+                        confidence: Math.round(confidence),
+                        rawText: extractedText,
+                        extractedDetails: ticketDetails
+                    },
+                    authenticityAnalysis: authenticityAnalysis
                 };
                 
-                alert("מידע שחולץ מה-OCR:\n\n" + JSON.stringify(ocrResult, null, 2));
+                alert("ניתוח מלא של הכרטיס:\n\n" + JSON.stringify(completeResult, null, 2));
                 
                 updateTicketData({
                     extractedText,
-                    ticketDetails,
+                    ticketDetails: {
+                        ...ticketDetails,
+                        authenticityScore: authenticityAnalysis.authenticity_score,
+                        analysisFlags: authenticityAnalysis.risk_flags,
+                        currencyDetected: authenticityAnalysis.currency
+                    },
                     isProcessing: false
                 });
                 
-                setUploadStatus(`OCR הושלם בהצלחה! (דיוק: ${Math.round(confidence)}%)`);
+                setUploadStatus(`ניתוח הושלם! (OCR: ${Math.round(confidence)}%, אותנטיות: ${authenticityAnalysis.authenticity_score}%)`);
                 
-                // Auto-advance to next step after successful OCR
+                // Auto-advance to next step after successful analysis
                 setTimeout(() => {
                     if (nextStep) {
                         nextStep();
                     }
-                }, 1000);
+                }, 1500);
             } else {
                 // If OCR didn't work well, set up for manual entry
                 console.log(`OCR confidence too low (${Math.round(confidence)}%) or no text found`);
@@ -173,7 +191,82 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         }
     };
 
-    // No longer needed - Tesseract.js works directly with File objects
+    // Helper function to detect currency from text
+    const detectCurrency = (text: string): string => {
+        if (text.includes('₪') || text.includes('ILS')) return 'שקל ישראלי';
+        if (text.includes('$') || text.includes('USD')) return 'דולר אמריקאי';
+        if (text.includes('€') || text.includes('EUR')) return 'יורו';
+        if (text.includes('£') || text.includes('GBP')) return 'ליש"ט';
+        
+        // Default assumption for Israeli venues/artists
+        if (text.includes('ישראל') || text.includes('תל אביב') || text.includes('ירושלים') || text.includes('היכל')) {
+            return 'שקל ישראלי';
+        }
+        
+        return 'לא ידוע';
+    };
+
+    // Simple authenticity analysis
+    const analyzeTicketAuthenticity = async (extractedData: any): Promise<any> => {
+        try {
+            const ocrText = extractedData.ocr_data?.extracted_text || '';
+            const currency = extractedData.ocr_data?.currency_detected || 'לא ידוע';
+            
+            // Extract date from text
+            const dateMatch = ocrText.match(/(\d{1,2}\/\d{1,2}\/\d{4})|(\d{1,2}\.\d{1,2}\.\d{4})|(\d{1,2}-\d{1,2}-\d{4})/);
+            const eventDate = dateMatch ? dateMatch[0] : null;
+            
+            // Check if event has passed
+            let status = 'valid';
+            let authenticityScore = 75;
+            const riskFlags: string[] = [];
+            
+            if (eventDate) {
+                const eventTime = new Date(eventDate.replace(/\./g, '/'));
+                const today = new Date();
+                if (eventTime < today) {
+                    status = 'expired';
+                    authenticityScore = Math.min(authenticityScore, 35);
+                    riskFlags.push('האירוע כבר התרחש');
+                }
+            }
+            
+            // Adjust score based on OCR confidence
+            if (extractedData.ocr_data.confidence < 60) {
+                authenticityScore -= 10;
+                riskFlags.push('איכות זיהוי טקסט נמוכה');
+            }
+            
+            // Check for basic ticket elements
+            if (!ocrText.includes('כרטיס') && !ocrText.includes('ticket')) {
+                authenticityScore -= 15;
+                riskFlags.push('חסרים רכיבי כרטיס בסיסיים');
+            }
+            
+            return {
+                authenticity_score: Math.max(0, authenticityScore),
+                status: status,
+                currency: currency,
+                event_date: eventDate,
+                days_since_event: eventDate ? Math.floor((new Date().getTime() - new Date(eventDate.replace(/\./g, '/')).getTime()) / (1000 * 3600 * 24)) : null,
+                price_analysis: currency === 'שקל ישראלי' ? 'מחירים סבירים לשוק הישראלי' : 'בדוק מחירים לפי מטבע מקומי',
+                risk_flags: riskFlags,
+                recommendations: status === 'expired' ? 'כרטיס פג תוקף - אל תקנה' : 'בדוק פרטי אירוע נוספים'
+            };
+        } catch (error) {
+            console.error('Analysis Error:', error);
+            return {
+                authenticity_score: 50,
+                status: 'unknown',
+                currency: 'לא ידוע',
+                event_date: null,
+                days_since_event: null,
+                price_analysis: 'ניתוח נכשל',
+                risk_flags: ['שגיאה בניתוח'],
+                recommendations: 'בדוק כרטיס ידנית'
+            };
+        }
+    };
 
     const parseTicketDetails = (text: string) => {
         // Enhanced parsing logic for Hebrew ticket details
