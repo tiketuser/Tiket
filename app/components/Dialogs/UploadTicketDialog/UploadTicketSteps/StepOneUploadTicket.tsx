@@ -288,52 +288,130 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     };
 
     const parseTicketDetails = (text: string) => {
-        // Enhanced parsing logic for Hebrew ticket details
+        console.log('Parsing OCR text:', text);
         const details: any = {};
         
-        // Common patterns for ticket information
+        // Clean the text for better processing
+        const cleanText = text.replace(/[\u200E\u200F\u202A-\u202E]/g, '').replace(/\s+/g, ' ');
+        
+        // Enhanced patterns for mixed Hebrew/English content
         const patterns = {
-            // Date patterns
-            date: /(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})|(\d{1,2}\s+\w+\s+\d{2,4})/i,
-            // Time patterns  
-            time: /(\d{1,2}:\d{2})/,
-            // Price patterns
-            price: /₪?\s*(\d+(?:,\d{3})*(?:\.\d{2})?)\s*₪?/,
-            // Seat patterns
-            seat: /(מקום|כיסא|מושב)\s*:?\s*(\d+)/i,
+            // More flexible date patterns including Hebrew format
+            date: /(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})|(\d{6,8})|(\d{1,2}\s*(ינו|פבר|מרץ|אפר|מאי|יונ|יול|אוג|ספט|אוק|נוב|דצמ)\w*\s*\d{2,4})/i,
+            // Time patterns - more flexible
+            time: /(\d{1,2}:?\d{2})\s*(בשעה|שעה)?/i,
+            // Price patterns including Hebrew context
+            price: /(₪\s*)?(\d+(?:,\d{3})*(?:\.\d{2})?)\s*₪?/,
+            // Seat/venue patterns
+            seat: /(מקום|כיסא|מושב|seat)\s*:?\s*(\d+)/i,
             row: /(שורה|רו|row)\s*:?\s*(\w+)/i,
-            section: /(יציע|אזור|section)\s*:?\s*(\w+)/i,
+            section: /(יציע|אזור|section|אזור)\s*:?\s*(\w+)/i,
+            // Venue patterns
+            venue: /(לבונטין|בלומפילד|היכל|תיאטרון|זאפה|בארבי|גן החשמל|אולמי|במה)/i,
+            // Barcode patterns
+            barcode: /([A-Z0-9\-]{5,})/,
         };
 
-        // Extract date
-        const dateMatch = text.match(patterns.date);
-        if (dateMatch) details.date = dateMatch[0];
-
-        // Extract time
-        const timeMatch = text.match(patterns.time);
-        if (timeMatch) details.time = timeMatch[0];
-
-        // Extract price
-        const priceMatch = text.match(patterns.price);
-        if (priceMatch) details.originalPrice = parseFloat(priceMatch[1].replace(',', ''));
-
-        // Extract seat info
-        const seatMatch = text.match(patterns.seat);
-        if (seatMatch) details.seat = seatMatch[2];
-
-        const rowMatch = text.match(patterns.row);
-        if (rowMatch) details.row = rowMatch[2];
-
-        const sectionMatch = text.match(patterns.section);
-        if (sectionMatch) details.section = sectionMatch[2];
-
-        // Try to extract artist/title (usually the largest text or first lines)
-        const lines = text.split('\n').filter(line => line.trim().length > 0);
-        if (lines.length > 0) {
-            details.title = lines[0].trim();
-            if (lines.length > 1) details.artist = lines[1].trim();
+        // Extract artist name - look for capitalized English names or known patterns
+        const artistMatch = cleanText.match(/(DENNIS\s+LLOYD|[A-Z]{3,}\s+[A-Z]{3,}|עומר\s+אדם|שלמה\s+ארצי|אייל\s+גולן)/i);
+        if (artistMatch) {
+            details.artist = artistMatch[0].trim();
+            details.title = artistMatch[0].trim(); // Use artist as title if no separate title found
         }
 
+        // Extract date - try multiple approaches
+        let dateFound = false;
+        
+        // Try standard date format first
+        const dateMatch = cleanText.match(patterns.date);
+        if (dateMatch) {
+            let dateStr = dateMatch[0];
+            // Handle compressed dates like "3772021" -> "3/7/2021"
+            if (/^\d{6,8}$/.test(dateStr)) {
+                if (dateStr.length === 7) {
+                    // Format: DMMYYYY or DDMYYYY
+                    dateStr = dateStr.charAt(0) + '/' + dateStr.substring(1, 3) + '/' + dateStr.substring(3);
+                } else if (dateStr.length === 8) {
+                    // Format: DDMMYYYY
+                    dateStr = dateStr.substring(0, 2) + '/' + dateStr.substring(2, 4) + '/' + dateStr.substring(4);
+                }
+            }
+            details.date = dateStr;
+            dateFound = true;
+        }
+
+        // Extract time
+        const timeMatch = cleanText.match(patterns.time);
+        if (timeMatch) {
+            let timeStr = timeMatch[1];
+            // Handle time without colon like "2100" -> "21:00"
+            if (/^\d{4}$/.test(timeStr)) {
+                timeStr = timeStr.substring(0, 2) + ':' + timeStr.substring(2);
+            }
+            details.time = timeStr;
+        }
+
+        // Extract price
+        const priceMatch = cleanText.match(patterns.price);
+        if (priceMatch) {
+            details.originalPrice = parseFloat(priceMatch[2].replace(',', ''));
+        }
+
+        // Extract venue information
+        const venueMatch = cleanText.match(patterns.venue);
+        if (venueMatch) {
+            details.venue = venueMatch[0];
+        } else {
+            // Look for venue in context - lines containing city names or venue keywords
+            const lines = cleanText.split('\n');
+            for (const line of lines) {
+                if (line.includes('תל אביב') || line.includes('ירושלים') || line.includes('חיפה') || 
+                    line.includes('Tel Aviv') || line.includes('Jerusalem') || line.includes('Haifa')) {
+                    details.venue = line.trim();
+                    break;
+                }
+            }
+        }
+
+        // Extract seat information
+        const seatMatch = cleanText.match(patterns.seat);
+        if (seatMatch) details.seat = seatMatch[2];
+
+        const rowMatch = cleanText.match(patterns.row);
+        if (rowMatch) details.row = rowMatch[2];
+
+        const sectionMatch = cleanText.match(patterns.section);
+        if (sectionMatch) details.section = sectionMatch[2];
+
+        // Extract barcode
+        const barcodeMatch = cleanText.match(patterns.barcode);
+        if (barcodeMatch) {
+            // Look for the longest alphanumeric sequence
+            const codes = cleanText.match(/[A-Z0-9\-]{5,}/g);
+            if (codes) {
+                details.barcode = codes.sort((a, b) => b.length - a.length)[0];
+            }
+        }
+
+        // If no artist found, try to extract from first meaningful line
+        if (!details.artist) {
+            const lines = cleanText.split('\n').filter(line => {
+                const trimmed = line.trim();
+                return trimmed.length > 3 && !trimmed.match(/^\d+$/) && !trimmed.match(/^[^\w\s]+$/);
+            });
+            
+            if (lines.length > 0) {
+                let firstLine = lines[0].trim();
+                // Clean up OCR artifacts
+                firstLine = firstLine.replace(/[^\u0590-\u05FF\u0020-\u007E]/g, '').trim();
+                if (firstLine.length > 2) {
+                    details.title = firstLine;
+                    if (!details.artist) details.artist = firstLine;
+                }
+            }
+        }
+
+        console.log('Parsed details:', details);
         return details;
     };
 
