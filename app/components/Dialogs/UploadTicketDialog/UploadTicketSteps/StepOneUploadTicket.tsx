@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useState, useRef } from "react";
 import Tesseract from 'tesseract.js';
-import TestExtractionButton from '../../../TestExtractionButton';
 
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import CustomInput from "@/app/components/CustomInput/CustomInput";
@@ -18,10 +17,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     const [uploadStatus, setUploadStatus] = useState<string>("לא זוהה קובץ");
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [barcode, setBarcode] = useState<string>("");
-    const [useAIEnhancement, setUseAIEnhancement] = useState<boolean>(false);
-    const [aiProcessingStatus, setAiProcessingStatus] = useState<string>("");
-    const [aiResults, setAiResults] = useState<any>(null);
-    const [ocrResults, setOcrResults] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const workerRef = useRef<Tesseract.Worker | null>(null);
     const isProcessingRef = useRef<boolean>(false);
@@ -79,13 +74,14 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 return;
             }
             
+            console.log('Tesseract OCR Result:', { text, confidence });
             let extractedText = text.trim();
 
             // If Tesseract didn't extract good text, still proceed to manual entry
             if (extractedText && confidence > 30) { // Only use result if confidence is reasonable
                 const ticketDetails = parseTicketDetails(extractedText);
                 
-                setUploadStatus('מנתח אותנטיות...');
+                setUploadStatus('מנתח אותנטיות עם AI...');
                 
                 // Perform simple authenticity analysis
                 const authenticityAnalysis = await analyzeTicketAuthenticity({
@@ -96,6 +92,37 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                         confidence: Math.round(confidence)
                     }
                 });
+                
+                // Show organized extracted information in alert
+                const organizedInfo = `🎫 מידע שחולץ מהכרטיס:
+
+📋 פרטי אירוע:
+• שם האירוע: ${ticketDetails.title || 'לא זוהה'}
+• אמן: ${ticketDetails.artist || 'לא זוהה'}
+• תאריך: ${ticketDetails.date || authenticityAnalysis.event_date || 'לא זוהה'}
+• שעה: ${ticketDetails.time || 'לא זוהה'}
+• מקום: ${ticketDetails.venue || 'לא זוהה'}
+
+💺 פרטי ישיבה:
+• מקום: ${ticketDetails.seat || 'לא זוהה'}
+• שורה: ${ticketDetails.row || 'לא זוהה'}
+• יציע/אזור: ${ticketDetails.section || 'לא זוהה'}
+
+💰 פרטי מחיר:
+• מחיר מקורי: ${ticketDetails.originalPrice ? ticketDetails.originalPrice + ' ' + authenticityAnalysis.currency : 'לא זוהה'}
+• מטבע: ${authenticityAnalysis.currency}
+
+🔍 ניתוח אותנטיות:
+• ציון אמינות: ${authenticityAnalysis.authenticity_score}%
+• סטטוס: ${authenticityAnalysis.status}
+• סיכונים: ${authenticityAnalysis.risk_flags.join(', ') || 'אין'}
+• המלצה: ${authenticityAnalysis.recommendations}
+
+📊 פרטים טכניים:
+• דיוק OCR: ${Math.round(confidence)}%
+• ברקוד: ${barcode || ticketDetails.barcode || 'לא זוהה'}`;
+                
+                alert(organizedInfo);
                 
                 updateTicketData({
                     extractedText,
@@ -109,9 +136,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 });
                 
                 setUploadStatus(`ניתוח הושלם! (OCR: ${Math.round(confidence)}%, אותנטיות: ${authenticityAnalysis.authenticity_score}%)`);
-                
-                // Store OCR results for potential merging
-                setOcrResults(ticketDetails);
                 
                 // Auto-advance to next step after successful analysis
                 setTimeout(() => {
@@ -264,11 +288,14 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     };
 
     const parseTicketDetails = (text: string) => {
+        console.log('Parsing OCR text:', text);
         const details: any = {};
         
         // Clean text and split into lines for better analysis
         const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         const fullText = text.replace(/[\u200E\u200F\u202A-\u202E]/g, '').replace(/\s+/g, ' ');
+        
+        console.log('Text lines:', lines);
         
         // Extract DENNIS LLOYD specifically from the OCR pattern
         const dennisLloydMatch = fullText.match(/DENNIS[\s\S]*?LLOYD/i);
@@ -303,124 +330,68 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         }
         
         // Focus ONLY on numbers that appear with currency symbols
+        console.log('Full text for price detection:', fullText);
         
-        // Normalize numbers before pattern matching - handle OCR artifacts
-        const normalizeNumbers = (text: string) => {
-            // Join digits separated by spaces/punctuation (OCR artifacts like "3 95.00" -> "395.00")
-            let normalized = text.replace(/(\d)[\s\u200E\u200F'.,](?=\d)/g, '$1');
-            
-            // Handle thousands separators: "1,395" or "1.395" -> "1395" (when followed by groups of 3)
-            normalized = normalized.replace(/(\d{1,3})([.,]\d{3})+(?!\d)/g, (match, first, rest) => {
-                return first + rest.replace(/[.,]/g, '');
-            });
-            
-            return normalized;
-        };
-        
-        const normalizedText = normalizeNumbers(fullText);
-        
-        // More robust currency patterns that handle OCR noise
+        // Comprehensive currency symbol patterns - only look for numbers WITH currency symbols
         const currencyPatterns = [
-            // Hebrew patterns - more flexible for OCR noise
-            /(\d+(?:\.\d+)?)\s*₪/g,                              // 123₪ or 123.45₪
-            /₪\s*(\d+(?:\.\d+)?)/g,                              // ₪123 or ₪123.45
-            /(\d+(?:\.\d+)?)\s*שח/gi,                            // 123 שח
-            /(\d+(?:\.\d+)?)\s*ש"ח/gi,                           // 123 ש"ח  
-            /(\d+(?:\.\d+)?)\s*שקל/gi,                           // 123 שקל
-            /שקל\s*(\d+(?:\.\d+)?)/gi,                           // שקל 123
-            /(?:^|[\s:;,.-])ל(\d+(?:\.\d+)?)(?!\d)/g,            // ל25 (with word boundaries)
+            // Hebrew patterns
+            /(\d+)\s*₪/g,                    // 123₪
+            /₪\s*(\d+)/g,                    // ₪123
+            /(\d+)\s*שח/gi,                  // 123 שח
+            /(\d+)\s*ש"ח/gi,                 // 123 ש"ח
+            /(\d+)\s*שקל/gi,                 // 123 שקל
+            /שקל\s*(\d+)/gi,                 // שקל 123
+            /מחיר[\s:]*(\d+)/gi,             // מחיר: 123
+            /ל(\d+)/g,                       // ל25 (like in the OCR output)
             
-            // Price with context - flexible for OCR artifacts
-            /מחיר[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,                // מחיר: [noise] 123
-            /סכום[\s\w:]*[^0-9]*(\d+(?:\.\d+)?)/gi,              // סכום העסקה: [noise] 123  
-            /עלות[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,                // עלות: [noise] 123
-            /תשלום[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,               // תשלום: [noise] 123
-            
-            // English/International patterns
-            /(\d+(?:\.\d+)?)\s*\$/g,                             // 123$ or 123.45$
-            /\$\s*(\d+(?:\.\d+)?)/g,                             // $123 or $123.45
-            /(\d+(?:\.\d+)?)\s*USD/gi,                           // 123 USD
-            /USD\s*(\d+(?:\.\d+)?)/gi,                           // USD 123
-            /(\d+(?:\.\d+)?)\s*EUR/gi,                           // 123 EUR
-            /EUR\s*(\d+(?:\.\d+)?)/gi,                           // EUR 123
-            /(\d+(?:\.\d+)?)\s*GBP/gi,                           // 123 GBP
-            /GBP\s*(\d+(?:\.\d+)?)/gi,                           // GBP 123
-            /(\d+(?:\.\d+)?)\s*NIS/gi,                           // 123 NIS
-            /NIS\s*(\d+(?:\.\d+)?)/gi,                           // NIS 123
-            
-            // Price with English context - flexible for OCR artifacts  
-            /price[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,               // price: [noise] 123
-            /cost[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,                // cost: [noise] 123
-            /total[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,               // total: [noise] 123
+            // English/International patterns  
+            /(\d+)\s*\$/g,                   // 123$
+            /\$\s*(\d+)/g,                   // $123
+            /(\d+)\s*USD/gi,                 // 123 USD
+            /USD\s*(\d+)/gi,                 // USD 123
+            /(\d+)\s*EUR/gi,                 // 123 EUR
+            /EUR\s*(\d+)/gi,                 // EUR 123
+            /(\d+)\s*GBP/gi,                 // 123 GBP
+            /GBP\s*(\d+)/gi,                 // GBP 123
+            /(\d+)\s*NIS/gi,                 // 123 NIS
+            /NIS\s*(\d+)/gi,                 // NIS 123
         ];
         
         let foundPrices = [];
         
-        // Search for ALL currency patterns in normalized text
+        // Search for ALL currency patterns
         for (const pattern of currencyPatterns) {
             let match;
-            while ((match = pattern.exec(normalizedText)) !== null) {
-                // Handle both integer and decimal prices
-                const priceStr = match[1];
-                const price = parseFloat(priceStr);
-                
-                // More inclusive price range - reject only clearly wrong values
-                if (price >= 5 && price <= 10000 && !isNaN(price)) {
+            while ((match = pattern.exec(fullText)) !== null) {
+                const price = parseInt(match[1]);
+                if (price >= 10 && price <= 5000) { // Reasonable price range
                     foundPrices.push({
-                        price: price, // Keep original precision
-                        displayPrice: Math.round(price), // Round for display only
+                        price: price,
                         context: match[0],
-                        pattern: pattern.source,
-                        fullMatch: match[0]
+                        pattern: pattern.source
                     });
                 }
             }
         }
         
+        console.log('Found prices with currency symbols:', foundPrices);
         
         // Select the best price if multiple found
         if (foundPrices.length > 0) {
-            // Sort by likelihood - prefer prices in typical ranges and strong context
+            // Sort by likelihood - prefer prices in typical ranges
             foundPrices.sort((a, b) => {
-                // Score based on typical ticket price ranges and context quality
-                let scoreA = 1;
-                let scoreB = 1;
-                
-                // Price range scoring (higher score = more likely)
-                if (a.price >= 50 && a.price <= 1000) scoreA += 10;
-                else if (a.price >= 20 && a.price <= 2000) scoreA += 5;
-                else if (a.price >= 5 && a.price <= 5000) scoreA += 2;
-                
-                if (b.price >= 50 && b.price <= 1000) scoreB += 10;
-                else if (b.price >= 20 && b.price <= 2000) scoreB += 5;
-                else if (b.price >= 5 && b.price <= 5000) scoreB += 2;
-                
-                // Enhanced context quality scoring - more currency indicators
-                const contextA = a.context.toLowerCase();
-                const contextB = b.context.toLowerCase();
-                
-                // Strong price indicators
-                if (contextA.includes('מחיר') || contextA.includes('price')) scoreA += 5;
-                if (contextA.includes('סכום') || contextA.includes('total') || contextA.includes('cost')) scoreA += 4;
-                
-                if (contextB.includes('מחיר') || contextB.includes('price')) scoreB += 5;
-                if (contextB.includes('סכום') || contextB.includes('total') || contextB.includes('cost')) scoreB += 4;
-                
-                // Currency symbols and indicators
-                if (contextA.includes('₪') || contextA.includes('שח') || contextA.includes('שקל')) scoreA += 3;
-                if (contextA.includes('$') || contextA.includes('usd') || contextA.includes('eur') || contextA.includes('nis')) scoreA += 3;
-                
-                if (contextB.includes('₪') || contextB.includes('שח') || contextB.includes('שקל')) scoreB += 3;
-                if (contextB.includes('$') || contextB.includes('usd') || contextB.includes('eur') || contextB.includes('nis')) scoreB += 3;
-                
-                // Penalize very long sequences that look like IDs/barcodes
-                if (a.context.match(/\d{10,}/)) scoreA -= 2;
-                if (b.context.match(/\d{10,}/)) scoreB -= 2;
-                
+                // Score based on typical ticket price ranges
+                const scoreA = (a.price >= 50 && a.price <= 800) ? 10 : 
+                              (a.price >= 25 && a.price <= 1500) ? 5 : 1;
+                const scoreB = (b.price >= 50 && b.price <= 800) ? 10 : 
+                              (b.price >= 25 && b.price <= 1500) ? 5 : 1;
                 return scoreB - scoreA;
             });
             
-            details.originalPrice = foundPrices[0].displayPrice; // Use rounded price for display
+            details.originalPrice = foundPrices[0].price;
+            console.log('Selected price:', foundPrices[0].price, 'from context:', foundPrices[0].context);
+        } else {
+            console.log('No prices found with currency symbols');
         }
         
         // Look for barcode - longest sequence of numbers and letters
@@ -456,6 +427,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             const venueMatch = fullText.match(pattern);
             if (venueMatch) {
                 details.venue = venueMatch[1].trim();
+                console.log('Found venue:', details.venue);
                 break;
             }
         }
@@ -469,6 +441,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     cleanLine.includes('אול') || cleanLine.includes('מרכז') || cleanLine.includes('היכל')) {
                     if (cleanLine.length > 10 && cleanLine.length < 100) { // Reasonable venue name length
                         details.venue = cleanLine;
+                        console.log('Found venue from line analysis:', cleanLine);
                         break;
                     }
                 }
@@ -502,16 +475,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             }
         }
         
-        
-        // Update ticket data with OCR results
-        if (updateTicketData) {
-            updateTicketData({
-                ticketDetails: details,
-                isProcessing: false,
-                extractionError: undefined
-            });
-        }
-        
+        console.log('Final parsed details:', details);
         return details;
     };
 
@@ -539,71 +503,8 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         
         setUploadStatus(`קובץ נבחר: ${file.name}`);
         
-        // Process with OCR first
+        // Process with OCR
         await processWithOCR(file);
-        
-        // Optionally enhance with Advanced AI if enabled
-        if (useAIEnhancement) {
-            try {
-                const aiResult = await processWithAI(file);
-                
-                if (aiResult && aiResult.final_results && aiResult.final_results.overall_confidence > 0.3) {
-                    // Use advanced AI results - they're already processed and merged
-                    const advancedResults = {
-                        title: aiResult.final_results.artist || aiResult.ai_extraction?.artist,
-                        artist: aiResult.final_results.artist || aiResult.ai_extraction?.artist,
-                        venue: aiResult.final_results.venue || aiResult.ai_extraction?.venue,
-                        date: aiResult.final_results.date || aiResult.ai_extraction?.date,
-                        time: aiResult.final_results.time || aiResult.ai_extraction?.time,
-                        originalPrice: aiResult.final_results.price || (aiResult.ai_extraction?.price ? parseFloat(aiResult.ai_extraction.price) : undefined),
-                        currencyDetected: aiResult.final_results.currency || '₪',
-                        row: aiResult.final_results.row,
-                        seat: aiResult.final_results.seat,
-                        section: aiResult.final_results.section,
-                        barcode: aiResult.final_results.barcode,
-                        authenticityScore: Math.round(aiResult.final_results.overall_confidence * 100),
-                        extractionSources: {
-                            ai_advanced: true,
-                            ocr: !!ticketData?.ticketDetails,
-                            confidence: aiResult.final_results.overall_confidence,
-                            israeliArtistsChecked: aiResult.extraction_metadata?.israeli_artists_checked || 0,
-                            israeliVenuesChecked: aiResult.extraction_metadata?.israeli_venues_checked || 0
-                        }
-                    };
-                    
-                    // Merge with any existing OCR data, preferring AI results for high confidence fields
-                    const currentDetails = ticketData?.ticketDetails || {};
-                    const finalDetails = {
-                        ...currentDetails,
-                        ...advancedResults,
-                        // Keep OCR data if AI didn't find certain fields
-                        originalPrice: advancedResults.originalPrice || currentDetails.originalPrice,
-                        authenticityScore: Math.max(
-                            advancedResults.authenticityScore || 0,
-                            currentDetails.authenticityScore || 0
-                        )
-                    };
-                    
-                    // Update ticket data with advanced AI results
-                    if (updateTicketData) {
-                        updateTicketData({
-                            ticketDetails: finalDetails,
-                            isProcessing: false,
-                            extractionError: undefined
-                        });
-                    }
-                    
-                    const confidencePercent = Math.round(aiResult.final_results.overall_confidence * 100);
-                    setUploadStatus(`הושלם עם AI מתקדם! (${confidencePercent}% ביטחון, ${aiResult.enhanced_extraction?.artists?.length || 0} אמנים נבדקו)`);
-                    setAiResults(aiResult);
-                } else {
-                    setAiProcessingStatus("AI מתקדם לא מצא שיפורים משמעותיים - משתמש ב-OCR");
-                }
-            } catch (error) {
-                console.error('Advanced AI processing failed, using OCR results only:', error);
-                setAiProcessingStatus("שגיאה ב-AI מתקדם - משתמש בתוצאות OCR בלבד");
-            }
-        }
     };
 
     const handleBarcodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -617,123 +518,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 }
             });
         }
-    };
-
-    // Advanced AI Processing with Israeli context
-    const processWithAI = async (file: File) => {
-        if (!useAIEnhancement) return null;
-        
-        try {
-            setAiProcessingStatus("מעבד תמונה עם AI מתקדם לכרטיסים ישראליים...");
-            
-            const formData = new FormData();
-            formData.append('image', file);
-            
-            const startTime = Date.now();
-            const response = await fetch('/api/tickets/extract', {
-                method: 'POST',
-                body: formData,
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`AI processing failed: ${response.status} - ${errorData.error}`);
-            }
-            
-            const result = await response.json();
-            const processingTime = Date.now() - startTime;
-            
-            console.log(`Advanced extraction completed in ${processingTime}ms:`, {
-                artist: result.final_results?.artist,
-                venue: result.final_results?.venue, 
-                price: result.final_results?.price,
-                confidence: result.final_results?.overall_confidence?.toFixed(2)
-            });
-            
-            setAiProcessingStatus(`AI סיים! זיהה ${result.final_results?.artist ? 'אמן' : ''} ${result.final_results?.venue ? 'מקום' : ''} ${result.final_results?.price ? 'מחיר' : ''} (${Math.round((result.final_results?.overall_confidence || 0) * 100)}% ביטחון)`);
-            
-            return result;
-            
-        } catch (error) {
-            console.error('Advanced AI processing error:', error);
-            setAiProcessingStatus("שגיאה בעיבוד AI מתקדם");
-            return null;
-        }
-    };
-
-    // Merge OCR and AI results intelligently with confidence-based decisions
-    const mergeResults = (ocrData: any, aiData: any) => {
-        if (!ocrData && !aiData) return {};
-        if (!aiData) return ocrData;
-        if (!ocrData) return aiData;
-
-        // Start with OCR results as base
-        const merged = { ...ocrData };
-
-        // Define confidence thresholds and quality checks
-        const isHighConfidenceAI = aiData.confidence && aiData.confidence > 0.7;
-        const isMediumConfidenceAI = aiData.confidence && aiData.confidence > 0.5;
-
-        // Price merging - prefer more specific and reasonable values
-        if (aiData.price && typeof aiData.price === 'number' && aiData.price > 0) {
-            if (!merged.originalPrice || (isHighConfidenceAI && aiData.price < merged.originalPrice * 3)) {
-                merged.originalPrice = aiData.price;
-                merged.currency = aiData.currency || merged.currency;
-            }
-        }
-        
-        // Venue merging - prefer longer, more descriptive venue names
-        if (aiData.venue && typeof aiData.venue === 'string' && aiData.venue.length > 3) {
-            if (!merged.venue || (isMediumConfidenceAI && aiData.venue.length > merged.venue.length)) {
-                merged.venue = aiData.venue;
-            }
-        }
-        
-        // Artist/Title merging - prefer non-empty, reasonable length names
-        if (aiData.artist && typeof aiData.artist === 'string' && aiData.artist.length > 2) {
-            if (!merged.artist || (isHighConfidenceAI && aiData.artist.length > merged.artist.length)) {
-                merged.artist = aiData.artist;
-                if (aiData.title && aiData.title !== aiData.artist) {
-                    merged.title = aiData.title;
-                } else if (!merged.title) {
-                    merged.title = aiData.artist;
-                }
-            }
-        }
-
-        // Date/time merging - prefer AI if OCR didn't find valid dates
-        if (aiData.date && (!merged.date || merged.date.length < 8)) {
-            merged.date = aiData.date;
-        }
-        
-        if (aiData.time && (!merged.time || merged.time.length < 4)) {
-            merged.time = aiData.time;
-        }
-
-        // Seating information - fill missing fields
-        if (aiData.seat && !merged.seat) {
-            merged.seat = aiData.seat;
-        }
-        if (aiData.row && !merged.row) {
-            merged.row = aiData.row;
-        }
-        if (aiData.section && !merged.section) {
-            merged.section = aiData.section;
-        }
-
-        // Barcode - prefer longer, more complete barcodes
-        if (aiData.barcode && aiData.barcode.length > (merged.barcode?.length || 0)) {
-            merged.barcode = aiData.barcode;
-        }
-
-        // Add merging metadata
-        merged.extractionSources = {
-            ocr: !!ocrData,
-            ai: !!aiData,
-            aiConfidence: aiData.confidence || 0
-        };
-
-        return merged;
     };
 
     const canProceed = ticketData?.uploadedFile || barcode.length > 0;
@@ -807,46 +591,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                             </button>
                         </div>
                     )}
-                    
-                    {/* AI Enhancement Controls */}
-                    <div className="flex flex-col gap-2 mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center gap-2">
-                            <input 
-                                type="checkbox" 
-                                id="aiEnhancement"
-                                checked={useAIEnhancement}
-                                onChange={(e) => setUseAIEnhancement(e.target.checked)}
-                                className="checkbox checkbox-sm checkbox-primary"
-                            />
-                            <label htmlFor="aiEnhancement" className="text-sm text-gray-700 flex items-center gap-1 font-medium">
-                                <span>🤖</span>
-                                שיפור עם AI חזותי (אופציונלי)
-                            </label>
-                        </div>
-                        
-                        <div className="text-xs text-gray-600 mr-6">
-                            התמונה תישלח לשירות AI חיצוני (OpenAI) לניתוח מדויק יותר.
-                            <br />
-                            ללא הסכמה זו, המערכת תשתמש רק בזיהוי מקומי.
-                        </div>
-                        
-                        {aiProcessingStatus && (
-                            <div className="text-xs text-blue-600 flex items-center gap-1">
-                                <span>✨</span>
-                                {aiProcessingStatus}
-                            </div>
-                        )}
-                        
-                        {aiResults && (
-                            <div className="text-xs text-green-600 flex items-center gap-1">
-                                <span>🎯</span>
-                                AI זיהה {Object.keys(aiResults).length} שדות
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* Advanced Testing Component */}
-                    <TestExtractionButton />
                 </div>
 
                 {/* Right side: Image preview */}
