@@ -1,5 +1,8 @@
+'use client';
+
 import Image from "next/image";
 import { useState, useRef } from "react";
+import Tesseract from 'tesseract.js';
 
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import CustomInput from "@/app/components/CustomInput/CustomInput";
@@ -15,105 +18,69 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [barcode, setBarcode] = useState<string>("");
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const workerRef = useRef<Tesseract.Worker | null>(null);
+    const isProcessingRef = useRef<boolean>(false);
 
     const processWithOCR = async (file: File) => {
         if (!updateTicketData) return;
         
-        setUploadStatus("מעבד קובץ...");
+        setUploadStatus("מכין מנוע OCR...");
         updateTicketData({ isProcessing: true, extractionError: undefined });
 
+        let worker: Tesseract.Worker | null = null;
+
         try {
-            // Convert file to base64 for Google Vision API
-            const base64 = await fileToBase64(file);
+            isProcessingRef.current = true;
             
-            // Try Google Cloud Vision API first (better for Hebrew)
-            const visionRequestBody = {
-                requests: [{
-                    image: {
-                        content: base64
-                    },
-                    features: [{
-                        type: 'TEXT_DETECTION',
-                        maxResults: 1
-                    }],
-                    imageContext: {
-                        languageHints: ['he', 'en'] // Hebrew and English
+            // Initialize Tesseract worker with Hebrew and English support
+            setUploadStatus("מעביר תמונה לעיבוד...");
+            
+            const worker = await Tesseract.createWorker(['heb', 'eng'], 1, {
+                logger: (m) => {
+                    if (!isProcessingRef.current) return; // Don't update if cancelled
+                    console.log('OCR Progress:', m);
+                    if (m.status === 'recognizing text') {
+                        const progress = Math.round(m.progress * 100);
+                        setUploadStatus(`מזהה טקסט... ${progress}%`);
+                    } else if (m.status === 'loading language traineddata') {
+                        setUploadStatus('טוען מודל זיהוי עברית...');
+                    } else if (m.status === 'initializing tesseract') {
+                        setUploadStatus('מכין מנוע OCR...');
                     }
-                }]
-            };
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-            // Free Google Vision API endpoint (limited usage)
-            let response = await fetch('https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC8UpKk7gXODsaWQ6KvhKOOsQ6m8jKWSDw', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(visionRequestBody),
-                signal: controller.signal
+                }
             });
 
-            clearTimeout(timeoutId);
+            workerRef.current = worker;
 
-            let result;
-            let extractedText = '';
-
-            if (response.ok) {
-                result = await response.json();
-                console.log('Google Vision Result:', result);
-                
-                if (result.responses && result.responses[0] && result.responses[0].textAnnotations) {
-                    extractedText = result.responses[0].textAnnotations[0]?.description || '';
-                }
+            // Check if processing was cancelled
+            if (!isProcessingRef.current) {
+                await worker.terminate();
+                return;
             }
 
-            // Fallback to OCR.Space if Google Vision fails or returns empty
-            if (!extractedText.trim()) {
-                console.log('Falling back to OCR.Space...');
-                
-                try {
-                    const ocrRequestBody = {
-                        base64Image: base64,
-                        language: 'heb',
-                        isOverlayRequired: false,
-                        detectOrientation: true,
-                        isTable: true
-                    };
+            // Configure Tesseract for better accuracy
+            await worker.setParameters({
+                tessedit_page_seg_mode: '6', // Uniform block of text
+                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789אבגדהוזחטיכךלמםנןסעפףצץקרשת .,:-₪/',
+                preserve_interword_spaces: '1'
+            });
 
-                    const ocrController = new AbortController();
-                    const ocrTimeoutId = setTimeout(() => {
-                        ocrController.abort();
-                    }, 10000);
+            setUploadStatus('מתחיל זיהוי תוכן...');
 
-                    response = await fetch('https://api.ocr.space/parse/image', {
-                        method: 'POST',
-                        headers: {
-                            'apikey': 'helloworld',
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(ocrRequestBody),
-                        signal: ocrController.signal
-                    });
-
-                    clearTimeout(ocrTimeoutId);
-
-                    if (response.ok) {
-                        result = await response.json();
-                        console.log('OCR.Space Result:', result);
-                        
-                        if (result.ParsedResults && result.ParsedResults[0]) {
-                            extractedText = result.ParsedResults[0].ParsedText || '';
-                        }
-                    }
-                } catch (fallbackError) {
-                    console.log('OCR.Space also failed:', fallbackError);
-                    // Continue to manual entry
-                }
+            // Process the image with Tesseract.js
+            const { data: { text, confidence } } = await worker.recognize(file);
+            
+            // Check again if processing was cancelled after recognition
+            if (!isProcessingRef.current) {
+                await worker.terminate();
+                return;
             }
+            
+            console.log('Tesseract OCR Result:', { text, confidence });
+            let extractedText = text.trim();
 
-            if (extractedText.trim()) {
+            // If Tesseract didn't extract good text, still proceed to manual entry
+            if (extractedText && confidence > 30) { // Only use result if confidence is reasonable
                 const ticketDetails = parseTicketDetails(extractedText);
                 
                 updateTicketData({
@@ -122,7 +89,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     isProcessing: false
                 });
                 
-                setUploadStatus("OCR הושלם בהצלחה!");
+                setUploadStatus(`OCR הושלם בהצלחה! (דיוק: ${Math.round(confidence)}%)`);
                 
                 // Auto-advance to next step after successful OCR
                 setTimeout(() => {
@@ -131,18 +98,37 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     }
                 }, 1000);
             } else {
-                throw new Error("לא ניתן לחלץ טקסט מהתמונה");
+                // If OCR didn't work well, set up for manual entry
+                console.log(`OCR confidence too low (${Math.round(confidence)}%) or no text found`);
+                updateTicketData({
+                    isProcessing: false,
+                    ticketDetails: {
+                        title: "",
+                        artist: "",
+                        date: "",
+                        time: "",
+                        venue: "",
+                        seat: "",
+                        row: "",
+                        section: "",
+                        barcode: "",
+                        originalPrice: undefined
+                    },
+                    extractionError: "איכות הטקסט נמוכה - מעבר למילוי ידני"
+                });
+                setUploadStatus("תמונה הועלתה - מלא פרטים ידנית");
+                return;
             }
         } catch (error) {
-            console.error('OCR Error:', error);
+            console.error('Tesseract OCR Error:', error);
             
             // Provide helpful error message
             let errorMessage = "מעבר למילוי ידני";
             if (error instanceof Error) {
-                if (error.name === 'AbortError') {
-                    errorMessage = "OCR לוקח יותר מדי זמן - מעבר למילוי ידני";
-                } else if (error.message.includes('API Error')) {
-                    errorMessage = "שירות OCR לא זמין - מעבר למילוי ידני";
+                if (error.message.includes('loading')) {
+                    errorMessage = "טעינת מודל OCR נכשלה - מעבר למילוי ידני";
+                } else if (error.message.includes('recognize')) {
+                    errorMessage = "זיהוי הטקסט נכשל - מעבר למילוי ידני";
                 }
             }
             
@@ -164,26 +150,21 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 extractionError: errorMessage
             });
             setUploadStatus("תמונה הועלתה - מלא פרטים ידנית");
+        } finally {
+            // Always cleanup the worker
+            isProcessingRef.current = false;
+            if (workerRef.current) {
+                try {
+                    await workerRef.current.terminate();
+                    workerRef.current = null;
+                } catch (e) {
+                    console.log('Worker cleanup failed:', e);
+                }
+            }
         }
     };
 
-    // Helper function to convert file to base64
-    const fileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                if (typeof reader.result === 'string') {
-                    // Remove data URL prefix (data:image/jpeg;base64,)
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                } else {
-                    reject(new Error('Failed to convert file to base64'));
-                }
-            };
-            reader.onerror = error => reject(error);
-        });
-    };
+    // No longer needed - Tesseract.js works directly with File objects
 
     const parseTicketDetails = (text: string) => {
         // Enhanced parsing logic for Hebrew ticket details
@@ -247,6 +228,11 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 
         // Update ticket data with uploaded file
         updateTicketData({ uploadedFile: file });
+        
+        // Revoke previous URL to prevent memory leaks
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
         
         // Create preview URL
         const url = URL.createObjectURL(file);
@@ -320,10 +306,21 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                             </div>
                             <button 
                                 className="btn btn-sm btn-outline"
-                                onClick={() => {
+                                onClick={async () => {
+                                    // Cancel any running OCR process
+                                    isProcessingRef.current = false;
+                                    if (workerRef.current) {
+                                        try {
+                                            await workerRef.current.terminate();
+                                            workerRef.current = null;
+                                        } catch (e) {
+                                            console.log('Failed to cancel OCR:', e);
+                                        }
+                                    }
+                                    
                                     if (updateTicketData) {
                                         updateTicketData({ isProcessing: false });
-                                        setUploadStatus("דילוג על OCR - אפשר להמשיך");
+                                        setUploadStatus("מעבר למילוי ידני");
                                     }
                                 }}
                             >
