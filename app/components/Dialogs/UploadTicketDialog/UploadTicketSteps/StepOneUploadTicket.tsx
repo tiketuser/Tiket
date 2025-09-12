@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useRef } from "react";
 import Tesseract from 'tesseract.js';
+import TestExtractionButton from '../../../TestExtractionButton';
 
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import CustomInput from "@/app/components/CustomInput/CustomInput";
@@ -541,36 +542,66 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         // Process with OCR first
         await processWithOCR(file);
         
-        // Optionally enhance with AI if enabled
-        if (useAIEnhancement && ticketData?.ticketDetails) {
+        // Optionally enhance with Advanced AI if enabled
+        if (useAIEnhancement) {
             try {
-                setAiProcessingStatus("שולח לניתוח AI מתקדם...");
                 const aiResult = await processWithAI(file);
                 
-                if (aiResult && typeof aiResult === 'object' && aiResult.confidence > 0.5) {
-                    setAiProcessingStatus(`AI זיהה בביטחון ${Math.round(aiResult.confidence * 100)}%`);
+                if (aiResult && aiResult.final_results && aiResult.final_results.overall_confidence > 0.3) {
+                    // Use advanced AI results - they're already processed and merged
+                    const advancedResults = {
+                        title: aiResult.final_results.artist || aiResult.ai_extraction?.artist,
+                        artist: aiResult.final_results.artist || aiResult.ai_extraction?.artist,
+                        venue: aiResult.final_results.venue || aiResult.ai_extraction?.venue,
+                        date: aiResult.final_results.date || aiResult.ai_extraction?.date,
+                        time: aiResult.final_results.time || aiResult.ai_extraction?.time,
+                        originalPrice: aiResult.final_results.price || (aiResult.ai_extraction?.price ? parseFloat(aiResult.ai_extraction.price) : undefined),
+                        currencyDetected: aiResult.final_results.currency || '₪',
+                        row: aiResult.final_results.row,
+                        seat: aiResult.final_results.seat,
+                        section: aiResult.final_results.section,
+                        barcode: aiResult.final_results.barcode,
+                        authenticityScore: Math.round(aiResult.final_results.overall_confidence * 100),
+                        extractionSources: {
+                            ai_advanced: true,
+                            ocr: !!ticketData?.ticketDetails,
+                            confidence: aiResult.final_results.overall_confidence,
+                            israeliArtistsChecked: aiResult.extraction_metadata?.israeli_artists_checked || 0,
+                            israeliVenuesChecked: aiResult.extraction_metadata?.israeli_venues_checked || 0
+                        }
+                    };
                     
-                    // Merge AI results with existing OCR results
+                    // Merge with any existing OCR data, preferring AI results for high confidence fields
                     const currentDetails = ticketData?.ticketDetails || {};
-                    const mergedDetails = mergeResults(currentDetails, aiResult);
+                    const finalDetails = {
+                        ...currentDetails,
+                        ...advancedResults,
+                        // Keep OCR data if AI didn't find certain fields
+                        originalPrice: advancedResults.originalPrice || currentDetails.originalPrice,
+                        authenticityScore: Math.max(
+                            advancedResults.authenticityScore || 0,
+                            currentDetails.authenticityScore || 0
+                        )
+                    };
                     
-                    // Update ticket data with merged results
+                    // Update ticket data with advanced AI results
                     if (updateTicketData) {
                         updateTicketData({
-                            ticketDetails: mergedDetails,
+                            ticketDetails: finalDetails,
                             isProcessing: false,
                             extractionError: undefined
                         });
                     }
                     
-                    setUploadStatus(`הושלם + שיפור AI (${Math.round(aiResult.confidence * 100)}% ביטחון)`);
+                    const confidencePercent = Math.round(aiResult.final_results.overall_confidence * 100);
+                    setUploadStatus(`הושלם עם AI מתקדם! (${confidencePercent}% ביטחון, ${aiResult.enhanced_extraction?.artists?.length || 0} אמנים נבדקו)`);
                     setAiResults(aiResult);
                 } else {
-                    setAiProcessingStatus("AI לא מצא שיפורים משמעותיים");
+                    setAiProcessingStatus("AI מתקדם לא מצא שיפורים משמעותיים - משתמש ב-OCR");
                 }
             } catch (error) {
-                console.error('AI enhancement failed, using OCR results only');
-                setAiProcessingStatus("שגיאה בשיפור AI - משתמש בתוצאות OCR בלבד");
+                console.error('Advanced AI processing failed, using OCR results only:', error);
+                setAiProcessingStatus("שגיאה ב-AI מתקדם - משתמש בתוצאות OCR בלבד");
             }
         }
     };
@@ -588,33 +619,44 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         }
     };
 
-    // AI Vision Enhancement
+    // Advanced AI Processing with Israeli context
     const processWithAI = async (file: File) => {
         if (!useAIEnhancement) return null;
         
         try {
-            setAiProcessingStatus("שולח תמונה לניתוח AI...");
+            setAiProcessingStatus("מעבד תמונה עם AI מתקדם לכרטיסים ישראליים...");
             
             const formData = new FormData();
             formData.append('image', file);
             
+            const startTime = Date.now();
             const response = await fetch('/api/tickets/extract', {
                 method: 'POST',
                 body: formData,
             });
             
             if (!response.ok) {
-                throw new Error(`AI processing failed: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(`AI processing failed: ${response.status} - ${errorData.error}`);
             }
             
             const result = await response.json();
+            const processingTime = Date.now() - startTime;
             
-            setAiProcessingStatus("AI סיים ניתוח!");
+            console.log(`Advanced extraction completed in ${processingTime}ms:`, {
+                artist: result.final_results?.artist,
+                venue: result.final_results?.venue, 
+                price: result.final_results?.price,
+                confidence: result.final_results?.overall_confidence?.toFixed(2)
+            });
+            
+            setAiProcessingStatus(`AI סיים! זיהה ${result.final_results?.artist ? 'אמן' : ''} ${result.final_results?.venue ? 'מקום' : ''} ${result.final_results?.price ? 'מחיר' : ''} (${Math.round((result.final_results?.overall_confidence || 0) * 100)}% ביטחון)`);
+            
             return result;
             
         } catch (error) {
-            console.error('AI processing error:', error);
-            setAiProcessingStatus("שגיאה בעיבוד AI");
+            console.error('Advanced AI processing error:', error);
+            setAiProcessingStatus("שגיאה בעיבוד AI מתקדם");
             return null;
         }
     };
@@ -802,6 +844,9 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                             </div>
                         )}
                     </div>
+                    
+                    {/* Advanced Testing Component */}
+                    <TestExtractionButton />
                 </div>
 
                 {/* Right side: Image preview */}
