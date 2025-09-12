@@ -329,49 +329,69 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             details.time = `${hours}:${minutes}`;
         }
         
-        // Look for prices in various formats - more comprehensive search
-        const allNumbers = fullText.match(/\d+/g) || [];
-        console.log('All numbers found:', allNumbers);
+        // Focus ONLY on numbers that appear with currency symbols
+        console.log('Full text for price detection:', fullText);
         
-        // Look for prices near Hebrew price indicators
-        const hebrewPricePatterns = [
-            /מחיר[\s:]*(\d+)/i,     // מחיר: 123
-            /(\d+)[\s]*שח/i,        // 123 שח
-            /(\d+)[\s]*ש"ח/i,       // 123 ש"ח
-            /(\d+)[\s]*₪/,          // 123₪
-            /₪[\s]*(\d+)/,          // ₪123
-            /(\d+)[\s]*NIS/i,       // 123 NIS
+        // Comprehensive currency symbol patterns - only look for numbers WITH currency symbols
+        const currencyPatterns = [
+            // Hebrew patterns
+            /(\d+)\s*₪/g,                    // 123₪
+            /₪\s*(\d+)/g,                    // ₪123
+            /(\d+)\s*שח/gi,                  // 123 שח
+            /(\d+)\s*ש"ח/gi,                 // 123 ש"ח
+            /(\d+)\s*שקל/gi,                 // 123 שקל
+            /שקל\s*(\d+)/gi,                 // שקל 123
+            /מחיר[\s:]*(\d+)/gi,             // מחיר: 123
+            /ל(\d+)/g,                       // ל25 (like in the OCR output)
+            
+            // English/International patterns  
+            /(\d+)\s*\$/g,                   // 123$
+            /\$\s*(\d+)/g,                   // $123
+            /(\d+)\s*USD/gi,                 // 123 USD
+            /USD\s*(\d+)/gi,                 // USD 123
+            /(\d+)\s*EUR/gi,                 // 123 EUR
+            /EUR\s*(\d+)/gi,                 // EUR 123
+            /(\d+)\s*GBP/gi,                 // 123 GBP
+            /GBP\s*(\d+)/gi,                 // GBP 123
+            /(\d+)\s*NIS/gi,                 // 123 NIS
+            /NIS\s*(\d+)/gi,                 // NIS 123
         ];
         
-        // First try Hebrew price patterns
-        for (const pattern of hebrewPricePatterns) {
-            const priceMatch = fullText.match(pattern);
-            if (priceMatch) {
-                const price = parseInt(priceMatch[1]);
-                if (price >= 25 && price <= 2000) {
-                    details.originalPrice = price;
-                    console.log('Found price with Hebrew pattern:', price);
-                    break;
+        let foundPrices = [];
+        
+        // Search for ALL currency patterns
+        for (const pattern of currencyPatterns) {
+            let match;
+            while ((match = pattern.exec(fullText)) !== null) {
+                const price = parseInt(match[1]);
+                if (price >= 10 && price <= 5000) { // Reasonable price range
+                    foundPrices.push({
+                        price: price,
+                        context: match[0],
+                        pattern: pattern.source
+                    });
                 }
             }
         }
         
-        // If no price found with context, look at individual numbers
-        if (!details.originalPrice) {
-            const candidates = allNumbers
-                .map(n => parseInt(n))
-                .filter(price => price >= 25 && price <= 2000) // Broader range
-                .sort((a, b) => {
-                    // Prefer numbers in typical price ranges (50-500 more likely than 2000+)
-                    const aScore = (a >= 50 && a <= 500) ? 10 : (a >= 25 && a <= 1000) ? 5 : 1;
-                    const bScore = (b >= 50 && b <= 500) ? 10 : (b >= 25 && b <= 1000) ? 5 : 1;
-                    return bScore - aScore;
-                });
+        console.log('Found prices with currency symbols:', foundPrices);
+        
+        // Select the best price if multiple found
+        if (foundPrices.length > 0) {
+            // Sort by likelihood - prefer prices in typical ranges
+            foundPrices.sort((a, b) => {
+                // Score based on typical ticket price ranges
+                const scoreA = (a.price >= 50 && a.price <= 800) ? 10 : 
+                              (a.price >= 25 && a.price <= 1500) ? 5 : 1;
+                const scoreB = (b.price >= 50 && b.price <= 800) ? 10 : 
+                              (b.price >= 25 && b.price <= 1500) ? 5 : 1;
+                return scoreB - scoreA;
+            });
             
-            if (candidates.length > 0) {
-                details.originalPrice = candidates[0];
-                console.log('Found price candidate:', candidates[0], 'from:', candidates);
-            }
+            details.originalPrice = foundPrices[0].price;
+            console.log('Selected price:', foundPrices[0].price, 'from context:', foundPrices[0].context);
+        } else {
+            console.log('No prices found with currency symbols');
         }
         
         // Look for barcode - longest sequence of numbers and letters
