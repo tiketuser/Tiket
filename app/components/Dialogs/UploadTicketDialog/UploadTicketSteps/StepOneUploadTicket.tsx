@@ -329,22 +329,48 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             details.time = `${hours}:${minutes}`;
         }
         
-        // Look for prices in various formats
-        const pricePatterns = [
-            /₪\s*(\d+)/,           // ₪123
-            /(\d+)\s*₪/,           // 123₪
-            /(\d{3,4})\s*(?=\s|$)/ // 3-4 digit numbers (likely prices)
+        // Look for prices in various formats - more comprehensive search
+        const allNumbers = fullText.match(/\d+/g) || [];
+        console.log('All numbers found:', allNumbers);
+        
+        // Look for prices near Hebrew price indicators
+        const hebrewPricePatterns = [
+            /מחיר[\s:]*(\d+)/i,     // מחיר: 123
+            /(\d+)[\s]*שח/i,        // 123 שח
+            /(\d+)[\s]*ש"ח/i,       // 123 ש"ח
+            /(\d+)[\s]*₪/,          // 123₪
+            /₪[\s]*(\d+)/,          // ₪123
+            /(\d+)[\s]*NIS/i,       // 123 NIS
         ];
         
-        for (const pattern of pricePatterns) {
+        // First try Hebrew price patterns
+        for (const pattern of hebrewPricePatterns) {
             const priceMatch = fullText.match(pattern);
-            if (priceMatch && !details.originalPrice) {
+            if (priceMatch) {
                 const price = parseInt(priceMatch[1]);
-                // Only accept reasonable ticket prices (50-2000)
-                if (price >= 50 && price <= 2000) {
+                if (price >= 25 && price <= 2000) {
                     details.originalPrice = price;
+                    console.log('Found price with Hebrew pattern:', price);
                     break;
                 }
+            }
+        }
+        
+        // If no price found with context, look at individual numbers
+        if (!details.originalPrice) {
+            const candidates = allNumbers
+                .map(n => parseInt(n))
+                .filter(price => price >= 25 && price <= 2000) // Broader range
+                .sort((a, b) => {
+                    // Prefer numbers in typical price ranges (50-500 more likely than 2000+)
+                    const aScore = (a >= 50 && a <= 500) ? 10 : (a >= 25 && a <= 1000) ? 5 : 1;
+                    const bScore = (b >= 50 && b <= 500) ? 10 : (b >= 25 && b <= 1000) ? 5 : 1;
+                    return bScore - aScore;
+                });
+            
+            if (candidates.length > 0) {
+                details.originalPrice = candidates[0];
+                console.log('Found price candidate:', candidates[0], 'from:', candidates);
             }
         }
         
@@ -354,12 +380,51 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             details.barcode = barcodeMatch[1];
         }
         
-        // Look for venue information - check each line for venue names
-        for (const line of lines) {
-            if (line.includes('לבונטין') || line.includes('בלומפילד') || 
-                line.includes('היכל') || line.includes('זאפה')) {
-                details.venue = line;
+        // Enhanced venue detection - look for more venue patterns
+        const venuePatterns = [
+            // Known Israeli venues
+            /(לבונטין[\s\d]*)/i,
+            /(בלומפילד|בלומפיד)/i,
+            /(היכל[\s\w]*)/i,
+            /(תיאטרון[\s\w]*)/i,
+            /(זאפה[\s\w]*)/i,
+            /(בארבי)/i,
+            /(גן\s+החשמל)/i,
+            /(אולמי\s+\w+)/i,
+            /(סולטן\s+פול)/i,
+            /(אולם\s+\w+)/i,
+            /(מתחם\s+\w+)/i,
+            // Address patterns
+            /(תל\s+אביב[^,\n]*)/i,
+            /(ירושלים[^,\n]*)/i,
+            /(חיפה[^,\n]*)/i,
+            /(רמת\s+גן[^,\n]*)/i,
+            // Street addresses
+            /(\w+\s+\d+,\s*[^,\n]+)/,
+        ];
+        
+        for (const pattern of venuePatterns) {
+            const venueMatch = fullText.match(pattern);
+            if (venueMatch) {
+                details.venue = venueMatch[1].trim();
+                console.log('Found venue:', details.venue);
                 break;
+            }
+        }
+        
+        // If no venue found with patterns, look in individual lines for location hints
+        if (!details.venue) {
+            for (const line of lines) {
+                const cleanLine = line.trim();
+                // Look for lines that might contain venue info (with numbers, street indicators)
+                if (cleanLine.includes('7') || cleanLine.includes('רח') || cleanLine.includes('בול') ||
+                    cleanLine.includes('אול') || cleanLine.includes('מרכז') || cleanLine.includes('היכל')) {
+                    if (cleanLine.length > 10 && cleanLine.length < 100) { // Reasonable venue name length
+                        details.venue = cleanLine;
+                        console.log('Found venue from line analysis:', cleanLine);
+                        break;
+                    }
+                }
             }
         }
         
