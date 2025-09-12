@@ -17,6 +17,10 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     const [uploadStatus, setUploadStatus] = useState<string>("לא זוהה קובץ");
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [barcode, setBarcode] = useState<string>("");
+    const [useAIEnhancement, setUseAIEnhancement] = useState<boolean>(true);
+    const [aiProcessingStatus, setAiProcessingStatus] = useState<string>("");
+    const [aiResults, setAiResults] = useState<any>(null);
+    const [ocrResults, setOcrResults] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const workerRef = useRef<Tesseract.Worker | null>(null);
     const isProcessingRef = useRef<boolean>(false);
@@ -538,6 +542,16 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         }
         
         console.log('Final parsed details:', details);
+        
+        // Update ticket data with OCR results
+        if (updateTicketData) {
+            updateTicketData({
+                ticketDetails: details,
+                isProcessing: false,
+                extractionError: undefined
+            });
+        }
+        
         return details;
     };
 
@@ -565,8 +579,30 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         
         setUploadStatus(`קובץ נבחר: ${file.name}`);
         
-        // Process with OCR
+        // Process with OCR first
         await processWithOCR(file);
+        
+        // Optionally enhance with AI if enabled
+        if (useAIEnhancement && ticketData?.ticketDetails) {
+            try {
+                setAiProcessingStatus("שולח לניתוח AI מתקדם...");
+                const aiResult = await processWithAI(file);
+                
+                if (aiResult && typeof aiResult === 'object' && aiResult.confidence > 0.5) {
+                    setAiProcessingStatus(`AI זיהה בביטחון ${Math.round(aiResult.confidence * 100)}%`);
+                    console.log('AI enhancement available:', aiResult);
+                    
+                    // Update status to show AI enhancement available
+                    setUploadStatus(`הושלם + שיפור AI (${Math.round(aiResult.confidence * 100)}% ביטחון)`);
+                    setAiResults(aiResult);
+                } else {
+                    setAiProcessingStatus("AI לא מצא שיפורים משמעותיים");
+                }
+            } catch (error) {
+                console.error('AI enhancement error:', error);
+                setAiProcessingStatus("שגיאה בשיפור AI");
+            }
+        }
     };
 
     const handleBarcodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -580,6 +616,100 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 }
             });
         }
+    };
+
+    // AI Vision Enhancement
+    const processWithAI = async (file: File) => {
+        if (!useAIEnhancement) return null;
+        
+        try {
+            setAiProcessingStatus("שולח תמונה לניתוח AI...");
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const response = await fetch('/api/tickets/extract', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            if (!response.ok) {
+                throw new Error(`AI processing failed: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('AI Vision extraction result:', result);
+            
+            setAiProcessingStatus("AI סיים ניתוח!");
+            return result;
+            
+        } catch (error) {
+            console.error('AI processing error:', error);
+            setAiProcessingStatus("שגיאה בעיבוד AI");
+            return null;
+        }
+    };
+
+    // Merge OCR and AI results intelligently
+    const mergeResults = (ocrData: any, aiData: any) => {
+        if (!ocrData && !aiData) return {};
+        if (!aiData) return ocrData;
+        if (!ocrData) return aiData;
+
+        console.log('Merging OCR and AI results:', { ocrData, aiData });
+
+        // Start with OCR results as base
+        const merged = { ...ocrData };
+
+        // AI results take precedence for certain fields if they seem more reliable
+        if (aiData.confidence && aiData.confidence > 0.7) {
+            // High confidence AI results - prefer AI for key fields
+            if (aiData.price && !merged.originalPrice) {
+                merged.originalPrice = aiData.price;
+                console.log('Using AI price:', aiData.price);
+            }
+            
+            if (aiData.venue && aiData.venue.length > 3 && (!merged.venue || merged.venue.length < 5)) {
+                merged.venue = aiData.venue;
+                console.log('Using AI venue:', aiData.venue);
+            }
+            
+            if (aiData.artist && aiData.artist.length > 2 && (!merged.artist || merged.artist.length < 3)) {
+                merged.artist = aiData.artist;
+                merged.title = aiData.title || aiData.artist;
+                console.log('Using AI artist:', aiData.artist);
+            }
+
+            if (aiData.date && !merged.date) {
+                merged.date = aiData.date;
+                console.log('Using AI date:', aiData.date);
+            }
+
+            if (aiData.time && !merged.time) {
+                merged.time = aiData.time;
+                console.log('Using AI time:', aiData.time);
+            }
+
+            if (aiData.seat && !merged.seat) {
+                merged.seat = aiData.seat;
+            }
+
+            if (aiData.row && !merged.row) {
+                merged.row = aiData.row;
+            }
+
+            if (aiData.barcode && aiData.barcode.length > merged.barcode?.length) {
+                merged.barcode = aiData.barcode;
+            }
+        }
+
+        // Prefer OCR price if AI didn't find one but OCR did
+        if (!merged.originalPrice && ocrData.originalPrice) {
+            merged.originalPrice = ocrData.originalPrice;
+        }
+
+        console.log('Final merged results:', merged);
+        return merged;
     };
 
     const canProceed = ticketData?.uploadedFile || barcode.length > 0;
@@ -653,6 +783,37 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                             </button>
                         </div>
                     )}
+                    
+                    {/* AI Enhancement Controls */}
+                    <div className="flex flex-col gap-2 mt-2">
+                        <div className="flex items-center gap-2">
+                            <input 
+                                type="checkbox" 
+                                id="aiEnhancement"
+                                checked={useAIEnhancement}
+                                onChange={(e) => setUseAIEnhancement(e.target.checked)}
+                                className="checkbox checkbox-sm checkbox-primary"
+                            />
+                            <label htmlFor="aiEnhancement" className="text-sm text-gray-700 flex items-center gap-1">
+                                <span>🤖</span>
+                                שיפור עם AI חזותי
+                            </label>
+                        </div>
+                        
+                        {aiProcessingStatus && (
+                            <div className="text-xs text-blue-600 flex items-center gap-1">
+                                <span>✨</span>
+                                {aiProcessingStatus}
+                            </div>
+                        )}
+                        
+                        {aiResults && (
+                            <div className="text-xs text-green-600 flex items-center gap-1">
+                                <span>🎯</span>
+                                AI זיהה {Object.keys(aiResults).length} שדות
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Right side: Image preview */}
