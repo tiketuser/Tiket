@@ -93,17 +93,36 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     }
                 });
                 
-                // Show both OCR and authenticity analysis in alert
-                const completeResult = {
-                    ocrAnalysis: {
-                        confidence: Math.round(confidence),
-                        rawText: extractedText,
-                        extractedDetails: ticketDetails
-                    },
-                    authenticityAnalysis: authenticityAnalysis
-                };
+                // Show organized extracted information in alert
+                const organizedInfo = `🎫 מידע שחולץ מהכרטיס:
+
+📋 פרטי אירוע:
+• שם האירוע: ${ticketDetails.title || 'לא זוהה'}
+• אמן: ${ticketDetails.artist || 'לא זוהה'}
+• תאריך: ${ticketDetails.date || authenticityAnalysis.event_date || 'לא זוהה'}
+• שעה: ${ticketDetails.time || 'לא זוהה'}
+• מקום: ${ticketDetails.venue || 'לא זוהה'}
+
+💺 פרטי ישיבה:
+• מקום: ${ticketDetails.seat || 'לא זוהה'}
+• שורה: ${ticketDetails.row || 'לא זוהה'}
+• יציע/אזור: ${ticketDetails.section || 'לא זוהה'}
+
+💰 פרטי מחיר:
+• מחיר מקורי: ${ticketDetails.originalPrice ? ticketDetails.originalPrice + ' ' + authenticityAnalysis.currency : 'לא זוהה'}
+• מטבע: ${authenticityAnalysis.currency}
+
+🔍 ניתוח אותנטיות:
+• ציון אמינות: ${authenticityAnalysis.authenticity_score}%
+• סטטוס: ${authenticityAnalysis.status}
+• סיכונים: ${authenticityAnalysis.risk_flags.join(', ') || 'אין'}
+• המלצה: ${authenticityAnalysis.recommendations}
+
+📊 פרטים טכניים:
+• דיוק OCR: ${Math.round(confidence)}%
+• ברקוד: ${barcode || ticketDetails.barcode || 'לא זוהה'}`;
                 
-                alert("ניתוח מלא של הכרטיס:\n\n" + JSON.stringify(completeResult, null, 2));
+                alert(organizedInfo);
                 
                 updateTicketData({
                     extractedText,
