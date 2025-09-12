@@ -83,6 +83,15 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             if (extractedText && confidence > 30) { // Only use result if confidence is reasonable
                 const ticketDetails = parseTicketDetails(extractedText);
                 
+                // Show extracted data in alert (JSON format)
+                const ocrResult = {
+                    confidence: Math.round(confidence),
+                    rawText: extractedText,
+                    extractedDetails: ticketDetails
+                };
+                
+                alert("מידע שחולץ מה-OCR:\n\n" + JSON.stringify(ocrResult, null, 2));
+                
                 updateTicketData({
                     extractedText,
                     ticketDetails,
