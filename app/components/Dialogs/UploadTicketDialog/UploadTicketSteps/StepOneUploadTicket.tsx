@@ -297,27 +297,56 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         
         console.log('Text lines:', lines);
         
-        // Extract DENNIS LLOYD specifically from the OCR pattern
-        const dennisLloydMatch = fullText.match(/DENNIS[\s\S]*?LLOYD/i);
-        if (dennisLloydMatch) {
-            details.artist = "DENNIS LLOYD";
-            details.title = "DENNIS LLOYD";
+        // Look for Israeli venue names specifically
+        const israeliVenueMatch = fullText.match(/(האצטדיון\s+הלאומי[^,\n]*)/i) ||
+                                 fullText.match(/(בלומפילד[^,\n]*)/i) ||
+                                 fullText.match(/(היכל\s+התרבות[^,\n]*)/i) ||
+                                 fullText.match(/(לבונטין[^,\n]*)/i);
+        
+        if (israeliVenueMatch) {
+            details.venue = israeliVenueMatch[1].trim();
+            console.log('Found Israeli venue:', details.venue);
         }
         
-        // Look for date in format like "3772021" and convert to proper date
-        const compressedDateMatch = fullText.match(/(\d{7})/);
-        if (compressedDateMatch) {
-            const dateStr = compressedDateMatch[1]; // "3772021"
-            // Assuming format is DDMMYYYY where first digit might be day
-            const day = dateStr.substring(0, 1);   // "3" 
-            const month = dateStr.substring(1, 3); // "77" -> probably "07" (July)
-            const year = dateStr.substring(3);     // "2021"
-            
-            // Fix the month if it seems wrong
-            let fixedMonth = month;
-            if (month === "77") fixedMonth = "07";
-            
-            details.date = `${day}/${fixedMonth}/${year}`;
+        // Look for artist/event name in the first meaningful lines
+        for (const line of lines) {
+            const cleanLine = line.trim().replace(/[^\u0590-\u05FF\u0020-\u007Ea-zA-Z]/g, '');
+            if (cleanLine.length > 3 && cleanLine.length < 50 && 
+                !cleanLine.includes('ASE') && !cleanLine.includes('STADIUM') && 
+                !cleanLine.includes('Reference') && !cleanLine.includes('Block')) {
+                if (!details.artist) {
+                    details.artist = cleanLine;
+                    details.title = cleanLine;
+                    console.log('Found artist:', cleanLine);
+                    break;
+                }
+            }
+        }
+        
+        // Look for date in Israeli format like "06/08/25" or similar patterns
+        const israeliDatePatterns = [
+            /(\d{2})\/(\d{2})\/(\d{2})/,    // 06/08/25
+            /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/,  // 6.8.25 or 6.8.2025
+            /(\d{2})\/(\d{2})\/(\d{4})/,   // 06/08/2025
+        ];
+        
+        for (const pattern of israeliDatePatterns) {
+            const dateMatch = fullText.match(pattern);
+            if (dateMatch) {
+                let day = dateMatch[1];
+                let month = dateMatch[2]; 
+                let year = dateMatch[3];
+                
+                // Convert 2-digit year to 4-digit
+                if (year.length === 2) {
+                    const yearNum = parseInt(year);
+                    year = yearNum > 50 ? `19${year}` : `20${year}`;
+                }
+                
+                details.date = `${day}/${month}/${year}`;
+                console.log('Found Israeli date:', details.date);
+                break;
+            }
         }
         
         // Look for time in format "בשעה2100" and convert to "21:00"
@@ -448,16 +477,37 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             }
         }
         
-        // Look for seat numbers
-        const seatMatch = fullText.match(/מקום[\s:]*(\d+)/i) || fullText.match(/seat[\s:]*(\d+)/i);
-        if (seatMatch) {
-            details.seat = seatMatch[1];
+        // Enhanced Hebrew seat and row detection
+        const hebrewSeatMatch = fullText.match(/מושב[\s:]*(\d+)/i) || 
+                               fullText.match(/מקום[\s:]*(\d+)/i) ||
+                               fullText.match(/seat[\s:]*(\d+)/i);
+        if (hebrewSeatMatch) {
+            details.seat = hebrewSeatMatch[1];
+            console.log('Found seat:', details.seat);
         }
         
-        // Look for row information
-        const rowMatch = fullText.match(/שורה[\s:]*([א-ת\w]+)/i) || fullText.match(/row[\s:]*([א-ת\w]+)/i);
-        if (rowMatch) {
-            details.row = rowMatch[1];
+        const hebrewRowMatch = fullText.match(/שורה[\s:]*(\d+)/i) ||
+                              fullText.match(/row[\s:]*(\d+)/i);
+        if (hebrewRowMatch) {
+            details.row = hebrewRowMatch[1];
+            console.log('Found row:', details.row);
+        }
+        
+        // Look for block/section information
+        const blockMatch = fullText.match(/block[\s:]*([A-Z0-9]+)/i) ||
+                          fullText.match(/איזור[\s:]*([A-Z0-9]+)/i) ||
+                          fullText.match(/יציע[\s:]*([A-Z0-9]+)/i);
+        if (blockMatch) {
+            details.section = blockMatch[1];
+            console.log('Found section/block:', details.section);
+        }
+        
+        // Look for gate information
+        const gateMatch = fullText.match(/gate[\s:]*(\d+)/i) ||
+                         fullText.match(/שער[\s:]*(\d+)/i);
+        if (gateMatch) {
+            details.gate = gateMatch[1];
+            console.log('Found gate:', details.gate);
         }
         
         // If no specific artist found, try to find meaningful text from clean lines
