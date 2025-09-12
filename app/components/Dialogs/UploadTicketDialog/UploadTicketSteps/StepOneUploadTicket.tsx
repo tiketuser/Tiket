@@ -17,7 +17,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     const [uploadStatus, setUploadStatus] = useState<string>("לא זוהה קובץ");
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [barcode, setBarcode] = useState<string>("");
-    const [useAIEnhancement, setUseAIEnhancement] = useState<boolean>(true);
+    const [useAIEnhancement, setUseAIEnhancement] = useState<boolean>(false);
     const [aiProcessingStatus, setAiProcessingStatus] = useState<string>("");
     const [aiResults, setAiResults] = useState<any>(null);
     const [ocrResults, setOcrResults] = useState<any>(null);
@@ -78,14 +78,13 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 return;
             }
             
-            console.log('Tesseract OCR Result:', { text, confidence });
             let extractedText = text.trim();
 
             // If Tesseract didn't extract good text, still proceed to manual entry
             if (extractedText && confidence > 30) { // Only use result if confidence is reasonable
                 const ticketDetails = parseTicketDetails(extractedText);
                 
-                setUploadStatus('מנתח אותנטיות עם AI...');
+                setUploadStatus('מנתח אותנטיות...');
                 
                 // Perform simple authenticity analysis
                 const authenticityAnalysis = await analyzeTicketAuthenticity({
@@ -96,37 +95,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                         confidence: Math.round(confidence)
                     }
                 });
-                
-                // Show organized extracted information in alert
-                const organizedInfo = `🎫 מידע שחולץ מהכרטיס:
-
-📋 פרטי אירוע:
-• שם האירוע: ${ticketDetails.title || 'לא זוהה'}
-• אמן: ${ticketDetails.artist || 'לא זוהה'}
-• תאריך: ${ticketDetails.date || authenticityAnalysis.event_date || 'לא זוהה'}
-• שעה: ${ticketDetails.time || 'לא זוהה'}
-• מקום: ${ticketDetails.venue || 'לא זוהה'}
-
-💺 פרטי ישיבה:
-• מקום: ${ticketDetails.seat || 'לא זוהה'}
-• שורה: ${ticketDetails.row || 'לא זוהה'}
-• יציע/אזור: ${ticketDetails.section || 'לא זוהה'}
-
-💰 פרטי מחיר:
-• מחיר מקורי: ${ticketDetails.originalPrice ? ticketDetails.originalPrice + ' ' + authenticityAnalysis.currency : 'לא זוהה'}
-• מטבע: ${authenticityAnalysis.currency}
-
-🔍 ניתוח אותנטיות:
-• ציון אמינות: ${authenticityAnalysis.authenticity_score}%
-• סטטוס: ${authenticityAnalysis.status}
-• סיכונים: ${authenticityAnalysis.risk_flags.join(', ') || 'אין'}
-• המלצה: ${authenticityAnalysis.recommendations}
-
-📊 פרטים טכניים:
-• דיוק OCR: ${Math.round(confidence)}%
-• ברקוד: ${barcode || ticketDetails.barcode || 'לא זוהה'}`;
-                
-                alert(organizedInfo);
                 
                 updateTicketData({
                     extractedText,
@@ -140,6 +108,9 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 });
                 
                 setUploadStatus(`ניתוח הושלם! (OCR: ${Math.round(confidence)}%, אותנטיות: ${authenticityAnalysis.authenticity_score}%)`);
+                
+                // Store OCR results for potential merging
+                setOcrResults(ticketDetails);
                 
                 // Auto-advance to next step after successful analysis
                 setTimeout(() => {
@@ -292,14 +263,11 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     };
 
     const parseTicketDetails = (text: string) => {
-        console.log('Parsing OCR text:', text);
         const details: any = {};
         
         // Clean text and split into lines for better analysis
         const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         const fullText = text.replace(/[\u200E\u200F\u202A-\u202E]/g, '').replace(/\s+/g, ' ');
-        
-        console.log('Text lines:', lines);
         
         // Extract DENNIS LLOYD specifically from the OCR pattern
         const dennisLloydMatch = fullText.match(/DENNIS[\s\S]*?LLOYD/i);
@@ -334,7 +302,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         }
         
         // Focus ONLY on numbers that appear with currency symbols
-        console.log('Full text for price detection:', fullText);
         
         // Normalize numbers before pattern matching - handle OCR artifacts
         const normalizeNumbers = (text: string) => {
@@ -350,7 +317,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         };
         
         const normalizedText = normalizeNumbers(fullText);
-        console.log('Normalized text for price detection:', normalizedText);
         
         // More robust currency patterns that handle OCR noise
         const currencyPatterns = [
@@ -410,7 +376,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             }
         }
         
-        console.log('Found prices with currency symbols:', foundPrices);
         
         // Select the best price if multiple found
         if (foundPrices.length > 0) {
@@ -455,9 +420,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             });
             
             details.originalPrice = foundPrices[0].displayPrice; // Use rounded price for display
-            console.log('Selected price:', foundPrices[0].displayPrice, 'from context:', foundPrices[0].context, 'all candidates:', foundPrices.map(p => `${p.displayPrice} (${p.context})`));
-        } else {
-            console.log('No prices found with currency symbols');
         }
         
         // Look for barcode - longest sequence of numbers and letters
@@ -493,7 +455,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             const venueMatch = fullText.match(pattern);
             if (venueMatch) {
                 details.venue = venueMatch[1].trim();
-                console.log('Found venue:', details.venue);
                 break;
             }
         }
@@ -507,7 +468,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     cleanLine.includes('אול') || cleanLine.includes('מרכז') || cleanLine.includes('היכל')) {
                     if (cleanLine.length > 10 && cleanLine.length < 100) { // Reasonable venue name length
                         details.venue = cleanLine;
-                        console.log('Found venue from line analysis:', cleanLine);
                         break;
                     }
                 }
@@ -541,7 +501,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             }
         }
         
-        console.log('Final parsed details:', details);
         
         // Update ticket data with OCR results
         if (updateTicketData) {
@@ -590,17 +549,28 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 
                 if (aiResult && typeof aiResult === 'object' && aiResult.confidence > 0.5) {
                     setAiProcessingStatus(`AI זיהה בביטחון ${Math.round(aiResult.confidence * 100)}%`);
-                    console.log('AI enhancement available:', aiResult);
                     
-                    // Update status to show AI enhancement available
+                    // Merge AI results with existing OCR results
+                    const currentDetails = ticketData?.ticketDetails || {};
+                    const mergedDetails = mergeResults(currentDetails, aiResult);
+                    
+                    // Update ticket data with merged results
+                    if (updateTicketData) {
+                        updateTicketData({
+                            ticketDetails: mergedDetails,
+                            isProcessing: false,
+                            extractionError: undefined
+                        });
+                    }
+                    
                     setUploadStatus(`הושלם + שיפור AI (${Math.round(aiResult.confidence * 100)}% ביטחון)`);
                     setAiResults(aiResult);
                 } else {
                     setAiProcessingStatus("AI לא מצא שיפורים משמעותיים");
                 }
             } catch (error) {
-                console.error('AI enhancement error:', error);
-                setAiProcessingStatus("שגיאה בשיפור AI");
+                console.error('AI enhancement failed, using OCR results only');
+                setAiProcessingStatus("שגיאה בשיפור AI - משתמש בתוצאות OCR בלבד");
             }
         }
     };
@@ -638,7 +608,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             }
             
             const result = await response.json();
-            console.log('AI Vision extraction result:', result);
             
             setAiProcessingStatus("AI סיים ניתוח!");
             return result;
@@ -650,65 +619,78 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         }
     };
 
-    // Merge OCR and AI results intelligently
+    // Merge OCR and AI results intelligently with confidence-based decisions
     const mergeResults = (ocrData: any, aiData: any) => {
         if (!ocrData && !aiData) return {};
         if (!aiData) return ocrData;
         if (!ocrData) return aiData;
 
-        console.log('Merging OCR and AI results:', { ocrData, aiData });
-
         // Start with OCR results as base
         const merged = { ...ocrData };
 
-        // AI results take precedence for certain fields if they seem more reliable
-        if (aiData.confidence && aiData.confidence > 0.7) {
-            // High confidence AI results - prefer AI for key fields
-            if (aiData.price && !merged.originalPrice) {
+        // Define confidence thresholds and quality checks
+        const isHighConfidenceAI = aiData.confidence && aiData.confidence > 0.7;
+        const isMediumConfidenceAI = aiData.confidence && aiData.confidence > 0.5;
+
+        // Price merging - prefer more specific and reasonable values
+        if (aiData.price && typeof aiData.price === 'number' && aiData.price > 0) {
+            if (!merged.originalPrice || (isHighConfidenceAI && aiData.price < merged.originalPrice * 3)) {
                 merged.originalPrice = aiData.price;
-                console.log('Using AI price:', aiData.price);
+                merged.currency = aiData.currency || merged.currency;
             }
-            
-            if (aiData.venue && aiData.venue.length > 3 && (!merged.venue || merged.venue.length < 5)) {
+        }
+        
+        // Venue merging - prefer longer, more descriptive venue names
+        if (aiData.venue && typeof aiData.venue === 'string' && aiData.venue.length > 3) {
+            if (!merged.venue || (isMediumConfidenceAI && aiData.venue.length > merged.venue.length)) {
                 merged.venue = aiData.venue;
-                console.log('Using AI venue:', aiData.venue);
             }
-            
-            if (aiData.artist && aiData.artist.length > 2 && (!merged.artist || merged.artist.length < 3)) {
+        }
+        
+        // Artist/Title merging - prefer non-empty, reasonable length names
+        if (aiData.artist && typeof aiData.artist === 'string' && aiData.artist.length > 2) {
+            if (!merged.artist || (isHighConfidenceAI && aiData.artist.length > merged.artist.length)) {
                 merged.artist = aiData.artist;
-                merged.title = aiData.title || aiData.artist;
-                console.log('Using AI artist:', aiData.artist);
-            }
-
-            if (aiData.date && !merged.date) {
-                merged.date = aiData.date;
-                console.log('Using AI date:', aiData.date);
-            }
-
-            if (aiData.time && !merged.time) {
-                merged.time = aiData.time;
-                console.log('Using AI time:', aiData.time);
-            }
-
-            if (aiData.seat && !merged.seat) {
-                merged.seat = aiData.seat;
-            }
-
-            if (aiData.row && !merged.row) {
-                merged.row = aiData.row;
-            }
-
-            if (aiData.barcode && aiData.barcode.length > merged.barcode?.length) {
-                merged.barcode = aiData.barcode;
+                if (aiData.title && aiData.title !== aiData.artist) {
+                    merged.title = aiData.title;
+                } else if (!merged.title) {
+                    merged.title = aiData.artist;
+                }
             }
         }
 
-        // Prefer OCR price if AI didn't find one but OCR did
-        if (!merged.originalPrice && ocrData.originalPrice) {
-            merged.originalPrice = ocrData.originalPrice;
+        // Date/time merging - prefer AI if OCR didn't find valid dates
+        if (aiData.date && (!merged.date || merged.date.length < 8)) {
+            merged.date = aiData.date;
+        }
+        
+        if (aiData.time && (!merged.time || merged.time.length < 4)) {
+            merged.time = aiData.time;
         }
 
-        console.log('Final merged results:', merged);
+        // Seating information - fill missing fields
+        if (aiData.seat && !merged.seat) {
+            merged.seat = aiData.seat;
+        }
+        if (aiData.row && !merged.row) {
+            merged.row = aiData.row;
+        }
+        if (aiData.section && !merged.section) {
+            merged.section = aiData.section;
+        }
+
+        // Barcode - prefer longer, more complete barcodes
+        if (aiData.barcode && aiData.barcode.length > (merged.barcode?.length || 0)) {
+            merged.barcode = aiData.barcode;
+        }
+
+        // Add merging metadata
+        merged.extractionSources = {
+            ocr: !!ocrData,
+            ai: !!aiData,
+            aiConfidence: aiData.confidence || 0
+        };
+
         return merged;
     };
 
@@ -785,7 +767,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                     )}
                     
                     {/* AI Enhancement Controls */}
-                    <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex flex-col gap-2 mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <div className="flex items-center gap-2">
                             <input 
                                 type="checkbox" 
@@ -794,10 +776,16 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                                 onChange={(e) => setUseAIEnhancement(e.target.checked)}
                                 className="checkbox checkbox-sm checkbox-primary"
                             />
-                            <label htmlFor="aiEnhancement" className="text-sm text-gray-700 flex items-center gap-1">
+                            <label htmlFor="aiEnhancement" className="text-sm text-gray-700 flex items-center gap-1 font-medium">
                                 <span>🤖</span>
-                                שיפור עם AI חזותי
+                                שיפור עם AI חזותי (אופציונלי)
                             </label>
+                        </div>
+                        
+                        <div className="text-xs text-gray-600 mr-6">
+                            התמונה תישלח לשירות AI חיצוני (OpenAI) לניתוח מדויק יותר.
+                            <br />
+                            ללא הסכמה זו, המערכת תשתמש רק בזיהוי מקומי.
                         </div>
                         
                         {aiProcessingStatus && (
