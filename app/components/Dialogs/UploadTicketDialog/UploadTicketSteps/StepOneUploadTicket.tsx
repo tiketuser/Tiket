@@ -332,43 +332,75 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         // Focus ONLY on numbers that appear with currency symbols
         console.log('Full text for price detection:', fullText);
         
-        // Comprehensive currency symbol patterns - only look for numbers WITH currency symbols
-        const currencyPatterns = [
-            // Hebrew patterns
-            /(\d+)\s*₪/g,                    // 123₪
-            /₪\s*(\d+)/g,                    // ₪123
-            /(\d+)\s*שח/gi,                  // 123 שח
-            /(\d+)\s*ש"ח/gi,                 // 123 ש"ח
-            /(\d+)\s*שקל/gi,                 // 123 שקל
-            /שקל\s*(\d+)/gi,                 // שקל 123
-            /מחיר[\s:]*(\d+)/gi,             // מחיר: 123
-            /ל(\d+)/g,                       // ל25 (like in the OCR output)
+        // Normalize numbers before pattern matching - handle OCR artifacts
+        const normalizeNumbers = (text: string) => {
+            // Join digits separated by spaces/punctuation (OCR artifacts like "3 95.00" -> "395.00")
+            let normalized = text.replace(/(\d)[\s\u200E\u200F'.,](?=\d)/g, '$1');
             
-            // English/International patterns  
-            /(\d+)\s*\$/g,                   // 123$
-            /\$\s*(\d+)/g,                   // $123
-            /(\d+)\s*USD/gi,                 // 123 USD
-            /USD\s*(\d+)/gi,                 // USD 123
-            /(\d+)\s*EUR/gi,                 // 123 EUR
-            /EUR\s*(\d+)/gi,                 // EUR 123
-            /(\d+)\s*GBP/gi,                 // 123 GBP
-            /GBP\s*(\d+)/gi,                 // GBP 123
-            /(\d+)\s*NIS/gi,                 // 123 NIS
-            /NIS\s*(\d+)/gi,                 // NIS 123
+            // Handle thousands separators: "1,395" or "1.395" -> "1395" (when followed by groups of 3)
+            normalized = normalized.replace(/(\d{1,3})([.,]\d{3})+(?!\d)/g, (match, first, rest) => {
+                return first + rest.replace(/[.,]/g, '');
+            });
+            
+            return normalized;
+        };
+        
+        const normalizedText = normalizeNumbers(fullText);
+        console.log('Normalized text for price detection:', normalizedText);
+        
+        // More robust currency patterns that handle OCR noise
+        const currencyPatterns = [
+            // Hebrew patterns - more flexible for OCR noise
+            /(\d+(?:\.\d+)?)\s*₪/g,                              // 123₪ or 123.45₪
+            /₪\s*(\d+(?:\.\d+)?)/g,                              // ₪123 or ₪123.45
+            /(\d+(?:\.\d+)?)\s*שח/gi,                            // 123 שח
+            /(\d+(?:\.\d+)?)\s*ש"ח/gi,                           // 123 ש"ח  
+            /(\d+(?:\.\d+)?)\s*שקל/gi,                           // 123 שקל
+            /שקל\s*(\d+(?:\.\d+)?)/gi,                           // שקל 123
+            /(?:^|[\s:;,.-])ל(\d+(?:\.\d+)?)(?!\d)/g,            // ל25 (with word boundaries)
+            
+            // Price with context - flexible for OCR artifacts
+            /מחיר[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,                // מחיר: [noise] 123
+            /סכום[\s\w:]*[^0-9]*(\d+(?:\.\d+)?)/gi,              // סכום העסקה: [noise] 123  
+            /עלות[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,                // עלות: [noise] 123
+            /תשלום[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,               // תשלום: [noise] 123
+            
+            // English/International patterns
+            /(\d+(?:\.\d+)?)\s*\$/g,                             // 123$ or 123.45$
+            /\$\s*(\d+(?:\.\d+)?)/g,                             // $123 or $123.45
+            /(\d+(?:\.\d+)?)\s*USD/gi,                           // 123 USD
+            /USD\s*(\d+(?:\.\d+)?)/gi,                           // USD 123
+            /(\d+(?:\.\d+)?)\s*EUR/gi,                           // 123 EUR
+            /EUR\s*(\d+(?:\.\d+)?)/gi,                           // EUR 123
+            /(\d+(?:\.\d+)?)\s*GBP/gi,                           // 123 GBP
+            /GBP\s*(\d+(?:\.\d+)?)/gi,                           // GBP 123
+            /(\d+(?:\.\d+)?)\s*NIS/gi,                           // 123 NIS
+            /NIS\s*(\d+(?:\.\d+)?)/gi,                           // NIS 123
+            
+            // Price with English context - flexible for OCR artifacts  
+            /price[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,               // price: [noise] 123
+            /cost[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,                // cost: [noise] 123
+            /total[\s:]*[^0-9]*(\d+(?:\.\d+)?)/gi,               // total: [noise] 123
         ];
         
         let foundPrices = [];
         
-        // Search for ALL currency patterns
+        // Search for ALL currency patterns in normalized text
         for (const pattern of currencyPatterns) {
             let match;
-            while ((match = pattern.exec(fullText)) !== null) {
-                const price = parseInt(match[1]);
-                if (price >= 10 && price <= 5000) { // Reasonable price range
+            while ((match = pattern.exec(normalizedText)) !== null) {
+                // Handle both integer and decimal prices
+                const priceStr = match[1];
+                const price = parseFloat(priceStr);
+                
+                // More inclusive price range - reject only clearly wrong values
+                if (price >= 5 && price <= 10000 && !isNaN(price)) {
                     foundPrices.push({
-                        price: price,
+                        price: price, // Keep original precision
+                        displayPrice: Math.round(price), // Round for display only
                         context: match[0],
-                        pattern: pattern.source
+                        pattern: pattern.source,
+                        fullMatch: match[0]
                     });
                 }
             }
@@ -378,18 +410,48 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         
         // Select the best price if multiple found
         if (foundPrices.length > 0) {
-            // Sort by likelihood - prefer prices in typical ranges
+            // Sort by likelihood - prefer prices in typical ranges and strong context
             foundPrices.sort((a, b) => {
-                // Score based on typical ticket price ranges
-                const scoreA = (a.price >= 50 && a.price <= 800) ? 10 : 
-                              (a.price >= 25 && a.price <= 1500) ? 5 : 1;
-                const scoreB = (b.price >= 50 && b.price <= 800) ? 10 : 
-                              (b.price >= 25 && b.price <= 1500) ? 5 : 1;
+                // Score based on typical ticket price ranges and context quality
+                let scoreA = 1;
+                let scoreB = 1;
+                
+                // Price range scoring (higher score = more likely)
+                if (a.price >= 50 && a.price <= 1000) scoreA += 10;
+                else if (a.price >= 20 && a.price <= 2000) scoreA += 5;
+                else if (a.price >= 5 && a.price <= 5000) scoreA += 2;
+                
+                if (b.price >= 50 && b.price <= 1000) scoreB += 10;
+                else if (b.price >= 20 && b.price <= 2000) scoreB += 5;
+                else if (b.price >= 5 && b.price <= 5000) scoreB += 2;
+                
+                // Enhanced context quality scoring - more currency indicators
+                const contextA = a.context.toLowerCase();
+                const contextB = b.context.toLowerCase();
+                
+                // Strong price indicators
+                if (contextA.includes('מחיר') || contextA.includes('price')) scoreA += 5;
+                if (contextA.includes('סכום') || contextA.includes('total') || contextA.includes('cost')) scoreA += 4;
+                
+                if (contextB.includes('מחיר') || contextB.includes('price')) scoreB += 5;
+                if (contextB.includes('סכום') || contextB.includes('total') || contextB.includes('cost')) scoreB += 4;
+                
+                // Currency symbols and indicators
+                if (contextA.includes('₪') || contextA.includes('שח') || contextA.includes('שקל')) scoreA += 3;
+                if (contextA.includes('$') || contextA.includes('usd') || contextA.includes('eur') || contextA.includes('nis')) scoreA += 3;
+                
+                if (contextB.includes('₪') || contextB.includes('שח') || contextB.includes('שקל')) scoreB += 3;
+                if (contextB.includes('$') || contextB.includes('usd') || contextB.includes('eur') || contextB.includes('nis')) scoreB += 3;
+                
+                // Penalize very long sequences that look like IDs/barcodes
+                if (a.context.match(/\d{10,}/)) scoreA -= 2;
+                if (b.context.match(/\d{10,}/)) scoreB -= 2;
+                
                 return scoreB - scoreA;
             });
             
-            details.originalPrice = foundPrices[0].price;
-            console.log('Selected price:', foundPrices[0].price, 'from context:', foundPrices[0].context);
+            details.originalPrice = foundPrices[0].displayPrice; // Use rounded price for display
+            console.log('Selected price:', foundPrices[0].displayPrice, 'from context:', foundPrices[0].context, 'all candidates:', foundPrices.map(p => `${p.displayPrice} (${p.context})`));
         } else {
             console.log('No prices found with currency symbols');
         }
