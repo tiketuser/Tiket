@@ -297,37 +297,68 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         
         console.log('Text lines:', lines);
         
-        // Look for Israeli venue names specifically
-        const israeliVenueMatch = fullText.match(/(האצטדיון\s+הלאומי[^,\n]*)/i) ||
-                                 fullText.match(/(בלומפילד[^,\n]*)/i) ||
-                                 fullText.match(/(היכל\s+התרבות[^,\n]*)/i) ||
-                                 fullText.match(/(לבונטין[^,\n]*)/i);
+        // Look for Israeli venue names in original lines (not collapsed text)
+        const israeliVenues = [
+            { pattern: /האצטדיון\s+הלאומי\s*רמת\s*[\-\u05be]?\s*גן/i, canonical: "האצטדיון הלאומי רמת-גן" },
+            { pattern: /בלומפילד/i, canonical: "אצטדיון בלומפילד" },
+            { pattern: /היכל\s+התרבות/i, canonical: "היכל התרבות" },
+            { pattern: /לבונטין/i, canonical: "לבונטין" },
+            { pattern: /זאפה/i, canonical: "זאפה" },
+            { pattern: /בארבי/i, canonical: "בארבי" }
+        ];
         
-        if (israeliVenueMatch) {
-            details.venue = israeliVenueMatch[1].trim();
-            console.log('Found Israeli venue:', details.venue);
+        // Search in original lines, not fullText
+        if (!details.venue) {
+            for (const line of lines) {
+                for (const venue of israeliVenues) {
+                    if (venue.pattern.test(line)) {
+                        details.venue = venue.canonical;
+                        console.log('Found Israeli venue:', details.venue);
+                        break;
+                    }
+                }
+                if (details.venue) break;
+            }
         }
         
-        // Look for artist/event name in the first meaningful lines
-        for (const line of lines) {
-            const cleanLine = line.trim().replace(/[^\u0590-\u05FF\u0020-\u007Ea-zA-Z]/g, '');
-            if (cleanLine.length > 3 && cleanLine.length < 50 && 
-                !cleanLine.includes('ASE') && !cleanLine.includes('STADIUM') && 
-                !cleanLine.includes('Reference') && !cleanLine.includes('Block')) {
-                if (!details.artist) {
-                    details.artist = cleanLine;
-                    details.title = cleanLine;
-                    console.log('Found artist:', cleanLine);
+        // Look for artist/event name with improved filtering
+        if (!details.artist) {
+            const excludeKeywords = ['ASE', 'STADIUM', 'Reference', 'Block', 'Row', 'Seat', 'Gate', 'Name', 
+                                   'שער', 'מושב', 'שורה', 'איזור', 'יציע', 'אצטדיון', 'האצטדיון', 'מחיר', 
+                                   'בלומפילד', 'זאפה', 'לבונטין', 'היכל'];
+            
+            for (const line of lines.slice(0, 5)) { // Only check first 5 lines
+                let candidate = line.trim();
+                
+                // Skip lines with excluded keywords
+                if (excludeKeywords.some(keyword => candidate.includes(keyword))) continue;
+                
+                // Clean the candidate
+                candidate = candidate.replace(/[^\u0590-\u05FF\u0020-\u007Ea-zA-Z]/g, ' ').trim();
+                candidate = candidate.replace(/[A-Za-z]+$/, '').trim(); // Remove trailing Latin letters
+                candidate = candidate.replace(/\s+/g, ' ').trim();
+                
+                // Check Hebrew ratio
+                const hebrewChars = (candidate.match(/[\u0590-\u05FF]/g) || []).length;
+                const totalChars = candidate.replace(/\s/g, '').length;
+                const hebrewRatio = totalChars > 0 ? hebrewChars / totalChars : 0;
+                
+                if (candidate.length >= 3 && candidate.length <= 40 && 
+                    hebrewRatio > 0.3 && totalChars > 2) {
+                    details.artist = candidate;
+                    details.title = candidate;
+                    console.log('Found artist:', candidate, 'Hebrew ratio:', hebrewRatio);
                     break;
                 }
             }
         }
         
-        // Look for date in Israeli format like "06/08/25" or similar patterns
+        // Look for date in Israeli format - 4-digit year first to avoid partial matches
         const israeliDatePatterns = [
-            /(\d{2})\/(\d{2})\/(\d{2})/,    // 06/08/25
-            /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/,  // 6.8.25 or 6.8.2025
-            /(\d{2})\/(\d{2})\/(\d{4})/,   // 06/08/2025
+            /(\d{2})\/(\d{2})\/(\d{4})/,                   // 06/08/2025
+            /(\d{1,2})\.(\d{1,2})\.(\d{4})/,               // 6.8.2025
+            /(\d{1,2})\.(\d{1,2})\.(\d{2})(?!\d)/,         // 6.8.25 (no trailing digit)
+            /(\d{2})\/(\d{2})\/(\d{2})(?!\d)/,             // 06/08/25 (no trailing digit)
         ];
         
         for (const pattern of israeliDatePatterns) {
@@ -429,8 +460,9 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             details.barcode = barcodeMatch[1];
         }
         
-        // Enhanced venue detection - look for more venue patterns
-        const venuePatterns = [
+        // Enhanced venue detection - only if venue not already set from canonical list
+        if (!details.venue) {
+            const venuePatterns = [
             // Known Israeli venues
             /(לבונטין[\s\d]*)/i,
             /(בלומפילד|בלומפיד)/i,
@@ -452,12 +484,13 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             /(\w+\s+\d+,\s*[^,\n]+)/,
         ];
         
-        for (const pattern of venuePatterns) {
-            const venueMatch = fullText.match(pattern);
-            if (venueMatch) {
-                details.venue = venueMatch[1].trim();
-                console.log('Found venue:', details.venue);
-                break;
+            for (const pattern of venuePatterns) {
+                const venueMatch = fullText.match(pattern);
+                if (venueMatch) {
+                    details.venue = venueMatch[1].trim();
+                    console.log('Found venue:', details.venue);
+                    break;
+                }
             }
         }
         
