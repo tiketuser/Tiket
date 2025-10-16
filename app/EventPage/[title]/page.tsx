@@ -33,6 +33,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       (card) => typeof card.title === "string" && card.title.trim() !== ""
     );
 
++
   console.log("title:", title);
   console.log("allTickets:", allTickets);
 
