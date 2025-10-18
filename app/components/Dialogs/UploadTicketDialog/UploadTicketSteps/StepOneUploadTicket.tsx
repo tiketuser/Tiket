@@ -6,6 +6,7 @@ import Tesseract from "tesseract.js";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import CustomInput from "@/app/components/CustomInput/CustomInput";
 import EmptyImage from "../../../../../public/images/Dialogs/emptyimage.svg";
+import ClientSideOCR from "./ClientSideOCR";
 
 const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
   nextStep,
@@ -13,6 +14,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
   updateTicketData,
 }) => {
   const [uploadStatus, setUploadStatus] = useState("לא זוהה קובץ");
+  const [showClientOCR, setShowClientOCR] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [barcode, setBarcode] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -22,6 +24,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
   /** ===== Vision-first: שימוש במודל AI ישירות על התמונה ===== */
   const tryVisionFirst = async (file: File) => {
     try {
+      setUploadStatus("מנתח תמונה עם מודל Vision...");
       const form = new FormData();
       form.append("file", file);
       if (barcode) form.append("barcode", barcode);
@@ -30,7 +33,13 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         method: "POST",
         body: form,
       });
-      if (!res.ok) throw new Error("vision failed");
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "Unknown error");
+        console.error("Vision API error:", res.status, errorText);
+        throw new Error(`Vision API failed: ${res.status}`);
+      }
+
       const data = await res.json();
 
       // אם חזר משהו משמעותי – נעדכן ונדלג על OCR
@@ -44,6 +53,31 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
           data.barcode);
 
       if (hasAny) {
+        // Check if this is a fallback response (when OpenAI quota is exceeded)
+        if (data._fallback) {
+          updateTicketData?.({
+            extractedText: undefined,
+            ticketDetails: {
+              title: "",
+              artist: "",
+              date: "",
+              time: "",
+              venue: "",
+              seat: "",
+              row: "",
+              section: "",
+              barcode: barcode || "",
+              originalPrice: undefined,
+            },
+            isProcessing: false,
+            extractionError:
+              data._message ||
+              "OpenAI quota exceeded - please fill in ticket details manually",
+          });
+          setUploadStatus("OpenAI quota exceeded - מלא פרטים ידנית");
+          return true;
+        }
+
         updateTicketData?.({
           extractedText: undefined, // אין צורך בטקסט גולמי
           ticketDetails: {
@@ -62,13 +96,19 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 : undefined,
           },
           isProcessing: false,
+          extractionError: undefined,
         });
         setUploadStatus("נותח בהצלחה ע״י מודל Vision ✓");
         setTimeout(() => nextStep && nextStep(), 700);
         return true;
       }
+
+      // Vision didn't extract enough data, try OCR fallback
+      setUploadStatus("מודל Vision לא זיהה מספיק נתונים - עובר ל-OCR...");
       return false;
-    } catch {
+    } catch (error) {
+      console.error("Vision API error:", error);
+      setUploadStatus("שגיאה במודל Vision - עובר ל-OCR...");
       return false;
     }
   };
@@ -129,71 +169,168 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 
   const parseTicketDetails = (text: string) => {
     const out: any = {};
-    const lines = text
+
+    // Clean text - remove RTL/LTR marks and normalize spaces
+    const cleanText = text
+      .replace(/[\u200E\u200F\u202A-\u202E\u202C\u202D]/g, "") // Remove directional marks
+      .replace(/\s+/g, " ") // Normalize spaces
+      .trim();
+
+    const lines = cleanText
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean);
-    const full = text
-      .replace(/[\u200E\u200F\u202A-\u202E]/g, "")
-      .replace(/\s+/g, " ");
-    const ds = [
-      /(\d{2})\/(\d{2})\/(\d{4})/,
-      /(\d{1,2})\.(\d{1,2})\.(\d{4})/,
-      /(\d{1,2})\.(\d{1,2})\.(\d{2})(?!\d)/,
-      /(\d{2})\/(\d{2})\/(\d{2})(?!\d)/,
-      /(\d{4})-(\d{2})-(\d{2})/,
+
+    // Enhanced date patterns for Hebrew tickets
+    const datePatterns = [
+      /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // DD/MM/YYYY
+      /(\d{1,2})\.(\d{1,2})\.(\d{4})/, // DD.MM.YYYY
+      /(\d{1,2})\.(\d{1,2})\.(\d{2})(?!\d)/, // DD.MM.YY
+      /(\d{2})\/(\d{2})\/(\d{2})(?!\d)/, // DD/MM/YY
+      /(\d{4})-(\d{2})-(\d{2})/, // YYYY-MM-DD
+      /(\d{1,2})\s*בחודש\s*(\d{1,2})\s*(\d{4})/, // Hebrew date format
     ];
-    for (const p of ds) {
-      const m = full.match(p);
-      if (m) {
-        let [_, a, b, c] = m as any;
-        if (c?.length === 2) c = parseInt(c) > 50 ? `19${c}` : `20${c}`;
-        out.date = `${a}/${b}/${c}`;
+
+    for (const pattern of datePatterns) {
+      const match = cleanText.match(pattern);
+      if (match) {
+        let [, day, month, year] = match;
+        if (year.length === 2) {
+          year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
+        }
+        out.date = `${day}/${month}/${year}`;
         break;
       }
     }
-    const t =
-      full.match(/(\d{1,2}):(\d{2})/) || full.match(/בשעה\s*(\d{2})(\d{2})/);
-    if (t) out.time = t.length === 3 ? `${t[1]}:${t[2]}` : `${t[1]}:${t[2]}`;
-    const pricePats = [
+
+    // Enhanced time patterns
+    const timePatterns = [
+      /(\d{1,2}):(\d{2})/, // HH:MM
+      /בשעה\s*(\d{1,2}):?(\d{2})/, // Hebrew "at hour"
+      /(\d{1,2})\s*:\s*(\d{2})/, // HH : MM (with spaces)
+    ];
+
+    for (const pattern of timePatterns) {
+      const match = cleanText.match(pattern);
+      if (match) {
+        const [, hour, minute] = match;
+        out.time = `${hour}:${minute}`;
+        break;
+      }
+    }
+
+    // Enhanced price patterns for Hebrew tickets
+    const pricePatterns = [
       /(\d+)\s*₪/g,
       /₪\s*(\d+)/g,
       /(\d+)\s*שח/gi,
       /(\d+)\s*ש"ח/gi,
       /(\d+)\s*שקל/gi,
       /שקל\s*(\d+)/gi,
+      /מחיר[:\s]*(\d+)/gi, // Hebrew "price:"
+      /(\d+)\s*ILS/gi,
     ];
-    const found: number[] = [];
-    for (const p of pricePats) {
-      let m;
-      while ((m = p.exec(full)) !== null) {
-        const v = parseInt(m[1]);
-        if (v >= 10 && v <= 5000) found.push(v);
+
+    const foundPrices: number[] = [];
+    for (const pattern of pricePatterns) {
+      let match;
+      while ((match = pattern.exec(cleanText)) !== null) {
+        const value = parseInt(match[1]);
+        if (value >= 10 && value <= 10000) {
+          // Extended range
+          foundPrices.push(value);
+        }
       }
     }
-    if (found.length) {
-      found.sort((a, b) => Math.abs(200 - a) - Math.abs(200 - b));
-      out.originalPrice = found[0];
+
+    if (foundPrices.length) {
+      // Sort by proximity to typical ticket prices (100-500)
+      foundPrices.sort((a, b) => Math.abs(300 - a) - Math.abs(300 - b));
+      out.originalPrice = foundPrices[0];
     }
-    const bc = full.match(/(\d{12,})/);
-    if (bc) out.barcode = bc[1];
-    const venue =
-      /(בלומפילד|היכל התרבות|זאפה|בארבי|לבונטין|היכל|תיאטרון|אצטדיון)/i;
-    const vl = lines.find((l) => venue.test(l));
-    if (vl) out.venue = vl;
-    for (const l of lines.slice(0, 5)) {
-      if (l.length >= 3 && !/^\d+$/.test(l)) {
-        out.artist = out.artist || l;
-        out.title = out.title || l;
+
+    // Enhanced barcode detection
+    const barcodePatterns = [
+      /(\d{12,})/, // 12+ digits
+      /ברקוד[:\s]*(\d+)/gi, // Hebrew "barcode:"
+      /קוד[:\s]*(\d{8,})/gi, // Hebrew "code:"
+    ];
+
+    for (const pattern of barcodePatterns) {
+      const match = cleanText.match(pattern);
+      if (match) {
+        out.barcode = match[1];
         break;
       }
     }
-    const seat = full.match(/(?:מושב|seat)[\s:]*([A-Z0-9]+)/i);
-    if (seat) out.seat = seat[1];
-    const row = full.match(/(?:שורה|row)[\s:]*([A-Z0-9]+)/i);
-    if (row) out.row = row[1];
-    const sec = full.match(/(?:block|section|איזור|יציע)[\s:]*([A-Z0-9]+)/i);
-    if (sec) out.section = sec[1];
+
+    // Enhanced venue detection for Israeli venues
+    const venuePatterns = [
+      /(בלומפילד|היכל התרבות|זאפה|בארבי|לבונטין|היכל|תיאטרון|אצטדיון|מרכז|אולם|פארק|גן)/i,
+      /(Bloomfield|Zappa|Barbie|Levontin|Heichal|Theater|Stadium|Center|Hall|Park|Garden)/i,
+    ];
+
+    for (const pattern of venuePatterns) {
+      const venueLine = lines.find((line) => pattern.test(line));
+      if (venueLine) {
+        out.venue = venueLine;
+        break;
+      }
+    }
+
+    // Enhanced artist/title detection
+    for (const line of lines.slice(0, 8)) {
+      // Check more lines
+      if (
+        line.length >= 3 &&
+        !/^\d+$/.test(line) &&
+        !line.includes("₪") &&
+        !line.includes("שקל")
+      ) {
+        if (!out.artist) out.artist = line;
+        if (!out.title) out.title = line;
+        break;
+      }
+    }
+
+    // Enhanced seat information detection
+    const seatPatterns = [
+      /(?:מושב|seat|מקום)[\s:]*([A-Z0-9]+)/i,
+      /מקום\s*(\d+)/i,
+    ];
+
+    for (const pattern of seatPatterns) {
+      const match = cleanText.match(pattern);
+      if (match) {
+        out.seat = match[1];
+        break;
+      }
+    }
+
+    const rowPatterns = [/(?:שורה|row)[\s:]*([A-Z0-9]+)/i, /שורה\s*(\d+)/i];
+
+    for (const pattern of rowPatterns) {
+      const match = cleanText.match(pattern);
+      if (match) {
+        out.row = match[1];
+        break;
+      }
+    }
+
+    const sectionPatterns = [
+      /(?:block|section|איזור|יציע|אזור)[\s:]*([A-Z0-9]+)/i,
+      /יציע\s*(\d+)/i,
+      /אזור\s*([A-Z0-9]+)/i,
+    ];
+
+    for (const pattern of sectionPatterns) {
+      const match = cleanText.match(pattern);
+      if (match) {
+        out.section = match[1];
+        break;
+      }
+    }
+
     return out;
   };
 
@@ -257,11 +394,28 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         },
       });
       workerRef.current = worker;
+
+      // Enhanced OCR parameters for better Hebrew text recognition
       await worker.setParameters({
-        tessedit_page_seg_mode: "6",
+        tessedit_page_seg_mode: "6", // Uniform block of text
+        tessedit_ocr_engine_mode: "1", // Neural nets LSTM engine only
         tessedit_char_whitelist:
-          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789אבגדהוזחטיכךלמםנןסעפףצץקרשת .,:-₪/()",
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789אבגדהוזחטיכךלמםנןסעפףצץקרשת .,:-₪/()[]{}",
         preserve_interword_spaces: "1",
+        tessedit_create_hocr: "0",
+        tessedit_create_tsv: "0",
+        tessedit_create_boxfile: "0",
+        // Hebrew-specific settings
+        language_model_penalty_non_freq_dict_word: "0.1",
+        language_model_penalty_non_dict_word: "0.15",
+        // Improve text recognition
+        textord_min_linesize: "2.5",
+        textord_old_baselines: "0",
+        textord_old_xheight: "0",
+        // Better character recognition
+        classify_bln_numeric_mode: "0",
+        classify_enable_learning: "0",
+        classify_enable_adaptive_matcher: "1",
       });
       const {
         data: { text, confidence },
@@ -283,16 +437,47 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             confidence: conf,
           },
         });
-        updateTicketData?.({
-          extractedText,
-          ticketDetails: {
-            ...parsed,
-            barcode: parsed.barcode || barcode || "",
-          },
-          isProcessing: false,
-        });
-        setUploadStatus(`בוצע ✓ (OCR: ${conf}%)`);
-        setTimeout(() => nextStep && nextStep(), 800);
+
+        // Check if we extracted meaningful data
+        const hasMeaningfulData =
+          parsed.title ||
+          parsed.artist ||
+          parsed.date ||
+          parsed.venue ||
+          parsed.originalPrice ||
+          parsed.barcode;
+
+        if (hasMeaningfulData) {
+          updateTicketData?.({
+            extractedText,
+            ticketDetails: {
+              ...parsed,
+              barcode: parsed.barcode || barcode || "",
+            },
+            isProcessing: false,
+            extractionError: undefined,
+          });
+          setUploadStatus(`OCR הושלם בהצלחה ✓ (דיוק: ${conf}%)`);
+          setTimeout(() => nextStep && nextStep(), 800);
+        } else {
+          updateTicketData?.({
+            isProcessing: false,
+            ticketDetails: {
+              title: "",
+              artist: "",
+              date: "",
+              time: "",
+              venue: "",
+              seat: "",
+              row: "",
+              section: "",
+              barcode: barcode || "",
+            },
+            extractionError:
+              "OCR זיהה טקסט אבל לא מצא פרטי כרטיס ברורים - מלא ידנית",
+          });
+          setUploadStatus("OCR הושלם - מלא פרטים ידנית");
+        }
       } else {
         updateTicketData?.({
           isProcessing: false,
@@ -305,13 +490,17 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
             seat: "",
             row: "",
             section: "",
-            barcode: "",
+            barcode: barcode || "",
           },
-          extractionError: "איכות הטקסט נמוכה - מעבר למילוי ידני",
+          extractionError:
+            conf <= 30
+              ? "איכות הטקסט נמוכה מדי (דיוק: " + conf + "%) - מלא פרטים ידנית"
+              : "לא זוהה טקסט בתמונה - מלא פרטים ידנית",
         });
         setUploadStatus("תמונה הועלתה - מלא פרטים ידנית");
       }
-    } catch {
+    } catch (error) {
+      console.error("OCR processing error:", error);
       updateTicketData?.({
         isProcessing: false,
         ticketDetails: {
@@ -323,11 +512,14 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
           seat: "",
           row: "",
           section: "",
-          barcode: "",
+          barcode: barcode || "",
         },
-        extractionError: "שגיאת OCR - מלא ידנית",
+        extractionError:
+          error instanceof Error
+            ? `שגיאת OCR: ${error.message} - מלא פרטים ידנית`
+            : "שגיאת OCR לא ידועה - מלא פרטים ידנית",
       });
-      setUploadStatus("תמונה הועלתה - מלא פרטים ידנית");
+      setUploadStatus("שגיאה בעיבוד - מלא פרטים ידנית");
     } finally {
       isProcessingRef.current = false;
       if (workerRef.current) {
@@ -356,11 +548,63 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     // נסה קודם Vision
     setUploadStatus("מנתח תמונה עם מודל Vision...");
     updateTicketData({ isProcessing: true });
-    const ok = await tryVisionFirst(file);
-    if (!ok) {
+    const visionSuccess = await tryVisionFirst(file);
+    if (!visionSuccess) {
       // פולבק ל-OCR
       await processWithOCR(file);
     }
+  };
+
+  // Retry mechanism for failed OCR
+  const retryOCR = async () => {
+    if (!ticketData?.uploadedFile || !updateTicketData) return;
+
+    setUploadStatus("מנסה שוב לנתח את התמונה...");
+    updateTicketData({ isProcessing: true, extractionError: undefined });
+
+    // Try Vision first, then OCR
+    const visionSuccess = await tryVisionFirst(ticketData.uploadedFile);
+    if (!visionSuccess) {
+      await processWithOCR(ticketData.uploadedFile);
+      // Show client-side OCR option after server-side OCR fails
+      setShowClientOCR(true);
+    }
+  };
+
+  const handleClientOCRSuccess = (data: any) => {
+    console.log("Client OCR extracted:", data);
+
+    // Update ticket data with extracted information
+    updateTicketData?.({
+      extractedText: undefined,
+      ticketDetails: {
+        title: data.title || "",
+        artist: data.artist || "",
+        date: data.date || "",
+        time: data.time || "",
+        venue: data.venue || "",
+        seat: data.seat || "",
+        row: data.row || "",
+        section: data.section || "",
+        barcode: data.barcode || barcode || "",
+        originalPrice:
+          typeof data.originalPrice === "number"
+            ? data.originalPrice
+            : undefined,
+      },
+      isProcessing: false,
+      extractionError: undefined,
+    });
+
+    setUploadStatus("נותח בהצלחה ע״י OCR ✓");
+    setShowClientOCR(false);
+    setTimeout(() => nextStep && nextStep(), 700);
+  };
+
+  const handleClientOCRError = (error: string) => {
+    console.error("Client OCR error:", error);
+    setUploadStatus(error);
+    setShowClientOCR(false);
   };
 
   const handleBarcodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -438,6 +682,44 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                 }}
               >
                 דלג על ניתוח
+              </button>
+            </div>
+          )}
+
+          {/* Retry button for failed OCR */}
+          {ticketData?.extractionError && !ticketData?.isProcessing && (
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-orange-600">
+                  ⚠️ {ticketData.extractionError}
+                </span>
+              </div>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={retryOCR}
+                disabled={!ticketData?.uploadedFile}
+              >
+                נסה שוב
+              </button>
+            </div>
+          )}
+
+          {/* Client-side OCR option */}
+          {showClientOCR && ticketData?.uploadedFile && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700 mb-3">
+                💡 נסה OCR מתקדם יותר בדפדפן
+              </p>
+              <ClientSideOCR
+                imageFile={ticketData.uploadedFile}
+                onExtract={handleClientOCRSuccess}
+                onError={handleClientOCRError}
+              />
+              <button
+                className="btn btn-sm btn-outline mt-2"
+                onClick={() => setShowClientOCR(false)}
+              >
+                ביטול
               </button>
             </div>
           )}

@@ -38,7 +38,7 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
         <div className="w-[3px] h-24 bg-strongText"></div> {/* Divider */}
         {/* Event Title Section */}
         <div className="text-center whitespace-nowrap truncate w-[180px]">
-          <span className="text-heading-3-desktop font-bold text-strongText">
+          <span className="text-heading-5-desktop font-bold text-strongText">
             {title}
           </span>
         </div>
