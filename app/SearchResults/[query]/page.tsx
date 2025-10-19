@@ -21,6 +21,11 @@ interface CardData {
 
 // Static params for SSG
 export async function generateStaticParams() {
+  // Return empty array if db is not available
+  if (!db) {
+    return [];
+  }
+
   // You may want to fetch artist names from Firestore here
   const querySnapshot = await getDocs(collection(db, "tickets"));
   const artistNames = Array.from(
@@ -33,6 +38,25 @@ export async function generateStaticParams() {
 
 const SearchResults = async ({ params }: { params: { query: string } }) => {
   const query = decodeURIComponent(params.query);
+
+  // Handle case when db is not available
+  if (!db) {
+    return (
+      <div>
+        <NavBar />
+        <div className="shadow-small-inner py-14 px-24">
+          <ResultSection
+            withUpperSection={true}
+            title={query}
+            upperText="חיפשת"
+            subText="מסד הנתונים לא זמין כרגע"
+            artistNames={[]}
+          />
+          <SearchResultsClient tickets={[]} />
+        </div>
+      </div>
+    );
+  }
 
   // Fetch tickets from Firestore
   const querySnapshot = await getDocs(collection(db, "tickets"));

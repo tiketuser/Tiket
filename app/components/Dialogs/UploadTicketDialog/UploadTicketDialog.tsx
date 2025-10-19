@@ -11,8 +11,8 @@ import StepFourUploadTicket from "./UploadTicketSteps/StepFourUploadTicket";
 import { TicketData } from "./UploadTicketSteps/UploadTicketInterface.types";
 
 // Firebase imports
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, serverTimestamp, Firestore } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, FirebaseStorage } from "firebase/storage";
 import { db, storage } from "../../../../firebase";
 
 interface UploadTicketInterface {
@@ -41,6 +41,10 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       return false;
     }
 
+    // Type narrowing: after the check above, we know db and storage are not null
+    const firestore = db;
+    const storageRef = storage;
+
     setIsPublishing(true);
     setPublishError(null);
 
@@ -48,9 +52,9 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       let imageUrl = null;
 
       // Upload image if available
-      if (ticketData.uploadedFile && storage) {
+      if (ticketData.uploadedFile) {
         const imageRef = ref(
-          storage,
+          storageRef,
           `ticket-images/${Date.now()}-${ticketData.uploadedFile.name}`
         );
         const snapshot = await uploadBytes(imageRef, ticketData.uploadedFile);
@@ -94,7 +98,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       };
 
       // Add to Firestore
-      const docRef = await addDoc(collection(db!, "tickets"), ticketDoc);
+      const docRef = await addDoc(collection(firestore, "tickets"), ticketDoc);
 
       // Update ticket data with the document ID
       setTicketData((prev) => ({ ...prev, ticketId: docRef.id }));
@@ -126,7 +130,12 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
 
   // Function to update ticket data
   const updateTicketData = (updates: Partial<TicketData>) => {
-    setTicketData((prev) => ({ ...prev, ...updates }));
+    console.log("UploadTicketDialog - updateTicketData called with:", updates);
+    setTicketData((prev) => {
+      const newData = { ...prev, ...updates };
+      console.log("UploadTicketDialog - new ticketData state:", newData);
+      return newData;
+    });
   };
 
   // Reset dialog state when closing
@@ -170,7 +179,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     {
       heading: "אשר את הפרטים",
       description: "בדוק את פרטי הכרטיס לפני הפרסום",
-      height: "h-[120vh] max-h-[800px] sm:h-[700px]",
+      height: "h-[120vh] max-h-auto sm:h-auto",
       width: "w-[95vw] max-w-[880px] sm:w-[880px]",
       content: (
         <StepThreeUploadTicket

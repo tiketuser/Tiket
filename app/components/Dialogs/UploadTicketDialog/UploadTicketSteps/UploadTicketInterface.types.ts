@@ -21,6 +21,8 @@ export interface TicketData {
         seat?: string;
         barcode?: string;
         originalPrice?: number;
+        price?: number; // Extracted price from OCR
+        isStanding?: boolean; // Standing ticket (no seat assignment)
     };
     pricing?: {
         askingPrice?: number;

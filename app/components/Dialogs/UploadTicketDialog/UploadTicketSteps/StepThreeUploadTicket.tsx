@@ -3,6 +3,19 @@ import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import CustomInput from "@/app/components/CustomInput/CustomInput";
 import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
 
+interface ExtendedTicketDetails {
+  title: string;
+  artist: string;
+  date: string;
+  time: string;
+  venue: string;
+  seat: string;
+  row: string;
+  section: string;
+  barcode: string;
+  isStanding: boolean;
+}
+
 const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   nextStep,
   prevStep,
@@ -10,40 +23,178 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   updateTicketData,
 }) => {
   // Local state for editable fields
-  const [editableDetails, setEditableDetails] = useState({
-    title: "",
-    artist: "",
-    date: "",
-    time: "",
-    venue: "",
-    seat: "",
-    row: "",
-    section: "",
-    barcode: "",
-  });
+  const [editableDetails, setEditableDetails] = useState<ExtendedTicketDetails>(
+    {
+      title: "",
+      artist: "",
+      date: "",
+      time: "",
+      venue: "",
+      seat: "",
+      row: "",
+      section: "",
+      barcode: "",
+      isStanding: false,
+    }
+  );
+
+  const [isDateInPast, setIsDateInPast] = useState(false);
+  const [dateError, setDateError] = useState<string>("");
 
   // Load ticket details when component mounts
   useEffect(() => {
+    console.log("StepThree - ticketData received:", ticketData);
+
     if (ticketData?.ticketDetails) {
-      setEditableDetails({
-        title: ticketData.ticketDetails.title || "",
-        artist: ticketData.ticketDetails.artist || "",
-        date: ticketData.ticketDetails.date || "",
-        time: ticketData.ticketDetails.time || "",
-        venue: ticketData.ticketDetails.venue || "",
-        seat: ticketData.ticketDetails.seat || "",
-        row: ticketData.ticketDetails.row || "",
-        section: ticketData.ticketDetails.section || "",
-        barcode: ticketData.ticketDetails.barcode || "",
-      });
+      const details = ticketData.ticketDetails;
+      console.log("StepThree - ticketDetails:", details);
+
+      // Map OCR extracted data to form fields
+      const newDetails = {
+        title: details.artist || details.title || "", // Use artist as title
+        artist: details.artist || "",
+        date: details.date || "",
+        time: details.time || "",
+        venue: details.venue || "",
+        // Seat info is stored directly in ticketDetails (not nested)
+        seat: details.seat || "",
+        row: details.row || "",
+        section: details.section || "",
+        barcode: details.barcode || "",
+        isStanding: details.isStanding || false,
+      };
+
+      console.log("StepThree - Setting editable details:", newDetails);
+      setEditableDetails(newDetails);
+
+      // Validate the extracted date
+      if (newDetails.date) {
+        const validation = validateDate(newDetails.date);
+        setIsDateInPast(validation.isInPast);
+        setDateError(validation.error);
+      }
     }
   }, [ticketData]);
+
+  // Comprehensive date validation
+  const validateDate = (
+    dateStr: string
+  ): { isValid: boolean; error: string; isInPast: boolean } => {
+    if (!dateStr) {
+      return { isValid: false, error: "", isInPast: false };
+    }
+
+    try {
+      let day: number, month: number, year: number;
+
+      // Parse DD/MM/YYYY format
+      if (dateStr.includes("/")) {
+        const parts = dateStr.split("/");
+        if (parts.length !== 3) {
+          return {
+            isValid: false,
+            error: "פורמט תאריך לא תקין. השתמש ב- DD/MM/YYYY",
+            isInPast: false,
+          };
+        }
+
+        day = parseInt(parts[0]);
+        month = parseInt(parts[1]);
+        year = parseInt(parts[2]);
+      } else {
+        // Try parsing other formats
+        const dateObj = new Date(dateStr);
+        if (isNaN(dateObj.getTime())) {
+          return { isValid: false, error: "תאריך לא תקין", isInPast: false };
+        }
+        day = dateObj.getDate();
+        month = dateObj.getMonth() + 1;
+        year = dateObj.getFullYear();
+      }
+
+      // Validate day (1-31)
+      if (isNaN(day) || day < 1 || day > 31) {
+        return { isValid: false, error: "יום לא תקין (1-31)", isInPast: false };
+      }
+
+      // Validate month (1-12)
+      if (isNaN(month) || month < 1 || month > 12) {
+        return {
+          isValid: false,
+          error: "חודש לא תקין (1-12)",
+          isInPast: false,
+        };
+      }
+
+      // Validate year (current year to 2 years in future)
+      const currentYear = new Date().getFullYear();
+      if (isNaN(year) || year < currentYear || year > currentYear + 2) {
+        return {
+          isValid: false,
+          error: `שנה לא תקינה (${currentYear}-${currentYear + 2})`,
+          isInPast: false,
+        };
+      }
+
+      // Check if date is valid (e.g., not Feb 31)
+      const dateObj = new Date(year, month - 1, day);
+      if (
+        dateObj.getDate() !== day ||
+        dateObj.getMonth() !== month - 1 ||
+        dateObj.getFullYear() !== year
+      ) {
+        return {
+          isValid: false,
+          error: "תאריך לא קיים (לדוגמה: 31/2)",
+          isInPast: false,
+        };
+      }
+
+      // Check if date is in the past
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      dateObj.setHours(0, 0, 0, 0);
+
+      if (dateObj < today) {
+        return {
+          isValid: false,
+          error: "התאריך עבר - הזן תאריך עתידי",
+          isInPast: true,
+        };
+      }
+
+      // Check if date is too far in the future (more than 2 years)
+      const maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() + 2);
+      if (dateObj > maxDate) {
+        return {
+          isValid: false,
+          error: "התאריך רחוק מדי בעתיד (עד שנתיים)",
+          isInPast: false,
+        };
+      }
+
+      return { isValid: true, error: "", isInPast: false };
+    } catch (error) {
+      console.error("Error validating date:", error);
+      return { isValid: false, error: "שגיאה בבדיקת תאריך", isInPast: false };
+    }
+  };
 
   const handleDetailChange = (field: string, value: string) => {
     setEditableDetails((prev) => ({
       ...prev,
       [field]: value,
+      // When title changes, also update artist to keep them in sync
+      ...(field === "title" && { artist: value }),
     }));
+
+    // Check if date field was changed and validate it
+    if (field === "date") {
+      const validation = validateDate(value);
+      setIsDateInPast(validation.isInPast);
+      setDateError(validation.error);
+    }
 
     // Update ticket data
     if (updateTicketData) {
@@ -51,6 +202,29 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         ticketDetails: {
           ...ticketData?.ticketDetails,
           [field]: value,
+          // When title changes, also update artist to keep them in sync
+          ...(field === "title" && { artist: value }),
+        },
+      });
+    }
+  };
+
+  const handleStandingChange = (checked: boolean) => {
+    setEditableDetails((prev) => ({
+      ...prev,
+      isStanding: checked,
+      // Clear seat info when standing is checked
+      ...(checked && { seat: "", row: "", section: "" }),
+    }));
+
+    // Update ticket data
+    if (updateTicketData) {
+      updateTicketData({
+        ticketDetails: {
+          ...ticketData?.ticketDetails,
+          isStanding: checked,
+          // Clear seat info when standing is checked
+          ...(checked && { seat: "", row: "", section: "" }),
         },
       });
     }
@@ -58,15 +232,42 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
   const formatSeatLocation = () => {
     const parts = [];
-    if (editableDetails.section) parts.push(`יציע ${editableDetails.section}`);
-    if (editableDetails.row) parts.push(`שורה ${editableDetails.row}`);
-    if (editableDetails.seat) parts.push(`מקום ${editableDetails.seat}`);
-    return parts.join(" ") || "מיקום לא צוין";
+
+    // Only add venue if it has a value
+    if (editableDetails.venue && editableDetails.venue.trim()) {
+      parts.push(editableDetails.venue);
+    }
+
+    // If it's a standing ticket, show "עמידה" and skip seat details
+    if (editableDetails.isStanding) {
+      parts.push("עמידה");
+      return parts.join(" • ");
+    }
+
+    // Only add section label if there's a value
+    if (editableDetails.section && editableDetails.section.trim()) {
+      parts.push(`יציע ${editableDetails.section}`);
+    }
+
+    // Only add row label if there's a value
+    if (editableDetails.row && editableDetails.row.trim()) {
+      parts.push(`שורה ${editableDetails.row}`);
+    }
+
+    // Only add seat label if there's a value
+    if (editableDetails.seat && editableDetails.seat.trim()) {
+      parts.push(`מקום ${editableDetails.seat}`);
+    }
+
+    // If no location info at all, show placeholder
+    return parts.length > 0 ? parts.join(" • ") : "מיקום לא צוין";
   };
 
   const canProceed =
     editableDetails.title &&
     editableDetails.date &&
+    editableDetails.venue &&
+    !dateError &&
     ticketData?.pricing?.askingPrice;
 
   // Show extraction status if there was an error
@@ -76,7 +277,6 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
     <div>
       <div className="max-w-[500px] mx-auto px-4 mt-8">
         {/* Title and Subtitle */}
-        
 
         {/* Show extraction status */}
         {hasExtractionError && (
@@ -89,6 +289,16 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             </p>
           </div>
         )}
+
+        {/* Show warning if date has errors */}
+        {dateError && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700 font-semibold">⚠️ בעיה בתאריך</p>
+            <p className="text-xs text-red-600 mt-1">
+              {dateError}. אנא תקן את התאריך כדי לפרסם את הכרטיס.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Preview Card */}
@@ -97,6 +307,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
           price={ticketData?.pricing?.askingPrice || 0}
           title={editableDetails.artist || editableDetails.title || "ללא כותרת"}
           date={editableDetails.date || "ללא תאריך"}
+          venue={editableDetails.venue || ""}
           seatLocation={formatSeatLocation()}
           width="w-[800px]"
         />
@@ -120,63 +331,110 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className={`block text-sm font-medium mb-1 ${
+                dateError ? "text-red-600" : "text-gray-700"
+              }`}
+            >
               תאריך *
             </label>
-            <CustomInput
-              id="date"
-              name="date"
-              width="w-full"
-              placeholder="15 אוק׳"
-              value={editableDetails.date}
-              onChange={(e) => handleDetailChange("date", e.target.value)}
-            />
+            <div className="relative">
+              <CustomInput
+                id="date"
+                name="date"
+                width="w-full"
+                placeholder="DD/MM/YYYY"
+                value={editableDetails.date}
+                onChange={(e) => handleDetailChange("date", e.target.value)}
+                error={!!dateError}
+              />
+              {dateError && (
+                <div className="absolute -bottom-6 right-0 text-xs text-red-600 font-medium">
+                  ⚠️ {dateError}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              יציע
-            </label>
-            <CustomInput
-              id="section"
-              name="section"
-              width="w-full"
-              placeholder="4"
-              value={editableDetails.section}
-              onChange={(e) => handleDetailChange("section", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              שורה
-            </label>
-            <CustomInput
-              id="row"
-              name="row"
-              width="w-full"
-              placeholder="24"
-              value={editableDetails.row}
-              onChange={(e) => handleDetailChange("row", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              מקום
-            </label>
-            <CustomInput
-              id="seat"
-              name="seat"
-              width="w-full"
-              placeholder="15"
-              value={editableDetails.seat}
-              onChange={(e) => handleDetailChange("seat", e.target.value)}
-            />
-          </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            מקום האירוע *
+          </label>
+          <CustomInput
+            id="venue"
+            name="venue"
+            width="w-full"
+            placeholder="היכל מנורה מבטחים"
+            value={editableDetails.venue}
+            onChange={(e) => handleDetailChange("venue", e.target.value)}
+          />
         </div>
+
+        {/* Standing Ticket Checkbox */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-primary"
+              checked={editableDetails.isStanding}
+              onChange={(e) => handleStandingChange(e.target.checked)}
+            />
+            <span className="text-sm font-medium text-gray-700">
+              כרטיס עמידה (ללא מקומות ישיבה)
+            </span>
+          </label>
+        </div>
+
+        {/* Seat Information - Hidden when standing ticket */}
+        {!editableDetails.isStanding && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                יציע{" "}
+                <span className="text-gray-400 font-normal">(אופציונלי)</span>
+              </label>
+              <CustomInput
+                id="section"
+                name="section"
+                width="w-full"
+                placeholder={editableDetails.section || "ריק"}
+                value={editableDetails.section}
+                onChange={(e) => handleDetailChange("section", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                שורה{" "}
+                <span className="text-gray-400 font-normal">(אופציונלי)</span>
+              </label>
+              <CustomInput
+                id="row"
+                name="row"
+                width="w-full"
+                placeholder={editableDetails.row || "ריק"}
+                value={editableDetails.row}
+                onChange={(e) => handleDetailChange("row", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                מקום{" "}
+                <span className="text-gray-400 font-normal">(אופציונלי)</span>
+              </label>
+              <CustomInput
+                id="seat"
+                name="seat"
+                width="w-full"
+                placeholder={editableDetails.seat || "ריק"}
+                value={editableDetails.seat}
+                onChange={(e) => handleDetailChange("seat", e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Pricing Summary */}
         {ticketData?.pricing && (
@@ -188,31 +446,39 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         )}
       </div>
 
-      <div className="flex justify-center gap-4 sm:gap-10 mt-6">
-        <button
-          type="button"
-          className="btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm sm:text-text-large font-normal"
-          onClick={() => prevStep && prevStep()}
-        >
-          לשלב הקודם
-        </button>
+      <div className="flex flex-col items-center gap-2 mt-6">
+        {!canProceed && dateError && (
+          <p className="text-xs text-red-600 font-medium">
+            לא ניתן לפרסם - {dateError}
+          </p>
+        )}
 
-        <button
-          type="button"
-          className={`btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
-            canProceed
-              ? "bg-primary text-white hover:bg-primary/90"
-              : "bg-secondary text-white cursor-not-allowed"
-          }`}
-          onClick={() => {
-            if (canProceed && nextStep) {
-              nextStep();
-            }
-          }}
-          disabled={!canProceed}
-        >
-          פרסום כרטיס
-        </button>
+        <div className="flex justify-center gap-4 sm:gap-10">
+          <button
+            type="button"
+            className="btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm sm:text-text-large font-normal"
+            onClick={() => prevStep && prevStep()}
+          >
+            לשלב הקודם
+          </button>
+
+          <button
+            type="button"
+            className={`btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
+              canProceed
+                ? "bg-primary text-white hover:bg-primary/90"
+                : "bg-secondary text-white cursor-not-allowed"
+            }`}
+            onClick={() => {
+              if (canProceed && nextStep) {
+                nextStep();
+              }
+            }}
+            disabled={!canProceed}
+          >
+            פרסום כרטיס
+          </button>
+        </div>
       </div>
     </div>
   );

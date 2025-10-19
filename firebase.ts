@@ -1,7 +1,8 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+import { initializeApp, FirebaseApp } from "firebase/app";
 import {
   getFirestore,
+  Firestore,
   collection,
   getDocs,
   setDoc,
@@ -13,8 +14,8 @@ import {
   deleteDoc,
   onSnapshot
 } from "firebase/firestore";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
-import { getStorage } from "firebase/storage";
+import { getAuth, Auth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -30,7 +31,10 @@ const firebaseConfig = {
 const hasValidConfig = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
                       process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-let app, db, auth, storage;
+let app: FirebaseApp | null;
+let db: Firestore | null;
+let auth: Auth | null;
+let storage: FirebaseStorage | null;
 
 if (hasValidConfig) {
   // Initialize Firebase with real config

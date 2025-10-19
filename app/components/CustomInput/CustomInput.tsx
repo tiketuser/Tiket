@@ -13,6 +13,7 @@ interface CustomInputProps {
   pattern?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: boolean; // Add error prop for validation styling
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
@@ -27,6 +28,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
   pattern = ".*",
   value,
   onChange,
+  error = false,
 }) => {
   return (
     <div className={`${className} relative ${width}`}>
@@ -42,7 +44,11 @@ const CustomInput: React.FC<CustomInputProps> = ({
         pattern={pattern}
         value={value}
         onChange={onChange}
-        className={`w-full py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300`}
+        className={`w-full py-3 pl-12 pr-4 rounded-lg border ${
+          error
+            ? "border-red-500 focus:border-red-500"
+            : "border-gray-300 focus:border-gray-300"
+        } sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0`}
       />
     </div>
   );
