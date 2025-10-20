@@ -1,73 +1,93 @@
-import Image from "next/image";
-
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
-
 import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
 
-import ShareIcon from "@/public/images/Dialogs/ShareIcon.svg"
-
 const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
-    // nextStep,
-    // prevStep 
+  savedTickets = [],
+  publishAllTickets,
+  isPublishing,
+  prevStep,
 }) => {
-    return (
-        <div className="px-4 sm:px-0">
-            <div className="w-full max-w-[668px] mt-6 sm:mt-12">
+  const handlePublish = async () => {
+    if (publishAllTickets) {
+      await publishAllTickets();
+    }
+  };
 
-                {/* Title and Subtitle */}
-                <p className="text-lg sm:text-heading-5-desktop font-bold">
-                    בהצלחה במכירה!
-                </p>
-                <p className="text-sm sm:text-text-medium font-bold text-strongText">
-                    תוכל לראות את הכרטיס ביחד עם שאר הכרטיסים במודעות שלך.            
-                </p>         
-            </div> 
+  return (
+    <div className="px-4 sm:px-0">
+      <div className="w-full max-w-[880px] mt-6 sm:mt-12">
+        {/* Title and Subtitle */}
+        <p className="text-lg sm:text-heading-5-desktop font-bold">
+          סקירה סופית
+        </p>
+        <p className="text-sm sm:text-text-medium font-bold text-strongText">
+          בדוק את כל הכרטיסים לפני הפרסום ({savedTickets.length} כרטיסים)
+        </p>
+      </div>
 
-            <div className="flex flex-col items-center gap-2 w-full max-w-[668px]">
-                <button 
-                    id="nextStep"
-                    className="btn w-full h-[48px] min-h-0 btn-secondary bg-primary text-white text-sm sm:text-text-large font-normal disabled:bg-secondary disabled:text-white mt-8 sm:mt-12 mx-auto block"
-                >
-                    המודעות שלי  
-                </button>
+      {/* Display all saved tickets */}
+      <div className="mt-6 sm:mt-8 w-full max-w-[880px] space-y-4 max-h-[500px] overflow-y-auto">
+        {savedTickets.map((ticket, index) => (
+          <MinimalCard
+            key={index}
+            price={ticket?.pricing?.askingPrice || 0}
+            priceBefore={ticket?.ticketDetails?.originalPrice}
+            title={
+              ticket?.ticketDetails?.artist ||
+              ticket?.ticketDetails?.title ||
+              ""
+            }
+            date={ticket?.ticketDetails?.date || ""}
+            venue={ticket?.ticketDetails?.venue}
+            seatLocation={
+              ticket?.ticketDetails?.isStanding
+                ? "עמידה"
+                : [
+                    ticket?.ticketDetails?.venue,
+                    ticket?.ticketDetails?.section,
+                    ticket?.ticketDetails?.row,
+                    ticket?.ticketDetails?.seat,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")
+            }
+            width="w-full"
+          />
+        ))}
+      </div>
 
-                <label className="link link-hover text-primary border-transparent text-sm sm:text-text-large font-normal cursor-pointer">
-                    לדף הבית
-                </label>
+      {/* Action buttons */}
+      <div className="flex flex-col items-center gap-3 mt-8 w-full max-w-[880px]">
+        <button
+          className={`btn w-full h-[48px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
+            isPublishing
+              ? "bg-gray-400 text-white cursor-wait"
+              : "bg-primary text-white hover:bg-primary/90"
+          }`}
+          onClick={handlePublish}
+          disabled={isPublishing}
+        >
+          {isPublishing ? (
+            <div className="flex items-center gap-2">
+              <div className="loading loading-spinner loading-sm"></div>
+              <span>מפרסם כרטיסים...</span>
             </div>
+          ) : (
+            `פרסם ${savedTickets.length} כרטיסים`
+          )}
+        </button>
 
-            <div className="flex flex-col items-center gap-2 mt-8 sm:mt-12">
-
-                <p className="text-lg sm:text-heading-5-desktop font-bold text-center">
-                    שתף את הכרטיס ברשתות החברתיות
-                </p>
-
-                <button 
-                    id="nextStep"
-                    className="btn w-full max-w-[340px] h-[48px] min-h-0 btn-secondary bg-secondary text-primary text-sm sm:text-text-large font-normal disabled:bg-secondary disabled:text-white mx-auto block"
-                >
-                    <div className="flex items-center justify-center gap-2">                        
-                        <Image src={ShareIcon} alt="ShareIcon" />
-                        <label>שתף</label>
-                    </div>
-                </button>
-
-            </div>
-
-            <div className="mt-8 flex justify-center">
-                <MinimalCard 
-                    price={500}
-                    priceBefore={600}
-                    title="עלמה גוב"
-                    date="15 אוק׳"
-                    seatLocation="היכל התרבות - תל אביב"
-                    width="w-full max-w-[880px]"
-                />
-            </div>
-         
-        </div>
-        
-    );
+        <button
+          type="button"
+          className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm sm:text-text-large font-normal"
+          onClick={() => prevStep && prevStep()}
+          disabled={isPublishing}
+        >
+          חזור
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default StepFourUploadTicket;

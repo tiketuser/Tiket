@@ -6,17 +6,36 @@ import SeatingMap from "../../components/SeatingMap/SeatingMap";
 import { db } from "../../../firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
-interface CardData {
+// Enable dynamic rendering with revalidation
+export const dynamic = "force-dynamic";
+export const revalidate = 60; // Revalidate every 60 seconds
+
+interface Concert {
   id: string;
+  artist: string;
   title: string;
-  imageSrc: string;
   date: string;
-  location: string;
-  priceBefore: number;
-  price: number;
-  soldOut: boolean;
-  ticketsLeft: number;
-  timeLeft: string;
+  time: string;
+  venue: string;
+  imageData?: string;
+  status: string;
+}
+
+interface Ticket {
+  id: string;
+  concertId: string;
+  artist: string;
+  date: string;
+  venue: string;
+  time: string;
+  section: string;
+  row: number | null;
+  seat: number | null;
+  isStanding: boolean;
+  askingPrice: number;
+  originalPrice: number;
+  status: string;
+  sellerId: string;
 }
 
 const EventPage = async ({ params }: { params: { title: string } }) => {
@@ -36,29 +55,66 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       );
     }
 
-    // Query Firestore for exact title match
-    const ticketsRef = collection(db, "tickets");
-    const querySnapshot = await getDocs(ticketsRef);
+    // Step 1: Query concerts by artist name directly (more efficient)
+    const concertsRef = collection(db, "concerts");
+    const concertsQuery = query(
+      concertsRef,
+      where("artist", "==", decodedTitle),
+      where("status", "==", "active")
+    );
+    const concertsSnapshot = await getDocs(concertsQuery);
 
-    // Process and filter tickets
-    const allTickets: CardData[] = querySnapshot.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<CardData, "id">),
-      }))
-      .filter(
-        (card) =>
-          typeof card.title === "string" &&
-          card.title.trim() === decodedTitle.trim()
-      );
+    // Get the first matching concert
+    const concert =
+      concertsSnapshot.docs.length > 0
+        ? {
+            id: concertsSnapshot.docs[0].id,
+            ...(concertsSnapshot.docs[0].data() as Omit<Concert, "id">),
+          }
+        : null;
 
-    // If no matching events found
-    if (allTickets.length === 0) {
+    // If no concert found
+    if (!concert) {
       return (
         <div>
           <NavBar />
           <div className="text-center text-red-500 text-xl mt-20">
-            לא נמצאו כרטיסים לאירוע הזה 😢
+            לא נמצא קונצרט של {decodedTitle} 😢
+          </div>
+          <Footer />
+        </div>
+      );
+    }
+
+    // Step 2: Fetch tickets for this concert using query
+    const ticketsRef = collection(db, "tickets");
+    const ticketsQuery = query(
+      ticketsRef,
+      where("concertId", "==", concert.id),
+      where("status", "==", "available")
+    );
+    const ticketsSnapshot = await getDocs(ticketsQuery);
+
+    const tickets: Ticket[] = ticketsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Ticket, "id">),
+    }));
+
+    // If no tickets found
+    if (tickets.length === 0) {
+      return (
+        <div>
+          <NavBar />
+          <EventUpperSection
+            imageSrc={concert.imageData || "/images/Artist/default.png"}
+            title={concert.artist}
+            date={concert.date}
+            location={concert.venue}
+            time={concert.time}
+            availableTickets={0}
+          />
+          <div className="text-center text-red-500 text-xl mt-20 mb-20">
+            לא נמצאו כרטיסים זמינים לאירוע הזה 😢
           </div>
           <Footer />
         </div>
@@ -69,29 +125,45 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       <div>
         <NavBar />
         <EventUpperSection
-          imageSrc={allTickets[0].imageSrc}
-          title={allTickets[0].title}
-          date={allTickets[0].date}
-          location={allTickets[0].location}
-          time={"20:00"}
-          availableTickets={allTickets.reduce(
-            (sum, event) => sum + event.ticketsLeft,
-            0
-          )}
+          imageSrc={concert.imageData || "/images/Artist/default.png"}
+          title={concert.artist}
+          date={concert.date}
+          location={concert.venue}
+          time={concert.time}
+          availableTickets={tickets.length}
         />
         <div className="flex flex-col items-center justify-center sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 pt-8 pr-4 pb-8 pl-4 gap-4 shadow-small-inner">
-          {allTickets.map((event) => (
-            <div key={event.id} className="flex items-center justify-center">
-              <div className="w-full">
-                <SingleCard {...event} timeLeft="" buttonAction="קנה" />
+          {tickets.map((ticket) => {
+            // Format seat location
+            const seatLocation = ticket.isStanding
+              ? `עמידה - ${ticket.section}`
+              : `מושב ${ticket.section}${ticket.row}-${ticket.seat}`;
+
+            return (
+              <div key={ticket.id} className="flex items-center justify-center">
+                <div className="w-full">
+                  <SingleCard
+                    title={concert.artist}
+                    imageSrc={concert.imageData || "/images/Artist/default.png"}
+                    date={concert.date}
+                    location={concert.venue}
+                    seatLocation={seatLocation}
+                    priceBefore={ticket.originalPrice}
+                    price={ticket.askingPrice}
+                    soldOut={false}
+                    ticketsLeft={tickets.length}
+                    timeLeft=""
+                    buttonAction="קנה"
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div>
           <SeatingMap
             title={"מפת ישיבה"}
-            venueName={allTickets[0].location}
+            venueName={concert.venue}
             SeatingMapsvg="/images/Event Page/Web/Seats.svg"
           />
         </div>
@@ -119,20 +191,21 @@ export async function generateStaticParams() {
       return [];
     }
 
-    const querySnapshot = await getDocs(collection(db, "tickets"));
-    const titles = Array.from(
+    // Get all concerts
+    const concertsSnapshot = await getDocs(collection(db, "concerts"));
+    const artists = Array.from(
       new Set(
-        querySnapshot.docs
-          .map((doc) => doc.data().title)
+        concertsSnapshot.docs
+          .map((doc) => doc.data().artist)
           .filter(
-            (title): title is string =>
-              typeof title === "string" && title.trim() !== ""
+            (artist): artist is string =>
+              typeof artist === "string" && artist.trim() !== ""
           )
       )
     );
 
-    return titles.map((title) => ({
-      title: encodeURIComponent(title),
+    return artists.map((artist) => ({
+      title: encodeURIComponent(artist),
     }));
   } catch (error) {
     console.error("Error generating static params:", error);

@@ -51,6 +51,15 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
           <CarouselNext className="absolute right-[-16px]" />
           <NavigationDotes />
         </Carousel>
+        <div className="flex justify-center mt-6">
+          <Link
+            href="/ViewMore"
+            className="hover:text-primary-dark text-text-large transition-colors"
+          >
+            
+            גלה עוד
+          </Link>
+        </div>
       </div>
       {/* Layout for screens < sm */}
       <div className="sm:hidden flex flex-wrap justify-center gap-3 xs:gap-5 w-full mt-6 mb-8">

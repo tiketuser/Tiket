@@ -9,18 +9,36 @@ interface CustomDateInputProps {
   placeholder: string;
   icon?: React.ReactElement;
   dropdownIcon?: React.ReactElement;
+  onDateChange?: (dateRange: DateRange | undefined) => void;
+  value?: DateRange | undefined; // Controlled value
 }
 
 const CustomDateInput: React.FC<CustomDateInputProps> = ({
   placeholder,
   icon,
   dropdownIcon,
+  onDateChange,
+  value,
 }) => {
-  const [date, setDate] = useState<DateRange | undefined>(undefined); // No initial date range
+  const [date, setDate] = useState<DateRange | undefined>(value); // No initial date range
   const [isOpen, setIsOpen] = useState(false); // Tracks dropdown visibility
   const dropdownRef = useRef<HTMLDivElement>(null); // To detect clicks outside the dropdown
 
+  // Update internal state when controlled value changes
+  useEffect(() => {
+    if (value !== undefined || value === undefined) {
+      setDate(value);
+    }
+  }, [value]);
+
   const toggleDropdown = () => setIsOpen((prev) => !prev);
+
+  const handleDateChange = (newDate: DateRange | undefined) => {
+    setDate(newDate);
+    if (onDateChange) {
+      onDateChange(newDate);
+    }
+  };
 
   const handleClickOutside = (event: MouseEvent) => {
     if (
@@ -85,7 +103,7 @@ const CustomDateInput: React.FC<CustomDateInputProps> = ({
           mode="range"
           defaultMonth={new Date()} // Default to current month if no selection
           selected={date}
-          onSelect={setDate}
+          onSelect={handleDateChange}
           numberOfMonths={1}
           className="absolute top-full mt-1 right-0 rounded-md border w-full flex justify-center z-20"
         />

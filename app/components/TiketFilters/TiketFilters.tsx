@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 import Image from "next/image";
 import citiesData from "@/app/DemoData/citiesData";
@@ -7,6 +5,7 @@ import venueData from "@/app/DemoData/venueData";
 import CustomSelectInput from "../CustomSelectInput/CustomSelectInput";
 import CustomDateInput from "../CustomDateInput/CustomDateInput";
 import PriceFilter from "../PriceFilter/PriceFilter";
+import { DateRange } from "react-day-picker";
 
 // ייבוא אייקונים
 import CityIcon from "../../../public/images/SearchResult/City Icon.svg";
@@ -15,8 +14,63 @@ import DateIcon from "../../../public/images/SearchResult/Date Icon.svg";
 import PriceIcon from "../../../public/images/SearchResult/Price Icon.svg";
 import DropdownIcon from "../../../public/images/SearchResult/Arrow.svg";
 
-const TiketFilters = () => {
-  const [values, setValues] = useState<number[]>([20, 80]);
+interface TiketFiltersProps {
+  onFilterChange?: (filters: {
+    cities: string[];
+    venues: string[];
+    dateRange: DateRange | undefined;
+    priceRange: number[];
+  }) => void;
+}
+
+const TiketFilters: React.FC<TiketFiltersProps> = ({ onFilterChange }) => {
+  const [cities, setCities] = useState<string[]>([]);
+  const [venues, setVenues] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [priceRange, setPriceRange] = useState<number[]>([0, 1000]);
+
+  const handleApplyFilters = () => {
+    if (onFilterChange) {
+      onFilterChange({
+        cities,
+        venues,
+        dateRange,
+        priceRange,
+      });
+    }
+  };
+
+  const handleResetFilters = () => {
+    setCities([]);
+    setVenues([]);
+    setDateRange(undefined);
+    setPriceRange([0, 1000]);
+
+    if (onFilterChange) {
+      onFilterChange({
+        cities: [],
+        venues: [],
+        dateRange: undefined,
+        priceRange: [0, 1000],
+      });
+    }
+  };
+
+  const handleCitiesChange = (selected: string[]) => {
+    setCities(selected);
+  };
+
+  const handleVenuesChange = (selected: string[]) => {
+    setVenues(selected);
+  };
+
+  const handleDateChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+  };
+
+  const handlePriceChange = (values: number[]) => {
+    setPriceRange(values);
+  };
 
   return (
     <>
@@ -39,6 +93,8 @@ const TiketFilters = () => {
                 height={16}
               />
             }
+            onSelectionChange={handleCitiesChange}
+            value={cities}
           />
         </div>
 
@@ -64,6 +120,8 @@ const TiketFilters = () => {
                 height={16}
               />
             }
+            onSelectionChange={handleVenuesChange}
+            value={venues}
           />
         </div>
 
@@ -82,6 +140,8 @@ const TiketFilters = () => {
                 height={15}
               />
             }
+            onDateChange={handleDateChange}
+            value={dateRange}
           />
         </div>
 
@@ -104,10 +164,26 @@ const TiketFilters = () => {
             min={0}
             max={1000}
             step={1}
-            defaultValue={values}
-            onValueChange={(newValues) => setValues(newValues)}
+            defaultValue={priceRange}
+            onValueChange={handlePriceChange}
           />
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-center gap-4 mb-6">
+        <button
+          onClick={handleApplyFilters}
+          className="px-8 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+        >
+          החל סינון
+        </button>
+        <button
+          onClick={handleResetFilters}
+          className="px-8 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+        >
+          אפס סינון
+        </button>
       </div>
     </>
   );

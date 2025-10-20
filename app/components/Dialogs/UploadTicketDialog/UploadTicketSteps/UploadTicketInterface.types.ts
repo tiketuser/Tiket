@@ -3,6 +3,11 @@ export interface UploadTicketInterface {
     prevStep?: () => void;
     ticketData?: TicketData;
     updateTicketData?: (updates: Partial<TicketData>) => void;
+    saveAndAddAnother?: () => void;
+    proceedToReview?: () => void;
+    savedTickets?: TicketData[];
+    publishAllTickets?: () => Promise<boolean>;
+    isPublishing?: boolean;
 }
 
 export interface TicketData {

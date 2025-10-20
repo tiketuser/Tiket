@@ -6,6 +6,14 @@ import SearchIcon from "../../../public/images/SearchBar/SearchIconBold.svg";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import TiketFilters from "../TiketFilters/TiketFilters";
+import { DateRange } from "react-day-picker";
+
+interface FilterState {
+  cities: string[];
+  venues: string[];
+  dateRange: DateRange | undefined;
+  priceRange: number[];
+}
 
 interface ResultSectionProps {
   withUpperSection: boolean;
@@ -13,7 +21,8 @@ interface ResultSectionProps {
   upperText?: string;
   subText: string;
   image?: React.ReactElement<typeof Image>;
-  artistNames: string[]; 
+  artistNames: string[];
+  onFilterChange?: (filters: FilterState) => void;
 }
 
 const ResultSection: React.FC<ResultSectionProps> = ({
@@ -23,6 +32,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   subText,
   image,
   artistNames,
+  onFilterChange,
 }) => {
   const router = useRouter();
 
@@ -58,7 +68,6 @@ const ResultSection: React.FC<ResultSectionProps> = ({
         <CustomSearchInput
           id="Search artists or shows input"
           placeholder={title}
-          value={title} // Pass the decoded value here!
           placeholderColor="text-strongText"
           onEnter={handleSearch}
           suggestions={artistNames}
@@ -69,7 +78,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
       </div>
 
       {/* Filters Section */}
-      <TiketFilters />
+      <TiketFilters onFilterChange={onFilterChange} />
     </div>
   );
 };

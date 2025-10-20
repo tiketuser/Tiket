@@ -24,7 +24,7 @@ interface SingleCardProps {
 
 const SingleCard: React.FC<SingleCardProps> = ({
   title,
-  // date,
+  date,
   tag,
   location,
   // ticketsLeft,
@@ -36,18 +36,82 @@ const SingleCard: React.FC<SingleCardProps> = ({
   buttonAction,
 }) => {
   const [isCheckoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+
+  // Parse date string (format: "dd/mm/yyyy")
+  const parseDateInfo = (dateString: string) => {
+    console.log(
+      "SingleCard received date:",
+      dateString,
+      "type:",
+      typeof dateString
+    );
+
+    if (!dateString || dateString === "" || dateString === "undefined") {
+      console.error("No valid date provided");
+      return { dayOfWeek: "-", day: "-", month: "-" };
+    }
+
+    const parts = dateString.split("/");
+    if (parts.length !== 3) {
+      console.error("Invalid date format:", dateString, "parts:", parts);
+      return { dayOfWeek: "-", day: "-", month: "-" };
+    }
+
+    const [day, month, year] = parts.map(Number);
+
+    // Validate parsed values
+    if (isNaN(day) || isNaN(month) || isNaN(year)) {
+      console.error("Invalid date values:", { day, month, year, dateString });
+      return { dayOfWeek: "-", day: "-", month: "-" };
+    }
+
+    const dateObj = new Date(year, month - 1, day);
+
+    const hebrewDays = [
+      "ראשון",
+      "שני",
+      "שלישי",
+      "רביעי",
+      "חמישי",
+      "שישי",
+      "שבת",
+    ];
+    const hebrewMonths = [
+      "ינו׳",
+      "פבר׳",
+      "מרץ",
+      "אפר׳",
+      "מאי",
+      "יוני",
+      "יולי",
+      "אוג׳",
+      "ספט׳",
+      "אוק׳",
+      "נוב׳",
+      "דצמ׳",
+    ];
+
+    return {
+      dayOfWeek: hebrewDays[dateObj.getDay()],
+      day: day,
+      month: hebrewMonths[month - 1],
+    };
+  };
+
+  const dateInfo = parseDateInfo(date);
+
   return (
     <div className="flex items-center justify-between sm:border-b-4 border-b-2 border-highlight sm:pt-4 sm:pr-12 sm:pb-4 sm:pl-8 sm:gap-14 xs:pt-2 xs:pr-4 xs:pb-2 xs:pl-4 pt-2 pr-1 pb-2 pl-1 gap-2 shadow-large w-[300px] xs:w-[400px] sm:w-auto sm:h-[128px] xs:h-[100px] h-[85px] bg-white select-none transition-transform duration-700  hover:scale-[1.01] cursor-pointer">
       {/* Date Section */}
       <div className="flex flex-col items-center">
         <span className="sm:text-text-large xs:text-text-extra-small text-[10px] sm:leading-[30px] mt-2 font-normal text-strongText">
-          חמישי
+          {dateInfo.dayOfWeek}
         </span>
         <span className="sm:text-heading-3-desktop xs:text-heading-6-desktop text-text-regular  font-bold text-strongText sm:leading-[40px]">
-          15
+          {dateInfo.day}
         </span>
         <span className="sm:text-text-large xs:text-text-extra-small text-[10px] sm:leading-[30px]  font-normal text-strongText">
-          אוק׳
+          {dateInfo.month}
         </span>
       </div>
       {/* Divider */}

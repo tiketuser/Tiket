@@ -22,6 +22,47 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
   time,
   availableTickets,
 }) => {
+  // Parse date string (format: "dd/mm/yyyy") to Hebrew format
+  const formatDateHebrew = (dateString: string): string => {
+    if (!dateString) return "";
+
+    try {
+      const [day, month, year] = dateString.split("/").map(Number);
+      const dateObj = new Date(year, month - 1, day);
+
+      const hebrewDays = [
+        "ראשון",
+        "שני",
+        "שלישי",
+        "רביעי",
+        "חמישי",
+        "שישי",
+        "שבת",
+      ];
+      const hebrewMonths = [
+        "ינואר",
+        "פברואר",
+        "מרץ",
+        "אפריל",
+        "מאי",
+        "יוני",
+        "יולי",
+        "אוגוסט",
+        "ספטמבר",
+        "אוקטובר",
+        "נובמבר",
+        "דצמבר",
+      ];
+
+      const dayOfWeek = hebrewDays[dateObj.getDay()];
+      const monthName = hebrewMonths[month - 1];
+
+      return `${dayOfWeek}, ${day} ב${monthName} ${year}`;
+    } catch (error) {
+      return dateString;
+    }
+  };
+
   return (
     <div className="flex w-full sm:h-[346px] xs:h-[280px] h-[240px] lg:pl-72 lg:pr-72 md:pt-4 md:pb-4 md:pr-24 md:pl-24 sm:pr-4 sm:pl-4 xs:pt-4 pb-4 pr-4 pl-4 shadow-small-inner">
       {/* Right: Event Details */}
@@ -33,7 +74,7 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
         <div className="sm:w-[382px] xs:w-[183px] w-[160px] h-[3px] relative top-[-15px] xs:top-0 bg-mutedText"></div>
         {/* Date and Location */}
         <div className="flex flex-col sm:text-heading-5-desktop xs:text-heading-5-mobile text-heading-6-mobile font-bold leading-[27px] xs:leading-[33px] text-strongText">
-          <span>{date}</span>
+          <span>{formatDateHebrew(date)}</span>
           <span>{location}</span>
         </div>
 

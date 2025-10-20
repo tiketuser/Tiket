@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface CustomSearchInputProps {
   type?: string;
@@ -31,9 +31,16 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
   suggestions = [],
   value,
 }) => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(value || "");
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Sync internal state with external value prop
+  useEffect(() => {
+    if (value !== undefined) {
+      setInputValue(value);
+    }
+  }, [value]);
 
   // עדכון טקסט וסינון הצעות
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -8,6 +8,8 @@ interface CustomSelectInputProps {
   icon?: React.ReactElement;
   dropdownIcon?: React.ReactElement;
   options: string[]; // Array of items
+  onSelectionChange?: (selected: string[]) => void;
+  value?: string[]; // Controlled value
 }
 
 const CustomSelectInput: React.FC<CustomSelectInputProps> = ({
@@ -16,19 +18,34 @@ const CustomSelectInput: React.FC<CustomSelectInputProps> = ({
   icon,
   dropdownIcon,
   options,
+  onSelectionChange,
+  value,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
+  const [selectedValues, setSelectedValues] = useState<string[]>(value || []);
+
+  // Update internal state when controlled value changes
+  useEffect(() => {
+    if (value !== undefined) {
+      setSelectedValues(value);
+    }
+  }, [value]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleDropdown = () => setIsOpen((prev) => !prev);
 
   const handleOptionClick = (option: string) => {
-    setSelectedValues((prev) =>
-      prev.includes(option)
+    setSelectedValues((prev) => {
+      const newValues = prev.includes(option)
         ? prev.filter((value) => value !== option)
-        : [...prev, option]
-    );
+        : [...prev, option];
+
+      if (onSelectionChange) {
+        onSelectionChange(newValues);
+      }
+
+      return newValues;
+    });
   };
 
   const handleClickOutside = (event: MouseEvent) => {

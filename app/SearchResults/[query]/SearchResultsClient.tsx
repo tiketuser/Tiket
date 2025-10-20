@@ -20,7 +20,6 @@ export default function SearchResultsClient({
   tickets: CardData[];
 }) {
   const openLoginDialog = () => {};
-  return (
-    <RegularGallery cardsData={tickets} openLoginDialog={openLoginDialog} />
-  );
+  
+  return <RegularGallery cardsData={tickets} openLoginDialog={openLoginDialog} />;
 }

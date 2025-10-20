@@ -28,17 +28,22 @@ const NavBar = () => {
   const [isSignUpDialogOpen, setSignUpDialogOpen] = useState(false);
   const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [pendingFavoritesRedirect, setPendingFavoritesRedirect] =
     useState(false);
   let closeTimeout: NodeJS.Timeout;
+  let adminCloseTimeout: NodeJS.Timeout;
   const router = useRouter();
+
+  // Check if user is admin
+  const isAdmin = user?.email === "tiketbizzz@gmail.com";
 
   useEffect(() => {
     if (!hasValidConfig) {
       // Firebase not configured, skip auth setup
       return;
     }
-    
+
     const auth = getAuth();
     setPersistence(auth, browserLocalPersistence);
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -68,6 +73,21 @@ const NavBar = () => {
   const handleMouseEnter = () => {
     clearTimeout(closeTimeout);
     setDropdownOpen(true);
+  };
+
+  const handleAdminDropdownToggle = () => {
+    setAdminDropdownOpen((prev) => !prev);
+  };
+
+  const handleAdminMouseLeave = () => {
+    adminCloseTimeout = setTimeout(() => {
+      setAdminDropdownOpen(false);
+    }, 200);
+  };
+
+  const handleAdminMouseEnter = () => {
+    clearTimeout(adminCloseTimeout);
+    setAdminDropdownOpen(true);
   };
 
   const handleLogout = async () => {
@@ -125,6 +145,79 @@ const NavBar = () => {
               </div>
             )}
           </div>
+
+          {/* Admin Dropdown - Only visible to admin */}
+          {isAdmin && (
+            <div
+              className="relative"
+              onMouseEnter={handleAdminMouseEnter}
+              onMouseLeave={handleAdminMouseLeave}
+            >
+              {/* Admin Button */}
+              <button
+                className="flex items-center space-x-2 rtl:space-x-reverse hover:text-purple-600 focus:outline-none relative"
+                onPointerDown={handleAdminDropdownToggle}
+              >
+                <Image src={Arrow} alt="Arrow" />
+                <span className="text-text-large font-normal text-purple-600">
+                  ניהול
+                </span>
+              </button>
+
+              {/* Admin Dropdown Content */}
+              {isAdminDropdownOpen && (
+                <div
+                  className="absolute right-0 w-56 mt-2 bg-purple-50 shadow-xxlarge rounded-lg z-50 border-2 border-purple-200"
+                  onMouseEnter={handleAdminMouseEnter}
+                  onMouseLeave={handleAdminMouseLeave}
+                >
+                  <div className="px-4 py-2 text-right text-text-small font-bold text-purple-800 border-b-2 border-purple-200">
+                    פאנל ניהול
+                  </div>
+                  <Link href="/Admin">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      יצירת קונצרטים
+                    </div>
+                  </Link>
+                  <Link href="/approve-tickets">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      אישור כרטיסים
+                    </div>
+                  </Link>
+                  <Link href="/regenerate-tickets">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      יצירת כרטיסים
+                    </div>
+                  </Link>
+                  <Link href="/update-images">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      עדכון תמונות
+                    </div>
+                  </Link>
+                  <Link href="/fix-dates">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      תיקון תאריכים
+                    </div>
+                  </Link>
+                  <Link href="/manage-artists">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      ניהול אמנים
+                    </div>
+                  </Link>
+                  <Link href="/manage-categories">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      ניהול קטגוריות
+                    </div>
+                  </Link>
+                  <Link href="/diagnostic">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer border-t border-purple-200">
+                      אבחון מערכת
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Like Button */}
           <Link href={user ? "/Favorites" : "#"}>

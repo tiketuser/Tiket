@@ -21,6 +21,8 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   prevStep,
   ticketData,
   updateTicketData,
+  saveAndAddAnother,
+  proceedToReview,
 }) => {
   // Local state for editable fields
   const [editableDetails, setEditableDetails] = useState<ExtendedTicketDetails>(
@@ -266,6 +268,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   const canProceed =
     editableDetails.title &&
     editableDetails.date &&
+    editableDetails.time &&
     editableDetails.venue &&
     !dateError &&
     ticketData?.pricing?.askingPrice;
@@ -359,6 +362,23 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
+            שעת האירוע *
+          </label>
+          <CustomInput
+            id="time"
+            name="time"
+            width="w-full"
+            placeholder="20:00"
+            value={editableDetails.time}
+            onChange={(e) => handleDetailChange("time", e.target.value)}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            פורמט: HH:MM (לדוגמה: 20:00)
+          </p>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             מקום האירוע *
           </label>
           <CustomInput
@@ -447,37 +467,52 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
       </div>
 
       <div className="flex flex-col items-center gap-2 mt-6">
-        {!canProceed && dateError && (
-          <p className="text-xs text-red-600 font-medium">
-            לא ניתן לפרסם - {dateError}
-          </p>
-        )}
+        <div className="flex flex-col items-center gap-3">
+          {/* Primary actions */}
+          <div className="flex justify-center gap-4 w-full max-w-[700px]">
+            <button
+              type="button"
+              className={`btn flex-1 h-[46px] sm:max-w-[180px] w-[180px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
+                canProceed
+                  ? "bg-secondary text-primary hover:bg-secondary/90"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              onClick={() => {
+                if (canProceed && saveAndAddAnother) {
+                  saveAndAddAnother();
+                }
+              }}
+              disabled={!canProceed}
+            >
+              הוסף כרטיס נוסף
+            </button>
 
-        <div className="flex justify-center gap-4 sm:gap-10">
-          <button
-            type="button"
-            className="btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm sm:text-text-large font-normal"
-            onClick={() => prevStep && prevStep()}
-          >
-            לשלב הקודם
-          </button>
+            <button
+              type="button"
+              className={`btn flex-1 h-[46px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
+                canProceed
+                  ? "bg-primary text-white hover:bg-primary/90"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              onClick={() => {
+                if (canProceed && proceedToReview) {
+                  proceedToReview();
+                }
+              }}
+              disabled={!canProceed}
+            >
+              המשך לפרסום
+            </button>
 
-          <button
-            type="button"
-            className={`btn w-[120px] sm:w-[140px] h-[46px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
-              canProceed
-                ? "bg-primary text-white hover:bg-primary/90"
-                : "bg-secondary text-white cursor-not-allowed"
-            }`}
-            onClick={() => {
-              if (canProceed && nextStep) {
-                nextStep();
-              }
-            }}
-            disabled={!canProceed}
-          >
-            פרסום כרטיס
-          </button>
+            {/* Back button */}
+            <button
+              type="button"
+              className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm sm:text-text-large font-normal"
+              onClick={() => prevStep && prevStep()}
+            >
+              לשלב הקודם
+            </button>
+          </div>
         </div>
       </div>
     </div>
