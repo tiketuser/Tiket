@@ -65,11 +65,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
     return (
       <div>
         <NavBar />
-        <SearchResultsWrapper
-          query={query}
-          tickets={[]}
-          artistNames={[]}
-        />
+        <SearchResultsWrapper query={query} tickets={[]} artistNames={[]} />
       </div>
     );
   }
