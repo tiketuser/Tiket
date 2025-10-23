@@ -20,7 +20,7 @@ import AdminProtection from "../components/AdminProtection/AdminProtection";
 
 interface ConcertFormData {
   artist: string;
-  title: string;
+  category: string;
   date: string;
   time: string;
   venue: string;
@@ -32,6 +32,7 @@ interface Concert {
   id: string;
   artist: string;
   title: string;
+  category: string;
   date: string;
   time: string;
   venue: string;
@@ -46,7 +47,7 @@ export default function AdminPage() {
   const [loadingConcerts, setLoadingConcerts] = useState(true);
   const [formData, setFormData] = useState<ConcertFormData>({
     artist: "",
-    title: "",
+    category: "מוזיקה",
     date: "",
     time: "",
     venue: "",
@@ -97,7 +98,9 @@ export default function AdminPage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -129,17 +132,16 @@ export default function AdminPage() {
   };
 
   const validateForm = (): string | null => {
-    if (!formData.artist.trim()) return "נא למלא שם אמן";
-    if (!formData.title.trim()) return "נא למלא כותרת";
+    if (!formData.artist.trim()) return "נא למלא שם האירוע";
     if (!formData.date.trim()) return "נא למלא תאריך";
     if (!formData.time.trim()) return "נא למלא שעה";
     if (!formData.venue.trim()) return "נא למלא מיקום";
     if (!formData.imageFile) return "נא להעלות תמונה";
 
-    // Validate date format (dd/mm/yyyy)
-    const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+    // Validate date format (dd/mm/yyyy or dd.mm.yyyy)
+    const dateRegex = /^\d{2}[\/\.]\d{2}[\/\.]\d{4}$/;
     if (!dateRegex.test(formData.date)) {
-      return "פורמט תאריך לא תקין (יש להזין: dd/mm/yyyy)";
+      return "פורמט תאריך לא תקין (יש להזין: dd/mm/yyyy או dd.mm.yyyy)";
     }
 
     // Validate time format (HH:MM)
@@ -176,11 +178,15 @@ export default function AdminPage() {
       // Convert image to base64
       const imageData = await convertImageToBase64(formData.imageFile!);
 
-      // Create concert document
+      // Normalize date to use / separator
+      const normalizedDate = formData.date.trim().replace(/\./g, "/");
+
+      // Create event document
       const concertData = {
         artist: formData.artist.trim(),
-        title: formData.title.trim(),
-        date: formData.date.trim(),
+        title: formData.artist.trim(), // Set title same as artist for backwards compatibility
+        category: formData.category,
+        date: normalizedDate,
         time: formData.time.trim(),
         venue: formData.venue.trim(),
         imageData: imageData,
@@ -204,12 +210,12 @@ export default function AdminPage() {
         ...prev,
       ]);
 
-      setMessage({ type: "success", text: "✅ הקונצרט נוצר בהצלחה!" });
+      setMessage({ type: "success", text: " האירוע נוצר בהצלחה!" });
 
       // Reset form
       setFormData({
         artist: "",
-        title: "",
+        category: "מוזיקה",
         date: "",
         time: "",
         venue: "",
@@ -241,23 +247,23 @@ export default function AdminPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-heading-2-desktop md:text-heading-1-desktop font-bold text-primary mb-2">
-              🎭 ניהול קונצרטים
+              ניהול אירועים
             </h1>
             <p className="text-text-large text-mutedText">
-              צור קונצרט חדש במערכת
+              צור אירוע חדש במערכת
             </p>
           </div>
 
           {/* Form Card */}
           <div className="bg-white rounded-2xl shadow-large p-8 border border-secondary">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Artist Name */}
+              {/* Event Name */}
               <div>
                 <label
                   htmlFor="artist"
                   className="block text-right text-text-medium font-semibold text-strongText mb-2"
                 >
-                  שם האמן *
+                  שם האירוע *
                 </label>
                 <input
                   type="text"
@@ -266,29 +272,33 @@ export default function AdminPage() {
                   value={formData.artist}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-secondary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-right"
-                  placeholder="לדוגמה: עומר אדם"
+                  placeholder="לדוגמה: עומר אדם, מכבי תל אביב נגד הפועל"
                   disabled={loading}
                 />
               </div>
 
-              {/* Concert Title */}
+              {/* Category */}
               <div>
                 <label
-                  htmlFor="title"
+                  htmlFor="category"
                   className="block text-right text-text-medium font-semibold text-strongText mb-2"
                 >
-                  כותרת הקונצרט *
+                  קטגוריה *
                 </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-secondary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-right"
-                  placeholder="לדוגמה: הופעה מיוחדת בפארק הירקון"
+                  className="w-full px-4 py-3 border border-secondary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-right bg-white"
                   disabled={loading}
-                />
+                >
+                  <option value="מוזיקה">מוזיקה</option>
+                  <option value="תיאטרון">תיאטרון</option>
+                  <option value="סטנדאפ">סטנדאפ</option>
+                  <option value="ילדים">ילדים</option>
+                  <option value="ספורט">ספורט</option>
+                </select>
               </div>
 
               {/* Date and Time */}
@@ -357,7 +367,7 @@ export default function AdminPage() {
                   htmlFor="image-upload"
                   className="block text-right text-text-medium font-semibold text-strongText mb-2"
                 >
-                  תמונת הקונצרט *
+                  תמונת האירוע *
                 </label>
                 <input
                   type="file"
@@ -451,10 +461,10 @@ export default function AdminPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    יוצר קונצרט...
+                    יוצר אירוע...
                   </span>
                 ) : (
-                  " צור קונצרט חדש"
+                  "צור אירוע חדש"
                 )}
               </button>
             </form>
@@ -463,23 +473,26 @@ export default function AdminPage() {
           {/* Instructions */}
           <div className="mt-8 bg-secondary border border-primary rounded-lg p-6 text-right">
             <h3 className="font-bold text-primary text-text-large mb-3">
-              💡 הוראות שימוש
+              הוראות שימוש
             </h3>
             <ul className="space-y-2 text-strongText text-text-medium">
               <li>• מלא את כל השדות המסומנים בכוכבית (*)</li>
-              <li>• תאריך בפורמט: dd/mm/yyyy (לדוגמה: 25/12/2025)</li>
-              <li>• שעה בפורמט: HH:MM (לדוגמה: 20:00)</li>
-              <li>• העלה תמונה איכותית לקונצרט (JPG, PNG, WEBP)</li>
               <li>
-                • לאחר יצירת הקונצרט, ניתן להוסיף כרטיסים דרך "העלאת כרטיס"
+                • תאריך בפורמט: dd/mm/yyyy או dd.mm.yyyy (לדוגמה: 25/12/2025 או
+                25.12.2025)
+              </li>
+              <li>• שעה בפורמט: HH:MM (לדוגמה: 20:00)</li>
+              <li>• העלה תמונה איכותית לאירוע (JPG, PNG, WEBP)</li>
+              <li>
+                • לאחר יצירת האירוע, ניתן להוסיף כרטיסים דרך "העלאת כרטיס"
               </li>
             </ul>
           </div>
 
-          {/* Existing Concerts List */}
+          {/* Existing Events List */}
           <div className="mt-12">
             <h2 className="text-heading-3-desktop font-bold text-primary mb-6 text-right">
-              📋 קונצרטים קיימים
+              📋 אירועים קיימים
             </h2>
 
             {loadingConcerts ? (
@@ -506,7 +519,7 @@ export default function AdminPage() {
               </div>
             ) : concerts.length === 0 ? (
               <div className="bg-secondary rounded-lg p-8 text-center text-mutedText text-text-large">
-                אין קונצרטים במערכת. צור את הקונצרט הראשון שלך! 🎸
+                אין אירועים במערכת. צור את האירוע הראשון שלך! �
               </div>
             ) : (
               <div className="grid gap-6">
@@ -534,10 +547,12 @@ export default function AdminPage() {
                             <h3 className="text-heading-4-desktop font-bold text-primary mb-1">
                               {concert.artist}
                             </h3>
-                            <p className="text-text-large text-strongText mb-2">
-                              {concert.title}
-                            </p>
-                            <div className="flex gap-4 text-text-small text-mutedText flex-wrap justify-end">
+                            {concert.category && (
+                              <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-text-small font-semibold mb-2">
+                                {concert.category}
+                              </span>
+                            )}
+                            <div className="flex gap-4 text-text-small text-mutedText flex-wrap justify-end mt-2">
                               <span>📅 {concert.date}</span>
                               <span>🕐 {concert.time}</span>
                               <span>📍 {concert.venue}</span>
@@ -550,7 +565,7 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleDeleteConcert(concert.id)}
                               className="p-2 bg-secondary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
-                              title="מחק קונצרט"
+                              title="מחק אירוע"
                             >
                               <svg
                                 className="w-5 h-5"

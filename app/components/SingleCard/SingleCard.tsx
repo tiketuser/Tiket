@@ -37,7 +37,7 @@ const SingleCard: React.FC<SingleCardProps> = ({
 }) => {
   const [isCheckoutDialogOpen, setCheckoutDialogOpen] = useState(false);
 
-  // Parse date string (format: "dd/mm/yyyy")
+  // Parse date string (format: "dd/mm/yyyy" or "dd.mm.yyyy")
   const parseDateInfo = (dateString: string) => {
     console.log(
       "SingleCard received date:",
@@ -51,7 +51,9 @@ const SingleCard: React.FC<SingleCardProps> = ({
       return { dayOfWeek: "-", day: "-", month: "-" };
     }
 
-    const parts = dateString.split("/");
+    // Normalize date separator to /
+    const normalizedDate = dateString.replace(/\./g, "/");
+    const parts = normalizedDate.split("/");
     if (parts.length !== 3) {
       console.error("Invalid date format:", dateString, "parts:", parts);
       return { dayOfWeek: "-", day: "-", month: "-" };

@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import TiketFilters from "../components/TiketFilters/TiketFilters";
 import ResponsiveGallery from "../components/TicketGallery/ResponsiveGallery";
 import { DateRange } from "react-day-picker";
+import { calculateTimeLeft } from "../../utils/timeCalculator";
 
 interface CardData {
   id: string;
@@ -95,8 +96,9 @@ const ViewMore = () => {
 
       // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
+        const normalizedDate = concert.date.replace(/\./g, "/");
         const concertDate = new Date(
-          concert.date.split("/").reverse().join("-")
+          normalizedDate.split("/").reverse().join("-")
         );
         const fromDate = new Date(filters.dateRange.from);
         fromDate.setHours(0, 0, 0, 0);
@@ -189,26 +191,7 @@ const ViewMore = () => {
                 : minPrice;
 
             // Calculate time until event
-            const eventDate = new Date(
-              concert.date.split("/").reverse().join("-")
-            );
-            const now = new Date();
-            const diffTime = eventDate.getTime() - now.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            let timeLeft = "";
-            if (diffDays < 0) {
-              timeLeft = "האירוע עבר";
-            } else if (diffDays === 0) {
-              timeLeft = "היום!";
-            } else if (diffDays === 1) {
-              timeLeft = "מחר";
-            } else if (diffDays <= 7) {
-              timeLeft = `בעוד ${diffDays} ימים`;
-            } else {
-              const weeks = Math.floor(diffDays / 7);
-              timeLeft = weeks === 1 ? "בעוד שבוע" : `בעוד ${weeks} שבועות`;
-            }
+            const timeLeft = calculateTimeLeft(concert.date, concert.time);
 
             const cardData = {
               id: concert.id,
@@ -235,11 +218,31 @@ const ViewMore = () => {
             card.categories?.includes("recently-viewed")
           )
         );
-        setLastMinuteDeals(
-          concertCards.filter((card: any) =>
-            card.categories?.includes("last-minute-deals")
-          )
-        );
+
+        // Last minute deals: concerts within 2 days from now
+        const now = new Date();
+        const twoDaysFromNow = new Date(now);
+        twoDaysFromNow.setDate(now.getDate() + 2);
+        twoDaysFromNow.setHours(23, 59, 59, 999);
+
+        const lastMinute = concertCards.filter((card) => {
+          try {
+            const normalizedDate = card.date.replace(/\./g, "/");
+            const [day, month, year] = normalizedDate.split("/").map(Number);
+            const concertDate = new Date(year, month - 1, day);
+
+            return concertDate >= now && concertDate <= twoDaysFromNow;
+          } catch (error) {
+            console.error(
+              "Error parsing date for last minute deals:",
+              card.date
+            );
+            return false;
+          }
+        });
+
+        setLastMinuteDeals(lastMinute);
+
         setRecommendations(
           concertCards.filter((card: any) =>
             card.categories?.includes("recommendations")

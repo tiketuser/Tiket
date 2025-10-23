@@ -4,8 +4,8 @@ import CustomInput from "@/app/components/CustomInput/CustomInput";
 import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
 
 interface ExtendedTicketDetails {
-  title: string;
   artist: string;
+  category: string;
   date: string;
   time: string;
   venue: string;
@@ -27,8 +27,8 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   // Local state for editable fields
   const [editableDetails, setEditableDetails] = useState<ExtendedTicketDetails>(
     {
-      title: "",
       artist: "",
+      category: "מוזיקה",
       date: "",
       time: "",
       venue: "",
@@ -53,8 +53,8 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
       // Map OCR extracted data to form fields
       const newDetails = {
-        title: details.artist || details.title || "", // Use artist as title
-        artist: details.artist || "",
+        artist: details.artist || details.title || "", // Use title as fallback for backwards compatibility
+        category: details.category || "מוזיקה",
         date: details.date || "",
         time: details.time || "",
         venue: details.venue || "",
@@ -89,13 +89,13 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
     try {
       let day: number, month: number, year: number;
 
-      // Parse DD/MM/YYYY format
-      if (dateStr.includes("/")) {
-        const parts = dateStr.split("/");
+      // Parse DD/MM/YYYY or DD.MM.YYYY format
+      if (dateStr.includes("/") || dateStr.includes(".")) {
+        const parts = dateStr.split(/[\/\.]/);
         if (parts.length !== 3) {
           return {
             isValid: false,
-            error: "פורמט תאריך לא תקין. השתמש ב- DD/MM/YYYY",
+            error: "פורמט תאריך לא תקין. השתמש ב- DD/MM/YYYY או DD.MM.YYYY",
             isInPast: false,
           };
         }
@@ -187,8 +187,6 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
     setEditableDetails((prev) => ({
       ...prev,
       [field]: value,
-      // When title changes, also update artist to keep them in sync
-      ...(field === "title" && { artist: value }),
     }));
 
     // Check if date field was changed and validate it
@@ -204,8 +202,6 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         ticketDetails: {
           ...ticketData?.ticketDetails,
           [field]: value,
-          // When title changes, also update artist to keep them in sync
-          ...(field === "title" && { artist: value }),
         },
       });
     }
@@ -266,7 +262,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   };
 
   const canProceed =
-    editableDetails.title &&
+    editableDetails.artist &&
     editableDetails.date &&
     editableDetails.time &&
     editableDetails.venue &&
@@ -308,7 +304,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
       <div className="mt-6 flex justify-center">
         <MinimalCard
           price={ticketData?.pricing?.askingPrice || 0}
-          title={editableDetails.artist || editableDetails.title || "ללא כותרת"}
+          title={editableDetails.artist || "ללא שם אירוע"}
           date={editableDetails.date || "ללא תאריך"}
           venue={editableDetails.venue || ""}
           seatLocation={formatSeatLocation()}
@@ -321,16 +317,35 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              כותרת האירוע *
+              שם האירוע *
             </label>
             <CustomInput
-              id="title"
-              name="title"
+              id="artist"
+              name="artist"
               width="w-full"
-              placeholder="שם האמן/אירוע"
-              value={editableDetails.title}
-              onChange={(e) => handleDetailChange("title", e.target.value)}
+              placeholder="עומר אדם, מכבי תל אביב נגד הפועל"
+              value={editableDetails.artist}
+              onChange={(e) => handleDetailChange("artist", e.target.value)}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              קטגוריה *
+            </label>
+            <select
+              id="category"
+              name="category"
+              value={editableDetails.category}
+              onChange={(e) => handleDetailChange("category", e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="מוזיקה">מוזיקה</option>
+              <option value="תיאטרון">תיאטרון</option>
+              <option value="סטנדאפ">סטנדאפ</option>
+              <option value="ילדים">ילדים</option>
+              <option value="ספורט">ספורט</option>
+            </select>
           </div>
 
           <div>
@@ -346,7 +361,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                 id="date"
                 name="date"
                 width="w-full"
-                placeholder="DD/MM/YYYY"
+                placeholder="DD/MM/YYYY או DD.MM.YYYY"
                 value={editableDetails.date}
                 onChange={(e) => handleDetailChange("date", e.target.value)}
                 error={!!dateError}

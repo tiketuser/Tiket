@@ -3,6 +3,7 @@ import NavBar from "../../components/NavBar/NavBar";
 import SearchResultsWrapper from "./SearchResultsWrapper";
 import { db } from "../../../firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { calculateTimeLeft } from "../../../utils/timeCalculator";
 
 // Define CardData type here or import it
 interface CardData {
@@ -119,24 +120,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
         : minPrice;
 
     // Calculate time until event
-    const eventDate = new Date(concert.date.split("/").reverse().join("-"));
-    const now = new Date();
-    const diffTime = eventDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    let timeLeft = "";
-    if (diffDays < 0) {
-      timeLeft = "האירוע עבר";
-    } else if (diffDays === 0) {
-      timeLeft = "היום!";
-    } else if (diffDays === 1) {
-      timeLeft = "מחר";
-    } else if (diffDays <= 7) {
-      timeLeft = `בעוד ${diffDays} ימים`;
-    } else {
-      const weeks = Math.floor(diffDays / 7);
-      timeLeft = weeks === 1 ? "בעוד שבוע" : `בעוד ${weeks} שבועות`;
-    }
+    const timeLeft = calculateTimeLeft(concert.date, concert.time);
 
     return {
       id: concert.id,

@@ -89,7 +89,7 @@ const Card: React.FC<CardProps> = ({
     }
   };
 
-  // Parse date string (format: "dd/mm/yyyy") to Hebrew format
+  // Parse date string (format: "dd/mm/yyyy" or "dd.mm.yyyy") to Hebrew format
   const formatDateHebrew = (dateString: string): string => {
     if (!dateString || dateString === "undefined" || dateString === "null") {
       console.warn("Card: Invalid date string:", dateString);
@@ -97,7 +97,9 @@ const Card: React.FC<CardProps> = ({
     }
 
     try {
-      const parts = dateString.split("/");
+      // Normalize date separator to /
+      const normalizedDate = dateString.replace(/\./g, "/");
+      const parts = normalizedDate.split("/");
       if (parts.length !== 3) {
         console.warn("Card: Invalid date format:", dateString);
         return dateString;

@@ -102,6 +102,9 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       console.log(`Starting to publish ${savedTickets.length} tickets`);
       let publishedCount = 0;
       let skippedCount = 0;
+      let verifiedCount = 0; // Auto-approved tickets
+      let needsReviewCount = 0; // Manual review needed
+      let rejectedCount = 0; // Failed verification
 
       // Group tickets by concert (artist + date + venue)
       const ticketsByConcert = new Map<string, typeof savedTickets>();
@@ -132,9 +135,12 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
 
         // Normalize date to dd/mm/yyyy format
         const normalizeDate = (dateStr: string): string => {
+          // Convert dots to slashes first
+          const normalized = dateStr.replace(/\./g, "/");
+
           // If already in dd/mm/yyyy format, return as is
-          if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-            return dateStr;
+          if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalized)) {
+            return normalized;
           }
 
           // Try to parse other date formats
@@ -260,6 +266,43 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             }`
           );
 
+          // 🔍 STEP 1: Verify ticket with venue API
+          console.log("🔍 Calling venue verification API...");
+          let verificationResult: any = null;
+          try {
+            const verifyResponse = await fetch("/api/venue-verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                barcode: ticket.ticketDetails?.barcode || "",
+                artist: ticket.ticketDetails?.artist || "",
+                eventName: ticket.ticketDetails?.artist || "",
+                venue: ticket.ticketDetails?.venue || "",
+                date: normalizedDate,
+                time: ticket.ticketDetails?.time || "",
+                section: ticket.ticketDetails?.section || "",
+                row: ticket.ticketDetails?.row || "",
+                seat: ticket.ticketDetails?.seat || "",
+                isStanding: ticket.ticketDetails?.isStanding || false,
+              }),
+            });
+            verificationResult = await verifyResponse.json();
+            console.log("✅ Verification result:", verificationResult);
+          } catch (error) {
+            console.error("❌ Verification API error:", error);
+            // If verification fails, default to manual review
+            verificationResult = {
+              verified: false,
+              confidence: 0,
+              status: "needs_review",
+              matchedFields: [],
+              unmatchedFields: [],
+              reason:
+                "Verification service unavailable - manual review required",
+              timestamp: new Date().toISOString(),
+            };
+          }
+
           // Convert uploaded image to base64 for storage
           let ticketImageBase64 = null;
           if (ticket.uploadedFile) {
@@ -284,9 +327,20 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             }
           }
 
+          // Determine ticket status based on verification
+          let ticketStatus = "rejected";
+          if (verificationResult.status === "verified") {
+            ticketStatus = "available"; // Auto-approved!
+          } else if (verificationResult.status === "needs_review") {
+            ticketStatus = "pending_approval"; // Manual review required
+          } else {
+            ticketStatus = "rejected"; // Failed verification
+          }
+
           const ticketDoc = {
             concertId: concertId || null, // null if no matching concert
             artist: ticket.ticketDetails?.artist || "",
+            category: ticket.ticketDetails?.category || "מוזיקה",
             date: normalizedDate, // Use normalized date format
             time: ticket.ticketDetails?.time || "",
             venue: ticket.ticketDetails?.venue || "",
@@ -302,7 +356,22 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             maxPrice: ticket.pricing?.maxPrice || null,
             extractedText: ticket.extractedText || null,
             ticketImage: ticketImageBase64, // Store uploaded ticket image
-            status: "pending_approval", // ALL tickets need manual approval
+            status: ticketStatus, // Set based on verification result
+            // Verification details
+            verificationStatus: verificationResult.status,
+            verificationConfidence: verificationResult.confidence,
+            verificationDetails: {
+              matchedFields: verificationResult.matchedFields || [],
+              unmatchedFields: verificationResult.unmatchedFields || [],
+              officialTicketId:
+                verificationResult.details?.officialTicketId || null,
+              eventId: verificationResult.details?.eventId || null,
+              ticketingSystem:
+                verificationResult.details?.ticketingSystem || null,
+              reason: verificationResult.reason,
+              apiResponse: verificationResult,
+            },
+            verificationTimestamp: serverTimestamp(),
             createdAt: serverTimestamp(),
             sellerId: "anonymous",
           };
@@ -316,8 +385,15 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           );
           console.log("Ticket data:", ticketDoc);
 
-          // All tickets are pending approval now
+          // Track verification results
           publishedCount++;
+          if (verificationResult.status === "verified") {
+            verifiedCount++;
+          } else if (verificationResult.status === "needs_review") {
+            needsReviewCount++;
+          } else if (verificationResult.status === "rejected") {
+            rejectedCount++;
+          }
 
           // Track if concert is missing
           if (!concertId) {
@@ -326,20 +402,35 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
         }
       }
 
-      const pendingMessage =
-        skippedCount > 0
-          ? `\n\n⚠️ ${skippedCount} כרטיסים ללא קונצרט מתאים (יש ליצור קונצרט)`
-          : "";
-
       console.log(
-        `Successfully saved ${publishedCount} tickets for approval, ${skippedCount} without matching concert`
+        `Successfully processed ${publishedCount} tickets: ${verifiedCount} verified, ${needsReviewCount} needs review, ${rejectedCount} rejected`
       );
       setIsPublishing(false);
 
-      // Inform seller that tickets need admin approval
-      alert(
-        `✅ הכרטיסים נשלחו בהצלחה!\n\n⏳ הכרטיסים יפורסמו לאחר אישור המנהל\n\nנודיע לך ברגע שהכרטיסים יאושרו${pendingMessage}`
-      );
+      // Build success message based on verification results
+      let successMessage = "";
+
+      if (verifiedCount > 0) {
+        successMessage += `✅ ${verifiedCount} כרטיסים אומתו ופורסמו מיד!\n\n`;
+        successMessage += `הכרטיסים אושרו אוטומטית על ידי מערכת האימות של האולם\n`;
+        successMessage += `והם כעת זמינים למכירה באתר.\n\n`;
+      }
+
+      if (needsReviewCount > 0) {
+        successMessage += `⏳ ${needsReviewCount} כרטיסים בבדיקה\n\n`;
+        successMessage += `פרטי הכרטיסים תואמים חלקית למאגר האולם.\n`;
+        successMessage += `הצוות שלנו יבדוק את הכרטיסים תוך 2-4 שעות.\n`;
+        successMessage += `תוכל לעקוב אחרי הסטטוס בעמוד "הכרטיסים שלי".\n\n`;
+      }
+
+      if (rejectedCount > 0) {
+        successMessage += `❌ ${rejectedCount} כרטיסים נדחו\n\n`;
+        successMessage += `הכרטיסים לא תואמים למאגר האולמות.\n`;
+        successMessage += `אנא בדוק את הפרטים ונסה שוב.\n`;
+        successMessage += `ניתן לראות את הסיבות בעמוד "הכרטיסים שלי".\n\n`;
+      }
+
+      alert(successMessage.trim());
       handleClose();
       return true;
     } catch (error) {

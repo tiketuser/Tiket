@@ -22,12 +22,14 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
   time,
   availableTickets,
 }) => {
-  // Parse date string (format: "dd/mm/yyyy") to Hebrew format
+  // Parse date string (format: "dd/mm/yyyy" or "dd.mm.yyyy") to Hebrew format
   const formatDateHebrew = (dateString: string): string => {
     if (!dateString) return "";
 
     try {
-      const [day, month, year] = dateString.split("/").map(Number);
+      // Normalize date separator to /
+      const normalizedDate = dateString.replace(/\./g, "/");
+      const [day, month, year] = normalizedDate.split("/").map(Number);
       const dateObj = new Date(year, month - 1, day);
 
       const hebrewDays = [

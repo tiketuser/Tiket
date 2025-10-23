@@ -191,7 +191,7 @@ const NavBar = () => {
                   </Link>
                   <Link href="/update-images">
                     <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
-                      עדכון תמונות
+                      עריכת אירועים
                     </div>
                   </Link>
                   <Link href="/fix-dates">

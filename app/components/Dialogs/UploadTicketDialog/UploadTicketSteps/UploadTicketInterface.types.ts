@@ -17,6 +17,7 @@ export interface TicketData {
     ticketDetails?: {
         title?: string;
         artist?: string;
+        category?: string; // Event category: מוזיקה, תיאטרון, סטנדאפ, ילדים, ספורט
         venue?: string;
         date?: string;
         time?: string;

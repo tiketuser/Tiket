@@ -66,8 +66,9 @@ export default function SearchResultsWrapper({
 
       // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
+        const normalizedDate = concert.date.replace(/\./g, "/");
         const concertDate = new Date(
-          concert.date.split("/").reverse().join("-")
+          normalizedDate.split("/").reverse().join("-")
         );
         const fromDate = new Date(filters.dateRange.from);
         fromDate.setHours(0, 0, 0, 0);

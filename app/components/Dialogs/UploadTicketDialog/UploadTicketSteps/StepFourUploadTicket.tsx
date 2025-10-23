@@ -34,7 +34,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
             priceBefore={ticket?.ticketDetails?.originalPrice}
             title={
               ticket?.ticketDetails?.artist ||
-              ticket?.ticketDetails?.title ||
+              ticket?.ticketDetails?.title || // Fallback for backwards compatibility
               ""
             }
             date={ticket?.ticketDetails?.date || ""}

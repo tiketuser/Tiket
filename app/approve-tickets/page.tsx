@@ -37,6 +37,17 @@ interface Ticket {
   ticketImage?: string; // Base64 image of uploaded ticket
   createdAt: any;
   sellerId: string;
+  // Verification fields
+  verificationStatus?: "verified" | "needs_review" | "rejected";
+  verificationConfidence?: number;
+  verificationDetails?: {
+    matchedFields: string[];
+    unmatchedFields: string[];
+    reason: string;
+    officialTicketId?: string;
+    eventId?: string;
+    ticketingSystem?: string;
+  };
 }
 
 interface Concert {
@@ -73,10 +84,14 @@ export default function ApproveTicketsPage() {
         ...doc.data(),
       })) as Ticket[];
 
-      // Filter in memory for pending tickets
+      // Filter in memory for tickets that need manual review
+      // Only show tickets with verification status "needs_review" or old "pending_approval"
       const pendingTickets = allTickets
         .filter(
-          (t) => t.status === "pending_approval" || t.status === "pending"
+          (t) =>
+            t.verificationStatus === "needs_review" ||
+            t.status === "pending_approval" ||
+            t.status === "pending"
         )
         .sort((a, b) => {
           const aTime = a.createdAt?.seconds || 0;
@@ -368,6 +383,101 @@ export default function ApproveTicketsPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Verification Info */}
+                      {ticket.verificationDetails && (
+                        <div className="space-y-3">
+                          <h3 className="text-heading-4-desktop font-bold text-strongText">
+                            🔍 אימות אולם
+                          </h3>
+                          <div
+                            className={`rounded-lg p-4 space-y-2 text-sm border-2 ${
+                              (ticket.verificationConfidence || 0) >= 90
+                                ? "bg-green-50 border-green-200"
+                                : (ticket.verificationConfidence || 0) >= 65
+                                ? "bg-yellow-50 border-yellow-200"
+                                : "bg-red-50 border-red-200"
+                            }`}
+                          >
+                            {/* Confidence Score */}
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="font-bold">דירוג אמינות:</span>
+                              <span className="text-2xl font-bold">
+                                {ticket.verificationConfidence}%
+                              </span>
+                            </div>
+
+                            {/* Ticketing System */}
+                            {ticket.verificationDetails.ticketingSystem && (
+                              <p className="text-xs text-gray-600">
+                                מערכת:{" "}
+                                {ticket.verificationDetails.ticketingSystem}
+                              </p>
+                            )}
+
+                            {/* Official Ticket ID */}
+                            {ticket.verificationDetails.officialTicketId && (
+                              <p className="text-xs text-gray-600">
+                                מזהה רשמי:{" "}
+                                {ticket.verificationDetails.officialTicketId}
+                              </p>
+                            )}
+
+                            {/* Matched Fields */}
+                            {ticket.verificationDetails.matchedFields?.length >
+                              0 && (
+                              <div className="mt-2">
+                                <p className="font-medium text-green-800 mb-1">
+                                  ✓ שדות תואמים:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {ticket.verificationDetails.matchedFields.map(
+                                    (field, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs"
+                                      >
+                                        {field}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Unmatched Fields */}
+                            {ticket.verificationDetails.unmatchedFields
+                              ?.length > 0 && (
+                              <div className="mt-2">
+                                <p className="font-medium text-orange-800 mb-1">
+                                  ⚠ שדות לא תואמים:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {ticket.verificationDetails.unmatchedFields.map(
+                                    (field, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs"
+                                      >
+                                        {field}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Reason */}
+                            {ticket.verificationDetails.reason && (
+                              <div className="mt-3 pt-3 border-t border-gray-300">
+                                <p className="text-xs italic">
+                                  {ticket.verificationDetails.reason}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Concert Match */}
                       <div className="space-y-3">

@@ -29,9 +29,10 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
       // Try to parse different date formats
       let dateObj: Date;
 
-      // Check if format is DD/MM/YYYY
-      if (dateStr.includes("/")) {
-        const [day, month, year] = dateStr.split("/");
+      // Check if format is DD/MM/YYYY or DD.MM.YYYY
+      if (dateStr.includes("/") || dateStr.includes(".")) {
+        const normalizedDate = dateStr.replace(/\./g, "/");
+        const [day, month, year] = normalizedDate.split("/");
         dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       }
       // Check if format is like "15 Aug" or "15 אוג"

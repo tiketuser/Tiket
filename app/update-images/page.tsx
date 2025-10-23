@@ -1,273 +1,499 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import { db } from "../../firebase";
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  query,
+  orderBy,
+} from "firebase/firestore";
+import Image from "next/image";
 
-export default function UpdateImagesPage() {
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+interface Concert {
+  id: string;
+  artist: string;
+  title: string;
+  date: string;
+  time: string;
+  venue: string;
+  imageData: string | null;
+  status: string;
+  views?: number;
+}
 
-  const handleUpdate = async () => {
-    if (!confirm("האם אתה בטוח שברצונך לעדכן את תמונות הקונצרטים?")) {
-      return;
-    }
+export default function EditConcertsPage() {
+  const [concerts, setConcerts] = useState<Concert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedConcert, setSelectedConcert] = useState<Concert | null>(null);
+  const [editForm, setEditForm] = useState<Concert | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-    setLoading(true);
-    setError(null);
-    setResults(null);
+  useEffect(() => {
+    loadConcerts();
+  }, []);
 
+  const loadConcerts = async () => {
     try {
-      const response = await fetch("/api/update-concert-images", {
-        method: "POST",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to update images");
-      }
-
-      setResults(data.results);
-    } catch (err: any) {
-      setError(err.message);
+      setLoading(true);
+      const concertsQuery = query(
+        collection(db, "concerts"),
+        orderBy("date", "desc")
+      );
+      const snapshot = await getDocs(concertsQuery);
+      const concertsData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Concert[];
+      setConcerts(concertsData);
+    } catch (error) {
+      console.error("Error loading concerts:", error);
+      alert("שגיאה בטעינת אירועים");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleEdit = (concert: Concert) => {
+    setSelectedConcert(concert);
+    setEditForm({ ...concert });
+  };
+
+  const handleCancel = () => {
+    setSelectedConcert(null);
+    setEditForm(null);
+  };
+
+  const handleSave = async () => {
+    if (!editForm || !selectedConcert) return;
+
+    if (!confirm(`האם אתה בטוח שברצונך לעדכן את האירוע ${editForm.artist}?`)) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      // Normalize date to use / separator
+      const normalizedDate = editForm.date.replace(/\./g, "/");
+
+      const concertRef = doc(db, "concerts", selectedConcert.id);
+      await updateDoc(concertRef, {
+        artist: editForm.artist,
+        title: editForm.artist, // Set title same as artist for backwards compatibility
+        date: normalizedDate,
+        time: editForm.time,
+        venue: editForm.venue,
+        status: editForm.status,
+        imageData: editForm.imageData,
+      });
+
+      // Update local state with normalized date
+      const updatedForm = { ...editForm, date: normalizedDate };
+      setConcerts(
+        concerts.map((c) => (c.id === selectedConcert.id ? updatedForm : c))
+      );
+
+      alert("האירוע עודכן בהצלחה!");
+      handleCancel();
+    } catch (error) {
+      console.error("Error updating concert:", error);
+      alert("שגיאה בעדכון האירוע");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editForm) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("אנא בחר קובץ תמונה");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("גודל התמונה חייב להיות פחות מ-5MB");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setEditForm({ ...editForm, imageData: base64String });
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("שגיאה בהעלאת התמונה");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (!editForm) return;
+    if (confirm("האם אתה בטוח שברצונך להסיר את התמונה?")) {
+      setEditForm({ ...editForm, imageData: null });
+    }
+  };
+
+  const filteredConcerts = concerts.filter((concert) => {
+    const matchesSearch =
+      concert.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      concert.venue.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || concert.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <AdminProtection>
       <NavBar />
       <div className="min-h-screen bg-white py-12 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-heading-2-desktop font-bold text-primary mb-2">
-              🎨 עדכון תמונות קונצרטים
+              עריכת אירועים
             </h1>
             <p className="text-text-large text-mutedText">
-              המרת תמונות מהתיקייה public/images/Artist והוספתן לקונצרטים
+              עדכון פרטי אירועים, תמונות וסטטוס
             </p>
           </div>
 
-          {/* Info Box */}
-          <div className="bg-secondary border border-primary rounded-lg p-6 mb-8 text-right">
-            <h3 className="font-bold text-primary text-text-large mb-3">
-              💡 איך זה עובד?
-            </h3>
-            <ul className="space-y-2 text-strongText text-text-medium">
-              <li>• הסקריפט קורא תמונות מתיקיית Artist</li>
-              <li>• ממיר אותן לפורמט base64</li>
-              <li>• מתאים כל תמונה לקונצרט לפי שם האמן</li>
-              <li>• מעדכן את שדה imageData בפיירסטור</li>
-              <li>• מדלג על קונצרטים שכבר יש להם תמונה</li>
-            </ul>
-          </div>
-
-          {/* Available Images */}
-          <div className="bg-white border border-secondary rounded-lg p-6 mb-8 text-right shadow-large">
-            <h3 className="font-bold text-primary text-text-large mb-4">
-              📁 תמונות זמינות
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[
-                "עלמה גוב",
-                "פאטן נבי",
-                "גיא אביב",
-                "כרן פלס",
-                "מק בני",
-                "נועה קירל",
-                "אופק",
-                "עומר אדם",
-                "רביד פלוטניק",
-                "רון אסעל",
-                "שלמה ארצי",
-                "טונה",
-              ].map((artist) => (
-                <div
-                  key={artist}
-                  className="bg-secondary p-3 rounded-lg text-center"
-                >
-                  <span className="text-strongText text-text-medium">
-                    🎤 {artist}
-                  </span>
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p className="text-mutedText mt-4">טוען אירועים...</p>
+            </div>
+          ) : (
+            <>
+              {/* Search and Filter Bar */}
+              <div className="bg-secondary border border-primary rounded-lg p-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-strongText font-bold mb-2 text-right">
+                      חיפוש
+                    </label>
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="חפש לפי אמן או מקום..."
+                      className="w-full px-4 py-3 border border-secondary rounded-lg text-right focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-strongText font-bold mb-2 text-right">
+                      סינון לפי סטטוס
+                    </label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full px-4 py-3 border border-secondary rounded-lg text-right focus:outline-none focus:border-primary"
+                    >
+                      <option value="all">הכל</option>
+                      <option value="active">פעיל</option>
+                      <option value="past">עבר</option>
+                      <option value="cancelled">בוטל</option>
+                    </select>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Action Button */}
-          <div className="text-center mb-8">
-            <button
-              onClick={handleUpdate}
-              disabled={loading}
-              className={`py-4 px-8 rounded-lg font-bold text-white text-text-large transition-all transform hover:scale-105 shadow-large ${
-                loading
-                  ? "bg-weakText cursor-not-allowed"
-                  : "bg-primary hover:bg-highlight"
-              }`}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  מעדכן תמונות...
-                </span>
-              ) : (
-                "🎨 עדכן תמונות קונצרטים"
-              )}
-            </button>
-          </div>
-
-          {/* Error Display */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8 text-right">
-              <h3 className="font-bold text-red-900 mb-2">❌ שגיאה</h3>
-              <p className="text-red-800">{error}</p>
-            </div>
-          )}
-
-          {/* Results Display */}
-          {results && (
-            <div className="space-y-6">
-              {/* Summary */}
-              <div className="bg-secondary border border-primary rounded-lg p-6 text-right">
-                <h3 className="font-bold text-primary text-text-large mb-4">
-                  📊 סיכום
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-4 rounded-lg text-center">
-                    <div className="text-heading-3-desktop font-bold text-primary">
-                      {results.total}
-                    </div>
-                    <div className="text-text-small text-mutedText">
-                      סה"כ קונצרטים
-                    </div>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg text-center">
-                    <div className="text-heading-3-desktop font-bold text-green-600">
-                      {results.updated}
-                    </div>
-                    <div className="text-text-small text-mutedText">עודכנו</div>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg text-center">
-                    <div className="text-heading-3-desktop font-bold text-yellow-600">
-                      {results.skipped}
-                    </div>
-                    <div className="text-text-small text-mutedText">דולגו</div>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg text-center">
-                    <div className="text-heading-3-desktop font-bold text-red-600">
-                      {results.notFound + results.errors}
-                    </div>
-                    <div className="text-text-small text-mutedText">שגיאות</div>
-                  </div>
+                <div className="mt-4 text-center text-mutedText">
+                  מציג {filteredConcerts.length} מתוך {concerts.length} אירועים
                 </div>
               </div>
 
-              {/* Details */}
-              <div className="bg-white border border-secondary rounded-lg p-6 text-right shadow-large">
-                <h3 className="font-bold text-primary text-text-large mb-4">
-                  📋 פירוט
-                </h3>
-                <div className="space-y-3">
-                  {results.details.map((detail: any, index: number) => (
+              {/* Concerts List */}
+              {!selectedConcert ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredConcerts.map((concert) => (
                     <div
-                      key={index}
-                      className={`p-4 rounded-lg border ${
-                        detail.status === "updated"
-                          ? "bg-green-50 border-green-200"
-                          : detail.status === "skipped"
-                          ? "bg-yellow-50 border-yellow-200"
-                          : "bg-red-50 border-red-200"
-                      }`}
+                      key={concert.id}
+                      className="bg-white border border-secondary rounded-lg overflow-hidden shadow-large hover:shadow-xl transition-shadow"
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 text-right">
-                          <p className="font-bold text-strongText">
-                            {detail.artist}
-                          </p>
-                          <p className="text-text-small text-mutedText">
-                            {detail.message}
-                          </p>
-                          {detail.imageFile && (
-                            <p className="text-text-extra-small text-mutedText">
-                              📁 {detail.imageFile}
-                            </p>
+                      {/* Concert Image */}
+                      <div className="relative h-48 bg-secondary">
+                        {concert.imageData ? (
+                          <Image
+                            src={concert.imageData}
+                            alt={concert.artist}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <span className="text-6xl text-mutedText">♪</span>
+                          </div>
+                        )}
+                        {/* Status Badge */}
+                        <div className="absolute top-2 right-2">
+                          <span
+                            className={`px-3 py-1 rounded-full text-white text-text-small font-bold ${
+                              concert.status === "active"
+                                ? "bg-green-500"
+                                : concert.status === "past"
+                                ? "bg-gray-500"
+                                : "bg-red-500"
+                            }`}
+                          >
+                            {concert.status === "active"
+                              ? "פעיל"
+                              : concert.status === "past"
+                              ? "עבר"
+                              : "בוטל"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Concert Info */}
+                      <div className="p-4 text-right">
+                        <h3 className="text-text-large font-bold text-primary mb-2">
+                          {concert.artist}
+                        </h3>
+                        <div className="space-y-1 text-text-medium text-strongText">
+                          <p>{concert.date}</p>
+                          <p>{concert.time}</p>
+                          <p>{concert.venue}</p>
+                          {concert.views !== undefined && (
+                            <p>{concert.views} צפיות</p>
                           )}
                         </div>
-                        <div className="mr-4">
-                          {detail.status === "updated" && (
-                            <span className="text-2xl">✅</span>
-                          )}
-                          {detail.status === "skipped" && (
-                            <span className="text-2xl">⏭️</span>
-                          )}
-                          {(detail.status === "not_found" ||
-                            detail.status === "error") && (
-                            <span className="text-2xl">❌</span>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => handleEdit(concert)}
+                          className="w-full mt-4 bg-primary text-white py-2 px-4 rounded-lg hover:bg-highlight transition-colors font-bold"
+                        >
+                          ערוך אירוע
+                        </button>
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
 
-              {/* Success Message */}
-              {results.updated > 0 && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-right">
-                  <h3 className="font-bold text-green-900 mb-2">
-                    ✅ עדכון הושלם בהצלחה!
-                  </h3>
-                  <p className="text-green-800">
-                    {results.updated} קונצרטים עודכנו בהצלחה עם תמונות מקצועיות.
-                    <br />
-                    עכשיו אפשר לראות אותם בגלריה בדף הבית!
-                  </p>
-                  <div className="mt-4">
-                    <a
-                      href="/"
-                      className="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-highlight transition-colors"
-                    >
-                      🏠 חזרה לדף הבית
-                    </a>
+                  {filteredConcerts.length === 0 && (
+                    <div className="col-span-full text-center py-20">
+                      <p className="text-mutedText text-text-large">
+                        לא נמצאו אירועים תואמים
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Edit Form */
+                <div className="max-w-3xl mx-auto">
+                  <div className="bg-white border border-secondary rounded-lg shadow-large p-8">
+                    <div className="flex justify-between items-center mb-6">
+                      <button
+                        onClick={handleCancel}
+                        className="text-mutedText hover:text-strongText"
+                      >
+                        ← חזרה
+                      </button>
+                      <h2 className="text-heading-3-desktop font-bold text-primary">
+                        עריכת אירוע
+                      </h2>
+                    </div>
+
+                    {editForm && (
+                      <div className="space-y-6">
+                        {/* Image Upload Section */}
+                        <div>
+                          <label className="block text-strongText font-bold mb-2 text-right">
+                            תמונה
+                          </label>
+                          <div className="border-2 border-dashed border-secondary rounded-lg p-6">
+                            {editForm.imageData ? (
+                              <div className="space-y-4">
+                                <div className="relative h-64 rounded-lg overflow-hidden">
+                                  <Image
+                                    src={editForm.imageData}
+                                    alt={editForm.artist}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <label className="flex-1 cursor-pointer bg-secondary text-strongText py-2 px-4 rounded-lg hover:bg-primary hover:text-white transition-colors text-center font-bold">
+                                    החלף תמונה
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={handleImageUpload}
+                                      className="hidden"
+                                      disabled={uploadingImage}
+                                    />
+                                  </label>
+                                  <button
+                                    onClick={handleRemoveImage}
+                                    className="flex-1 bg-red-100 text-red-600 py-2 px-4 rounded-lg hover:bg-red-200 transition-colors font-bold"
+                                  >
+                                    הסר תמונה
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <label className="cursor-pointer block text-center">
+                                <div className="py-8">
+                                  <p className="text-mutedText mb-2">
+                                    לחץ להעלאת תמונה
+                                  </p>
+                                  <p className="text-text-small text-weakText">
+                                    גודל מקסימלי: 5MB
+                                  </p>
+                                </div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleImageUpload}
+                                  className="hidden"
+                                  disabled={uploadingImage}
+                                />
+                              </label>
+                            )}
+                            {uploadingImage && (
+                              <p className="text-center text-primary mt-2">
+                                מעלה תמונה...
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Event Name */}
+                        <div>
+                          <label className="block text-strongText font-bold mb-2 text-right">
+                            שם האירוע
+                          </label>
+                          <input
+                            type="text"
+                            value={editForm.artist}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                artist: e.target.value,
+                              })
+                            }
+                            className="w-full px-4 py-3 border border-secondary rounded-lg text-right focus:outline-none focus:border-primary"
+                            placeholder="שם האירוע"
+                          />
+                        </div>
+
+                        {/* Date and Time */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-strongText font-bold mb-2 text-right">
+                              תאריך
+                            </label>
+                            <input
+                              type="text"
+                              value={editForm.date}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  date: e.target.value,
+                                })
+                              }
+                              className="w-full px-4 py-3 border border-secondary rounded-lg text-right focus:outline-none focus:border-primary"
+                              placeholder="DD/MM/YYYY או DD.MM.YYYY"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-strongText font-bold mb-2 text-right">
+                              שעה
+                            </label>
+                            <input
+                              type="text"
+                              value={editForm.time}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  time: e.target.value,
+                                })
+                              }
+                              className="w-full px-4 py-3 border border-secondary rounded-lg text-right focus:outline-none focus:border-primary"
+                              placeholder="HH:MM"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Venue */}
+                        <div>
+                          <label className="block text-strongText font-bold mb-2 text-right">
+                            מיקום
+                          </label>
+                          <input
+                            type="text"
+                            value={editForm.venue}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                venue: e.target.value,
+                              })
+                            }
+                            className="w-full px-4 py-3 border border-secondary rounded-lg text-right focus:outline-none focus:border-primary"
+                            placeholder="מקום האירוע"
+                          />
+                        </div>
+
+                        {/* Status */}
+                        <div>
+                          <label className="block text-strongText font-bold mb-2 text-right">
+                            סטטוס
+                          </label>
+                          <select
+                            value={editForm.status}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                status: e.target.value,
+                              })
+                            }
+                            className="w-full px-4 py-3 border border-secondary rounded-lg text-right focus:outline-none focus:border-primary"
+                          >
+                            <option value="active">פעיל</option>
+                            <option value="past">עבר</option>
+                            <option value="cancelled">בוטל</option>
+                          </select>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-4 pt-4">
+                          <button
+                            onClick={handleCancel}
+                            className="flex-1 py-3 px-6 border border-secondary rounded-lg text-strongText hover:bg-secondary transition-colors font-bold"
+                            disabled={saving}
+                          >
+                            ביטול
+                          </button>
+                          <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className={`flex-1 py-3 px-6 rounded-lg text-white font-bold transition-all ${
+                              saving
+                                ? "bg-weakText cursor-not-allowed"
+                                : "bg-primary hover:bg-highlight"
+                            }`}
+                          >
+                            {saving ? "שומר..." : "שמור שינויים"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
-            </div>
+            </>
           )}
-
-          {/* Instructions */}
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6 text-right">
-            <h3 className="font-bold text-blue-900 text-text-large mb-3">
-              📝 הוראות
-            </h3>
-            <ol className="space-y-2 text-blue-800 text-text-medium list-decimal list-inside">
-              <li>ודא שיש קונצרטים בפיירסטור (הרץ מיגרציה או צור ידנית)</li>
-              <li>לחץ על כפתור "עדכן תמונות קונצרטים"</li>
-              <li>המתן לסיום העדכון (עשוי לקחת מספר שניות)</li>
-              <li>בדוק את התוצאות ורשימת העדכונים</li>
-              <li>עבור לדף הבית כדי לראות את הקונצרטים עם התמונות החדשות</li>
-            </ol>
-          </div>
         </div>
       </div>
       <Footer />

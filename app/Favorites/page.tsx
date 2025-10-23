@@ -16,6 +16,7 @@ import ResultSection from "../components/ResultSection/ResultSection";
 import HeartIcon from "../../public/images/Favorites/Heart.svg";
 import Image from "next/image";
 import { DateRange } from "react-day-picker";
+import { calculateTimeLeft } from "../../utils/timeCalculator";
 
 interface CardData {
   imageSrc: string;
@@ -153,26 +154,7 @@ const Favorites = () => {
               : minPrice;
 
           // Calculate time until event
-          const eventDate = new Date(
-            concert.date.split("/").reverse().join("-")
-          );
-          const now = new Date();
-          const diffTime = eventDate.getTime() - now.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-          let timeLeft = "";
-          if (diffDays < 0) {
-            timeLeft = "האירוע עבר";
-          } else if (diffDays === 0) {
-            timeLeft = "היום!";
-          } else if (diffDays === 1) {
-            timeLeft = "מחר";
-          } else if (diffDays <= 7) {
-            timeLeft = `בעוד ${diffDays} ימים`;
-          } else {
-            const weeks = Math.floor(diffDays / 7);
-            timeLeft = weeks === 1 ? "בעוד שבוע" : `בעוד ${weeks} שבועות`;
-          }
+          const timeLeft = calculateTimeLeft(concert.date, concert.time);
 
           return {
             id: concert.id,
@@ -222,8 +204,9 @@ const Favorites = () => {
 
       // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
+        const normalizedDate = concert.date.replace(/\./g, "/");
         const concertDate = new Date(
-          concert.date.split("/").reverse().join("-")
+          normalizedDate.split("/").reverse().join("-")
         );
         const fromDate = new Date(filters.dateRange.from);
         fromDate.setHours(0, 0, 0, 0);

@@ -10,6 +10,7 @@ const visionClient = new vision.ImageAnnotatorClient({
 
 interface TicketData {
   artist: string | null;
+  category: string | null;
   price: number | null;
   venue: string | null;
   date: string | null;
@@ -37,6 +38,7 @@ async function analyzeWithGemini(text: string): Promise<TicketData> {
             Extract ticket information from this text.
             Return a JSON object (no markdown, no backticks) with these fields:
             - artist: name of performer or event (string or null)
+            - category: classify the event type. Must be one of: "מוזיקה" (music concerts), "תיאטרון" (theater/plays), "סטנדאפ" (stand-up comedy), "ילדים" (kids shows), "ספורט" (sports events). Default to "מוזיקה" if unsure.
             - price: numeric value only (number or null)
             - venue: location name (string or null)
             - date: event date in format "DD MMM" or "DD/MM/YYYY" (string or null)
@@ -73,6 +75,7 @@ async function analyzeWithGemini(text: string): Promise<TicketData> {
     const parsed = JSON.parse(jsonString);
     return {
       artist: parsed.artist || null,
+      category: parsed.category || "מוזיקה",
       price: typeof parsed.price === "number" ? parsed.price : null,
       venue: parsed.venue || null,
       date: parsed.date || null,
@@ -88,6 +91,7 @@ async function analyzeWithGemini(text: string): Promise<TicketData> {
     console.error("Raw response:", jsonString);
     return {
       artist: null,
+      category: null,
       price: null,
       venue: null,
       date: null,
