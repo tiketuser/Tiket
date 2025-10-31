@@ -144,7 +144,7 @@ if (!snapshot.empty) {
 
 ## Next Steps
 
-1. ✅ Update upload dialog to create concerts and link tickets
-2. ⏭️ Update Gallery component to fetch concerts + aggregate ticket data
-3. ⏭️ Update EventPage to show concert details + available tickets
-4. ⏭️ Add admin panel to manage concerts (edit details, merge duplicates)
+1.  Update upload dialog to create concerts and link tickets
+2. ⏭ Update Gallery component to fetch concerts + aggregate ticket data
+3. ⏭ Update EventPage to show concert details + available tickets
+4. ⏭ Add admin panel to manage concerts (edit details, merge duplicates)

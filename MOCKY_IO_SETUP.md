@@ -1,4 +1,4 @@
-# 🌐 Mocky.io Setup Guide
+#  Mocky.io Setup Guide
 
 ## Step-by-Step Instructions to Make Venue Database Accessible Online
 
@@ -155,7 +155,7 @@ curl -X POST http://localhost:3000/api/venue-verify \
 3. **Live Demo**:
 
    - Upload ticket with barcode `7290016353891`
-   - Show instant "✅ Verified" message
+   - Show instant " Verified" message
    - Open MyTickets, show green badge + 95% confidence
 
 4. **Show Partial Match**:
@@ -167,7 +167,7 @@ curl -X POST http://localhost:3000/api/venue-verify \
 5. **Show Rejection**:
 
    - Upload fake ticket
-   - Show "❌ Rejected" message
+   - Show " Rejected" message
    - Explain: "Saves admin time by rejecting obvious fakes"
 
 6. **Show Metrics** (Future):
@@ -192,4 +192,4 @@ curl -X POST http://localhost:3000/api/venue-verify \
 - Showing external API integration
 - Demo that data is accessible externally
 
-**Current Status**: ✅ Working with local mock data
+**Current Status**:  Working with local mock data

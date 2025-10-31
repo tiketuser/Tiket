@@ -82,7 +82,7 @@ const ThankYou: React.FC<ThankYouProps> = ({ isOpen, onClose }) => {
             priceBefore={457}
             title="עלמה גוב"
             date="15 אוק׳"
-            seatLocation="יציע 4, שורה 21 כיסא 3"
+            seatLocation="אזור 4, שורה 21 כיסא 3"
           />
         </div>
       </div>

@@ -1,10 +1,10 @@
 # Time Until Event - Display Improvements
 
-## ✅ Fixed: Time Until Event Display
+##  Fixed: Time Until Event Display
 
 Improved the "time until event" display to be more readable, polished, and visually appealing.
 
-## 🎯 Changes Made
+##  Changes Made
 
 ### 1. Card Component Layout
 
@@ -93,7 +93,7 @@ const months = Math.floor(diffDays / 30);
 return months === 1 ? "בעוד חודש" : `בעוד ${months} חודשים`;
 ```
 
-## 📅 Time Display Examples
+##  Time Display Examples
 
 ### Same Day:
 
@@ -121,64 +121,64 @@ return months === 1 ? "בעוד חודש" : `בעוד ${months} חודשים`;
 
 - **Negative days**: `האירוע עבר` (Event has passed)
 
-## 🎨 Visual Comparison
+##  Visual Comparison
 
 ### Before:
 
 ```
-┌─────────────────────────────┐
-│   [Concert Card]            │
-│   ...                       │
-│   💰 ₪150 - ₪300           │
-│   ⏰ 3 ימים זמן לאירוע      │  ← Hard to read
-└─────────────────────────────┘
+
+   [Concert Card]            
+   ...                       
+    ₪150 - ₪300           
+   ⏰ 3 ימים זמן לאירוע        ← Hard to read
+
 ```
 
 ### After:
 
 ```
-┌─────────────────────────────┐
-│   [Concert Card]            │
-│   ...                       │
-│   💰 ₪150 - ₪300           │
-│   ⏰ זמן לאירוע: בעוד 3 ימים │  ← Clear & highlighted!
-└─────────────────────────────┘
+
+   [Concert Card]            
+   ...                       
+    ₪150 - ₪300           
+   ⏰ זמן לאירוע: בעוד 3 ימים   ← Clear & highlighted!
+
 ```
 
-## 🌟 Benefits
+##  Benefits
 
 ### Visual:
 
-✅ **Better hierarchy** - Label is muted, time is highlighted
-✅ **Proper RTL** - Natural Hebrew reading direction
-✅ **Better spacing** - Removed negative margin
-✅ **Color coding** - Primary color draws attention to the time value
+ **Better hierarchy** - Label is muted, time is highlighted
+ **Proper RTL** - Natural Hebrew reading direction
+ **Better spacing** - Removed negative margin
+ **Color coding** - Primary color draws attention to the time value
 
 ### Content:
 
-✅ **More precise** - Shows hours for same-day events
-✅ **Better grammar** - "בעוד" (in) prefix for all future times
-✅ **Natural language** - "מחרתיים" instead of "2 ימים"
-✅ **Special cases** - "מתחיל עכשיו!" for events starting now
-✅ **Singular handling** - "בעוד שבוע" not "בעוד 1 שבועות"
+ **More precise** - Shows hours for same-day events
+ **Better grammar** - "בעוד" (in) prefix for all future times
+ **Natural language** - "מחרתיים" instead of "2 ימים"
+ **Special cases** - "מתחיל עכשיו!" for events starting now
+ **Singular handling** - "בעוד שבוע" not "בעוד 1 שבועות"
 
-## 📊 Complete Time Ranges
+##  Complete Time Ranges
 
 | Time Range        | Old Display  | New Display        |
 | ----------------- | ------------ | ------------------ |
-| -1 days           | "האירוע עבר" | "האירוע עבר" ✓     |
-| 0 days, 2 hours   | "היום!"      | "בעוד 2 שעות" ✨   |
-| 0 days, >12 hours | "היום!"      | "היום!" ✓          |
-| 0 days, 0 hours   | "היום!"      | "מתחיל עכשיו!" ✨  |
-| 1 day             | "מחר"        | "מחר" ✓            |
-| 2 days            | "2 ימים"     | "מחרתיים" ✨       |
-| 3 days            | "3 ימים"     | "בעוד 3 ימים" ✨   |
-| 7 days            | "1 שבועות"   | "בעוד שבוע" ✨     |
-| 14 days           | "2 שבועות"   | "בעוד 2 שבועות" ✨ |
-| 30 days           | "1 חודשים"   | "בעוד חודש" ✨     |
-| 60 days           | "2 חודשים"   | "בעוד 2 חודשים" ✨ |
+| -1 days           | "האירוע עבר" | "האירוע עבר"      |
+| 0 days, 2 hours   | "היום!"      | "בעוד 2 שעות"    |
+| 0 days, >12 hours | "היום!"      | "היום!"           |
+| 0 days, 0 hours   | "היום!"      | "מתחיל עכשיו!"   |
+| 1 day             | "מחר"        | "מחר"             |
+| 2 days            | "2 ימים"     | "מחרתיים"        |
+| 3 days            | "3 ימים"     | "בעוד 3 ימים"    |
+| 7 days            | "1 שבועות"   | "בעוד שבוע"      |
+| 14 days           | "2 שבועות"   | "בעוד 2 שבועות"  |
+| 30 days           | "1 חודשים"   | "בעוד חודש"      |
+| 60 days           | "2 חודשים"   | "בעוד 2 חודשים"  |
 
-## 🎯 Implementation Details
+##  Implementation Details
 
 ### Card Display (RTL):
 
@@ -199,7 +199,7 @@ Reading order (RTL):
 - **Value**: `text-primary` (#b54653) - branded color, attention-grabbing
 - **Font weight**: Label is `font-light`, value is `font-semibold`
 
-## ✨ Result
+##  Result
 
 The "time until event" display is now:
 
@@ -217,4 +217,4 @@ Users can now easily see at a glance:
 - ⏰ זמן לאירוע: **בעוד שבוע**
 - ⏰ זמן לאירוע: **בעוד חודש**
 
-Much better! 🎉
+Much better! 

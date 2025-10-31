@@ -5,6 +5,14 @@
 :root {
   --background: rgba(255, 255, 255, 1);
   --foreground: #171717;
+  
+  /* Default category theme colors (Music) */
+  --color-primary: #B54653;
+  --color-secondary: #EAC4C7;
+  --color-highlight: #8C5A5F;
+  
+  /* Smooth transitions for theme changes */
+  transition: --color-primary 0.3s ease, --color-secondary 0.3s ease, --color-highlight 0.3s ease;
 }
 
 @media (prefers-color-scheme: light) {
@@ -20,10 +28,49 @@ body {
   direction: rtl;
 }
 
+@layer components {
+  /* Custom button styles using dynamic theme colors */
+  .btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--color-highlight);
+    border-color: var(--color-highlight);
+  }
+  
+  .btn-secondary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+  
+  .btn-secondary:hover {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+  }
+  
+  /* Themed SVG color transitions - using CSS filters */
+  /* Note: For best results, SVGs should be inline or use mask-image with background colors */
+  .themed-svg {
+    transition: filter 0.3s ease-in-out;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Smooth color transitions for theme changes */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 0.3s;
+  transition-timing-function: ease-in-out;
 }
 
 :root:has(.no-doc-scroll) {

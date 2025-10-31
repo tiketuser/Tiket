@@ -17,8 +17,9 @@ import {
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import { getDefaultCategoryImage } from "../theme/defaultCategoryImages";
 
-interface ConcertFormData {
+interface EventFormData {
   artist: string;
   category: string;
   date: string;
@@ -28,7 +29,7 @@ interface ConcertFormData {
   imagePreview: string;
 }
 
-interface Concert {
+interface Event {
   id: string;
   artist: string;
   title: string;
@@ -40,12 +41,13 @@ interface Concert {
   status: string;
   views: number;
   createdAt: any;
+  ticketsCount?: number; // Number of available tickets
 }
 
 export default function AdminPage() {
-  const [concerts, setConcerts] = useState<Concert[]>([]);
-  const [loadingConcerts, setLoadingConcerts] = useState(true);
-  const [formData, setFormData] = useState<ConcertFormData>({
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [formData, setFormData] = useState<EventFormData>({
     artist: "",
     category: "מוזיקה",
     date: "",
@@ -61,40 +63,60 @@ export default function AdminPage() {
     text: string;
   } | null>(null);
 
-  // Fetch existing concerts
+  // Bulk import state
+  const [bulkJson, setBulkJson] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Fetch existing events with ticket counts (concerts collection)
   useEffect(() => {
-    const fetchConcerts = async () => {
+    const fetchEvents = async () => {
       try {
-        const concertsQuery = query(
+        const eventsQuery = query(
           collection(db as any, "concerts"),
           orderBy("createdAt", "desc")
         );
-        const snapshot = await getDocs(concertsQuery);
-        const concertsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Concert[];
-        setConcerts(concertsData);
+        const snapshot = await getDocs(eventsQuery);
+        const eventsData = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const eventData = { id: doc.id, ...doc.data() } as Event;
+
+            // Fetch tickets count for this event
+            const ticketsQuery = query(
+              collection(db as any, "tickets"),
+              where("concertId", "==", doc.id),
+              where("status", "==", "available")
+            );
+            const ticketsSnapshot = await getDocs(ticketsQuery);
+            eventData.ticketsCount = ticketsSnapshot.size;
+
+            return eventData;
+          })
+        );
+        setEvents(eventsData);
       } catch (error) {
-        console.error("Error fetching concerts:", error);
+        console.error("Error fetching events:", error);
       } finally {
-        setLoadingConcerts(false);
+        setLoadingEvents(false);
       }
     };
 
-    fetchConcerts();
+    fetchEvents();
   }, []);
 
-  const handleDeleteConcert = async (concertId: string) => {
-    if (!confirm("האם אתה בטוח שברצונך למחוק את הקונצרט?")) return;
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm("האם אתה בטוח שברצונך למחוק את האירוע?")) return;
 
     try {
-      await deleteDoc(doc(db as any, "concerts", concertId));
-      setConcerts((prev) => prev.filter((c) => c.id !== concertId));
-      setMessage({ type: "success", text: "✅ הקונצרט נמחק בהצלחה" });
+      await deleteDoc(doc(db as any, "concerts", eventId));
+      setEvents((prev) => prev.filter((c) => c.id !== eventId));
+      setMessage({ type: "success", text: " האירוע נמחק בהצלחה" });
     } catch (error) {
-      console.error("Error deleting concert:", error);
-      setMessage({ type: "error", text: "שגיאה במחיקת הקונצרט" });
+      console.error("Error deleting event:", error);
+      setMessage({ type: "error", text: "שגיאה במחיקת האירוע" });
     }
   };
 
@@ -136,7 +158,7 @@ export default function AdminPage() {
     if (!formData.date.trim()) return "נא למלא תאריך";
     if (!formData.time.trim()) return "נא למלא שעה";
     if (!formData.venue.trim()) return "נא למלא מיקום";
-    if (!formData.imageFile) return "נא להעלות תמונה";
+    // Image is now optional - will use default if not provided
 
     // Validate date format (dd/mm/yyyy or dd.mm.yyyy)
     const dateRegex = /^\d{2}[\/\.]\d{2}[\/\.]\d{4}$/;
@@ -175,14 +197,20 @@ export default function AdminPage() {
     setMessage(null);
 
     try {
-      // Convert image to base64
-      const imageData = await convertImageToBase64(formData.imageFile!);
+      // Get image data: use uploaded image or default category image
+      let imageData: string;
+      if (formData.imageFile) {
+        imageData = await convertImageToBase64(formData.imageFile);
+      } else {
+        // Use default category image
+        imageData = await getDefaultCategoryImage(formData.category);
+      }
 
       // Normalize date to use / separator
       const normalizedDate = formData.date.trim().replace(/\./g, "/");
 
-      // Create event document
-      const concertData = {
+      // Create event document (concerts collection)
+      const eventData = {
         artist: formData.artist.trim(),
         title: formData.artist.trim(), // Set title same as artist for backwards compatibility
         category: formData.category,
@@ -195,18 +223,18 @@ export default function AdminPage() {
         createdAt: serverTimestamp(),
       };
 
-      const newConcertRef = await addDoc(
+      const newEventRef = await addDoc(
         collection(db as any, "concerts"),
-        concertData
+        eventData
       );
 
       // Add to local state
-      setConcerts((prev) => [
+      setEvents((prev) => [
         {
-          id: newConcertRef.id,
-          ...concertData,
+          id: newEventRef.id,
+          ...eventData,
           createdAt: new Date(),
-        } as Concert,
+        } as Event,
         ...prev,
       ]);
 
@@ -229,13 +257,172 @@ export default function AdminPage() {
       ) as HTMLInputElement;
       if (fileInput) fileInput.value = "";
     } catch (error) {
-      console.error("Error creating concert:", error);
+      console.error("Error creating event:", error);
       setMessage({
         type: "error",
         text: "שגיאה ביצירת הקונצרט. נא לנסות שוב.",
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    setBulkLoading(true);
+    setBulkMessage(null);
+
+    try {
+      // Parse JSON
+      let eventsArray;
+      try {
+        eventsArray = JSON.parse(bulkJson);
+      } catch (error) {
+        setBulkMessage({
+          type: "error",
+          text: "JSON לא תקין. נא לבדוק את הפורמט.",
+        });
+        setBulkLoading(false);
+        return;
+      }
+
+      // Ensure it's an array
+      if (!Array.isArray(eventsArray)) {
+        eventsArray = [eventsArray];
+      }
+
+      if (eventsArray.length === 0) {
+        setBulkMessage({ type: "error", text: "לא נמצאו אירועים ב-JSON" });
+        setBulkLoading(false);
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      // Process each event
+      for (let i = 0; i < eventsArray.length; i++) {
+        const eventJson = eventsArray[i];
+
+        try {
+          // Validate required fields
+          if (!eventJson.name || !eventJson.name.trim()) {
+            errors.push(`אירוע ${i + 1}: חסר שם אירוע`);
+            errorCount++;
+            continue;
+          }
+          if (!eventJson.date || !eventJson.date.trim()) {
+            errors.push(`אירוע ${i + 1} (${eventJson.name}): חסר תאריך`);
+            errorCount++;
+            continue;
+          }
+          if (!eventJson.time || !eventJson.time.trim()) {
+            errors.push(`אירוע ${i + 1} (${eventJson.name}): חסרה שעה`);
+            errorCount++;
+            continue;
+          }
+          if (!eventJson.location || !eventJson.location.trim()) {
+            errors.push(`אירוע ${i + 1} (${eventJson.name}): חסר מיקום`);
+            errorCount++;
+            continue;
+          }
+
+          // Normalize date format
+          const normalizedDate = eventJson.date.trim().replace(/\./g, "/");
+
+          // Validate date format
+          const dateRegex = /^\d{2}[\/\.]\d{2}[\/\.]\d{4}$/;
+          if (!dateRegex.test(normalizedDate)) {
+            errors.push(
+              `אירוע ${i + 1} (${eventJson.name}): פורמט תאריך לא תקין`
+            );
+            errorCount++;
+            continue;
+          }
+
+          // Validate time format
+          const timeRegex = /^\d{2}:\d{2}$/;
+          if (!timeRegex.test(eventJson.time.trim())) {
+            errors.push(
+              `אירוע ${i + 1} (${eventJson.name}): פורמט שעה לא תקין`
+            );
+            errorCount++;
+            continue;
+          }
+
+          // Get category (default to מוזיקה if not provided)
+          const category = eventJson.category || "מוזיקה";
+
+          // Get default image for category
+          const imageData = await getDefaultCategoryImage(category);
+
+          // Create event document
+          const eventData = {
+            artist: eventJson.name.trim(),
+            title: eventJson.name.trim(),
+            category: category,
+            date: normalizedDate,
+            time: eventJson.time.trim(),
+            venue: eventJson.location.trim(),
+            imageData: imageData,
+            status: "active",
+            views: 0,
+            createdAt: serverTimestamp(),
+          };
+
+          const newEventRef = await addDoc(
+            collection(db as any, "concerts"),
+            eventData
+          );
+
+          // Add to local state
+          setEvents((prev) => [
+            {
+              id: newEventRef.id,
+              ...eventData,
+              createdAt: new Date(),
+            } as Event,
+            ...prev,
+          ]);
+
+          successCount++;
+        } catch (error) {
+          console.error(`Error creating event ${i + 1}:`, error);
+          errors.push(
+            `אירוע ${i + 1} (${eventJson.name || "ללא שם"}): שגיאה ביצירה`
+          );
+          errorCount++;
+        }
+      }
+
+      // Show results
+      if (successCount > 0 && errorCount === 0) {
+        setBulkMessage({
+          type: "success",
+          text: ` ${successCount} אירועים נוצרו בהצלחה!`,
+        });
+        setBulkJson(""); // Clear the textarea
+      } else if (successCount > 0 && errorCount > 0) {
+        setBulkMessage({
+          type: "error",
+          text: ` ${successCount} אירועים נוצרו, ${errorCount} נכשלו:\n${errors.join(
+            "\n"
+          )}`,
+        });
+      } else {
+        setBulkMessage({
+          type: "error",
+          text: ` כל האירועים נכשלו:\n${errors.join("\n")}`,
+        });
+      }
+    } catch (error) {
+      console.error("Error in bulk import:", error);
+      setBulkMessage({
+        type: "error",
+        text: "שגיאה כללית ביבוא אירועים. נא לנסות שוב.",
+      });
+    } finally {
+      setBulkLoading(false);
     }
   };
 
@@ -252,6 +439,21 @@ export default function AdminPage() {
             <p className="text-text-large text-mutedText">
               צור אירוע חדש במערכת
             </p>
+            {/* Link to manage default images */}
+            <div className="mt-4 flex gap-3 justify-center">
+              <a
+                href="/manage-default-images"
+                className="inline-block px-6 py-2 bg-secondary text-primary rounded-lg hover:bg-highlight hover:text-white transition-colors font-semibold"
+              >
+                ניהול תמונות ברירת מחדל
+              </a>
+              <a
+                href="/manage-themes"
+                className="inline-block px-6 py-2 bg-secondary text-primary rounded-lg hover:bg-highlight hover:text-white transition-colors font-semibold"
+              >
+                ניהול צבעי קטגוריות
+              </a>
+            </div>
           </div>
 
           {/* Form Card */}
@@ -367,8 +569,11 @@ export default function AdminPage() {
                   htmlFor="image-upload"
                   className="block text-right text-text-medium font-semibold text-strongText mb-2"
                 >
-                  תמונת האירוע *
+                  תמונת האירוע (אופציונלי)
                 </label>
+                <p className="text-sm text-gray-600 mb-2 text-right">
+                  אם לא תועלה תמונה, תשתמש תמונת ברירת מחדל של הקטגוריה
+                </p>
                 <input
                   type="file"
                   id="image-upload"
@@ -470,6 +675,130 @@ export default function AdminPage() {
             </form>
           </div>
 
+          {/* Bulk Import Section */}
+          <div className="mt-8 bg-white rounded-2xl shadow-large p-8 border border-secondary">
+            <h2 className="text-heading-3-desktop font-bold text-primary mb-4 text-right">
+              יבוא מרובה של אירועים (JSON)
+            </h2>
+            <p className="text-text-medium text-mutedText mb-6 text-right">
+              הדבק JSON עם מערך אירועים ליצירה מרובה
+            </p>
+
+            {/* JSON Input */}
+            <div className="mb-6">
+              <label
+                htmlFor="bulkJson"
+                className="block text-right text-text-medium font-semibold text-strongText mb-2"
+              >
+                JSON של אירועים
+              </label>
+              <textarea
+                id="bulkJson"
+                value={bulkJson}
+                onChange={(e) => setBulkJson(e.target.value)}
+                className="w-full px-4 py-3 border border-secondary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-right font-mono text-sm"
+                rows={12}
+                placeholder={`[
+  {
+    "name": "עומר אדם",
+    "category": "מוזיקה",
+    "time": "21:30",
+    "date": "05/11/2025",
+    "location": "היכל מנורה, תל אביב"
+  },
+  {
+    "name": "נועה קירל",
+    "category": "מוזיקה",
+    "time": "20:00",
+    "date": "12.11.2025",
+    "location": "Live Park, ראשון לציון"
+  }
+]`}
+                disabled={bulkLoading}
+              />
+            </div>
+
+            {/* Bulk Message */}
+            {bulkMessage && (
+              <div
+                className={`p-4 rounded-lg text-right mb-6 whitespace-pre-line ${
+                  bulkMessage.type === "success"
+                    ? "bg-green-50 text-green-800 border border-green-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                {bulkMessage.text}
+              </div>
+            )}
+
+            {/* Bulk Import Button */}
+            <button
+              onClick={handleBulkImport}
+              disabled={bulkLoading || !bulkJson.trim()}
+              className={`w-full py-4 px-6 rounded-lg font-bold text-white text-text-large transition-all transform hover:scale-105 shadow-large ${
+                bulkLoading || !bulkJson.trim()
+                  ? "bg-weakText cursor-not-allowed"
+                  : "bg-highlight hover:bg-primary"
+              }`}
+            >
+              {bulkLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  מייבא אירועים...
+                </span>
+              ) : (
+                "יבא אירועים"
+              )}
+            </button>
+
+            {/* Format Help */}
+            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-right">
+              <h4 className="font-bold text-blue-800 text-text-medium mb-2">
+                פורמט JSON נדרש:
+              </h4>
+              <ul className="space-y-1 text-blue-700 text-text-small">
+                <li>
+                  • <code className="bg-blue-100 px-1 rounded">name</code> - שם
+                  האירוע (חובה)
+                </li>
+                <li>
+                  • <code className="bg-blue-100 px-1 rounded">category</code> -
+                  קטגוריה (אופציונלי, ברירת מחדל: מוזיקה)
+                </li>
+                <li>
+                  • <code className="bg-blue-100 px-1 rounded">time</code> - שעה
+                  בפורמט HH:MM (חובה)
+                </li>
+                <li>
+                  • <code className="bg-blue-100 px-1 rounded">date</code> -
+                  תאריך בפורמט dd/mm/yyyy או dd.mm.yyyy (חובה)
+                </li>
+                <li>
+                  • <code className="bg-blue-100 px-1 rounded">location</code> -
+                  מיקום האירוע (חובה)
+                </li>
+              </ul>
+              <p className="text-blue-600 text-text-small mt-2">
+                הקטגוריות הזמינות: מוזיקה, תיאטרון, סטנדאפ, ילדים, ספורט
+              </p>
+            </div>
+          </div>
+
           {/* Instructions */}
           <div className="mt-8 bg-secondary border border-primary rounded-lg p-6 text-right">
             <h3 className="font-bold text-primary text-text-large mb-3">
@@ -492,10 +821,10 @@ export default function AdminPage() {
           {/* Existing Events List */}
           <div className="mt-12">
             <h2 className="text-heading-3-desktop font-bold text-primary mb-6 text-right">
-              📋 אירועים קיימים
+              אירועים קיימים
             </h2>
 
-            {loadingConcerts ? (
+            {loadingEvents ? (
               <div className="flex justify-center items-center py-12">
                 <svg
                   className="animate-spin h-10 w-10 text-primary"
@@ -517,24 +846,24 @@ export default function AdminPage() {
                   />
                 </svg>
               </div>
-            ) : concerts.length === 0 ? (
+            ) : events.length === 0 ? (
               <div className="bg-secondary rounded-lg p-8 text-center text-mutedText text-text-large">
                 אין אירועים במערכת. צור את האירוע הראשון שלך! �
               </div>
             ) : (
               <div className="grid gap-6">
-                {concerts.map((concert) => (
+                {events.map((event) => (
                   <div
-                    key={concert.id}
+                    key={event.id}
                     className="bg-white rounded-xl shadow-large border border-secondary overflow-hidden hover:shadow-xlarge transition-shadow"
                   >
                     <div className="flex flex-col md:flex-row">
                       {/* Image */}
                       <div className="md:w-48 h-48 bg-secondary relative flex-shrink-0">
-                        {concert.imageData && (
+                        {event.imageData && (
                           <img
-                            src={concert.imageData}
-                            alt={concert.title}
+                            src={event.imageData}
+                            alt={event.title}
                             className="w-full h-full object-cover"
                           />
                         )}
@@ -544,26 +873,44 @@ export default function AdminPage() {
                       <div className="flex-1 p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div className="text-right flex-1">
-                            <h3 className="text-heading-4-desktop font-bold text-primary mb-1">
-                              {concert.artist}
-                            </h3>
-                            {concert.category && (
+                            <div className="flex items-center gap-2 justify-end mb-1">
+                              <h3 className="text-heading-4-desktop font-bold text-primary">
+                                {event.artist}
+                              </h3>
+                              {event.ticketsCount === 0 && (
+                                <span className="inline-block px-3 py-1 bg-red-100 text-red-600 rounded-full text-text-small font-semibold">
+                                  אין כרטיסים
+                                </span>
+                              )}
+                            </div>
+                            {event.category && (
                               <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-text-small font-semibold mb-2">
-                                {concert.category}
+                                {event.category}
                               </span>
                             )}
                             <div className="flex gap-4 text-text-small text-mutedText flex-wrap justify-end mt-2">
-                              <span>📅 {concert.date}</span>
-                              <span>🕐 {concert.time}</span>
-                              <span>📍 {concert.venue}</span>
-                              <span>👁️ {concert.views || 0} צפיות</span>
+                              <span> {event.date}</span>
+                              <span> {event.time}</span>
+                              <span> {event.venue}</span>
+                              <span>👁️ {event.views || 0} צפיות</span>
+                              {event.ticketsCount !== undefined && (
+                                <span
+                                  className={
+                                    event.ticketsCount > 0
+                                      ? "text-green-600"
+                                      : "text-red-600"
+                                  }
+                                >
+                                  {event.ticketsCount} כרטיסים
+                                </span>
+                              )}
                             </div>
                           </div>
 
                           {/* Actions */}
                           <div className="flex gap-2 mr-4">
                             <button
-                              onClick={() => handleDeleteConcert(concert.id)}
+                              onClick={() => handleDeleteEvent(event.id)}
                               className="p-2 bg-secondary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
                               title="מחק אירוע"
                             >
@@ -587,14 +934,12 @@ export default function AdminPage() {
                         <div className="flex justify-end">
                           <span
                             className={`px-3 py-1 rounded-full text-text-extra-small font-semibold ${
-                              concert.status === "active"
+                              event.status === "active"
                                 ? "bg-secondary text-primary border border-primary"
                                 : "bg-weakText text-white"
                             }`}
                           >
-                            {concert.status === "active"
-                              ? "✅ פעיל"
-                              : "⏸️ לא פעיל"}
+                            {event.status === "active" ? " פעיל" : " לא פעיל"}
                           </span>
                         </div>
                       </div>

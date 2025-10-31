@@ -13,7 +13,7 @@ export default function RegenerateTicketsPage() {
   const handleRegenerate = async () => {
     if (
       !confirm(
-        "⚠️ This will DELETE ALL existing tickets and create new ones!\n\nAre you sure you want to continue?"
+        "אזהרה: פעולה זו תמחק את כל הכרטיסים הקיימים ותיצור כרטיסים חדשים!\n\nהאם אתה בטוח שברצונך להמשיך?"
       )
     ) {
       return;
@@ -52,27 +52,26 @@ export default function RegenerateTicketsPage() {
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-heading-1-desktop font-bold text-strongText mb-4">
-              🎫 Regenerate Tickets
+              יצירת כרטיסים מחדש
             </h1>
             <p className="text-body-large text-mutedText max-w-2xl mx-auto">
-              This tool will delete all existing tickets and generate new
-              realistic tickets for each concert in the database.
+              כלי זה ימחק את כל הכרטיסים הקיימים ויצור כרטיסים ריאליסטיים חדשים
+              לכל הופעה במסד הנתונים.
             </p>
           </div>
 
           {/* Warning Box */}
           <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 mb-8">
             <div className="flex items-start gap-4">
-              <span className="text-4xl">⚠️</span>
+              <span className="text-4xl">⚠</span>
               <div>
                 <h3 className="text-heading-4-desktop font-semibold text-red-800 mb-2">
-                  Warning: Destructive Action
+                  אזהרה: פעולה הרסנית
                 </h3>
                 <p className="text-body-medium text-red-700">
-                  This will{" "}
-                  <strong>permanently delete ALL existing tickets</strong> from
-                  your database and create new randomly generated ones. This
-                  action cannot be undone.
+                  פעולה זו תמחק <strong>לצמיתות את כל הכרטיסים הקיימים</strong>{" "}
+                  ממסד הנתונים ותיצור כרטיסים חדשים באופן אקראי. לא ניתן לבטל
+                  פעולה זו.
                 </p>
               </div>
             </div>
@@ -105,10 +104,10 @@ export default function RegenerateTicketsPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Regenerating Tickets...
+                  מייצר כרטיסים מחדש...
                 </span>
               ) : (
-                "🔄 Regenerate All Tickets"
+                "יצירת כרטיסים מחדש"
               )}
             </button>
           </div>
@@ -117,10 +116,10 @@ export default function RegenerateTicketsPage() {
           {error && (
             <div className="bg-red-100 border-2 border-red-300 rounded-xl p-6 mb-8">
               <div className="flex items-start gap-3">
-                <span className="text-2xl">❌</span>
+                <span className="text-2xl">✕</span>
                 <div>
                   <h3 className="text-heading-5-desktop font-semibold text-red-800 mb-2">
-                    Error
+                    שגיאה
                   </h3>
                   <p className="text-body-medium text-red-700">{error}</p>
                 </div>
@@ -132,9 +131,9 @@ export default function RegenerateTicketsPage() {
           {result && (
             <div className="bg-green-50 border-2 border-green-200 rounded-xl p-8">
               <div className="text-center mb-6">
-                <span className="text-6xl mb-4 block">✨</span>
+                <span className="text-6xl mb-4 block">✓</span>
                 <h2 className="text-heading-2-desktop font-bold text-green-800 mb-2">
-                  Tickets Regenerated Successfully!
+                  הכרטיסים נוצרו מחדש בהצלחה!
                 </h2>
               </div>
 
@@ -144,26 +143,26 @@ export default function RegenerateTicketsPage() {
                   <div className="text-heading-2-desktop font-bold text-primary mb-1">
                     {result.concerts}
                   </div>
-                  <div className="text-body-small text-mutedText">Concerts</div>
+                  <div className="text-body-small text-mutedText">הופעות</div>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center shadow-medium">
                   <div className="text-heading-2-desktop font-bold text-red-600 mb-1">
                     {result.oldTicketsDeleted}
                   </div>
-                  <div className="text-body-small text-mutedText">Deleted</div>
+                  <div className="text-body-small text-mutedText">נמחקו</div>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center shadow-medium">
                   <div className="text-heading-2-desktop font-bold text-green-600 mb-1">
                     {result.newTicketsCreated}
                   </div>
-                  <div className="text-body-small text-mutedText">Created</div>
+                  <div className="text-body-small text-mutedText">נוצרו</div>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center shadow-medium">
                   <div className="text-heading-2-desktop font-bold text-highlight mb-1">
                     {result.averagePerConcert}
                   </div>
                   <div className="text-body-small text-mutedText">
-                    Avg/Concert
+                    ממוצע להופעה
                   </div>
                 </div>
               </div>
@@ -171,7 +170,7 @@ export default function RegenerateTicketsPage() {
               {/* Concert Details */}
               <div>
                 <h3 className="text-heading-4-desktop font-semibold text-strongText mb-4">
-                  📋 Concert Breakdown
+                  פירוט הופעות
                 </h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {result.concertDetails.map((concert: any, index: number) => (
@@ -181,15 +180,15 @@ export default function RegenerateTicketsPage() {
                     >
                       <div>
                         <div className="text-body-large font-semibold text-strongText">
-                          🎤 {concert.artist}
+                          {concert.artist}
                         </div>
                         <div className="text-body-small text-mutedText">
-                          📅 {concert.date} | 📍 {concert.venue}
+                          {concert.date} | {concert.venue}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-body-medium font-semibold text-primary">
-                          {concert.ticketCount} tickets
+                          {concert.ticketCount} כרטיסים
                         </div>
                         <div className="text-body-small text-mutedText">
                           {concert.priceRange}
@@ -207,14 +206,14 @@ export default function RegenerateTicketsPage() {
                   className="bg-primary hover:bg-highlight text-white font-semibold px-6 py-3 rounded-lg 
                            transition-all duration-200 text-body-medium"
                 >
-                  🏠 View Gallery
+                  לגלריה
                 </a>
                 <a
                   href="/diagnostic"
                   className="bg-secondary hover:bg-highlight text-strongText font-semibold px-6 py-3 rounded-lg 
                            transition-all duration-200 text-body-medium"
                 >
-                  🔍 View Diagnostic
+                  לאבחון
                 </a>
               </div>
             </div>
@@ -224,39 +223,35 @@ export default function RegenerateTicketsPage() {
           {!result && !error && !loading && (
             <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
               <h3 className="text-heading-4-desktop font-semibold text-blue-800 mb-4">
-                ℹ️ What This Does
+                מה עושה הכלי הזה
               </h3>
               <ul className="space-y-2 text-body-medium text-blue-700">
                 <li className="flex items-start gap-2">
-                  <span>1️⃣</span>
-                  <span>Fetches all concerts from your database</span>
+                  <span>1.</span>
+                  <span>מביא את כל הההופעות ממסד הנתונים</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span>2️⃣</span>
-                  <span>Deletes ALL existing tickets permanently</span>
+                  <span>2.</span>
+                  <span>מוחק את כל הכרטיסים הקיימים לצמיתות</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span>3️⃣</span>
-                  <span>Generates 5-20 realistic tickets per concert</span>
+                  <span>3.</span>
+                  <span>מייצר 5-20 כרטיסים ריאליסטיים להופעה</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span>4️⃣</span>
+                  <span>4.</span>
                   <span>
-                    Creates tickets with varied sections (A, B, C, VIP, Gold,
-                    Silver)
+                    יוצר כרטיסים עם יציעים שונים (A, B, C, VIP, זהב, כסף)
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span>5️⃣</span>
-                  <span>
-                    Includes both seated tickets (with row/seat) and standing
-                    tickets
-                  </span>
+                  <span>5.</span>
+                  <span>כולל גם כרטיסים עם מקומות ישיבה וכרטיסי עמידה</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span>6️⃣</span>
+                  <span>6.</span>
                   <span>
-                    Generates realistic price ranges (₪150-₪1000) with discounts
+                    מייצר טווחי מחירים ריאליסטיים (150-1000 ש״ח) עם הנחות
                   </span>
                 </li>
               </ul>

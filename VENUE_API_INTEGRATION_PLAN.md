@@ -1,12 +1,12 @@
 # Venue API Integration Plan (POC for Investors)
 
-## 🎯 **Objective**
+##  **Objective**
 
 Replace manual admin approval with automated venue API verification to prove the concept of real-time ticket validation against official venue databases.
 
 ---
 
-## 📋 **Current Flow**
+##  **Current Flow**
 
 1. User uploads ticket → OCR extraction → Saved as `status: "pending_approval"`
 2. Admin manually reviews each ticket in `/approve-tickets`
@@ -15,7 +15,7 @@ Replace manual admin approval with automated venue API verification to prove the
 
 ---
 
-## 🚀 **New Flow (Automated Verification)**
+##  **New Flow (Automated Verification)**
 
 ### **Phase 1: Ticket Upload & Automatic Verification**
 
@@ -26,9 +26,9 @@ OCR extracts details (artist, date, venue, seat, barcode)
     ↓
 [NEW] Call Venue API to verify ticket authenticity
     ↓
-├─ ✅ Verified: status = "verified" → Publish immediately
-├─ ⚠️ Partial Match: status = "needs_review" → Admin review
-└─ ❌ Not Found: status = "rejected" → Notify seller
+  Verified: status = "verified" → Publish immediately
+  Partial Match: status = "needs_review" → Admin review
+  Not Found: status = "rejected" → Notify seller
 ```
 
 ### **Phase 2: Admin Dashboard (Updated)**
@@ -39,7 +39,7 @@ OCR extracts details (artist, date, venue, seat, barcode)
 
 ---
 
-## 🗄️ **Mock Venue Database Schema**
+##  **Mock Venue Database Schema**
 
 Using **JSONPlaceholder** style mock API or **Mocky.io** for demo purposes.
 
@@ -82,9 +82,9 @@ Using **JSONPlaceholder** style mock API or **Mocky.io** for demo purposes.
 
 ---
 
-## 🛠️ **Implementation Steps**
+##  **Implementation Steps**
 
-### **Step 1: Create Mock Venue API** ✅
+### **Step 1: Create Mock Venue API** 
 
 - **File**: `app/api/venue-verify/route.ts`
 - **Mock Data**: Store in `app/api/venue-verify/mockVenueData.ts`
@@ -94,7 +94,7 @@ Using **JSONPlaceholder** style mock API or **Mocky.io** for demo purposes.
   - Match partial details (low confidence → needs review)
   - No match (reject)
 
-### **Step 2: Update Ticket Upload Flow** 🔄
+### **Step 2: Update Ticket Upload Flow** 
 
 - **File**: `app/components/Dialogs/UploadTicketDialog/UploadTicketDialog.tsx`
 - **Changes**:
@@ -105,7 +105,7 @@ Using **JSONPlaceholder** style mock API or **Mocky.io** for demo purposes.
     - `rejected` (<60% match) → Don't save ticket
   - Store verification details: `verificationResult`, `verificationConfidence`, `verificationTimestamp`
 
-### **Step 3: Update Ticket Schema** 📊
+### **Step 3: Update Ticket Schema** 
 
 Add new fields to ticket documents:
 
@@ -125,7 +125,7 @@ Add new fields to ticket documents:
 }
 ```
 
-### **Step 4: Update Admin Approval Page** 🔧
+### **Step 4: Update Admin Approval Page** 
 
 - **File**: `app/approve-tickets/page.tsx`
 - **Changes**:
@@ -136,7 +136,7 @@ Add new fields to ticket documents:
   - Quick approve/reject with verification context
   - Add "Re-verify" button to check API again
 
-### **Step 5: Add Verification Dashboard** 📈
+### **Step 5: Add Verification Dashboard** 
 
 - **File**: `app/Admin/page.tsx` (add new section)
 - **Stats**:
@@ -146,25 +146,25 @@ Add new fields to ticket documents:
   - Rejection rate
   - Average confidence score
 
-### **Step 6: Seller Notifications** 📧
+### **Step 6: Seller Notifications** 
 
-- **Instant approval**: "כרטיס אומת ופורסם מיד! ✅"
+- **Instant approval**: "כרטיס אומת ופורסם מיד! "
 - **Needs review**: "כרטיס בבדיקה (זמן משוער: 2-4 שעות) ⏳"
-- **Rejected**: "הכרטיס לא אומת - פרטים לא תואמים למאגר האולמות ❌"
+- **Rejected**: "הכרטיס לא אומת - פרטים לא תואמים למאגר האולמות "
 
 ---
 
-## 🎨 **UI/UX Changes**
+##  **UI/UX Changes**
 
 ### **Upload Dialog Success Message**
 
 ```
-✅ הכרטיס אומת בהצלחה!
+ הכרטיס אומת בהצלחה!
 
 הכרטיס שלך אושר אוטומטית על ידי מערכת האימות של האולם
 ופורסם למכירה באתר.
 
-[אמינות: 98%] [✓ ברקוד אומת] [✓ מושב תואם]
+[אמינות: 98%] [ ברקוד אומת] [ מושב תואם]
 
 → צפייה בכרטיס שלי
 ```
@@ -172,19 +172,19 @@ Add new fields to ticket documents:
 ### **Needs Review Message**
 
 ```
-⚠️ הכרטיס נשלח לבדיקה
+ הכרטיס נשלח לבדיקה
 
 פרטי הכרטיס תואמים חלקית למאגר האולם.
 הצוות שלנו יבדוק את הכרטיס תוך 2-4 שעות.
 
-[אמינות: 75%] [✓ תאריך תואם] [⚠️ מושב לא תואם]
+[אמינות: 75%] [ תאריך תואם] [ מושב לא תואם]
 
 נעדכן אותך ב-SMS/Email
 ```
 
 ---
 
-## 🔐 **Security Considerations**
+##  **Security Considerations**
 
 1. **Rate Limiting**: Limit API calls to prevent abuse
 2. **Barcode Privacy**: Don't expose full barcode in client-side logs
@@ -193,7 +193,7 @@ Add new fields to ticket documents:
 
 ---
 
-## 📊 **Success Metrics (For Investor Demo)**
+##  **Success Metrics (For Investor Demo)**
 
 - **Automation Rate**: 80%+ tickets auto-approved
 - **Verification Speed**: <2 seconds per ticket
@@ -203,7 +203,7 @@ Add new fields to ticket documents:
 
 ---
 
-## 🚧 **Mock API Implementation Options**
+##  **Mock API Implementation Options**
 
 ### **Option 1: Local Mock (Recommended for POC)**
 
@@ -225,7 +225,7 @@ Add new fields to ticket documents:
 
 ---
 
-## 🎯 **Recommended: Option 1 (Local Mock)**
+##  **Recommended: Option 1 (Local Mock)**
 
 We'll create a sophisticated local mock that:
 
@@ -237,25 +237,25 @@ We'll create a sophisticated local mock that:
 
 ---
 
-## 📝 **Next Steps**
+##  **Next Steps**
 
-1. ✅ Review and approve this plan
-2. 🔨 Implement mock venue API endpoint
-3. 🔧 Update upload flow with verification
-4. 🎨 Update UI with verification status
-5. 📊 Add verification dashboard
-6. 🧪 Test various scenarios
-7. 🎬 Prepare investor demo script
+1.  Review and approve this plan
+2.  Implement mock venue API endpoint
+3.  Update upload flow with verification
+4.  Update UI with verification status
+5.  Add verification dashboard
+6.  Test various scenarios
+7.  Prepare investor demo script
 
 ---
 
-## 💡 **Demo Script for Investors**
+##  **Demo Script for Investors**
 
 1. **Show current pain point**: Manual approval is slow
 2. **Introduce solution**: Automated venue API verification
 3. **Live demo**:
-   - Upload ticket with matching barcode → ✅ Instant approval
-   - Upload ticket with partial match → ⚠️ Needs review (show admin)
-   - Upload fake ticket → ❌ Rejected with reason
+   - Upload ticket with matching barcode →  Instant approval
+   - Upload ticket with partial match →  Needs review (show admin)
+   - Upload fake ticket →  Rejected with reason
 4. **Show metrics**: 80% automation rate, 2sec verification time
 5. **Future roadmap**: Integration with 15+ venue APIs in Israel

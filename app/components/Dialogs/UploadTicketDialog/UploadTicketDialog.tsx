@@ -37,11 +37,16 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
   const [savedTickets, setSavedTickets] = useState<TicketData[]>([]); // Store multiple tickets
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
+  const [publishWarning, setPublishWarning] = useState<string | null>(null); // New warning state
 
   // Save current ticket and add another
-  const saveAndAddAnother = () => {
+  const saveAndAddAnother = (updatedTicketData?: TicketData) => {
+    // Use provided data or current ticketData
+    const dataToSave = updatedTicketData || ticketData;
+    console.log("saveAndAddAnother - saving ticket:", dataToSave);
     // Save current ticket to the list
-    setSavedTickets((prev) => [...prev, ticketData]);
+    setSavedTickets((prev) => [...prev, dataToSave]);
     // Reset current ticket data
     setTicketData({});
     // Go back to step 1
@@ -49,9 +54,30 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
   };
 
   // Move to step 4 (final review) with current ticket
-  const proceedToReview = () => {
+  const proceedToReview = (updatedTicketData?: TicketData) => {
+    // Use provided data or current ticketData
+    const dataToSave = updatedTicketData || ticketData;
+    console.log("===== proceedToReview CALLED =====");
+    console.log(
+      "proceedToReview - updatedTicketData received:",
+      updatedTicketData
+    );
+    console.log("proceedToReview - current ticketData state:", ticketData);
+    console.log(
+      "proceedToReview - dataToSave (will be added to savedTickets):",
+      dataToSave
+    );
+    console.log(
+      "proceedToReview - dataToSave.ticketDetails.row:",
+      dataToSave?.ticketDetails?.row
+    );
+    console.log("===================================");
     // Save current ticket to the list
-    setSavedTickets((prev) => [...prev, ticketData]);
+    setSavedTickets((prev) => {
+      const newSavedTickets = [...prev, dataToSave];
+      console.log("savedTickets after adding:", newSavedTickets);
+      return newSavedTickets;
+    });
     // Move to step 4
     setStep(4);
   };
@@ -61,7 +87,22 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     setStep((prev) => Math.min(prev + 1, 4));
   };
 
-  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
+  const prevStep = () => {
+    // If going back from step 4 to step 3, remove the last ticket from savedTickets
+    // This allows the user to edit it instead of creating a duplicate
+    if (step === 4 && savedTickets.length > 0) {
+      const lastTicket = savedTickets[savedTickets.length - 1];
+      // Remove last ticket from savedTickets
+      setSavedTickets((prev) => prev.slice(0, -1));
+      // Restore it to ticketData for editing
+      setTicketData(lastTicket);
+      // Clear any errors
+      setPublishError(null);
+      setPublishSuccess(null);
+      setPublishWarning(null);
+    }
+    setStep((prev) => Math.max(prev - 1, 1));
+  };
 
   // Function to update ticket data
   const updateTicketData = (updates: Partial<TicketData>) => {
@@ -80,6 +121,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     setSavedTickets([]);
     setIsPublishing(false);
     setPublishError(null);
+    setPublishSuccess(null);
     onClose();
   };
 
@@ -90,13 +132,13 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     if (!db) {
       console.error("Firebase not initialized:", { db });
       setPublishError("מסד הנתונים לא זמין כרגע");
-      alert("מסד הנתונים לא זמין כרגע");
       return false;
     }
 
     const firestore = db;
     setIsPublishing(true);
     setPublishError(null);
+    setPublishSuccess(null);
 
     try {
       console.log(`Starting to publish ${savedTickets.length} tickets`);
@@ -265,6 +307,105 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
               concertId || "pending"
             }`
           );
+          console.log(
+            "TICKET DATA BEING PUBLISHED:",
+            JSON.stringify(ticket, null, 2)
+          );
+          console.log("TICKET ROW:", ticket.ticketDetails?.row);
+          console.log("TICKET SECTION:", ticket.ticketDetails?.section);
+          console.log("TICKET SEAT:", ticket.ticketDetails?.seat);
+
+          // 🔍 STEP 0: Check for duplicate tickets
+          console.log(" Checking for duplicate tickets...");
+          try {
+            const duplicateCheck = await fetch("/api/check-duplicate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                barcode: ticket.ticketDetails?.barcode || "",
+                artist: ticket.ticketDetails?.artist || "",
+                venue: ticket.ticketDetails?.venue || "",
+                date: normalizedDate,
+                time: ticket.ticketDetails?.time || "",
+                seat: ticket.ticketDetails?.seat || "",
+                row: ticket.ticketDetails?.row || "",
+                section: ticket.ticketDetails?.section || "",
+              }),
+            });
+
+            const duplicateResult = await duplicateCheck.json();
+
+            if (duplicateResult.isDuplicate) {
+              console.error("🚫 Duplicate ticket detected:", duplicateResult);
+              const matchType = duplicateResult.duplicates[0]?.matchType;
+              const existingTicket = duplicateResult.duplicates[0]?.ticket;
+
+              let errorMessage = "";
+              if (matchType === "barcode") {
+                errorMessage = `⚠️ כרטיס עם ברקוד זהה כבר קיים במערכת\n\nפרטי הכרטיס הקיים במערכת:\n• אירוע: ${
+                  existingTicket.artist
+                }\n• מקום: ${existingTicket.venue}\n• תאריך: ${
+                  existingTicket.date
+                }\n• מיקום: ${
+                  existingTicket.section ? `אזור ${existingTicket.section}` : ""
+                } ${existingTicket.row ? `שורה ${existingTicket.row}` : ""} ${
+                  existingTicket.seat ? `מושב ${existingTicket.seat}` : ""
+                }\n• סטטוס: ${
+                  existingTicket.status === "available"
+                    ? "מפורסם"
+                    : existingTicket.status === "pending_approval"
+                    ? "ממתין לאישור"
+                    : "נדחה"
+                }\n\nהכרטיס שניסית להעלות:\n• מיקום: ${
+                  ticket.ticketDetails?.section
+                    ? `אזור ${ticket.ticketDetails.section}`
+                    : ""
+                } ${
+                  ticket.ticketDetails?.row
+                    ? `שורה ${ticket.ticketDetails.row}`
+                    : ""
+                } ${
+                  ticket.ticketDetails?.seat
+                    ? `מושב ${ticket.ticketDetails.seat}`
+                    : ""
+                }\n\nלא ניתן להעלות כרטיס כפול.`;
+              } else {
+                errorMessage = `⚠️ כרטיס זהה באותו מקום כבר קיים במערכת\n\nפרטי הכרטיס הקיים במערכת:\n• ${
+                  existingTicket.artist
+                }\n• ${existingTicket.venue}\n• ${existingTicket.date} בשעה ${
+                  existingTicket.time
+                }\n• מיקום: ${
+                  existingTicket.section ? `אזור ${existingTicket.section}` : ""
+                } ${existingTicket.row ? `שורה ${existingTicket.row}` : ""} ${
+                  existingTicket.seat ? `מושב ${existingTicket.seat}` : ""
+                }\n\nהכרטיס שניסית להעלות:\n• מיקום: ${
+                  ticket.ticketDetails?.section
+                    ? `אזור ${ticket.ticketDetails.section}`
+                    : ""
+                } ${
+                  ticket.ticketDetails?.row
+                    ? `שורה ${ticket.ticketDetails.row}`
+                    : ""
+                } ${
+                  ticket.ticketDetails?.seat
+                    ? `מושב ${ticket.ticketDetails.seat}`
+                    : ""
+                }\n\nלא ניתן להעלות את אותו מקום פעמיים.`;
+              }
+
+              setPublishError(errorMessage);
+              setIsPublishing(false);
+              return false;
+            }
+
+            console.log("✅ No duplicate found, proceeding with upload");
+          } catch (error) {
+            console.error("❌ Duplicate check error:", error);
+            // Continue with upload even if duplicate check fails (don't block user)
+            console.warn(
+              "⚠️ Continuing with upload despite duplicate check error"
+            );
+          }
 
           // 🔍 STEP 1: Verify ticket with venue API
           console.log("🔍 Calling venue verification API...");
@@ -347,6 +488,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             section: ticket.ticketDetails?.section || "",
             row: ticket.ticketDetails?.row || "",
             seat: ticket.ticketDetails?.seat || "",
+            barcode: ticket.ticketDetails?.barcode || null, // Store barcode for verification
             isStanding: ticket.ticketDetails?.isStanding || false,
             askingPrice: ticket.pricing?.askingPrice,
             originalPrice: ticket.ticketDetails?.originalPrice || null,
@@ -407,40 +549,66 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       );
       setIsPublishing(false);
 
-      // Build success message based on verification results
-      let successMessage = "";
+      // Clear previous messages
+      setPublishError(null);
+      setPublishSuccess(null);
+      setPublishWarning(null);
 
-      if (verifiedCount > 0) {
-        successMessage += `✅ ${verifiedCount} כרטיסים אומתו ופורסמו מיד!\n\n`;
+      // Build message based on verification results
+      // RED ERROR: If ALL tickets are rejected, show error message
+      if (rejectedCount > 0 && verifiedCount === 0 && needsReviewCount === 0) {
+        let errorMessage = `❌ ${rejectedCount} כרטיסים נדחו\n\n`;
+        errorMessage += `הכרטיסים לא תואמים למאגר האולמות.\n`;
+        errorMessage += `אנא בדוק את הפרטים ונסה שוב.\n`;
+        errorMessage += `ניתן לראות את הסיבות בעמוד "הכרטיסים שלי".\n\n`;
+        setPublishError(errorMessage.trim());
+        setIsPublishing(false);
+        return false;
+      }
+
+      // GREEN SUCCESS: Only verified tickets (auto-approved)
+      if (verifiedCount > 0 && needsReviewCount === 0 && rejectedCount === 0) {
+        let successMessage = `✅ ${verifiedCount} כרטיסים אומתו ופורסמו!\n\n`;
         successMessage += `הכרטיסים אושרו אוטומטית על ידי מערכת האימות של האולם\n`;
         successMessage += `והם כעת זמינים למכירה באתר.\n\n`;
+        setPublishSuccess(successMessage.trim());
+        setIsPublishing(false);
+        return true;
       }
 
-      if (needsReviewCount > 0) {
-        successMessage += `⏳ ${needsReviewCount} כרטיסים בבדיקה\n\n`;
-        successMessage += `פרטי הכרטיסים תואמים חלקית למאגר האולם.\n`;
-        successMessage += `הצוות שלנו יבדוק את הכרטיסים תוך 2-4 שעות.\n`;
-        successMessage += `תוכל לעקוב אחרי הסטטוס בעמוד "הכרטיסים שלי".\n\n`;
+      // ORANGE WARNING: Has needs_review tickets (or mixed results)
+      if (needsReviewCount > 0 || rejectedCount > 0) {
+        let warningMessage = "";
+
+        if (verifiedCount > 0) {
+          warningMessage += ` ${verifiedCount} כרטיסים אומתו בהצלחה ופורסמו \n\n`;
+        }
+
+        if (needsReviewCount > 0) {
+          warningMessage += ` ${needsReviewCount} כרטיסים ממתינים לאישור\n\n`;
+          warningMessage += `הכרטיסים לא תואמים במלואם למאגר האולם.\n`;
+          warningMessage += `הצוות שלנו יבדוק את הכרטיסים תוך 2-4 שעות.\n`;
+          warningMessage += `תוכל לעקוב אחרי הסטטוס בעמוד "הכרטיסים שלי".\n\n`;
+        }
+
+        if (rejectedCount > 0) {
+          warningMessage += ` ${rejectedCount} כרטיסים נדחו\n\n`;
+          warningMessage += `חלק מהכרטיסים לא תואמים למאגר האולמות.\n`;
+          warningMessage += `ניתן לראות את הסיבות בעמוד "הכרטיסים שלי".\n\n`;
+        }
+
+        setPublishWarning(warningMessage.trim());
+        setIsPublishing(false);
+        return true;
       }
 
-      if (rejectedCount > 0) {
-        successMessage += `❌ ${rejectedCount} כרטיסים נדחו\n\n`;
-        successMessage += `הכרטיסים לא תואמים למאגר האולמות.\n`;
-        successMessage += `אנא בדוק את הפרטים ונסה שוב.\n`;
-        successMessage += `ניתן לראות את הסיבות בעמוד "הכרטיסים שלי".\n\n`;
-      }
-
-      alert(successMessage.trim());
-      handleClose();
+      // Default success (shouldn't reach here, but just in case)
+      setPublishSuccess("הכרטיסים פורסמו בהצלחה!");
+      setIsPublishing(false);
       return true;
     } catch (error) {
       console.error("Error publishing tickets:", error);
       setPublishError(
-        `שגיאה בפרסום הכרטיסים: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-      alert(
         `שגיאה בפרסום הכרטיסים: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
@@ -505,6 +673,10 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           savedTickets={savedTickets}
           publishAllTickets={publishAllTickets}
           isPublishing={isPublishing}
+          publishError={publishError}
+          publishSuccess={publishSuccess}
+          publishWarning={publishWarning}
+          handleClose={handleClose}
           prevStep={prevStep}
         />
       ),

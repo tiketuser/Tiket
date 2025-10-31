@@ -1,19 +1,19 @@
-# 🎭 Concert vs Ticket Display - Complete Guide
+#  Concert vs Ticket Display - Complete Guide
 
-## 🎯 Current Issue
+##  Current Issue
 
 The Gallery is showing **ticket images** (like the screenshot with "Omer Adam" ticket) instead of **concert posters**.
 
-## 🔍 Why This Happens
+##  Why This Happens
 
 Your database currently has:
 
-- ❌ **No concerts** in the `concerts` collection
-- ✅ **Only tickets** in the `tickets` collection
+-  **No concerts** in the `concerts` collection
+-  **Only tickets** in the `tickets` collection
 
 The Gallery component is now properly coded to fetch concerts, but if there are no concerts in the database, nothing will display (or it falls back to old ticket data).
 
-## ✅ Solution: Create Concerts
+##  Solution: Create Concerts
 
 You have **3 options** to populate concerts:
 
@@ -85,7 +85,7 @@ Before doing anything, check what's in your database.
 
 ---
 
-## 📊 How It Should Work
+##  How It Should Work
 
 ### Gallery (Homepage)
 
@@ -113,9 +113,9 @@ Shows: CONCERT DETAILS + TICKETS
 
 ---
 
-## 🎨 Visual Difference
+##  Visual Difference
 
-### ❌ Wrong (What you see now):
+###  Wrong (What you see now):
 
 ```
 [Ticket Scan Image]
@@ -127,7 +127,7 @@ Omer Adam
 
 _(Shows a scanned ticket document)_
 
-### ✅ Correct (What you should see):
+###  Correct (What you should see):
 
 ```
 [Concert Poster Image]
@@ -142,20 +142,20 @@ _(Shows a professional concert poster)_
 
 ---
 
-## 🔧 Technical Flow
+##  Technical Flow
 
 ### Current Architecture:
 
 ```
 concerts/
-  ├── concert1 (artist: "עומר אדם", imageData: poster, date: "25/12/2025")
-  └── concert2 (artist: "שלומי שבת", imageData: poster, date: "30/12/2025")
+   concert1 (artist: "עומר אדם", imageData: poster, date: "25/12/2025")
+   concert2 (artist: "שלומי שבת", imageData: poster, date: "30/12/2025")
 
 tickets/
-  ├── ticket1 (concertId: concert1, section: "A", price: 150)
-  ├── ticket2 (concertId: concert1, section: "B", price: 200)
-  ├── ticket3 (concertId: concert1, section: "VIP", price: 300)
-  └── ticket4 (concertId: concert2, section: "A", price: 180)
+   ticket1 (concertId: concert1, section: "A", price: 150)
+   ticket2 (concertId: concert1, section: "B", price: 200)
+   ticket3 (concertId: concert1, section: "VIP", price: 300)
+   ticket4 (concertId: concert2, section: "A", price: 180)
 ```
 
 ### Gallery Component:
@@ -178,7 +178,7 @@ tickets/
 
 ---
 
-## 📝 Step-by-Step Instructions
+##  Step-by-Step Instructions
 
 ### If you have existing ticket data:
 
@@ -227,7 +227,7 @@ tickets/
 
 ---
 
-## 🚨 Troubleshooting
+##  Troubleshooting
 
 ### "Gallery is empty"
 
@@ -251,7 +251,7 @@ tickets/
 
 ---
 
-## ✅ Quick Actions
+##  Quick Actions
 
 | Action         | URL                   | Purpose                    |
 | -------------- | --------------------- | -------------------------- |
@@ -263,22 +263,22 @@ tickets/
 
 ---
 
-## 🎯 Expected Result
+##  Expected Result
 
 After following the steps above, your Gallery will display:
 
-✅ Concert posters (professional images)
-✅ Artist names
-✅ Date/time/venue
-✅ Ticket availability count
-✅ Price ranges
-✅ "Sold out" badges when applicable
+ Concert posters (professional images)
+ Artist names
+ Date/time/venue
+ Ticket availability count
+ Price ranges
+ "Sold out" badges when applicable
 
 And clicking a concert takes you to EventPage where you'll see individual tickets with the SingleCard component.
 
 ---
 
-## 📞 Need Help?
+##  Need Help?
 
 1. Visit `/diagnostic` to see current database state
 2. Check console for any error messages
@@ -287,6 +287,6 @@ And clicking a concert takes you to EventPage where you'll see individual ticket
 
 ---
 
-## 🎉 Final Notes
+##  Final Notes
 
 The Gallery component is **correctly implemented** to show concerts. You just need to populate the `concerts` collection in Firestore. Once you do that (via migration or manual creation), the gallery will automatically display concert posters instead of ticket scans.

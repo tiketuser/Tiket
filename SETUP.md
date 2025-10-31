@@ -1,4 +1,4 @@
-# 🚀 Quick Setup for Other PC
+#  Quick Setup for Other PC
 
 ## Option 1: Run Setup Script (Easiest)
 
@@ -62,6 +62,6 @@ firebase use tiket-9268c
 npm run dev
 ```
 
-## ⚠️ Security Note
+##  Security Note
 
 These setup scripts contain sensitive credentials. Keep them secure and never commit them to public repositories!

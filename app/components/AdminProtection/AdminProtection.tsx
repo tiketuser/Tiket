@@ -13,10 +13,16 @@ export default function AdminProtection({ children }: AdminProtectionProps) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // List of admin emails
+  const ADMIN_EMAILS = [
+    "tiketbizzz@gmail.com",
+    "admin@tiket.com", // Admin user
+  ];
+
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.email === "tiketbizzz@gmail.com") {
+      if (user && ADMIN_EMAILS.includes(user.email || "")) {
         setIsAdmin(true);
         setIsLoading(false);
       } else {
@@ -35,7 +41,7 @@ export default function AdminProtection({ children }: AdminProtectionProps) {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-heading-2-desktop font-bold text-primary mb-4">
-            🔒 מאמת הרשאות...
+             מאמת הרשאות...
           </div>
           <div className="text-body-medium text-mutedText">אנא המתן</div>
         </div>
@@ -48,7 +54,7 @@ export default function AdminProtection({ children }: AdminProtectionProps) {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-heading-1-desktop font-bold text-red-600 mb-4">
-            ⛔ גישה נדחתה
+             גישה נדחתה
           </div>
           <div className="text-body-large text-mutedText mb-6">
             אין לך הרשאות לצפות בעמוד זה

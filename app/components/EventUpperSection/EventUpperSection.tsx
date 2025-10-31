@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import TicketIcon from "../../../public/images/Event Page/Web/Ticket.svg";
 import ClockIcon from "../../../public/images/Event Page/Web/Clock.svg";
@@ -23,47 +23,54 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
   availableTickets,
 }) => {
   // Parse date string (format: "dd/mm/yyyy" or "dd.mm.yyyy") to Hebrew format
-  const formatDateHebrew = (dateString: string): string => {
-    if (!dateString) return "";
+  const formatDateHebrew = useMemo(() => {
+    return (dateString: string): string => {
+      if (!dateString) return "";
 
-    try {
-      // Normalize date separator to /
-      const normalizedDate = dateString.replace(/\./g, "/");
-      const [day, month, year] = normalizedDate.split("/").map(Number);
-      const dateObj = new Date(year, month - 1, day);
+      try {
+        // Normalize date separator to /
+        const normalizedDate = dateString.replace(/\./g, "/");
+        const [day, month, year] = normalizedDate.split("/").map(Number);
+        const dateObj = new Date(year, month - 1, day);
 
-      const hebrewDays = [
-        "ראשון",
-        "שני",
-        "שלישי",
-        "רביעי",
-        "חמישי",
-        "שישי",
-        "שבת",
-      ];
-      const hebrewMonths = [
-        "ינואר",
-        "פברואר",
-        "מרץ",
-        "אפריל",
-        "מאי",
-        "יוני",
-        "יולי",
-        "אוגוסט",
-        "ספטמבר",
-        "אוקטובר",
-        "נובמבר",
-        "דצמבר",
-      ];
+        const hebrewDays = [
+          "ראשון",
+          "שני",
+          "שלישי",
+          "רביעי",
+          "חמישי",
+          "שישי",
+          "שבת",
+        ];
+        const hebrewMonths = [
+          "ינואר",
+          "פברואר",
+          "מרץ",
+          "אפריל",
+          "מאי",
+          "יוני",
+          "יולי",
+          "אוגוסט",
+          "ספטמבר",
+          "אוקטובר",
+          "נובמבר",
+          "דצמבר",
+        ];
 
-      const dayOfWeek = hebrewDays[dateObj.getDay()];
-      const monthName = hebrewMonths[month - 1];
+        const dayOfWeek = hebrewDays[dateObj.getDay()];
+        const monthName = hebrewMonths[month - 1];
 
-      return `${dayOfWeek}, ${day} ב${monthName} ${year}`;
-    } catch (error) {
-      return dateString;
-    }
-  };
+        return `${dayOfWeek}, ${day} ב${monthName} ${year}`;
+      } catch (error) {
+        return dateString;
+      }
+    };
+  }, []);
+
+  const formattedDate = useMemo(
+    () => formatDateHebrew(date),
+    [date, formatDateHebrew]
+  );
 
   return (
     <div className="flex w-full sm:h-[346px] xs:h-[280px] h-[240px] lg:pl-72 lg:pr-72 md:pt-4 md:pb-4 md:pr-24 md:pl-24 sm:pr-4 sm:pl-4 xs:pt-4 pb-4 pr-4 pl-4 shadow-small-inner">
@@ -76,7 +83,7 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
         <div className="sm:w-[382px] xs:w-[183px] w-[160px] h-[3px] relative top-[-15px] xs:top-0 bg-mutedText"></div>
         {/* Date and Location */}
         <div className="flex flex-col sm:text-heading-5-desktop xs:text-heading-5-mobile text-heading-6-mobile font-bold leading-[27px] xs:leading-[33px] text-strongText">
-          <span>{formatDateHebrew(date)}</span>
+          <span>{formattedDate}</span>
           <span>{location}</span>
         </div>
 
@@ -102,6 +109,8 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
           width={310}
           height={264}
           className="md:w-[270px] md:h-[224px] sm:w-[210px] sm:h-[164px] xs:w-[164px] xs:h-[132px] w-[124px] h-[92px] xs:mt-16 mt-8"
+          priority
+          loading="eager"
         />
       </div>
     </div>

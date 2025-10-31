@@ -19,7 +19,7 @@ interface CardData {
   timeLeft: string;
 }
 
-interface Concert {
+interface Event {
   id: string;
   artist: string;
   title: string;
@@ -34,7 +34,7 @@ interface Concert {
 
 interface Ticket {
   id: string;
-  concertId: string;
+  concertId: string; // References concerts collection in Firebase
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -71,12 +71,12 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
     );
   }
 
-  // Fetch all concerts
-  const concertsSnapshot = await getDocs(collection(db, "concerts"));
-  const concerts: Concert[] = concertsSnapshot.docs.map((doc) => ({
+  // Fetch all events (concerts collection)
+  const eventsSnapshot = await getDocs(collection(db, "concerts"));
+  const events: Event[] = eventsSnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  })) as Concert[];
+  })) as Event[];
 
   // Fetch all available tickets
   const ticketsSnapshot = await getDocs(collection(db, "tickets"));
@@ -85,60 +85,62 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
     ...doc.data(),
   })) as Ticket[];
 
-  // Filter concerts that match the search query
-  const matchingConcerts = concerts.filter(
-    (concert) =>
-      concert &&
-      concert.status === "active" &&
-      concert.artist &&
-      concert.imageData &&
-      concert.artist.toLowerCase().includes(query.toLowerCase())
+  // Filter events that match the search query
+  const matchingEvents = events.filter(
+    (event) =>
+      event &&
+      event.status === "active" &&
+      event.artist &&
+      event.imageData &&
+      event.artist.toLowerCase().includes(query.toLowerCase())
   );
 
-  // Map concerts to card data with ticket information
-  const concertCards: CardData[] = matchingConcerts.map((concert) => {
-    // Get available tickets for this concert
-    const concertTickets = allTickets.filter(
-      (ticket) =>
-        ticket.concertId === concert.id && ticket.status === "available"
-    );
+  // Map events to card data with ticket information
+  const eventCards: CardData[] = matchingEvents
+    .map((event) => {
+      // Get available tickets for this event
+      const eventTickets = allTickets.filter(
+        (ticket) =>
+          ticket.concertId === event.id && ticket.status === "available"
+      );
 
-    // Calculate price range
-    const prices = concertTickets
-      .map((t) => t.askingPrice)
-      .filter((p) => p && !isNaN(p));
-    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+      // Calculate price range
+      const prices = eventTickets
+        .map((t) => t.askingPrice)
+        .filter((p) => p && !isNaN(p));
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
-    // Calculate average original price
-    const originalPrices = concertTickets
-      .map((t) => t.originalPrice || t.askingPrice)
-      .filter((p) => p && !isNaN(p));
-    const avgOriginalPrice =
-      originalPrices.length > 0
-        ? originalPrices.reduce((a, b) => a + b, 0) / originalPrices.length
-        : minPrice;
+      // Calculate average original price
+      const originalPrices = eventTickets
+        .map((t) => t.originalPrice || t.askingPrice)
+        .filter((p) => p && !isNaN(p));
+      const avgOriginalPrice =
+        originalPrices.length > 0
+          ? originalPrices.reduce((a, b) => a + b, 0) / originalPrices.length
+          : minPrice;
 
-    // Calculate time until event
-    const timeLeft = calculateTimeLeft(concert.date, concert.time);
+      // Calculate time until event
+      const timeLeft = calculateTimeLeft(event.date, event.time);
 
-    return {
-      id: concert.id,
-      title: concert.artist,
-      imageSrc: concert.imageData,
-      date: concert.date,
-      location: concert.venue,
-      priceBefore: Math.round(avgOriginalPrice),
-      price: minPrice === maxPrice ? minPrice : minPrice,
-      soldOut: concertTickets.length === 0,
-      ticketsLeft: concertTickets.length,
-      timeLeft: timeLeft,
-    };
-  });
+      return {
+        id: event.id,
+        title: event.artist,
+        imageSrc: event.imageData,
+        date: event.date,
+        location: event.venue,
+        priceBefore: Math.round(avgOriginalPrice),
+        price: minPrice === maxPrice ? minPrice : minPrice,
+        soldOut: eventTickets.length === 0,
+        ticketsLeft: eventTickets.length,
+        timeLeft: timeLeft,
+      };
+    })
+    .filter((event) => !event.soldOut); // Hide sold-out events from search results
 
   // Get all artist names for suggestions
   const artistNames = Array.from(
-    new Set(concerts.map((concert) => concert.artist).filter(Boolean))
+    new Set(events.map((event) => event.artist).filter(Boolean))
   );
 
   return (
@@ -146,7 +148,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
       <NavBar />
       <SearchResultsWrapper
         query={query}
-        tickets={concertCards}
+        tickets={eventCards}
         artistNames={artistNames}
       />
     </div>

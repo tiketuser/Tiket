@@ -4,11 +4,11 @@ import Footer from "../../components/Footer/Footer";
 import EventUpperSection from "../../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../../components/SeatingMap/SeatingMap";
 import { db } from "../../../firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
 
 // Enable dynamic rendering with revalidation
 export const dynamic = "force-dynamic";
-export const revalidate = 60; // Revalidate every 60 seconds
+export const revalidate = 30; // Revalidate every 30 seconds for faster cache
 
 interface Concert {
   id: string;
@@ -60,9 +60,23 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     const concertsQuery = query(
       concertsRef,
       where("artist", "==", decodedTitle),
-      where("status", "==", "active")
+      where("status", "==", "active"),
+      limit(1) // Only get one concert to save bandwidth
     );
-    const concertsSnapshot = await getDocs(concertsQuery);
+
+    // Step 2: Fetch tickets in parallel for better performance
+    const ticketsRef = collection(db, "tickets");
+    const ticketsQuery = query(
+      ticketsRef,
+      where("artist", "==", decodedTitle),
+      where("status", "==", "available")
+    );
+
+    // Execute both queries in parallel
+    const [concertsSnapshot, ticketsSnapshot] = await Promise.all([
+      getDocs(concertsQuery),
+      getDocs(ticketsQuery),
+    ]);
 
     // Get the first matching concert
     const concert =
@@ -86,19 +100,13 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       );
     }
 
-    // Step 2: Fetch tickets for this concert using query
-    const ticketsRef = collection(db, "tickets");
-    const ticketsQuery = query(
-      ticketsRef,
-      where("concertId", "==", concert.id),
-      where("status", "==", "available")
-    );
-    const ticketsSnapshot = await getDocs(ticketsQuery);
-
-    const tickets: Ticket[] = ticketsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Ticket, "id">),
-    }));
+    // Filter tickets that match the concert ID (since we queried by artist)
+    const tickets: Ticket[] = ticketsSnapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Ticket, "id">),
+      }))
+      .filter((ticket) => ticket.concertId === concert.id);
 
     // If no tickets found
     if (tickets.length === 0) {
@@ -134,10 +142,12 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
         />
         <div className="flex flex-col items-center justify-center sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 pt-8 pr-4 pb-8 pl-4 gap-4 shadow-small-inner">
           {tickets.map((ticket) => {
-            // Format seat location
+            // Format seat location more efficiently
             const seatLocation = ticket.isStanding
               ? `עמידה - ${ticket.section}`
-              : `מושב ${ticket.section}${ticket.row}-${ticket.seat}`;
+              : `מושב ${ticket.section}${ticket.row ? `-${ticket.row}` : ""}${
+                  ticket.seat ? `-${ticket.seat}` : ""
+                }`;
 
             return (
               <div key={ticket.id} className="flex items-center justify-center">
@@ -160,13 +170,11 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
             );
           })}
         </div>
-        <div>
-          <SeatingMap
-            title={"מפת ישיבה"}
-            venueName={concert.venue}
-            SeatingMapsvg="/images/Event Page/Web/Seats.svg"
-          />
-        </div>
+        <SeatingMap
+          title={"מפת ישיבה"}
+          venueName={concert.venue}
+          SeatingMapsvg="/images/Event Page/Web/Seats.svg"
+        />
         <Footer />
       </div>
     );
@@ -191,16 +199,20 @@ export async function generateStaticParams() {
       return [];
     }
 
-    // Get all concerts
-    const concertsSnapshot = await getDocs(collection(db, "concerts"));
+    // Get only active concerts and limit to reduce initial load
+    const concertsQuery = query(
+      collection(db, "concerts"),
+      where("status", "==", "active"),
+      limit(50) // Limit for faster initial build
+    );
+    const concertsSnapshot = await getDocs(concertsQuery);
+
+    // Extract unique artists more efficiently
     const artists = Array.from(
       new Set(
         concertsSnapshot.docs
           .map((doc) => doc.data().artist)
-          .filter(
-            (artist): artist is string =>
-              typeof artist === "string" && artist.trim() !== ""
-          )
+          .filter((artist): artist is string => Boolean(artist?.trim()))
       )
     );
 

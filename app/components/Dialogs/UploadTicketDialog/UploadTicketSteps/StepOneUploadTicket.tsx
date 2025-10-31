@@ -81,7 +81,21 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
       });
 
       if (!response.ok) {
-        throw new Error(`OCR failed: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error || `OCR failed: ${response.status}`;
+
+        // Show user-friendly error for Gemini API issues
+        if (
+          errorMessage.includes("temporarily unavailable") ||
+          errorMessage.includes("503")
+        ) {
+          throw new Error(
+            "שירות העיבוד זמנית לא זמין. אנא נסה שוב בעוד כמה שניות."
+          );
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -99,6 +113,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
           row: data.seatInfo?.row || "",
           section: data.seatInfo?.section || "",
           price: data.price || null,
+          barcode: data.barcode || null, // Add barcode to ticket details
         },
         isProcessing: false,
       });
@@ -107,9 +122,10 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 
       setUploadStatus("עיבוד הושלם בהצלחה ✓");
       setTimeout(() => nextStep?.(), 700);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
-      setUploadStatus("שגיאה בעיבוד - נסה שוב או מלא ידנית");
+      const errorMessage = error.message || "שגיאה בעיבוד";
+      setUploadStatus(`${errorMessage} - נסה שוב או מלא ידנית`);
       updateTicketData({ isProcessing: false });
     }
   };

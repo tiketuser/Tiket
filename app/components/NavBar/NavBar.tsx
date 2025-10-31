@@ -36,7 +36,8 @@ const NavBar = () => {
   const router = useRouter();
 
   // Check if user is admin
-  const isAdmin = user?.email === "tiketbizzz@gmail.com";
+  const isAdmin =
+    user?.email === "tiketbizzz@gmail.com" || user?.email === "admin@tiket.com";
 
   useEffect(() => {
     if (!hasValidConfig) {
@@ -176,7 +177,22 @@ const NavBar = () => {
                   </div>
                   <Link href="/Admin">
                     <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
-                      יצירת קונצרטים
+                      יצירת אירועים
+                    </div>
+                  </Link>
+                  <Link href="/update-images">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      עריכת אירועים
+                    </div>
+                  </Link>
+                  <Link href="/manage-categories">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      ניהול קטגוריות
+                    </div>
+                  </Link>
+                  <Link href="/manage-themes">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      צבע קטגוריות
                     </div>
                   </Link>
                   <Link href="/approve-tickets">
@@ -189,26 +205,18 @@ const NavBar = () => {
                       יצירת כרטיסים
                     </div>
                   </Link>
-                  <Link href="/update-images">
-                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
-                      עריכת אירועים
-                    </div>
-                  </Link>
-                  <Link href="/fix-dates">
+
+                  {/* <Link href="/fix-dates">
                     <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
                       תיקון תאריכים
                     </div>
-                  </Link>
+                  </Link> */}
                   <Link href="/manage-artists">
                     <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
                       ניהול אמנים
                     </div>
                   </Link>
-                  <Link href="/manage-categories">
-                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
-                      ניהול קטגוריות
-                    </div>
-                  </Link>
+
                   <Link href="/diagnostic">
                     <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer border-t border-purple-200">
                       אבחון מערכת

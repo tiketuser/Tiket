@@ -13,10 +13,13 @@ import TiketFilters from "../components/TiketFilters/TiketFilters";
 import ResponsiveGallery from "../components/TicketGallery/ResponsiveGallery";
 import { DateRange } from "react-day-picker";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
+import CategoryFilter from "../components/CategoryFilter/CategoryFilter";
+import { applyTheme, loadThemesFromFirebase } from "../theme/categoryThemes";
 
 interface CardData {
   id: string;
   title: string;
+  category?: string;
   imageSrc: string;
   date: string;
   location: string;
@@ -34,10 +37,11 @@ interface FilterState {
   priceRange: number[];
 }
 
-interface Concert {
+interface Event {
   id: string;
   artist: string;
   title: string;
+  category?: string;
   date: string;
   time: string;
   venue: string;
@@ -49,7 +53,7 @@ interface Concert {
 
 interface Ticket {
   id: string;
-  concertId: string;
+  concertId: string; // References concerts collection in Firebase
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -63,6 +67,7 @@ const ViewMore = () => {
   const [lastMinuteDeals, setLastMinuteDeals] = useState<CardData[]>([]);
   const [recommendations, setRecommendations] = useState<CardData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterState>({
     cities: [],
     venues: [],
@@ -74,30 +79,47 @@ const ViewMore = () => {
     // Login dialog functionality
   };
 
-  // Apply filters to concerts
+  // Initialize default theme on mount
+  useEffect(() => {
+    const initializeThemes = async () => {
+      await loadThemesFromFirebase(); // Load custom themes from Firebase
+      applyTheme(null); // Apply default theme (music) with loaded themes
+    };
+    initializeThemes();
+  }, []);
+
+  // Apply filters to events
   const applyFilters = (
-    concerts: CardData[],
-    filters: FilterState
+    events: CardData[],
+    filters: FilterState,
+    category: string | null
   ): CardData[] => {
-    return concerts.filter((concert) => {
+    return events.filter((event) => {
+      // Filter by category
+      if (category !== null) {
+        if (event.category !== category) {
+          return false;
+        }
+      }
+
       // Filter by cities
       if (filters.cities.length > 0) {
-        if (!filters.cities.includes(concert.location)) {
+        if (!filters.cities.includes(event.location)) {
           return false;
         }
       }
 
       // Filter by venues
       if (filters.venues.length > 0) {
-        if (!filters.venues.includes(concert.location)) {
+        if (!filters.venues.includes(event.location)) {
           return false;
         }
       }
 
       // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
-        const normalizedDate = concert.date.replace(/\./g, "/");
-        const concertDate = new Date(
+        const normalizedDate = event.date.replace(/\./g, "/");
+        const eventDate = new Date(
           normalizedDate.split("/").reverse().join("-")
         );
         const fromDate = new Date(filters.dateRange.from);
@@ -105,15 +127,15 @@ const ViewMore = () => {
         const toDate = new Date(filters.dateRange.to);
         toDate.setHours(23, 59, 59, 999);
 
-        if (concertDate < fromDate || concertDate > toDate) {
+        if (eventDate < fromDate || eventDate > toDate) {
           return false;
         }
       }
 
       // Filter by price range
       if (
-        concert.price < filters.priceRange[0] ||
-        concert.price > filters.priceRange[1]
+        event.price < filters.priceRange[0] ||
+        event.price > filters.priceRange[1]
       ) {
         return false;
       }
@@ -125,9 +147,15 @@ const ViewMore = () => {
   // Handle filter changes from TiketFilters component
   const handleFilterChange = (filters: FilterState) => {
     setActiveFilters(filters);
-    const filtered = applyFilters(cardsData, filters);
+    const filtered = applyFilters(cardsData, filters, selectedCategory);
     setFilteredCards(filtered);
   };
+
+  // Apply category filter whenever category or cardsData changes
+  useEffect(() => {
+    const filtered = applyFilters(cardsData, activeFilters, selectedCategory);
+    setFilteredCards(filtered);
+  }, [selectedCategory, cardsData]);
 
   // Fetch concerts with tickets from Firestore
   useEffect(() => {
@@ -141,14 +169,12 @@ const ViewMore = () => {
           return;
         }
 
-        // Fetch all concerts
-        const concertsSnapshot = await getDocs(
-          collection(db as any, "concerts")
-        );
-        const concerts: Concert[] = concertsSnapshot.docs.map((doc) => ({
+        // Fetch all events (concerts collection)
+        const eventsSnapshot = await getDocs(collection(db as any, "concerts"));
+        const events: Event[] = eventsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as Concert[];
+        })) as Event[];
 
         // Fetch all available tickets
         const ticketsSnapshot = await getDocs(collection(db as any, "tickets"));
@@ -157,31 +183,31 @@ const ViewMore = () => {
           ...doc.data(),
         })) as Ticket[];
 
-        // Map concerts to card data with ticket information
-        const concertCards: CardData[] = concerts
+        // Map events to card data with ticket information
+        const eventCards: CardData[] = events
           .filter(
-            (concert) =>
-              concert &&
-              concert.status === "active" &&
-              concert.artist &&
-              concert.imageData
+            (event) =>
+              event &&
+              event.status === "active" &&
+              event.artist &&
+              event.imageData
           )
-          .map((concert) => {
-            // Get available tickets for this concert
-            const concertTickets = allTickets.filter(
+          .map((event) => {
+            // Get available tickets for this event
+            const eventTickets = allTickets.filter(
               (ticket) =>
-                ticket.concertId === concert.id && ticket.status === "available"
+                ticket.concertId === event.id && ticket.status === "available"
             );
 
             // Calculate price range
-            const prices = concertTickets
+            const prices = eventTickets
               .map((t) => t.askingPrice)
               .filter((p) => p && !isNaN(p));
             const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
             const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
             // Calculate average original price
-            const originalPrices = concertTickets
+            const originalPrices = eventTickets
               .map((t) => t.originalPrice || t.askingPrice)
               .filter((p) => p && !isNaN(p));
             const avgOriginalPrice =
@@ -191,41 +217,43 @@ const ViewMore = () => {
                 : minPrice;
 
             // Calculate time until event
-            const timeLeft = calculateTimeLeft(concert.date, concert.time);
+            const timeLeft = calculateTimeLeft(event.date, event.time);
 
-            const cardData = {
-              id: concert.id,
-              title: concert.artist,
-              imageSrc: concert.imageData,
-              date: concert.date,
-              location: concert.venue,
+            const cardData: CardData = {
+              id: event.id,
+              title: event.artist || event.title,
+              category: event.category,
+              imageSrc: event.imageData,
+              date: event.date,
+              location: event.venue,
               priceBefore: Math.round(avgOriginalPrice),
               price: minPrice === maxPrice ? minPrice : minPrice,
-              soldOut: concertTickets.length === 0,
-              ticketsLeft: concertTickets.length,
+              soldOut: eventTickets.length === 0,
+              ticketsLeft: eventTickets.length,
               timeLeft: timeLeft,
             };
 
-            return { ...cardData, categories: concert.categories };
-          });
+            return { ...cardData, categories: event.categories };
+          })
+          .filter((event) => !event.soldOut); // Hide sold-out events from public view
 
-        setCardsData(concertCards);
-        setFilteredCards(concertCards);
+        setCardsData(eventCards);
+        setFilteredCards(eventCards);
 
         // Filter by categories
         setRecentlyViewed(
-          concertCards.filter((card: any) =>
+          eventCards.filter((card: any) =>
             card.categories?.includes("recently-viewed")
           )
         );
 
-        // Last minute deals: concerts within 2 days from now
+        // Last minute deals: events within 2 days from now
         const now = new Date();
         const twoDaysFromNow = new Date(now);
         twoDaysFromNow.setDate(now.getDate() + 2);
         twoDaysFromNow.setHours(23, 59, 59, 999);
 
-        const lastMinute = concertCards.filter((card) => {
+        const lastMinute = eventCards.filter((card) => {
           try {
             const normalizedDate = card.date.replace(/\./g, "/");
             const [day, month, year] = normalizedDate.split("/").map(Number);
@@ -244,14 +272,14 @@ const ViewMore = () => {
         setLastMinuteDeals(lastMinute);
 
         setRecommendations(
-          concertCards.filter((card: any) =>
+          eventCards.filter((card: any) =>
             card.categories?.includes("recommendations")
           )
         );
 
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching concerts:", error);
+        console.error("Error fetching events:", error);
         setLoading(false);
       }
     };
@@ -268,6 +296,7 @@ const ViewMore = () => {
 
   // Check if any filters are active
   const hasActiveFilters =
+    selectedCategory !== null ||
     activeFilters.cities.length > 0 ||
     activeFilters.venues.length > 0 ||
     activeFilters.dateRange !== undefined ||
@@ -281,6 +310,14 @@ const ViewMore = () => {
     <div dir="rtl">
       <NavBar />
       <div className="pt-14 pb-14 pr-6 pl-6 shadow-small-inner">
+        {/* Category Filter */}
+        <div className="flex justify-center mb-8">
+          <CategoryFilter
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+        </div>
+
         <div className="flex justify-center">
           <CustomSearchInput
             id="search-bar"
@@ -314,7 +351,7 @@ const ViewMore = () => {
 
         {!loading && db && cardsData.length === 0 && (
           <div className="text-center text-lg text-gray-500 py-8">
-            אין קונצרטים זמינים כרגע
+            אין אירועים זמינים כרגע
           </div>
         )}
 

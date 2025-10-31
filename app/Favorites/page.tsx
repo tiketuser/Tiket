@@ -31,7 +31,7 @@ interface CardData {
   timeLeft: string;
 }
 
-interface Concert {
+interface Event {
   id: string;
   artist: string;
   title: string;
@@ -44,7 +44,7 @@ interface Concert {
 
 interface Ticket {
   id: string;
-  concertId: string;
+  concertId: string; // References concerts collection in Firebase
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -104,74 +104,76 @@ const Favorites = () => {
           return;
         }
 
-        // Fetch all concerts and tickets
-        const [concertsSnapshot, ticketsSnapshot] = await Promise.all([
+        // Fetch all events and tickets (concerts collection)
+        const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
           getDocs(collection(db as any, "concerts")),
           getDocs(collection(db as any, "tickets")),
         ]);
 
-        const concerts: Concert[] = concertsSnapshot.docs.map((doc) => ({
+        const events: Event[] = eventsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as Concert[];
+        })) as Event[];
 
         const allTickets: Ticket[] = ticketsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         })) as Ticket[];
 
-        // Filter concerts that are in favorites
-        const favoriteConcerts = concerts.filter(
-          (concert) =>
-            favorites.includes(concert.id) &&
-            concert.status === "active" &&
-            concert.artist &&
-            concert.imageData
+        // Filter events that are in favorites
+        const favoriteEvents = events.filter(
+          (event) =>
+            favorites.includes(event.id) &&
+            event.status === "active" &&
+            event.artist &&
+            event.imageData
         );
 
-        // Map concerts to card data
-        const concertCards: CardData[] = favoriteConcerts.map((concert) => {
-          // Get available tickets for this concert
-          const concertTickets = allTickets.filter(
-            (ticket) =>
-              ticket.concertId === concert.id && ticket.status === "available"
-          );
+        // Map events to card data
+        const eventCards: CardData[] = favoriteEvents
+          .map((event) => {
+            // Get available tickets for this event
+            const eventTickets = allTickets.filter(
+              (ticket) =>
+                ticket.concertId === event.id && ticket.status === "available"
+            );
 
-          // Calculate price range
-          const prices = concertTickets
-            .map((t) => t.askingPrice)
-            .filter((p) => p && !isNaN(p));
-          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+            // Calculate price range
+            const prices = eventTickets
+              .map((t) => t.askingPrice)
+              .filter((p) => p && !isNaN(p));
+            const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
 
-          // Calculate average original price
-          const originalPrices = concertTickets
-            .map((t) => t.originalPrice || t.askingPrice)
-            .filter((p) => p && !isNaN(p));
-          const avgOriginalPrice =
-            originalPrices.length > 0
-              ? originalPrices.reduce((a, b) => a + b, 0) /
-                originalPrices.length
-              : minPrice;
+            // Calculate average original price
+            const originalPrices = eventTickets
+              .map((t) => t.originalPrice || t.askingPrice)
+              .filter((p) => p && !isNaN(p));
+            const avgOriginalPrice =
+              originalPrices.length > 0
+                ? originalPrices.reduce((a, b) => a + b, 0) /
+                  originalPrices.length
+                : minPrice;
 
-          // Calculate time until event
-          const timeLeft = calculateTimeLeft(concert.date, concert.time);
+            // Calculate time until event
+            const timeLeft = calculateTimeLeft(event.date, event.time);
 
-          return {
-            id: concert.id,
-            title: concert.artist,
-            imageSrc: concert.imageData,
-            date: concert.date,
-            location: concert.venue,
-            priceBefore: Math.round(avgOriginalPrice),
-            price: minPrice,
-            soldOut: concertTickets.length === 0,
-            ticketsLeft: concertTickets.length,
-            timeLeft: timeLeft,
-          };
-        });
+            return {
+              id: event.id,
+              title: event.artist,
+              imageSrc: event.imageData,
+              date: event.date,
+              location: event.venue,
+              priceBefore: Math.round(avgOriginalPrice),
+              price: minPrice,
+              soldOut: eventTickets.length === 0,
+              ticketsLeft: eventTickets.length,
+              timeLeft: timeLeft,
+            };
+          })
+          .filter((event) => !event.soldOut); // Hide sold-out events from favorites
 
-        setFavoriteCards(concertCards);
-        setFilteredCards(concertCards);
+        setFavoriteCards(eventCards);
+        setFilteredCards(eventCards);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching favorites:", error);
@@ -182,30 +184,30 @@ const Favorites = () => {
     fetchFavorites();
   }, [user]);
 
-  // Apply filters to concerts
+  // Apply filters to events
   const applyFilters = (
-    concerts: CardData[],
+    events: CardData[],
     filters: FilterState
   ): CardData[] => {
-    return concerts.filter((concert) => {
+    return events.filter((event) => {
       // Filter by cities
       if (filters.cities.length > 0) {
-        if (!filters.cities.includes(concert.location)) {
+        if (!filters.cities.includes(event.location)) {
           return false;
         }
       }
 
       // Filter by venues
       if (filters.venues.length > 0) {
-        if (!filters.venues.includes(concert.location)) {
+        if (!filters.venues.includes(event.location)) {
           return false;
         }
       }
 
       // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
-        const normalizedDate = concert.date.replace(/\./g, "/");
-        const concertDate = new Date(
+        const normalizedDate = event.date.replace(/\./g, "/");
+        const eventDate = new Date(
           normalizedDate.split("/").reverse().join("-")
         );
         const fromDate = new Date(filters.dateRange.from);
@@ -213,15 +215,15 @@ const Favorites = () => {
         const toDate = new Date(filters.dateRange.to);
         toDate.setHours(23, 59, 59, 999);
 
-        if (concertDate < fromDate || concertDate > toDate) {
+        if (eventDate < fromDate || eventDate > toDate) {
           return false;
         }
       }
 
       // Filter by price range
       if (
-        concert.price < filters.priceRange[0] ||
-        concert.price > filters.priceRange[1]
+        event.price < filters.priceRange[0] ||
+        event.price > filters.priceRange[1]
       ) {
         return false;
       }

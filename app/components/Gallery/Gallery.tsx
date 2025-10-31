@@ -9,10 +9,13 @@ import ResponsiveGallery from "../TicketGallery/ResponsiveGallery";
 import { db, collection, getDocs } from "../../../firebase";
 import LoginDialog from "../Dialogs/LoginDialog/LoginDialog";
 import { calculateTimeLeft } from "../../../utils/timeCalculator";
+import { applyTheme, loadThemesFromFirebase } from "../../theme/categoryThemes";
+import CategoryFilter from "../CategoryFilter/CategoryFilter";
 
 interface CardData {
   id: string;
   title: string;
+  category?: string;
   imageSrc: string;
   date: string;
   location: string;
@@ -23,10 +26,11 @@ interface CardData {
   timeLeft: string;
 }
 
-interface Concert {
+interface Event {
   id: string;
   artist: string;
   title: string;
+  category?: string;
   date: string;
   time: string;
   venue: string;
@@ -37,7 +41,7 @@ interface Concert {
 
 interface Ticket {
   id: string;
-  concertId: string;
+  concertId: string; // References concerts collection in Firebase
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -47,10 +51,21 @@ const Gallery = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [cardsData, setCardsData] = useState<CardData[]>([]);
+  const [allCardsData, setAllCardsData] = useState<CardData[]>([]); // Store all data for filtering
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
 
   // Define the function once
   const openLoginDialog = () => setLoginDialogOpen(true);
+
+  // Initialize default theme on mount
+  useEffect(() => {
+    const initializeThemes = async () => {
+      await loadThemesFromFirebase(); // Load custom themes from Firebase
+      applyTheme(null); // Apply default theme (music) with loaded themes
+    };
+    initializeThemes();
+  }, []);
 
   // Fetch concerts and their tickets from Firestore
   useEffect(() => {
@@ -65,14 +80,12 @@ const Gallery = () => {
           return;
         }
 
-        // Fetch all concerts
-        const concertsSnapshot = await getDocs(
-          collection(db as any, "concerts")
-        );
-        const concerts: Concert[] = concertsSnapshot.docs.map((doc) => ({
+        // Fetch all events (concerts collection)
+        const eventsSnapshot = await getDocs(collection(db as any, "concerts"));
+        const events: Event[] = eventsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as Concert[];
+        })) as Event[];
 
         // Fetch all available tickets
         const ticketsSnapshot = await getDocs(collection(db as any, "tickets"));
@@ -81,31 +94,31 @@ const Gallery = () => {
           ...doc.data(),
         })) as Ticket[];
 
-        // Map concerts to card data with ticket information
-        const concertCards: CardData[] = concerts
+        // Map events to card data with ticket information
+        const eventCards: CardData[] = events
           .filter(
-            (concert) =>
-              concert &&
-              concert.status === "active" &&
-              concert.artist &&
-              concert.imageData
-          ) // Only show active concerts with required data
-          .map((concert) => {
-            // Get available tickets for this concert
-            const concertTickets = allTickets.filter(
+            (event) =>
+              event &&
+              event.status === "active" &&
+              event.artist &&
+              event.imageData
+          ) // Only show active events with required data
+          .map((event) => {
+            // Get available tickets for this event
+            const eventTickets = allTickets.filter(
               (ticket) =>
-                ticket.concertId === concert.id && ticket.status === "available"
+                ticket.concertId === event.id && ticket.status === "available"
             );
 
             // Calculate price range
-            const prices = concertTickets
+            const prices = eventTickets
               .map((t) => t.askingPrice)
               .filter((p) => p && !isNaN(p));
             const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
             const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
             // Calculate average original price for "before" price
-            const originalPrices = concertTickets
+            const originalPrices = eventTickets
               .map((t) => t.originalPrice || t.askingPrice)
               .filter((p) => p && !isNaN(p) && p > minPrice);
             const avgOriginalPrice =
@@ -117,28 +130,27 @@ const Gallery = () => {
                 : Math.round(minPrice * 1.2); // Default to 20% markup if no original prices
 
             return {
-              id: concert.id || "",
-              title: concert.artist || "אמן לא ידוע",
-              imageSrc: concert.imageData || "",
-              date: concert.date || "",
-              location: concert.venue || "מיקום לא ידוע",
+              id: event.id || "",
+              title: event.artist || "אמן לא ידוע",
+              category: event.category || "מוזיקה",
+              imageSrc: event.imageData || "",
+              date: event.date || "",
+              location: event.venue || "מיקום לא ידוע",
               priceBefore: maxPrice > minPrice ? maxPrice : avgOriginalPrice,
               price: minPrice || 0,
-              soldOut: concertTickets.length === 0,
-              ticketsLeft: concertTickets.length,
-              timeLeft: calculateTimeLeft(
-                concert.date || "",
-                concert.time || ""
-              ),
+              soldOut: eventTickets.length === 0,
+              ticketsLeft: eventTickets.length,
+              timeLeft: calculateTimeLeft(event.date || "", event.time || ""),
             };
           })
+          .filter((event) => !event.soldOut) // Hide sold-out events from public gallery
           .sort((a, b) => {
-            // Sort by tickets available (sold out last), then by date
-            if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
+            // Sort by date
             return 0;
           });
 
-        setCardsData(concertCards);
+        setAllCardsData(eventCards); // Store all cards
+        setCardsData(eventCards); // Initially show all cards
       } catch (error) {
         console.error("Error fetching concerts:", error);
       } finally {
@@ -148,6 +160,22 @@ const Gallery = () => {
 
     fetchConcertsWithTickets();
   }, []);
+
+  // Filter cards by category and apply theme
+  useEffect(() => {
+    if (selectedCategory === null) {
+      // No category selected - show all events and apply default theme
+      setCardsData(allCardsData);
+      applyTheme(null); // Apply default theme (music)
+    } else {
+      // Filter by selected category
+      const filtered = allCardsData.filter(
+        (card) => card.category === selectedCategory
+      );
+      setCardsData(filtered);
+      applyTheme(selectedCategory); // Apply category-specific theme
+    }
+  }, [selectedCategory, allCardsData]);
 
   // Extract unique artist names for search suggestions
   const artistNames = [...new Set(cardsData.map((card) => card.title))];
@@ -159,6 +187,13 @@ const Gallery = () => {
 
   return (
     <div className="shadow-small-inner flex flex-col items-center pt-6 pb-10">
+      {/* Category Filter Buttons */}
+      <div className="mt-[40px] mb-[40px]">
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+      </div>
       <CustomSearchInput
         id="search-bar"
         placeholder="חפש אירוע"
@@ -180,7 +215,9 @@ const Gallery = () => {
       )}
       {!loading && db && cardsData.length === 0 && (
         <div className="text-center text-lg text-gray-500 py-8">
-          אין קונצרטים זמינים כרגע
+          {selectedCategory === null
+            ? "אין אירועים זמינים כרגע"
+            : `אין אירועי ${selectedCategory} זמינים כרגע`}
         </div>
       )}
       {!loading && db && cardsData.length > 0 && (

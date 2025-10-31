@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Admin User - Tiket</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #b54653;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #9a3942;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(181, 70, 83, 0.3);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .info-box {
+            background: #f0f7ff;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+        .credentials {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+            direction: ltr;
+            text-align: left;
+        }
+        .success {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+        .warning {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #b54653;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 יצירת משתמש מנהל</h1>
+        <p class="subtitle">Tiket Admin User Creation</p>
+
+        <div class="info-box">
+            <h3>📧 פרטי התחברות</h3>
+            <div class="credentials">
+                <strong>Email:</strong> admin@tiket.com<br>
+                <strong>Password:</strong> admin
+            </div>
+            <p style="margin-bottom: 0; font-size: 12px; color: #666;">
+                ⚠️ שנה סיסמה זו לאחר ההתחברות הראשונה!
+            </p>
+        </div>
+
+        <button id="createBtn" onclick="createAdmin()">
+            צור משתמש מנהל
+        </button>
+
+        <div id="result"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCGiiy5smPnTFY7RdhsHfe12briESgTr4k",
+            authDomain: "tiket-9268c.firebaseapp.com",
+            projectId: "tiket-9268c",
+            storageBucket: "tiket-9268c.firebasestorage.app",
+            messagingSenderId: "653453593991",
+            appId: "1:653453593991:web:67009ebea86a870f735722"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.createAdmin = async function() {
+            const btn = document.getElementById('createBtn');
+            const result = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div>';
+            result.style.display = 'none';
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(
+                    auth, 
+                    'admin@tiket.com', 
+                    'admin'
+                );
+
+                result.className = 'info-box success';
+                result.innerHTML = `
+                    <h3>✅ המשתמש נוצר בהצלחה!</h3>
+                    <p><strong>User ID:</strong> ${userCredential.user.uid}</p>
+                    <p><strong>Email:</strong> ${userCredential.user.email}</p>
+                    <div class="credentials">
+                        <strong>Login:</strong><br>
+                        Email: admin@tiket.com<br>
+                        Password: admin
+                    </div>
+                    <p style="color: #059669; font-weight: bold;">
+                        ✨ כעת תוכל להתחבר לאתר עם הפרטים הללו
+                    </p>
+                `;
+                result.style.display = 'block';
+                btn.innerHTML = '✓ המשתמש נוצר';
+                btn.style.background = '#10b981';
+
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    result.className = 'info-box warning';
+                    result.innerHTML = `
+                        <h3>⚠️ המשתמש כבר קיים</h3>
+                        <p>משתמש עם כתובת המייל <code>admin@tiket.com</code> כבר קיים במערכת.</p>
+                        <div class="credentials">
+                            Email: admin@tiket.com<br>
+                            Password: admin
+                        </div>
+                        <p>תוכל להתחבר עם הפרטים הללו.</p>
+                        <p style="font-size: 12px; color: #92400e;">
+                            אם שכחת את הסיסמה, מחק את המשתמש מ-Firebase Console והפעל שוב.
+                        </p>
+                    `;
+                } else {
+                    result.className = 'info-box error';
+                    result.innerHTML = `
+                        <h3>❌ שגיאה ביצירת המשתמש</h3>
+                        <p><strong>Error Code:</strong> ${error.code}</p>
+                        <p><strong>Message:</strong> ${error.message}</p>
+                    `;
+                }
+                result.style.display = 'block';
+                btn.innerHTML = 'נסה שוב';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

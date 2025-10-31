@@ -8,25 +8,25 @@ This migration converts your existing flat tickets structure into a proper conce
 
 ```
 tickets/
-├── ticket1 (artist: "שלמה ארצי", date: "15/10/2025", venue: "היכל", price: 250)
-├── ticket2 (artist: "שלמה ארצי", date: "15/10/2025", venue: "היכל", price: 300)
-├── ticket3 (artist: "עלמה גוב", date: "20/10/2025", venue: "פארק", price: 200)
-└── ...
+ ticket1 (artist: "שלמה ארצי", date: "15/10/2025", venue: "היכל", price: 250)
+ ticket2 (artist: "שלמה ארצי", date: "15/10/2025", venue: "היכל", price: 300)
+ ticket3 (artist: "עלמה גוב", date: "20/10/2025", venue: "פארק", price: 200)
+ ...
 ```
 
 ## After Migration
 
 ```
 concerts/
-├── concert1 (artist: "שלמה ארצי", date: "15/10/2025", venue: "היכל")
-└── concert2 (artist: "עלמה גוב", date: "20/10/2025", venue: "פארק")
+ concert1 (artist: "שלמה ארצי", date: "15/10/2025", venue: "היכל")
+ concert2 (artist: "עלמה גוב", date: "20/10/2025", venue: "פארק")
 
 tickets/
-├── ticket1 (concertId: concert1, section: "A", row: "5", seat: "12", price: 250)
-├── ticket2 (concertId: concert1, section: "B", row: "10", seat: "8", price: 180)
-├── ticket3 (concertId: concert1, section: "VIP", row: "1", seat: "5", price: 450)
-├── ticket4 (concertId: concert2, isStanding: true, price: 200)
-└── ...
+ ticket1 (concertId: concert1, section: "A", row: "5", seat: "12", price: 250)
+ ticket2 (concertId: concert1, section: "B", row: "10", seat: "8", price: 180)
+ ticket3 (concertId: concert1, section: "VIP", row: "1", seat: "5", price: 450)
+ ticket4 (concertId: concert2, isStanding: true, price: 200)
+ ...
 ```
 
 ## How to Run
@@ -170,9 +170,9 @@ If you encounter issues:
 ## Statistics Example
 
 ```
-✅ Migration completed successfully!
+ Migration completed successfully!
 
-📊 Statistics:
+ Statistics:
 • Old tickets backed up: 15
 • Concerts created: 5
 • New tickets generated: 32

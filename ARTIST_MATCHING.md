@@ -1,4 +1,4 @@
-# 🎤 Artist Matching System
+#  Artist Matching System
 
 ## Overview
 
@@ -8,9 +8,9 @@ The artist matching system provides intelligent Hebrew ↔ English artist name m
 
 ### 1. **Multi-Language Support**
 
-- ✅ Hebrew names: "עומר אדם", "סטטיק ובן אל תבורי"
-- ✅ English names: "Omer Adam", "Static and Ben El Tavori"
-- ✅ Mixed variations: "Static & Ben El", "סטטיק בן אל"
+-  Hebrew names: "עומר אדם", "סטטיק ובן אל תבורי"
+-  English names: "Omer Adam", "Static and Ben El Tavori"
+-  Mixed variations: "Static & Ben El", "סטטיק בן אל"
 
 ### 2. **Normalization**
 
@@ -170,21 +170,21 @@ Input: "עומר אדם"      → "עומר אדם" (Hebrew preserved)
 ### Step 2: Exact Match Check
 
 ```
-"omer adam" === "omer adam" ✅
+"omer adam" === "omer adam" 
 ```
 
 ### Step 3: Alias Lookup
 
 ```
 ARTIST_ALIASES["omer adam"] = ["עומר אדם", "omer adam", ...]
-"עומר אדם" found in aliases ✅
+"עומר אדם" found in aliases 
 ```
 
 ### Step 4: Fuzzy Matching (if needed)
 
 ```
-Levenshtein("omer adam", "omar adam") → similarity: 0.91 ✅
-Levenshtein("omer adam", "different") → similarity: 0.30 ❌
+Levenshtein("omer adam", "omar adam") → similarity: 0.91 
+Levenshtein("omer adam", "different") → similarity: 0.30 
 ```
 
 ## Integration Points
@@ -214,22 +214,22 @@ Levenshtein("omer adam", "different") → similarity: 0.30 ❌
 
 ## Benefits
 
-✅ **Automatic Matching** - Tickets automatically find concerts regardless of language  
-✅ **Typo Tolerance** - Minor spelling errors don't break matching  
-✅ **Bilingual Support** - Works with Hebrew and English seamlessly  
-✅ **Manual Override** - Admin can link tickets manually when needed  
-✅ **Extensible** - Easy to add new artist aliases  
-✅ **Transparent** - Console logging shows matching decisions
+ **Automatic Matching** - Tickets automatically find concerts regardless of language  
+ **Typo Tolerance** - Minor spelling errors don't break matching  
+ **Bilingual Support** - Works with Hebrew and English seamlessly  
+ **Manual Override** - Admin can link tickets manually when needed  
+ **Extensible** - Easy to add new artist aliases  
+ **Transparent** - Console logging shows matching decisions
 
 ## Console Logs
 
 The system provides detailed console output:
 
 ```
-✅ Exact match: "omer adam" === "omer adam"
-✅ Alias match: "עומר אדם" and "omer adam" both map to "omer adam"
-✅ Fuzzy match: "omar adam" and "omer adam" (similarity: 0.91)
-❌ No match: "different artist" vs "omer adam" (similarity: 0.30)
+ Exact match: "omer adam" === "omer adam"
+ Alias match: "עומר אדם" and "omer adam" both map to "omer adam"
+ Fuzzy match: "omar adam" and "omer adam" (similarity: 0.91)
+ No match: "different artist" vs "omer adam" (similarity: 0.30)
 ```
 
 ## Troubleshooting
@@ -255,11 +255,11 @@ The system provides detailed console output:
 
 ## Future Enhancements
 
-- 🔮 Admin UI to add aliases without code editing
-- 🔮 Machine learning for automatic alias discovery
-- 🔮 Support for artist nicknames/stage names
-- 🔮 Integration with external artist databases
-- 🔮 Transliteration engine for Hebrew ↔ English conversion
+-  Admin UI to add aliases without code editing
+-  Machine learning for automatic alias discovery
+-  Support for artist nicknames/stage names
+-  Integration with external artist databases
+-  Transliteration engine for Hebrew ↔ English conversion
 
 ## Files
 

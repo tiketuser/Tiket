@@ -1,10 +1,10 @@
 # Date Format Update - Hebrew Display
 
-## ✅ Updated: Date Display in Card and EventUpperSection
+##  Updated: Date Display in Card and EventUpperSection
 
 Both the concert Card (Gallery) and EventUpperSection (EventPage) now display dates in a human-readable Hebrew format instead of "dd/mm/yyyy".
 
-## 🎯 Changes Made
+##  Changes Made
 
 ### 1. Card Component (`app/components/Card/Card.tsx`)
 
@@ -16,7 +16,7 @@ Both the concert Card (Gallery) and EventUpperSection (EventPage) now display da
 - Added `formatDateHebrew()` function
 - Changed date display from `{date}` to `{formatDateHebrew(date)}`
 
-## 📅 Date Format Transformation
+##  Date Format Transformation
 
 ### Before:
 
@@ -31,7 +31,7 @@ Both the concert Card (Gallery) and EventUpperSection (EventPage) now display da
 (Thursday, 25 in December 2025)
 ```
 
-## 🔧 Implementation
+##  Implementation
 
 ```typescript
 const formatDateHebrew = (dateString: string): string => {
@@ -75,7 +75,7 @@ const formatDateHebrew = (dateString: string): string => {
 };
 ```
 
-## 🌍 Hebrew Day Names (Full)
+##  Hebrew Day Names (Full)
 
 ```typescript
 const hebrewDays = [
@@ -89,7 +89,7 @@ const hebrewDays = [
 ];
 ```
 
-## 📆 Hebrew Month Names (Full)
+##  Hebrew Month Names (Full)
 
 ```typescript
 const hebrewMonths = [
@@ -108,7 +108,7 @@ const hebrewMonths = [
 ];
 ```
 
-## 🎨 Display Examples
+##  Display Examples
 
 ### Example 1: December 25, 2025
 
@@ -142,49 +142,49 @@ Output: "שישי, 1 במאי 2026"
         (Friday, 1 in May 2026)
 ```
 
-## 📱 Where It Appears
+##  Where It Appears
 
 ### 1. Gallery - Concert Card
 
 ```
-┌─────────────────────────────┐
-│   [Concert Poster Image]    │
-│         ♥ [Heart Icon]       │
-├─────────────────────────────┤
-│  🎤 עומר אדם                │
-│  ─────────────────────      │
-│  חמישי, 25 בדצמבר 2025     │  ← Hebrew format!
-│  📍 פארק הירקון             │
-│  🎫 כרטיסים זמינים: 15     │
-│  💰 ₪150 - ₪300             │
-│  ⏰ 2 חודשים זמן לאירוע    │
-└─────────────────────────────┘
+
+   [Concert Poster Image]    
+          [Heart Icon]       
+
+   עומר אדם                
+        
+  חמישי, 25 בדצמבר 2025       ← Hebrew format!
+   פארק הירקון             
+   כרטיסים זמינים: 15     
+   ₪150 - ₪300             
+  ⏰ 2 חודשים זמן לאירוע    
+
 ```
 
 ### 2. EventPage - Upper Section
 
 ```
-┌─────────────────────────────────────────────┐
-│  עומר אדם                     [Poster]     │
-│  ───────────────────                        │
-│  חמישי, 25 בדצמבר 2025       ← Hebrew!     │
-│  פארק הירקון                                │
-│  תחילת המופע: 🕐 20:00                      │
-│  כרטיסים זמינים: 🎫 15                     │
-└─────────────────────────────────────────────┘
+
+  עומר אדם                     [Poster]     
+                          
+  חמישי, 25 בדצמבר 2025       ← Hebrew!     
+  פארק הירקון                                
+  תחילת המופע:  20:00                      
+  כרטיסים זמינים:  15                     
+
 ```
 
 ### 3. SingleCard - Date Section (Already has it)
 
 ```
-┌──────┐
-│ חמישי │  ← Day of week
-│  25   │  ← Day number
-│ דצמ׳  │  ← Month (abbreviated)
-└──────┘
+
+ חמישי   ← Day of week
+  25     ← Day number
+ דצמ׳    ← Month (abbreviated)
+
 ```
 
-## 🔄 Data Flow
+##  Data Flow
 
 ```
 Database:
@@ -208,38 +208,38 @@ Display:
   EventPage shows: "חמישי, 25 בדצמבר 2025"
 ```
 
-## 🎯 Benefits
+##  Benefits
 
 ### User Experience:
 
-✅ **More readable** - Full date with day of week
-✅ **Professional** - Proper Hebrew formatting
-✅ **Consistent** - Same format across Gallery and EventPage
-✅ **Clear** - Easy to understand at a glance
+ **More readable** - Full date with day of week
+ **Professional** - Proper Hebrew formatting
+ **Consistent** - Same format across Gallery and EventPage
+ **Clear** - Easy to understand at a glance
 
 ### Technical:
 
-✅ **Robust** - Error handling for invalid dates
-✅ **Localized** - Full Hebrew month names (not abbreviations)
-✅ **Maintainable** - Same function in both components
+ **Robust** - Error handling for invalid dates
+ **Localized** - Full Hebrew month names (not abbreviations)
+ **Maintainable** - Same function in both components
 
-## 📊 Comparison
+##  Comparison
 
 ### Old Format (dd/mm/yyyy):
 
 - Gallery: `25/12/2025`
 - EventPage: `25/12/2025`
 - SingleCard: Hebrew format (day/month abbreviation)
-- ❌ Inconsistent between components
+-  Inconsistent between components
 
 ### New Format (Hebrew Full):
 
 - Gallery: `חמישי, 25 בדצמבר 2025`
 - EventPage: `חמישי, 25 בדצמבר 2025`
 - SingleCard: Hebrew format (day/month abbreviation)
-- ✅ Professional and readable
+-  Professional and readable
 
-## ✨ Result
+##  Result
 
 Now all date displays are:
 
@@ -254,4 +254,4 @@ Users can now see dates like:
 - "שישי, 20 במרץ 2026" (Friday, March 20, 2026)
 - "שבת, 1 במאי 2026" (Saturday, May 1, 2026)
 
-Much better than "15/01/2026"! 🎉
+Much better than "15/01/2026"! 

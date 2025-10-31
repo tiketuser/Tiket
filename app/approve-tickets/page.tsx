@@ -48,6 +48,9 @@ interface Ticket {
     eventId?: string;
     ticketingSystem?: string;
   };
+  // Admin rejection
+  adminComment?: string; // Admin's comment when rejecting
+  rejectedAt?: string; // Timestamp when rejected
 }
 
 interface Concert {
@@ -65,6 +68,9 @@ export default function ApproveTicketsPage() {
   const [processingTicketId, setProcessingTicketId] = useState<string | null>(
     null
   );
+  const [adminComments, setAdminComments] = useState<Record<string, string>>(
+    {}
+  ); // Store admin comments for each ticket
 
   useEffect(() => {
     fetchData();
@@ -139,20 +145,35 @@ export default function ApproveTicketsPage() {
   };
 
   const handleReject = async (ticketId: string) => {
-    const reason = prompt("סיבת דחייה (אופציונלי):");
-    if (reason === null) return; // User cancelled
-
-    if (!confirm("האם למחוק כרטיס זה?")) return;
+    if (!confirm("האם לדחות כרטיס זה?")) return;
 
     setProcessingTicketId(ticketId);
     try {
-      await deleteDoc(doc(db as any, "tickets", ticketId));
+      // Get the admin comment from state (or empty string if none)
+      const comment = adminComments[ticketId] || "";
 
+      // Instead of deleting, update status to rejected with admin comment
+      await updateDoc(doc(db as any, "tickets", ticketId), {
+        status: "rejected",
+        verificationStatus: "rejected",
+        adminComment: comment || "הכרטיס נדחה על ידי המנהל",
+        rejectedAt: new Date().toISOString(),
+      });
+
+      // Remove from pending list (it's now rejected)
       setTickets((prev) => prev.filter((t) => t.id !== ticketId));
-      alert(" הכרטיס נמחק");
+
+      // Clear the comment from state
+      setAdminComments((prev) => {
+        const newComments = { ...prev };
+        delete newComments[ticketId];
+        return newComments;
+      });
+
+      alert("הכרטיס נדחה בהצלחה");
     } catch (error) {
       console.error("Error rejecting ticket:", error);
-      alert("שגיאה במחיקת הכרטיס");
+      alert("שגיאה בדחיית הכרטיס");
     } finally {
       setProcessingTicketId(null);
     }
@@ -185,7 +206,7 @@ export default function ApproveTicketsPage() {
 
   // Manually link ticket to a concert
   const handleLinkToConcert = async (ticketId: string, concertId: string) => {
-    if (!confirm("האם לקשר כרטיס זה לקונצרט?")) return;
+    if (!confirm("האם לקשר כרטיס זה לאירוע?")) return;
 
     setProcessingTicketId(ticketId);
     try {
@@ -197,7 +218,7 @@ export default function ApproveTicketsPage() {
       setTickets((prev) =>
         prev.map((t) => (t.id === ticketId ? { ...t, concertId } : t))
       );
-      alert("הכרטיס קושר לקונצרט בהצלחה!");
+      alert("הכרטיס קושר לאירוע בהצלחה!");
     } catch (error) {
       console.error("Error linking ticket:", error);
       alert("שגיאה בקישור הכרטיס");
@@ -262,13 +283,13 @@ export default function ApproveTicketsPage() {
               <p className="text-3xl font-bold text-green-600">
                 {tickets.filter((t) => !!getConcertForTicket(t)).length}
               </p>
-              <p className="text-sm text-green-700 mt-2">עם קונצרט מתאים</p>
+              <p className="text-sm text-green-700 mt-2">עם אירוע מתאים</p>
             </div>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
               <p className="text-3xl font-bold text-yellow-600">
                 {tickets.filter((t) => !getConcertForTicket(t)).length}
               </p>
-              <p className="text-sm text-yellow-700 mt-2">ללא קונצרט</p>
+              <p className="text-sm text-yellow-700 mt-2">ללא אירוע</p>
             </div>
           </div>
 
@@ -306,7 +327,7 @@ export default function ApproveTicketsPage() {
                             : "bg-orange-200 text-orange-800"
                         }`}
                       >
-                        {!hasConcert ? "ממתין לקונצרט" : "ממתין לאישור"}
+                        {!hasConcert ? "ממתין לאירוע" : "ממתין לאישור"}
                       </span>
                       <span className="text-sm text-mutedText">
                         {new Date(
@@ -482,12 +503,12 @@ export default function ApproveTicketsPage() {
                       {/* Concert Match */}
                       <div className="space-y-3">
                         <h3 className="text-heading-4-desktop font-bold text-strongText">
-                          קונצרט מתאים
+                          אירוע מתאים
                         </h3>
                         {concert ? (
                           <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2 text-sm">
                             <p className="text-green-800 font-bold flex items-center gap-2">
-                              נמצא קונצרט מתאים
+                              נמצא אירוע מתאים
                             </p>
                             <p>
                               <strong>אמן:</strong> {concert.artist}
@@ -509,10 +530,10 @@ export default function ApproveTicketsPage() {
                           <>
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
                               <p className="text-yellow-800 font-bold flex items-center gap-2 mb-3">
-                                לא נמצא קונצרט מתאים
+                                לא נמצא אירוע מתאים
                               </p>
                               <p className="text-yellow-700 mb-2">
-                                יש ליצור קונצרט עם הפרטים הבאים:
+                                יש ליצור אירוע עם הפרטים הבאים:
                               </p>
                               <div className="bg-white rounded p-2 space-y-1 font-mono text-xs">
                                 <p>artist: "{ticket.artist}"</p>
@@ -523,7 +544,7 @@ export default function ApproveTicketsPage() {
                                 href="/Admin"
                                 className="inline-block mt-3 text-primary underline text-xs"
                               >
-                                → לך ליצירת קונצרט
+                                → לך ליצירת אירוע
                               </a>
                             </div>
 
@@ -534,7 +555,7 @@ export default function ApproveTicketsPage() {
                                 return (
                                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4 text-sm">
                                     <p className="text-blue-800 font-bold mb-3 flex items-center gap-2">
-                                      קונצרטים מוצעים (התאמה חלקית)
+                                      אירועים מוצעים (התאמה חלקית)
                                     </p>
                                     <div className="space-y-3">
                                       {suggestions.map((suggestedConcert) => (
@@ -572,7 +593,7 @@ export default function ApproveTicketsPage() {
                                             }
                                             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
                                           >
-                                            קשר לקונצרט זה
+                                            קשר לאירוע זה
                                           </button>
                                         </div>
                                       ))}
@@ -587,8 +608,33 @@ export default function ApproveTicketsPage() {
                       </div>
                     </div>
 
+                    {/* Admin Comment Input (for rejection) */}
+                    <div className="mt-6 pt-6 border-t">
+                      <label className="block mb-2">
+                        <span className="text-sm font-semibold text-strongText">
+                          הערה למוכר (אופציונלי - תוצג במקרה של דחייה):
+                        </span>
+                        <textarea
+                          value={adminComments[ticket.id] || ""}
+                          onChange={(e) =>
+                            setAdminComments((prev) => ({
+                              ...prev,
+                              [ticket.id]: e.target.value,
+                            }))
+                          }
+                          placeholder="למשל: הכרטיס לא ברור, התמונה לא קריאה, הפרטים לא תואמים למאגר..."
+                          className="w-full mt-2 p-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none resize-none text-sm"
+                          rows={3}
+                        />
+                      </label>
+                      <p className="text-xs text-mutedText mt-1">
+                        אם תדחה את הכרטיס, המוכר יוכל לראות הערה זו בעמוד
+                        "הכרטיסים שלי"
+                      </p>
+                    </div>
+
                     {/* Actions */}
-                    <div className="flex gap-4 mt-6 pt-6 border-t">
+                    <div className="flex gap-4 mt-4">
                       <button
                         onClick={() => handleApprove(ticket.id)}
                         disabled={
@@ -599,7 +645,7 @@ export default function ApproveTicketsPage() {
                         {processingTicketId === ticket.id ? (
                           <span className="loading loading-spinner"></span>
                         ) : !hasConcert ? (
-                          "יש ליצור קונצרט תחילה"
+                          "יש ליצור אירוע תחילה"
                         ) : (
                           "אשר ופרסם"
                         )}
@@ -612,14 +658,14 @@ export default function ApproveTicketsPage() {
                         {processingTicketId === ticket.id ? (
                           <span className="loading loading-spinner"></span>
                         ) : (
-                          "דחה ומחק"
+                          "דחה כרטיס"
                         )}
                       </button>
                     </div>
 
                     {!hasConcert && (
                       <p className="text-xs text-yellow-700 mt-2 text-center">
-                        יש ליצור קונצרט מתאים לפני אישור הכרטיס
+                        יש ליצור אירוע מתאים לפני אישור הכרטיס
                       </p>
                     )}
                   </div>

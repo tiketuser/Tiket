@@ -33,14 +33,25 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
   cardsData,
   openLoginDialog,
 }) => {
+  // Determine if we should center the carousel (when there are 3 or fewer cards)
+  const shouldCenter = cardsData.length <= 3;
+
   return (
     <div className="w-full px-1 sm:px-8 sm:mt-10 sm:mb-0 mb-20">
       {/* Carousel for screens >= sm */}
-      <div className="hidden sm:block ">
+      <div className="hidden sm:block">
         <Carousel dir="ltr" className="w-full relative">
-          <CarouselContent className="flex flex-nowrap gap-6 h-[600px]">
+          <CarouselContent
+            className={`flex flex-nowrap gap-6 h-[640px] ${
+              shouldCenter ? "justify-center" : ""
+            }`}
+          >
             {cardsData.map((card) => (
-              <CarouselItem key={card.id} dir="rtl">
+              <CarouselItem
+                key={card.id}
+                dir="rtl"
+                className={shouldCenter ? "basis-auto" : ""}
+              >
                 <Link href={`/EventPage/${encodeURIComponent(card.title)}`}>
                   <Card {...card} openLoginDialog={openLoginDialog} />
                 </Link>
@@ -56,22 +67,22 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
             href="/ViewMore"
             className="hover:text-primary-dark text-text-large transition-colors"
           >
-            
             גלה עוד
           </Link>
         </div>
       </div>
-      {/* Layout for screens < sm */}
-      <div className="sm:hidden flex flex-wrap justify-center gap-3 xs:gap-5 w-full mt-6 mb-8">
+      {/* Grid Layout for screens < sm - 2 cards per row */}
+      <div className="sm:hidden grid grid-cols-2 gap-4 gap-y-2 w-full px-2 mt-6 mb-8">
         {cardsData.map((card) => (
-          <div
+          <Link
             key={card.id}
-            className="flex justify-center items-center lg:max-w-[600px] lg:max-h-[600px] sm:max-w-[155px] sm:max-h-[245px] xs:max-w-[160px] xs:max-h-[260px] "
+            href={`/EventPage/${encodeURIComponent(card.title)}`}
+            className="flex justify-center items-center w-full h-[300px]"
           >
-            <div className="xs:scale-[0.43] lg:scale-[0.90] scale-[0.39]">
+            <div className="w-full flex justify-center transform scale-[0.42] origin-center">
               <Card {...card} openLoginDialog={openLoginDialog} />
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

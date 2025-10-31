@@ -305,14 +305,19 @@ function verifyTicket(
   let reason: string;
 
   if (confidence >= 90) {
+    // High confidence - barcode match or near-perfect match
     status = "verified";
     reason = `כרטיס אומת בהצלחה! תואם ${matchedFields.length} שדות במערכת ${bestMatch?.ticketingSystem}`;
-  } else if (confidence >= 65) {
+  } else if (confidence >= 40) {
+    // Partial match - send to manual review (artist + venue + date = 55 points minimum)
     status = "needs_review";
-    reason = `התאמה חלקית - נדרשת בדיקה ידנית. תואם: ${matchedFields.join(", ")}`;
+    reason = matchedFields.length > 0 
+      ? `התאמה חלקית - נדרשת בדיקה ידנית. תואם: ${matchedFields.join(", ")}`
+      : `הכרטיס לא נמצא במאגר האולמות - נדרשת בדיקה ידנית`;
   } else {
-    status = "rejected";
-    reason = `הכרטיס לא נמצא במאגר האולמות. אנא בדוק את הפרטים ונסה שוב.`;
+    // Very low confidence or no match at all - only reject if obviously wrong
+    status = "needs_review"; // Changed from "rejected" - let admin decide
+    reason = `הכרטיס לא נמצא במאגר האולמות - נדרשת בדיקה ידנית של מנהל`;
   }
 
   return {

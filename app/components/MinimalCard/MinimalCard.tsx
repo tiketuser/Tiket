@@ -85,16 +85,16 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
   return (
     <div className={`bg-white ${width}`}>
       {/* Desktop Layout (hidden on mobile) */}
-      <div className="hidden sm:flex items-center justify-between pt-4 pr-12 pb-4 pl-8 gap-10 h-[128px]">
+      <div className="hidden sm:flex items-center justify-between pt-2 pr-8 pb-2 pl-6 gap-6 h-[100px]">
         {/* Date Section */}
-        <div className="flex flex-col items-center">
-          <span className="text-text-large leading-[30px] font-normal text-strongText">
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-text-large leading-[20px] font-normal text-strongText">
             {dayOfWeek}
           </span>
-          <span className="text-heading-3-desktop font-bold text-strongText leading-[40px]">
+          <span className="text-heading-3-desktop font-bold text-strongText leading-[28px]">
             {day}
           </span>
-          <span className="text-text-large leading-[30px]  font-normal text-strongText">
+          <span className="text-text-large leading-[20px] font-normal text-strongText">
             {month}
           </span>
         </div>
