@@ -11,6 +11,9 @@ import {
 } from "../theme/defaultCategoryImages";
 import { db, collection, getDocs, query, where } from "../../firebase";
 
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
+
 interface CategoryImageData {
   category: string;
   label: string;
@@ -221,7 +224,6 @@ export default function ManageDefaultImagesPage() {
 
           {/* Info Box */}
           <div className="mt-8 max-w-2xl mx-auto bg-blue-50 border border-blue-200 rounded-lg p-6">
-
             <ul className="text-text-medium text-blue-800 space-y-2 text-right list-disc list-inside">
               <li>תמונות אלו ישמשו כברירת מחדל כאשר לא תועלה תמונה לאירוע</li>
               <li>

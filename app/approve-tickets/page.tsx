@@ -20,6 +20,9 @@ import {
   findBestArtistMatch,
 } from "../../utils/artistMatcher";
 
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
+
 interface Ticket {
   id: string;
   concertId: string | null;

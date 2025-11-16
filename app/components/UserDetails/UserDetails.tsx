@@ -25,7 +25,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ section }) => {
     const fetchUserData = async () => {
       const auth = getAuth();
       const user = auth.currentUser;
-      if (user) {
+      if (user && db) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
@@ -104,7 +104,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ section }) => {
               ) {
                 const auth = getAuth();
                 const user = auth.currentUser;
-                if (user) {
+                if (user && db) {
                   try {
                     // Delete user document from Firestore
                     await deleteDoc(doc(db, "users", user.uid));

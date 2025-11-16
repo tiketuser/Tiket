@@ -75,13 +75,13 @@ const TiketFilters: React.FC<TiketFiltersProps> = ({ onFilterChange }) => {
   return (
     <>
       {/* Filters Section */}
-      <div className="flex justify-center gap-4 mt-6 mb-6">
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-4 sm:mt-6 mb-4 sm:mb-6 px-2 sm:px-0">
         {/* בחירת עיר */}
-        <div>
+        <div className="w-[calc(50%-4px)] sm:w-auto">
           <CustomSelectInput
             options={citiesData}
             placeholder="עיר"
-            width="250px"
+            width="100%"
             icon={
               <Image src={CityIcon} alt="City Icon" width={24} height={14} />
             }
@@ -99,11 +99,11 @@ const TiketFilters: React.FC<TiketFiltersProps> = ({ onFilterChange }) => {
         </div>
 
         {/* בחירת אולם */}
-        <div>
+        <div className="w-[calc(50%-4px)] sm:w-auto">
           <CustomSelectInput
             options={venueData}
             placeholder="אולם"
-            width="250px"
+            width="100%"
             icon={
               <Image
                 src={LocationIcon}
@@ -126,9 +126,10 @@ const TiketFilters: React.FC<TiketFiltersProps> = ({ onFilterChange }) => {
         </div>
 
         {/* בחירת תאריך */}
-        <div>
+        <div className="w-[calc(50%-4px)] sm:w-auto">
           <CustomDateInput
             placeholder="תאריך"
+            width="100%"
             icon={
               <Image src={DateIcon} alt="Date Icon" width={22} height={16} />
             }
@@ -146,10 +147,10 @@ const TiketFilters: React.FC<TiketFiltersProps> = ({ onFilterChange }) => {
         </div>
 
         {/* סינון לפי מחיר */}
-        <div>
+        <div className="w-[calc(50%-4px)] sm:w-auto">
           <PriceFilter
             placeholder="מחיר"
-            width="250px"
+            width="100%"
             icon={
               <Image src={PriceIcon} alt="Price Icon" width={22} height={16} />
             }
@@ -171,16 +172,16 @@ const TiketFilters: React.FC<TiketFiltersProps> = ({ onFilterChange }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center gap-4 mb-6">
+      <div className="flex justify-center gap-3 sm:gap-4 mb-4 sm:mb-6 px-2">
         <button
           onClick={handleApplyFilters}
-          className="px-8 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+          className="px-4 sm:px-6 md:px-8 py-1.5 sm:py-2 md:py-2.5 text-xs sm:text-sm md:text-base bg-primary text-white rounded-lg  hover:bg-primary/90 transition-colors"
         >
           החל סינון
         </button>
         <button
           onClick={handleResetFilters}
-          className="px-8 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+          className="px-4 sm:px-6 md:px-8 py-1.5 sm:py-2 md:py-2.5 text-xs sm:text-sm md:text-base bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
         >
           אפס סינון
         </button>

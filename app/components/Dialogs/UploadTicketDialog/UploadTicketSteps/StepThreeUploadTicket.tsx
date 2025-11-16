@@ -391,42 +391,46 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   const hasExtractionError = ticketData?.extractionError;
 
   return (
-    <div>
-      <div className="max-w-[500px] mx-auto px-4 mt-2 ">
+    <div className="w-full max-h-[calc(90vh-280px)] sm:max-h-[600px] overflow-y-auto px-2 sm:px-0">
+      <div className="max-w-[500px] mx-auto px-2 sm:px-4 mt-1 sm:mt-2">
         {/* Title and Subtitle */}
 
         {/* Show extraction status */}
         {hasExtractionError && (
-          <div className="mt-1 p-2 bg-orange-50 border border-orange-200 rounded-lg">
-            <p className="text-xs text-orange-700">⚠️ {hasExtractionError}</p>
+          <div className="mt-1 p-1.5 sm:p-2 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-[10px] sm:text-xs text-orange-700">
+              ⚠️ {hasExtractionError}
+            </p>
           </div>
         )}
 
         {/* Show warning if date has errors
         {dateError && (
-          <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-xs text-red-700 font-semibold">⚠️ {dateError}</p>
+          <div className="mt-1 p-1.5 sm:p-2 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-[10px] sm:text-xs text-red-700 font-semibold">⚠️ {dateError}</p>
           </div>
         )} */}
       </div>
 
       {/* Preview Card */}
-      <div className="mt-2 flex justify-center scale-90">
-        <MinimalCard
-          price={ticketData?.pricing?.askingPrice || 0}
-          title={editableDetails.artist || "ללא שם אירוע"}
-          date={editableDetails.date || "ללא תאריך"}
-          venue={editableDetails.venue || ""}
-          seatLocation={formatSeatLocation()}
-          width="w-[700px]"
-        />
+      <div className="mt-1.5 sm:mt-2 flex justify-center px-2 sm:px-0">
+        <div className="w-full max-w-[320px] sm:max-w-[500px] md:max-w-[630px]">
+          <MinimalCard
+            price={ticketData?.pricing?.askingPrice || 0}
+            title={editableDetails.artist || "ללא שם אירוע"}
+            date={editableDetails.date || "ללא תאריך"}
+            venue={editableDetails.venue || ""}
+            seatLocation={formatSeatLocation()}
+            width="w-full"
+          />
+        </div>
       </div>
 
       {/* Simple Form */}
-      <div className="mt-2 max-w-[500px] mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+      <div className="mt-1.5 sm:mt-2 max-w-[500px] mx-auto px-2 sm:px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
               שם האירוע *
             </label>
             <CustomInput
@@ -440,7 +444,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">
+            <label className="block text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 text-gray-700">
               קטגוריה *
             </label>
             <select
@@ -448,7 +452,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               name="category"
               value={editableDetails.category}
               onChange={(e) => handleDetailChange("category", e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               <option value="מוזיקה">מוזיקה</option>
               <option value="תיאטרון">תיאטרון</option>
@@ -460,7 +464,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
           <div>
             <label
-              className={`block text-sm font-medium mb-1 ${
+              className={`block text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 ${
                 dateError ? "text-red-600" : "text-gray-700"
               }`}
             >
@@ -485,7 +489,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
               שעת האירוע *
             </label>
             <CustomInput
@@ -498,15 +502,15 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               error={!!timeError}
             />
             {timeError && (
-              <div className="right-0 text-xs text-red-600 font-medium">
+              <div className="right-0 text-[10px] sm:text-xs text-red-600 font-medium">
                 ⚠️ {timeError}
               </div>
             )}
           </div>
         </div>
 
-        <div className="mb-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="mb-1.5 sm:mb-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
             מקום האירוע *
           </label>
           <CustomInput
@@ -520,8 +524,8 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         </div>
 
         {/* Barcode Field */}
-        <div className="mb-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="mb-1.5 sm:mb-2">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
             ברקוד כרטיס{" "}
             <span className="text-gray-400 font-normal">(אופציונלי)</span>
           </label>
@@ -549,15 +553,15 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         </div>
 
         {/* Standing Ticket Checkbox */}
-        <div className="mb-2">
+        <div className="mb-1.5 sm:mb-2">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              className="checkbox checkbox-primary"
+              className="checkbox checkbox-primary checkbox-sm sm:checkbox-md"
               checked={editableDetails.isStanding}
               onChange={(e) => handleStandingChange(e.target.checked)}
             />
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-xs sm:text-sm font-medium text-gray-700">
               כרטיס עמידה (ללא מקומות ישיבה)
             </span>
           </label>
@@ -565,9 +569,9 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
         {/* Seat Information - Hidden when standing ticket */}
         {!editableDetails.isStanding && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
                 אזור{" "}
                 <span className="text-gray-400 font-normal">(אופציונלי)</span>
               </label>
@@ -582,7 +586,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
                 שורה{" "}
                 <span className="text-gray-400 font-normal">(אופציונלי)</span>
               </label>
@@ -597,7 +601,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
                 מקום{" "}
                 <span className="text-gray-400 font-normal">(אופציונלי)</span>
               </label>
@@ -623,13 +627,13 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         )}
       </div>
 
-      <div className="flex flex-col items-center gap-2 mt-6">
-        <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-2 mt-3 sm:mt-4 pb-2">
+        <div className="flex flex-col items-center gap-2 sm:gap-3">
           {/* Primary actions */}
-          <div className="flex justify-center gap-4 w-full max-w-[700px] mb-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 w-full max-w-[700px] px-2">
             <button
               type="button"
-              className={`btn flex-1 h-[46px] sm:max-w-[180px] w-[180px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
+              className={`btn h-[40px] sm:h-[46px] sm:max-w-[180px] w-full sm:w-[180px] min-h-0 btn-secondary text-xs sm:text-sm md:text-text-large font-normal ${
                 canProceed
                   ? "bg-secondary text-primary hover:bg-secondary/90"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -646,7 +650,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
             <button
               type="button"
-              className={`btn flex-1 h-[46px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
+              className={`btn h-[40px] sm:h-[46px] min-h-0 btn-secondary text-xs sm:text-sm md:text-text-large font-normal ${
                 canProceed
                   ? "bg-primary text-white hover:bg-primary/90"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -664,7 +668,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             {/* Back button */}
             <button
               type="button"
-              className="btn w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm sm:text-text-large font-normal"
+              className="btn w-full sm:w-[140px] h-[40px] sm:h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-xs sm:text-sm md:text-text-large font-normal"
               onClick={() => prevStep && prevStep()}
             >
               לשלב הקודם

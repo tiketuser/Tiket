@@ -8,6 +8,9 @@ import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
 import { categoryThemes, CategoryTheme } from "../theme/categoryThemes";
 
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
+
 interface ThemeConfig {
   [category: string]: CategoryTheme;
 }
@@ -131,7 +134,7 @@ export default function ManageThemesPage() {
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-heading-1-desktop font-bold text-strongText mb-4">
-               ניהול צבעי קטגוריות
+              ניהול צבעי קטגוריות
             </h1>
             <p className="text-body-large text-mutedText">
               התאם אישית את ערכת הצבעים לכל קטגוריה
@@ -155,7 +158,7 @@ export default function ManageThemesPage() {
               )}
             </button>
             <button onClick={handleReset} className="btn btn-outline px-8">
-               אפס לברירת מחדל
+              אפס לברירת מחדל
             </button>
           </div>
 

@@ -5,6 +5,9 @@ import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
 
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
+
 interface ArtistAlias {
   canonical: string;
   hebrewName: string;

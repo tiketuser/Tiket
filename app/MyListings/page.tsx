@@ -10,6 +10,9 @@ import TitleSubtitle from "../components/TitleSubtitle/TitleSubtitle";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 interface Ticket {
   id: string;
   artist: string;

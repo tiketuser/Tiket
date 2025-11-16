@@ -130,40 +130,49 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
       </div>
 
       {/* Mobile Layout (visible only on mobile) */}
-      <div className="sm:hidden p-4 space-y-3">
+      <div className="sm:hidden p-3 space-y-2 border border-gray-200 rounded-lg">
         {/* Title and Date Row */}
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold text-strongText truncate flex-1 ml-2">
+        <div className="flex justify-between items-start gap-3">
+          <h3 className="text-sm font-bold text-strongText flex-1 leading-tight">
             {title}
           </h3>
-          <div className="flex flex-col items-center text-center">
-            <span className="text-xs font-normal text-strongText">
+          <div className="flex flex-col items-center text-center flex-shrink-0">
+            <span className="text-[10px] font-normal text-strongText leading-tight">
               {dayOfWeek}
             </span>
-            <span className="text-xl font-bold text-strongText">{day}</span>
-            <span className="text-xs font-normal text-strongText">{month}</span>
+            <span className="text-lg font-bold text-strongText leading-tight">
+              {day}
+            </span>
+            <span className="text-[10px] font-normal text-strongText leading-tight">
+              {month}
+            </span>
           </div>
         </div>
 
+        {/* Venue Row - if provided */}
+        {venue && (
+          <div className="text-xs font-medium text-gray-600">{venue}</div>
+        )}
+
         {/* Location Row */}
-        <div className="text-sm font-bold text-weakTextBluish">
+        <div className="text-xs font-bold text-weakTextBluish">
           {seatLocation}
         </div>
 
         {/* Price Row */}
-        <div className="flex items-center gap-3">
-          <span className="text-strongText text-xl font-extrabold">
+        <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+          <span className="text-strongText text-lg font-extrabold">
             ₪{price}
           </span>
           {priceBefore && (
-            <span className="text-weakTextBluish font-bold text-sm line-through">
+            <span className="text-weakTextBluish font-bold text-xs line-through">
               ₪{priceBefore}
             </span>
           )}
           <Image
             src={PriceIcon}
             alt="Price icon"
-            className="h-[24px] w-[12px]"
+            className="h-[20px] w-[10px] mr-auto"
           />
         </div>
       </div>

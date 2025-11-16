@@ -43,7 +43,7 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm py-8 overflow-y-auto">
           {/* Dialog Box */}
           <div
-            className={`relative bg-white shadow-lg p-4 my-auto ${width} ${height}`}
+            className={`relative bg-white shadow-lg sm:p-10 my-auto sm:${width} sm:h-auto w-[92%] h-auto py-10 px-2`}
           >
             {/* Exit Button */}
             <button

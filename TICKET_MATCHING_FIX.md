@@ -102,7 +102,7 @@ Visit `/diagnostic` to see:
 Go to `/Admin` and create a concert with:
 
 - Artist: "עומר אדם"
-- Title: "קונצרט חג"
+- Title: "אירוע חג"
 - Date: "06/12/2026" (dd/mm/yyyy format)
 - Time: "21:00"
 - Venue: "פארק הירקון - תל אביב"
@@ -135,16 +135,16 @@ Found existing concert with ID: abc123
 
 ## Common Matching Scenarios
 
-###  Will Match Now:
+### Will Match Now:
 
 | Admin Input            | OCR Extract            | Match? |
 | ---------------------- | ---------------------- | ------ |
-| Artist: "עומר אדם"     | Artist: "עומר אדם"     |  Yes |
-| Date: "06/12/2026"     | Date: "6 בדצמבר 2026"  |  Yes |
-| Venue: "Park Hayarkon" | Venue: "park hayarkon" |  Yes |
-| Date: "06/12/2026"     | Date: "06 DEC 2026"    |  Yes |
+| Artist: "עומר אדם"     | Artist: "עומר אדם"     | Yes    |
+| Date: "06/12/2026"     | Date: "6 בדצמבר 2026"  | Yes    |
+| Venue: "Park Hayarkon" | Venue: "park hayarkon" | Yes    |
+| Date: "06/12/2026"     | Date: "06 DEC 2026"    | Yes    |
 
-###  Will Still Create New Concert:
+### Will Still Create New Concert:
 
 | Scenario                                | Reason                                |
 | --------------------------------------- | ------------------------------------- |

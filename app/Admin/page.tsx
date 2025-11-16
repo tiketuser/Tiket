@@ -9,7 +9,6 @@ import {
   getDocs,
   query,
   orderBy,
-  deleteDoc,
   doc,
   where,
   updateDoc,
@@ -18,6 +17,9 @@ import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
 import { getDefaultCategoryImage } from "../theme/defaultCategoryImages";
+
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
 
 interface EventFormData {
   artist: string;
@@ -106,19 +108,6 @@ export default function AdminPage() {
 
     fetchEvents();
   }, []);
-
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm("האם אתה בטוח שברצונך למחוק את האירוע?")) return;
-
-    try {
-      await deleteDoc(doc(db as any, "concerts", eventId));
-      setEvents((prev) => prev.filter((c) => c.id !== eventId));
-      setMessage({ type: "success", text: " האירוע נמחק בהצלחה" });
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      setMessage({ type: "error", text: "שגיאה במחיקת האירוע" });
-    }
-  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -260,7 +249,7 @@ export default function AdminPage() {
       console.error("Error creating event:", error);
       setMessage({
         type: "error",
-        text: "שגיאה ביצירת הקונצרט. נא לנסות שוב.",
+        text: "שגיאה ביצירת האירוע. נא לנסות שוב.",
       });
     } finally {
       setLoading(false);
@@ -440,7 +429,7 @@ export default function AdminPage() {
               צור אירוע חדש במערכת
             </p>
             {/* Link to manage default images */}
-            <div className="mt-4 flex gap-3 justify-center">
+            <div className="mt-4 flex gap-3 justify-center flex-wrap">
               <a
                 href="/manage-default-images"
                 className="inline-block px-6 py-2 bg-secondary text-primary rounded-lg hover:bg-highlight hover:text-white transition-colors font-semibold"
@@ -452,6 +441,12 @@ export default function AdminPage() {
                 className="inline-block px-6 py-2 bg-secondary text-primary rounded-lg hover:bg-highlight hover:text-white transition-colors font-semibold"
               >
                 ניהול צבעי קטגוריות
+              </a>
+              <a
+                href="/Admin/pnl-calculator"
+                className="inline-block px-6 py-2 bg-secondary text-primary rounded-lg hover:bg-highlight hover:text-white transition-colors font-semibold"
+              >
+                מחשבון P&L
               </a>
             </div>
           </div>
@@ -907,40 +902,17 @@ export default function AdminPage() {
                             </div>
                           </div>
 
-                          {/* Actions */}
-                          <div className="flex gap-2 mr-4">
-                            <button
-                              onClick={() => handleDeleteEvent(event.id)}
-                              className="p-2 bg-secondary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
-                              title="מחק אירוע"
+                          <div className="flex justify-end">
+                            <span
+                              className={`px-3 py-1 rounded-full text-text-extra-small font-semibold ${
+                                event.status === "active"
+                                  ? "bg-secondary text-primary border border-primary"
+                                  : "bg-weakText text-white"
+                              }`}
                             >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
+                              {event.status === "active" ? " פעיל" : " לא פעיל"}
+                            </span>
                           </div>
-                        </div>
-
-                        <div className="flex justify-end">
-                          <span
-                            className={`px-3 py-1 rounded-full text-text-extra-small font-semibold ${
-                              event.status === "active"
-                                ? "bg-secondary text-primary border border-primary"
-                                : "bg-weakText text-white"
-                            }`}
-                          >
-                            {event.status === "active" ? " פעיל" : " לא פעיל"}
-                          </span>
                         </div>
                       </div>
                     </div>

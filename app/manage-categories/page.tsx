@@ -7,6 +7,9 @@ import AdminProtection from "../components/AdminProtection/AdminProtection";
 import { db } from "../../firebase";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
+
 interface Concert {
   id: string;
   artist: string;
@@ -89,19 +92,19 @@ export default function ManageCategoriesPage() {
               ניהול קטגוריות
             </h1>
             <p className="text-body-large text-mutedText">
-              בחר באילו קטגוריות כל קונצרט יוצג בדף ViewMore
+              בחר באילו קטגוריות כל אירוע יוצג בדף ViewMore
             </p>
           </div>
 
           {loading && (
             <div className="text-center text-lg text-gray-500 py-8">
-              טוען קונצרטים...
+              טוען אירועים...
             </div>
           )}
 
           {!loading && concerts.length === 0 && (
             <div className="text-center text-lg text-gray-500 py-8">
-              אין קונצרטים זמינים
+              אין אירועים זמינים
             </div>
           )}
 
@@ -175,8 +178,8 @@ export default function ManageCategoriesPage() {
               <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h3 className="font-bold text-blue-900 mb-2">מידע:</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>לחץ על התיבות כדי להוסיף או להסיר קונצרט מקטגוריה</li>
-                  <li>קונצרטים יכולים להיות במספר קטגוריות בו זמנית</li>
+                  <li>לחץ על התיבות כדי להוסיף או להסיר אירוע מקטגוריה</li>
+                  <li>אירועים יכולים להיות במספר קטגוריות בו זמנית</li>
                   <li>השינויים נשמרים אוטומטית ויופיעו מיד בדף ViewMore</li>
                 </ul>
               </div>

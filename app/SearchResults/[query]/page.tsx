@@ -5,6 +5,10 @@ import { db } from "../../../firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { calculateTimeLeft } from "../../../utils/timeCalculator";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Define CardData type here or import it
 interface CardData {
   id: string;
@@ -40,23 +44,7 @@ interface Ticket {
   status: string;
 }
 
-// Static params for SSG
-export async function generateStaticParams() {
-  // Return empty array if db is not available
-  if (!db) {
-    return [];
-  }
-
-  // Fetch artist names from concerts
-  const querySnapshot = await getDocs(collection(db, "concerts"));
-  const artistNames = Array.from(
-    new Set(querySnapshot.docs.map((doc) => doc.data().artist))
-  ).filter(Boolean);
-
-  return artistNames.map((name) => ({
-    query: encodeURIComponent(name as string),
-  }));
-}
+// Removed generateStaticParams - using dynamic rendering instead
 
 const SearchResults = async ({ params }: { params: { query: string } }) => {
   const query = decodeURIComponent(params.query);

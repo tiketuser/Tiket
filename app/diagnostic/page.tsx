@@ -6,6 +6,9 @@ import AdminProtection from "../components/AdminProtection/AdminProtection";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
+
 export default function DiagnosticPage() {
   const [concerts, setConcerts] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);

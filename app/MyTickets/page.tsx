@@ -9,6 +9,9 @@ import SingleCard from "../components/SingleCard/SingleCard";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 export default function MyTicketsPage() {
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPast, setShowPast] = useState(true);
@@ -47,10 +50,7 @@ export default function MyTicketsPage() {
               </div>
             ) : (
               cardsData.map((card) => (
-                <div
-                  key={card.id}
-                  className="flex items-center justify-center"
-                >
+                <div key={card.id} className="flex items-center justify-center">
                   <div className="flex mb-8 w-full justify-center items-center">
                     <SingleCard
                       location={card.location}

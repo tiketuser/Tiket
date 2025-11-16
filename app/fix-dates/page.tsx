@@ -7,6 +7,9 @@ import AdminProtection from "../components/AdminProtection/AdminProtection";
 import { db } from "../../firebase";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
+
 interface Concert {
   id: string;
   artist: string;

@@ -3,8 +3,15 @@ import SingleCard from "../../components/SingleCard/SingleCard";
 import Footer from "../../components/Footer/Footer";
 import EventUpperSection from "../../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../../components/SeatingMap/SeatingMap";
+import dynamicImport from "next/dynamic";
 import { db } from "../../../firebase";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
+
+// Dynamically import ViewTracker to avoid SSR issues
+const ViewTracker = dynamicImport(
+  () => import("./ViewTracker").then((mod) => mod.ViewTracker),
+  { ssr: false }
+);
 
 // Enable dynamic rendering with revalidation
 export const dynamic = "force-dynamic";
@@ -93,7 +100,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
         <div>
           <NavBar />
           <div className="text-center text-red-500 text-xl mt-20">
-            לא נמצא קונצרט של {decodedTitle} 😢
+            לא נמצא אירוע של {decodedTitle} 😢
           </div>
           <Footer />
         </div>
@@ -131,6 +138,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
 
     return (
       <div>
+        <ViewTracker concertId={concert.id} />
         <NavBar />
         <EventUpperSection
           imageSrc={concert.imageData || "/images/Artist/default.png"}
@@ -140,7 +148,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
           time={concert.time}
           availableTickets={tickets.length}
         />
-        <div className="flex flex-col items-center justify-center sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 pt-8 pr-4 pb-8 pl-4 gap-4 shadow-small-inner">
+        <div className="flex flex-col items-center justify-center sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 pt-8 px-2 sm:px-4 pb-8 gap-4 shadow-small-inner">
           {tickets.map((ticket) => {
             // Format seat location more efficiently
             const seatLocation = ticket.isStanding

@@ -42,7 +42,7 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
       <div className="hidden sm:block">
         <Carousel dir="ltr" className="w-full relative">
           <CarouselContent
-            className={`flex flex-nowrap gap-6 h-[640px] ${
+            className={`flex flex-nowrap gap-6 ${
               shouldCenter ? "justify-center" : ""
             }`}
           >
@@ -50,11 +50,11 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
               <CarouselItem
                 key={card.id}
                 dir="rtl"
-                className={shouldCenter ? "basis-auto" : ""}
+                className={`basis-1/3 ${shouldCenter ? "lg:basis-auto" : ""}`}
               >
-                <Link href={`/EventPage/${encodeURIComponent(card.title)}`}>
+                <div className="w-[392px] h-[700px]">
                   <Card {...card} openLoginDialog={openLoginDialog} />
-                </Link>
+                </div>
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -72,17 +72,11 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
         </div>
       </div>
       {/* Grid Layout for screens < sm - 2 cards per row */}
-      <div className="sm:hidden grid grid-cols-2 gap-4 gap-y-2 w-full px-2 mt-6 mb-8">
+      <div className="sm:hidden grid grid-cols-2 gap-3 w-full px-3 mt-6 mb-8">
         {cardsData.map((card) => (
-          <Link
-            key={card.id}
-            href={`/EventPage/${encodeURIComponent(card.title)}`}
-            className="flex justify-center items-center w-full h-[300px]"
-          >
-            <div className="w-full flex justify-center transform scale-[0.42] origin-center">
-              <Card {...card} openLoginDialog={openLoginDialog} />
-            </div>
-          </Link>
+          <div key={card.id} className="w-full">
+            <Card {...card} openLoginDialog={openLoginDialog} />
+          </div>
         ))}
       </div>
     </div>

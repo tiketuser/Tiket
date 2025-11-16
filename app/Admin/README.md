@@ -8,7 +8,7 @@ The Admin panel allows you to create and manage concerts in the system. Each con
 
 Navigate to: http://localhost:3000/Admin
 
-Or click "🎭 ניהול קונצרטים" in the navbar dropdown (under "הכרטיסים שלי")
+Or click "🎭 ניהול אירועים" in the navbar dropdown (under "הכרטיסים שלי")
 
 ## Features
 
@@ -17,13 +17,13 @@ Or click "🎭 ניהול קונצרטים" in the navbar dropdown (under "הכ�
 Fill in the form with:
 
 - **Artist Name** (שם האמן) - Required
-- **Concert Title** (כותרת הקונצרט) - Required
+- **Concert Title** (כותרת האירוע) - Required
 - **Date** (תאריך) - Format: dd/mm/yyyy (e.g., 25/12/2025)
 - **Time** (שעה) - Format: HH:MM (e.g., 20:00)
 - **Venue** (מיקום) - Location of the concert
 - **Image** (תמונה) - Upload a concert poster/image (JPG, PNG, WEBP)
 
-Click "🎸 צור קונצרט חדש" to create.
+Click "🎸 צור אירוע חדש" to create.
 
 ### 2. View Existing Concerts
 

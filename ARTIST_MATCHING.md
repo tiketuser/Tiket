@@ -1,4 +1,4 @@
-#  Artist Matching System
+# Artist Matching System
 
 ## Overview
 
@@ -8,9 +8,9 @@ The artist matching system provides intelligent Hebrew ↔ English artist name m
 
 ### 1. **Multi-Language Support**
 
--  Hebrew names: "עומר אדם", "סטטיק ובן אל תבורי"
--  English names: "Omer Adam", "Static and Ben El Tavori"
--  Mixed variations: "Static & Ben El", "סטטיק בן אל"
+- Hebrew names: "עומר אדם", "סטטיק ובן אל תבורי"
+- English names: "Omer Adam", "Static and Ben El Tavori"
+- Mixed variations: "Static & Ben El", "סטטיק בן אל"
 
 ### 2. **Normalization**
 
@@ -170,21 +170,21 @@ Input: "עומר אדם"      → "עומר אדם" (Hebrew preserved)
 ### Step 2: Exact Match Check
 
 ```
-"omer adam" === "omer adam" 
+"omer adam" === "omer adam"
 ```
 
 ### Step 3: Alias Lookup
 
 ```
 ARTIST_ALIASES["omer adam"] = ["עומר אדם", "omer adam", ...]
-"עומר אדם" found in aliases 
+"עומר אדם" found in aliases
 ```
 
 ### Step 4: Fuzzy Matching (if needed)
 
 ```
-Levenshtein("omer adam", "omar adam") → similarity: 0.91 
-Levenshtein("omer adam", "different") → similarity: 0.30 
+Levenshtein("omer adam", "omar adam") → similarity: 0.91
+Levenshtein("omer adam", "different") → similarity: 0.30
 ```
 
 ## Integration Points
@@ -214,7 +214,7 @@ Levenshtein("omer adam", "different") → similarity: 0.30
 
 ## Benefits
 
- **Automatic Matching** - Tickets automatically find concerts regardless of language  
+**Automatic Matching** - Tickets automatically find concerts regardless of language  
  **Typo Tolerance** - Minor spelling errors don't break matching  
  **Bilingual Support** - Works with Hebrew and English seamlessly  
  **Manual Override** - Admin can link tickets manually when needed  
@@ -239,7 +239,7 @@ The system provides detailed console output:
 1. **Check artist spelling** - Go to `/manage-artists` and test both names
 2. **Check console logs** - Look for matching decisions in browser console
 3. **Add alias if needed** - Edit `ARTIST_ALIASES` in `utils/artistMatcher.ts`
-4. **Manual linking** - Use "קשר לקונצרט זה" button in `/approve-tickets`
+4. **Manual linking** - Use "קשר לאירוע זה" button in `/approve-tickets`
 
 ### False positives?
 
@@ -255,11 +255,11 @@ The system provides detailed console output:
 
 ## Future Enhancements
 
--  Admin UI to add aliases without code editing
--  Machine learning for automatic alias discovery
--  Support for artist nicknames/stage names
--  Integration with external artist databases
--  Transliteration engine for Hebrew ↔ English conversion
+- Admin UI to add aliases without code editing
+- Machine learning for automatic alias discovery
+- Support for artist nicknames/stage names
+- Integration with external artist databases
+- Transliteration engine for Hebrew ↔ English conversion
 
 ## Files
 

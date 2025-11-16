@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ResultSection from "../../components/ResultSection/ResultSection";
 import SearchResultsClient from "./SearchResultsClient";
 import { DateRange } from "react-day-picker";
@@ -37,12 +37,18 @@ export default function SearchResultsWrapper({
   artistNames,
 }: SearchResultsWrapperProps) {
   const [filteredTickets, setFilteredTickets] = useState<CardData[]>(tickets);
+  const [loading, setLoading] = useState(true);
   const [activeFilters, setActiveFilters] = useState<FilterState>({
     cities: [],
     venues: [],
     dateRange: undefined,
     priceRange: [0, 1000],
   });
+
+  // Set loading to false once component mounts
+  useEffect(() => {
+    setLoading(false);
+  }, []);
 
   // Apply filters to tickets
   const applyFilters = (
@@ -113,17 +119,22 @@ export default function SearchResultsWrapper({
   const openLoginDialog = () => {};
 
   return (
-    <div className="shadow-small-inner py-14 px-24">
+    <div className="shadow-small-inner py-6 sm:py-14 px-4 sm:px-24">
       <ResultSection
         withUpperSection={true}
         title={query}
         upperText="חיפשת"
-        subText="אלו המופעים הקרובים של האמן שחיפשת"
+        subText="אירועים שתואמים לחיפוש שלך"
         artistNames={artistNames}
         onFilterChange={handleFilterChange}
       />
-      {displayTickets.length === 0 && hasActiveFilters ? (
-        <div className="text-center text-gray-500 text-xl mt-10 mb-10">
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-10 sm:py-20">
+          <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-primary mb-4"></div>
+          <p className="text-base sm:text-lg text-gray-600">טוען תוצאות...</p>
+        </div>
+      ) : displayTickets.length === 0 && hasActiveFilters ? (
+        <div className="text-center text-gray-500 text-lg sm:text-xl mt-6 sm:mt-10 mb-6 sm:mb-10 px-4">
           לא נמצאו אירועים התואמים את הסינון
         </div>
       ) : (

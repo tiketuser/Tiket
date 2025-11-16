@@ -14,9 +14,14 @@ import LoginRegisterButtons from "../LoginRegisterButtons/LoginRegisterButtons";
 interface LoginDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onSwitchToLogin?: () => void;
 }
 
-const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
+const SignUpDialog: React.FC<LoginDialogProps> = ({
+  isOpen,
+  onClose,
+  onSwitchToLogin,
+}) => {
   const [error, setError] = useState<string>("");
 
   const firebaseErrorToHebrew = (code: string) => {
@@ -74,15 +79,15 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
   return (
     <AdjustableDialog
-      width="sm:w-[880px] w-[400px]"
-      height="sm:h-[835px] h-[540px]"
+      width="w-[90vw] max-w-[400px] sm:max-w-[880px] sm:w-[880px]"
+      height="h-auto min-h-[600px] sm:h-[835px]"
       isOpen={isOpen}
       onClose={onClose}
       heading="הירשם"
       description="הירשם בכדי לקנות ולמכור כרטיסים"
     >
       <form
-        className="grid place-items-center grid-cols-2 sm:w-[456px] w-[256px] gap-x-7"
+        className="grid place-items-center grid-cols-2 w-full px-4 sm:px-0 sm:w-[456px] gap-x-3 sm:gap-x-7"
         onChange={(e) => {
           const form = e.currentTarget;
           const button = document.getElementById(
@@ -99,8 +104,8 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           name="email"
           type="email"
           placeholder="דואר אלקטרוני"
-          width="sm:w-[456px] w-[256px]"
-          className="col-span-2 sm:mt-10 mt-4"
+          width="sm:w-[456px] w-full"
+          className="col-span-2 sm:mt-10 mt-6"
           required={true}
         />
         <CustomInput
@@ -109,7 +114,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           type="phone"
           pattern="^\d{10}$"
           placeholder="מספר טלפון"
-          width="sm:w-[456px] w-[256px]"
+          width="sm:w-[456px] w-full"
           className="col-span-2 sm:mt-6 mt-4"
           required={true}
         />
@@ -119,7 +124,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           type="text"
           required={true}
           placeholder="שם פרטי"
-          width="sm:w-[212px] w-[112px]"
+          width="sm:w-[212px] w-full"
           className="sm:mt-10 mt-4"
           pattern="^\S+$"
         />
@@ -128,7 +133,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           name="lname"
           type="text"
           placeholder="שם משפחה"
-          width="sm:w-[212px] w-[112px]"
+          width="sm:w-[212px] w-full"
           className="sm:mt-10 mt-4"
           required={true}
           pattern="^\S+$"
@@ -138,7 +143,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           name="password"
           type="password"
           placeholder="סיסמא"
-          width="sm:w-[212px] w-[112px]"
+          width="sm:w-[212px] w-full"
           className="sm:mt-6 mt-4"
           required={true}
         />
@@ -147,13 +152,13 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           name="re-password"
           type="password"
           placeholder="אשר סיסמא"
-          width="sm:w-[212px] w-[112px]"
+          width="sm:w-[212px] w-full"
           className="sm:mt-6 mt-4"
           required={true}
         />
 
         {error && (
-          <div className="col-span-2 text-red-600 text-center pt-4">
+          <div className="col-span-2 text-red-600 text-center pt-3 text-sm">
             {error}
           </div>
         )}
@@ -161,18 +166,25 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         <button
           type="submit"
           id="submitButton"
-          className="btn sm:w-[456px] w-[256px] sm:h-[48px] h-[32px] min-h-0 sm:mt-10 mt-4 btn-secondary bg-primary text-white text-text-regular col-span-2 disabled:bg-secondary disabled:text-white"
+          className="btn rounded-md w-full sm:w-[456px] h-[44px] sm:h-[48px] min-h-0 sm:mt-10 mt-4 btn-secondary bg-primary text-white text-base font-semibold col-span-2 disabled:bg-secondary disabled:text-white"
           disabled
         >
           הירשם
         </button>
 
-        <div className="col-span-2 p-3">
+        <div className="col-span-2 p-3 w-full">
           <CheckBox text="אני מאשר את תנאי השימוש" required={true} />
         </div>
       </form>
 
-      <LoginRegisterButtons className="sm:mt-14" />
+      <LoginRegisterButtons
+        className="sm:mt-14 mt-8 pb-4"
+        redButton="הירשם"
+        grayButton="התחבר"
+        onRedClick={() => {}} // Already on signup, do nothing
+        onGrayClick={onSwitchToLogin}
+        activeButton="red" // הירשם is active on signup dialog
+      />
     </AdjustableDialog>
   );
 };

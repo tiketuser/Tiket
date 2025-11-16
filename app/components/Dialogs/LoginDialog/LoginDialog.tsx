@@ -14,10 +14,17 @@ import { db } from "../../../../firebase";
 interface LoginDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onSwitchToSignup?: () => void;
 }
 
-const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
+const LoginDialog: React.FC<LoginDialogProps> = ({
+  isOpen,
+  onClose,
+  onSwitchToSignup,
+}) => {
   const [error, setError] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
 
   // Email login handler
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -56,6 +63,9 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       }
 
       // Check if user doc exists
+      if (!db) {
+        throw new Error("Database not initialized");
+      }
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
 
@@ -81,21 +91,26 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
   return (
     <AdjustableDialog
-      width="sm:w-[880px] w-[400px]"
-      height="sm:h-[675px] h-[450px]"
-      heading="התחבר"
-      description="התחבר בכדי לקנות כרטיסים"
+      width="w-[90vw] max-w-[400px] sm:max-w-[880px] sm:w-[880px]"
+      height="h-auto min-h-[500px] sm:h-[675px]"
+      heading="התחברות"
+      description="התחבר בכדי לקנות ולמכור כרטיסים"
       isOpen={isOpen}
       onClose={onClose}
     >
-      <form className="flex flex-col items-center" onSubmit={handleEmailSubmit}>
+      <form
+        className="flex flex-col items-center w-full px-4 sm:px-0"
+        onSubmit={handleEmailSubmit}
+      >
         <CustomInput
           id="email"
           name="email"
           required={true}
-          placeholder="דואר אלקטרוני"
-          className="sm:pt-9"
-          width="sm:w-[456px] w-[256px]"
+          placeholder="דואר אלקטרוני / מספר טלפון"
+          className="sm:pt-9 pt-6"
+          width="sm:w-[456px] w-full"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <CustomInput
           id="password"
@@ -103,34 +118,40 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           required={true}
           type="password"
           placeholder="סיסמא"
-          className="pt-6"
-          width="sm:w-[456px] w-[256px]"
+          className="pt-4 sm:pt-6"
+          width="sm:w-[456px] w-full"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
-        {error && <div className="text-red-600 text-center pt-4">{error}</div>}
-        <button className="btn btn-primary mt-4" type="submit">
+        {error && (
+          <div className="text-red-600 text-center pt-3 text-sm">{error}</div>
+        )}
+
+        <div className="text-center mt-3 mb-4 w-full">
+          <a href="#" className="text-sm text-primary underline">
+            שכחתי סיסמא
+          </a>
+        </div>
+
+        <button
+          className="btn rounded-md h-[44px] min-h-0 w-full sm:w-[456px] btn-primary text-base font-semibold disabled:bg-secondary disabled:text-white"
+          type="submit"
+          disabled={!email.trim() || !password.trim()}
+        >
           התחבר
         </button>
+
         <button
           type="button"
           onClick={handleGoogleLogin}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#fff",
-            border: "1px solid #dadce0",
-            borderRadius: "4px",
-            fontWeight: 500,
-            fontSize: "16px",
-            color: "#3c4043",
-            padding: "8px 16px",
-            marginTop: "12px",
-            boxShadow: "none",
-            cursor: "pointer",
-            gap: "8px",
-          }}
+          className="w-full sm:w-[456px] h-[44px] flex items-center justify-center bg-white border border-gray-300 rounded-md font-medium text-sm text-gray-700 mt-3 hover:bg-gray-50 transition-colors"
         >
-          <svg width="20" height="20" viewBox="0 0 48 48">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 48 48"
+            className="absolute mr-32"
+          >
             <g>
               <path
                 fill="#4285F4"
@@ -155,9 +176,12 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         </button>
       </form>
       <LoginRegisterButtons
-        className="sm:pt-14"
+        className="sm:pt-14 pt-8 pb-4"
         redButton="הירשם"
         grayButton="התחבר"
+        onRedClick={onSwitchToSignup}
+        onGrayClick={() => {}} // Already on login, do nothing
+        activeButton="gray" // התחבר is active on login dialog
       />
     </AdjustableDialog>
   );

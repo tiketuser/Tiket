@@ -106,3 +106,21 @@ input:-webkit-autofill:active {
     color: black !important; /* צבע טקסט תקין */
     transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Navigation loading bar animation */
+@keyframes loading-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.5s ease-in-out infinite;
+}
+

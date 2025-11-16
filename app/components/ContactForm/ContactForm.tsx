@@ -46,7 +46,7 @@ const ContactForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-[529px] mx-auto p-6">
+    <form onSubmit={handleSubmit} className="w-full max-w-[529px] p-4 sm:p-6">
       {/* שם מלא */}
       <input
         autoComplete="off"
@@ -58,7 +58,7 @@ const ContactForm = () => {
         placeholder="שם מלא"
         value={formData.fullName}
         onChange={handleChange}
-        className={`w-full border border-weakText p-[10.5px] px-[16px] rounded-[8px] mb-3 text-text-regular placeholder-mutedText ${
+        className={`w-full border p-3 px-4 rounded-lg mb-4 text-text-regular placeholder-mutedText focus:outline-none focus:ring-2 focus:ring-primary/20 ${
           errors.fullName ? "border-primary" : "border-weakText"
         }`}
       />
@@ -74,7 +74,7 @@ const ContactForm = () => {
         placeholder="אימייל"
         value={formData.email}
         onChange={handleChange}
-        className={`w-full border border-weakText p-[10.5px] px-[16px] rounded-[8px] mb-3 text-text-regular placeholder-mutedText ${
+        className={`w-full border p-3 px-4 rounded-lg mb-4 text-text-regular placeholder-mutedText focus:outline-none focus:ring-2 focus:ring-primary/20 ${
           errors.email ? "border-primary" : "border-weakText"
         }`}
       />
@@ -85,7 +85,7 @@ const ContactForm = () => {
         placeholder="כתוב את הודעתך"
         value={formData.message}
         onChange={handleChange}
-        className={`w-full border border-weakText p-[10.5px] px-[16px] rounded-[8px] mb-3 text-text-regular placeholder-mutedText h-[120px] resize-none ${
+        className={`w-full border p-3 px-4 rounded-lg mb-4 text-text-regular placeholder-mutedText h-[140px] resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 ${
           errors.message ? "border-primary" : "border-weakText"
         }`}
       />
@@ -93,22 +93,33 @@ const ContactForm = () => {
       {/* כפתור שליחה */}
       <button
         type="submit"
-        className="w-full bg-highlight text-white rounded-[6px] h-12 pt-2 pr-4 pb-2 pl-4 text-text-large font-regular disabled:opacity-50"
+        className="w-full bg-highlight text-white rounded-lg h-12 text-text-large font-semibold disabled:opacity-50 hover:bg-highlight/90 transition-colors"
         disabled={!formData.termsAccepted}
       >
         שלח
       </button>
 
       {/* אישור תנאים */}
-      <div className="flex items-center mt-3 justify-center">
+      <div className="flex items-center mt-4 justify-center gap-2">
         <input
           type="checkbox"
           name="termsAccepted"
           checked={formData.termsAccepted}
           onChange={handleChange}
-          className="w-4 h-4 ml-2 border border-gray-300 rounded cursor-pointer"
+          className="w-4 h-4 border border-gray-300 rounded cursor-pointer accent-primary"
         />
-        <label className="text-sm text-mutedText">
+        <label
+          className="text-sm text-mutedText cursor-pointer"
+          onClick={() =>
+            handleChange({
+              target: {
+                name: "termsAccepted",
+                type: "checkbox",
+                checked: !formData.termsAccepted,
+              },
+            } as any)
+          }
+        >
           אני מאשר את תנאי השימוש
         </label>
       </div>

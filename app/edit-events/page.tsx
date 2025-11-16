@@ -10,10 +10,14 @@ import {
   getDocs,
   doc,
   updateDoc,
+  deleteDoc,
   query,
   orderBy,
 } from "firebase/firestore";
 import Image from "next/image";
+
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
 
 interface Concert {
   id: string;
@@ -42,6 +46,11 @@ export default function EditConcertsPage() {
   }, []);
 
   const loadConcerts = async () => {
+    if (!db) {
+      alert("מסד הנתונים לא מחובר");
+      return;
+    }
+
     try {
       setLoading(true);
       const concertsQuery = query(
@@ -75,7 +84,17 @@ export default function EditConcertsPage() {
   const handleSave = async () => {
     if (!editForm || !selectedConcert) return;
 
+    if (!db) {
+      alert("מסד הנתונים לא מחובר");
+      return;
+    }
+
     if (!confirm(`האם אתה בטוח שברצונך לעדכן את האירוע ${editForm.artist}?`)) {
+      return;
+    }
+
+    if (!db) {
+      alert("Database not initialized");
       return;
     }
 
@@ -109,6 +128,31 @@ export default function EditConcertsPage() {
       alert("שגיאה בעדכון האירוע");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (concertId: string, artistName: string) => {
+    if (!confirm(`האם אתה בטוח שברצונך למחוק את האירוע של ${artistName}?`)) {
+      return;
+    }
+
+    if (!db) {
+      alert("מסד הנתונים לא מחובר");
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, "concerts", concertId));
+      setConcerts(concerts.filter((c) => c.id !== concertId));
+      alert("האירוע נמחק בהצלחה!");
+
+      // If the deleted concert was being edited, close the edit form
+      if (selectedConcert?.id === concertId) {
+        handleCancel();
+      }
+    } catch (error) {
+      console.error("Error deleting concert:", error);
+      alert("שגיאה במחיקת האירוע");
     }
   };
 
@@ -271,12 +315,35 @@ export default function EditConcertsPage() {
                             <p>{concert.views} צפיות</p>
                           )}
                         </div>
-                        <button
-                          onClick={() => handleEdit(concert)}
-                          className="w-full mt-4 bg-primary text-white py-2 px-4 rounded-lg hover:bg-highlight transition-colors font-bold"
-                        >
-                          ערוך אירוע
-                        </button>
+                        <div className="flex gap-2 mt-4">
+                          <button
+                            onClick={() => handleEdit(concert)}
+                            className="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-highlight transition-colors font-bold"
+                          >
+                            ערוך אירוע
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDelete(concert.id, concert.artist)
+                            }
+                            className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors font-bold"
+                            title="מחק אירוע"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}

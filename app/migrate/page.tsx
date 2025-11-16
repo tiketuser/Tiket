@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 
+// Force dynamic rendering for admin pages
+export const dynamic = "force-dynamic";
+
 export default function MigratePage() {
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<any>(null);

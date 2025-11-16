@@ -1,10 +1,10 @@
-#  Concert Image Updater
+# Concert Image Updater
 
 ## Overview
 
 Automatically convert artist images from `public/images/Artist` to base64 and add them to concerts in Firestore.
 
-##  Purpose
+## Purpose
 
 Instead of manually uploading concert posters one by one, this tool:
 
@@ -13,12 +13,12 @@ Instead of manually uploading concert posters one by one, this tool:
 3. Matches them to concerts by artist name
 4. Updates Firestore automatically
 
-##  How to Use
+## How to Use
 
 ### Option 1: Web UI (Recommended)
 
 1. Visit: http://localhost:3000/update-images
-2. Click "עדכן תמונות קונצרטים"
+2. Click "עדכן תמונות אירועים"
 3. View results and statistics
 4. Go to homepage to see updated concerts
 
@@ -28,7 +28,7 @@ Instead of manually uploading concert posters one by one, this tool:
 node update-concert-images.js
 ```
 
-##  Available Artist Images
+## Available Artist Images
 
 The following artists have images in `public/images/Artist`:
 
@@ -47,7 +47,7 @@ The following artists have images in `public/images/Artist`:
 | `gayaviv.png`       | גיא אביב, Guy Aviv                       |
 | `ofekrap.png`       | אופק רפ, Ofek Rap                        |
 
-##  How It Works
+## How It Works
 
 ### 1. Artist Matching
 
@@ -74,11 +74,11 @@ await updateDoc(doc(db, "concerts", concertId), {
 
 ### 4. Smart Skipping
 
--  **Updates**: Concerts without images or with old image format
+- **Updates**: Concerts without images or with old image format
 - ⏭ **Skips**: Concerts already with base64 images
--  **Reports**: Concerts with no matching image file
+- **Reports**: Concerts with no matching image file
 
-##  Results
+## Results
 
 After running, you'll see:
 
@@ -99,7 +99,7 @@ After running, you'll see:
 - ** Not Found**: No matching image file for this artist
 - ** Error**: Technical issue during update
 
-##  Adding New Artist Images
+## Adding New Artist Images
 
 To add a new artist:
 
@@ -121,7 +121,7 @@ const artistMapping = {
 
 3. **Run update** again to apply the new image
 
-##  Technical Details
+## Technical Details
 
 ### Files Created:
 
@@ -144,7 +144,7 @@ const artistMapping = {
 }
 ```
 
-##  Troubleshooting
+## Troubleshooting
 
 ### "No concerts found in database"
 
@@ -174,7 +174,7 @@ const artistMapping = {
 **Note**: This is normal! The script won't overwrite existing images.
 To force update, manually delete the `imageData` field in Firestore first.
 
-##  Workflow Example
+## Workflow Example
 
 ### Scenario: You just ran migration
 
@@ -187,13 +187,13 @@ Your database now has:
 
 ```
 Visit: /update-images
-Click: "עדכן תמונות קונצרטים"
+Click: "עדכן תמונות אירועים"
 ```
 
 ### Results:
 
--  8 concerts matched and updated with images
--  2 concerts don't have matching images in folder
+- 8 concerts matched and updated with images
+- 2 concerts don't have matching images in folder
 
 ### What to do with the 2 unmatched:
 
@@ -205,10 +205,10 @@ Click: "עדכן תמונות קונצרטים"
 
 ```
 Visit: /
-Gallery now shows professional concert posters! 
+Gallery now shows professional concert posters!
 ```
 
-##  Pro Tips
+## Pro Tips
 
 1. **Use high-quality images**
 
@@ -233,7 +233,7 @@ Gallery now shows professional concert posters!
    - Keep original images under 500KB for best performance
    - Firestore has 1MB document size limit
 
-##  Expected Results
+## Expected Results
 
 ### Before:
 
@@ -246,23 +246,23 @@ Gallery now shows professional concert posters!
 - Clean, marketplace-quality appearance
 - Consistent branding across all concerts
 
-##  Related Pages
+## Related Pages
 
 - `/Admin` - Create concerts manually
 - `/migrate` - Convert tickets to concerts
 - `/diagnostic` - View database contents
 - `/` - Homepage gallery (see results)
 
-##  Benefits
+## Benefits
 
--  **Fast**: Updates multiple concerts in seconds
--  **Professional**: Uses your curated artist images
--  **Automated**: No manual work per concert
--  **Safe**: Skips concerts already with images
--  **Transparent**: Shows detailed results
+- **Fast**: Updates multiple concerts in seconds
+- **Professional**: Uses your curated artist images
+- **Automated**: No manual work per concert
+- **Safe**: Skips concerts already with images
+- **Transparent**: Shows detailed results
 
 ---
 
-##  Summary
+## Summary
 
 This tool makes it easy to give all your concerts professional, consistent images without manual uploading. Just run once and all matching concerts get their artist photos automatically!
