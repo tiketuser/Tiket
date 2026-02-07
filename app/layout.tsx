@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Assistant } from "next/font/google";
 import "./globals.css";
 import NavigationLoader from "./components/NavigationLoader/NavigationLoader";
@@ -13,11 +13,17 @@ const assistant = Assistant({
   variable: "--font-assistant",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#6366f1",
+};
+
 export const metadata: Metadata = {
   title: "Tiket - כרטיסים בקליק",
   description: "פלטפורמת מסחר בכרטיסים לאירועים",
   manifest: "/manifest.json",
-  themeColor: "#6366f1",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -25,17 +31,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/images/tiketlogo.svg", sizes: "any", type: "image/svg+xml" },
     ],
     apple: [
-      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/images/tiketlogo.svg", sizes: "any", type: "image/svg+xml" },
     ],
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
   },
 };
 

@@ -2,11 +2,36 @@
 import { NextResponse } from "next/server";
 import vision from "@google-cloud/vision";
 import path from "path";
+import fs from "fs";
 
-// Initialize Vision API client
-const visionClient = new vision.ImageAnnotatorClient({
-  keyFilename: path.join(process.cwd(), "creds.json"),
-});
+// Initialize Vision API client with credentials
+function createVisionClient() {
+  // Try multiple possible paths for creds.json
+  const possiblePaths = [
+    path.join(process.cwd(), "creds.json"),
+    path.join(process.cwd(), "app", "creds.json"),
+  ];
+
+  for (const credPath of possiblePaths) {
+    if (fs.existsSync(credPath)) {
+      console.log(`Using credentials from: ${credPath}`);
+      const credentials = JSON.parse(fs.readFileSync(credPath, "utf-8"));
+      return new vision.ImageAnnotatorClient({
+        credentials: {
+          client_email: credentials.client_email,
+          private_key: credentials.private_key,
+        },
+        projectId: credentials.project_id,
+      });
+    }
+  }
+
+  // Fallback: let it use GOOGLE_APPLICATION_CREDENTIALS env var or ADC
+  console.warn("No creds.json found, falling back to application default credentials");
+  return new vision.ImageAnnotatorClient();
+}
+
+const visionClient = createVisionClient();
 
 interface TicketData {
   artist: string | null;
@@ -27,7 +52,7 @@ interface TicketData {
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
-  initialDelay: number = 1000
+  initialDelay: number = 2000
 ): Promise<T> {
   let lastError: Error | null = null;
 
@@ -36,9 +61,10 @@ async function retryWithBackoff<T>(
       return await fn();
     } catch (error: any) {
       lastError = error;
+      const is429 = error.message?.includes("429");
       const isRetryableError =
+        is429 ||
         error.message?.includes("503") ||
-        error.message?.includes("429") ||
         error.message?.includes("500") ||
         error.message?.includes("timeout");
 
@@ -46,8 +72,10 @@ async function retryWithBackoff<T>(
         throw error;
       }
 
-      // Exponential backoff: 1s, 2s, 4s
-      const delay = initialDelay * Math.pow(2, attempt);
+      // For 429, use a longer delay (API suggests ~36s); otherwise exponential backoff
+      const delay = is429
+        ? 40000 // 40 seconds for rate limiting
+        : initialDelay * Math.pow(2, attempt);
       console.log(
         `Gemini API error (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`
       );
@@ -58,8 +86,31 @@ async function retryWithBackoff<T>(
   throw lastError || new Error("Max retries exceeded");
 }
 
+// Models to try in order (fallback if quota is exceeded on primary)
+const GEMINI_MODELS = [
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+];
+
 async function analyzeWithGemini(text: string): Promise<TicketData> {
-  const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  // Try each model; if one hits quota limits, try the next
+  for (const model of GEMINI_MODELS) {
+    try {
+      return await analyzeWithModel(text, model);
+    } catch (error: any) {
+      const isQuotaError = error.message?.includes("429") || error.message?.includes("RESOURCE_EXHAUSTED");
+      if (isQuotaError && model !== GEMINI_MODELS[GEMINI_MODELS.length - 1]) {
+        console.log(`⚠️ Quota exceeded for ${model}, falling back to next model...`);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("All Gemini models failed");
+}
+
+async function analyzeWithModel(text: string, model: string): Promise<TicketData> {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   
   return retryWithBackoff(async () => {
     const response = await fetch(endpoint, {
