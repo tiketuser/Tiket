@@ -27,6 +27,7 @@ const SearchResults = () => {
           title={query}
           upperText="חיפשת"
           subText="אלו המופעים הקרובים של האמן שחיפשת"
+          artistNames={[]}
         />
         <RegularGallery cardsData={tickets} />
       </div>
