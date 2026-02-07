@@ -1,10 +1,12 @@
 /**
  * Artist name matching utilities
  * Handles Hebrew/English variations and fuzzy matching
+ * Supports both static aliases (for fallback) and dynamic Firestore loading
  */
 
 // Common artist name mappings (Hebrew ↔ English)
-const ARTIST_ALIASES: { [key: string]: string[] } = {
+// These are default aliases used as fallback when Firestore is unavailable
+const DEFAULT_ARTIST_ALIASES: { [key: string]: string[] } = {
   // Key is normalized name, values are all variations
   "omer adam": ["עומר אדם", "omer adam", "umeradam"],
   "static and ben el tavori": ["סטטיק ובן אל תבורי", "static and ben el", "static & ben el tavori", "סטטיק בן אל"],
@@ -28,6 +30,68 @@ const ARTIST_ALIASES: { [key: string]: string[] } = {
   "hadag nahash": ["הדג נחש", "hadag nahash", "the fish snake"],
   "dennis lloyd": ["דניס לויד","Dennis Lloyd"],
 };
+
+// Runtime alias storage (combines default + Firestore aliases)
+let ARTIST_ALIASES: { [key: string]: string[] } = { ...DEFAULT_ARTIST_ALIASES };
+
+// Cache for Firestore aliases
+let firestoreAliasesLoaded = false;
+let firestoreAliasesCache: { [key: string]: string[] } | null = null;
+
+/**
+ * Load artist aliases from Firestore (server-side only)
+ * This should be called on server-side to populate dynamic aliases
+ */
+export async function loadArtistAliasesFromFirestore(): Promise<void> {
+  // Only run on server-side
+  if (typeof window !== 'undefined') {
+    console.warn('loadArtistAliasesFromFirestore should only be called server-side');
+    return;
+  }
+
+  // Return cached if already loaded
+  if (firestoreAliasesLoaded && firestoreAliasesCache) {
+    ARTIST_ALIASES = { ...DEFAULT_ARTIST_ALIASES, ...firestoreAliasesCache };
+    return;
+  }
+
+  try {
+    // Dynamic import to avoid issues on client-side
+    const { adminDb } = await import('@/lib/firebaseAdmin');
+    
+    if (!adminDb) {
+      console.warn('Firestore not available, using default aliases only');
+      return;
+    }
+
+    const aliasesSnapshot = await adminDb.collection('artist_aliases').get();
+    const firestoreAliases: { [key: string]: string[] } = {};
+
+    aliasesSnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.canonical && data.variations) {
+        firestoreAliases[data.canonical] = data.variations;
+      }
+    });
+
+    // Merge with defaults (Firestore takes precedence)
+    firestoreAliasesCache = firestoreAliases;
+    ARTIST_ALIASES = { ...DEFAULT_ARTIST_ALIASES, ...firestoreAliases };
+    firestoreAliasesLoaded = true;
+
+    console.log(`✅ Loaded ${Object.keys(firestoreAliases).length} artist aliases from Firestore`);
+  } catch (error) {
+    console.error('Error loading artist aliases from Firestore:', error);
+    // Continue with default aliases on error
+  }
+}
+
+/**
+ * Get current aliases (includes both default and Firestore)
+ */
+export function getArtistAliases(): { [key: string]: string[] } {
+  return ARTIST_ALIASES;
+}
 
 /**
  * Normalize string for comparison
@@ -164,7 +228,9 @@ export function findBestArtistMatch(
 }
 
 /**
- * Add artist alias dynamically (for admin to customize)
+ * Add artist alias dynamically (for runtime customization)
+ * Note: This only affects the in-memory cache, not Firestore
+ * For persistent storage, use the API endpoint
  */
 export function addArtistAlias(canonical: string, alias: string): void {
   const canonicalNorm = normalizeString(canonical);

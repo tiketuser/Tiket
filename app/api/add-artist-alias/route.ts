@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { requireAdmin } from "@/lib/authMiddleware";
+import { adminDb } from "@/lib/firebaseAdmin";
 
 export async function POST(request: NextRequest) {
+  // Require admin authentication
+  const authError = await requireAdmin(request);
+  if (authError) {
+    return authError;
+  }
+
   try {
     const { canonicalName, hebrewName, englishName, variations } =
       await request.json();
@@ -14,15 +20,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Path to artistMatcher.ts
-    const filePath = path.join(
-      process.cwd(),
-      "utils",
-      "artistMatcher.ts"
-    );
-
-    // Read the file
-    let fileContent = fs.readFileSync(filePath, "utf-8");
+    // Check if Firestore is available
+    if (!adminDb) {
+      return NextResponse.json(
+        { error: "Database service not available" },
+        { status: 503 }
+      );
+    }
 
     // Create the new alias entry
     const allVariations = [hebrewName, englishName, ...variations].filter(
@@ -30,38 +34,29 @@ export async function POST(request: NextRequest) {
     );
 
     const canonical = canonicalName.toLowerCase().trim();
-    const newAliasLine = `  "${canonical}": ${JSON.stringify(allVariations)},`;
 
-    // Check if alias already exists
-    if (fileContent.includes(`"${canonical}":`)) {
+    // Check if alias already exists in Firestore
+    const aliasRef = adminDb.collection('artist_aliases').doc(canonical);
+    const existingDoc = await aliasRef.get();
+
+    if (existingDoc.exists) {
       return NextResponse.json(
         { error: `Alias for "${canonical}" already exists` },
         { status: 409 }
       );
     }
 
-    // Find the ARTIST_ALIASES object and add the new entry
-    // Look for the closing brace of ARTIST_ALIASES
-    const aliasesRegex = /const ARTIST_ALIASES: \{ \[key: string\]: string\[\] \} = \{([\s\S]*?)\n\};/;
-    const match = fileContent.match(aliasesRegex);
-
-    if (!match) {
-      return NextResponse.json(
-        { error: "Could not find ARTIST_ALIASES object in file" },
-        { status: 500 }
-      );
-    }
-
-    // Insert the new alias before the closing brace
-    const updatedAliases = match[0].replace(/\n\};/, `\n${newAliasLine}\n};`);
-    fileContent = fileContent.replace(aliasesRegex, updatedAliases);
-
-    // Write back to file
-    fs.writeFileSync(filePath, fileContent, "utf-8");
+    // Add the new alias to Firestore
+    await aliasRef.set({
+      canonical,
+      variations: allVariations,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
 
     return NextResponse.json({
       success: true,
-      message: "Artist alias added successfully",
+      message: "Artist alias added successfully to database",
       alias: { canonical, variations: allVariations },
     });
   } catch (error) {
