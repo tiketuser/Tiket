@@ -29,7 +29,7 @@ const SearchResults = () => {
           subText="אלו המופעים הקרובים של האמן שחיפשת"
           artistNames={[]}
         />
-        <RegularGallery cardsData={tickets} />
+        <RegularGallery cardsData={tickets} openLoginDialog={() => {}} />
       </div>
     </div>
   );
