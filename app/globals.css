@@ -34,9 +34,7 @@ body {
     background-color: var(--color-primary);
     border-color: var(--color-primary);
     color: white;
-    transition-property: background-color, border-color, color;
-    transition-duration: 0.3s;
-    transition-timing-function: ease-in-out;
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
   }
   
   .btn-primary:hover {
@@ -48,9 +46,7 @@ body {
     background-color: var(--color-secondary);
     border-color: var(--color-primary);
     color: var(--color-primary);
-    transition-property: background-color, border-color, color;
-    transition-duration: 0.3s;
-    transition-timing-function: ease-in-out;
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
   }
   
   .btn-secondary:hover {
@@ -62,16 +58,12 @@ body {
   /* Themed SVG color transitions - using CSS filters */
   /* Note: For best results, SVGs should be inline or use mask-image with background colors */
   .themed-svg {
-    transition-property: filter, fill, stroke;
-    transition-duration: 0.3s;
-    transition-timing-function: ease-in-out;
+    transition: filter 0.3s ease-in-out, fill 0.3s ease-in-out, stroke 0.3s ease-in-out;
   }
   
   /* Theme transition utility class for other elements that need smooth color changes */
   .theme-transition {
-    transition-property: background-color, border-color, color, fill, stroke;
-    transition-duration: 0.3s;
-    transition-timing-function: ease-in-out;
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out, fill 0.3s ease-in-out, stroke 0.3s ease-in-out;
   }
 }
 
