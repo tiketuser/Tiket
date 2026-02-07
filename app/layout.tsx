@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
 import "./globals.css";
 import NavigationLoader from "./components/NavigationLoader/NavigationLoader";
+import ServiceWorkerRegister from "./components/ServiceWorkerRegister/ServiceWorkerRegister";
 import { Suspense } from "react";
 
 const assistant = Assistant({
@@ -13,8 +14,29 @@ const assistant = Assistant({
 });
 
 export const metadata: Metadata = {
-  title: "Tiket",
-  description: "Tiket",
+  title: "Tiket - כרטיסים בקליק",
+  description: "פלטפורמת מסחר בכרטיסים לאירועים",
+  manifest: "/manifest.json",
+  themeColor: "#6366f1",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tiket",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({
@@ -33,6 +55,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${assistant.variable}`}>
+        <ServiceWorkerRegister />
         <Suspense fallback={null}>
           <NavigationLoader />
         </Suspense>

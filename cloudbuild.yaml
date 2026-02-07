@@ -1,0 +1,58 @@
+steps:
+  # Build the Docker image
+  - name: 'Build Docker image'
+    id: build
+    args:
+      - 'build'
+      - '-t'
+      - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA'
+      - '-t'
+      - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:latest'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=${_NEXT_PUBLIC_FIREBASE_PROJECT_ID}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_APP_ID=${_NEXT_PUBLIC_FIREBASE_APP_ID}'
+      - '--build-arg'
+      - 'GEMINI_API_KEY=${_GEMINI_API_KEY}'
+      - '.'
+
+  # Push the image to Artifact Registry
+  - name: 'Push to Artifact Registry'
+    id: push
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app'
+
+  # Deploy to Cloud Run
+  - name: 'Deploy to Cloud Run'
+    id: deploy
+    args:
+      - 'run'
+      - 'deploy'
+      - 'tiket-app'
+      - '--image'
+      - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA'
+      - '--region'
+      - 'me-west1'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '512Mi'
+      - '--allow-unauthenticated'
+    entrypoint: gcloud
+
+images:
+  - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA'
+  - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
