@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/authMiddleware";
 import { adminDb } from "@/lib/firebaseAdmin";
+import * as admin from "firebase-admin";
 
 export async function POST(request: NextRequest) {
   // Require admin authentication
@@ -46,12 +47,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add the new alias to Firestore
+    // Add the new alias to Firestore with server timestamp
     await aliasRef.set({
       canonical,
       variations: allVariations,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     return NextResponse.json({

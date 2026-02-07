@@ -34,13 +34,15 @@ const DEFAULT_ARTIST_ALIASES: { [key: string]: string[] } = {
 // Runtime alias storage (combines default + Firestore aliases)
 let ARTIST_ALIASES: { [key: string]: string[] } = { ...DEFAULT_ARTIST_ALIASES };
 
-// Cache for Firestore aliases
+// Cache for Firestore aliases with thread-safety
 let firestoreAliasesLoaded = false;
 let firestoreAliasesCache: { [key: string]: string[] } | null = null;
+let firestoreLoadPromise: Promise<void> | null = null;
 
 /**
  * Load artist aliases from Firestore (server-side only)
  * This should be called on server-side to populate dynamic aliases
+ * Uses promise-based locking to prevent concurrent loads
  */
 export async function loadArtistAliasesFromFirestore(): Promise<void> {
   // Only run on server-side
@@ -55,35 +57,48 @@ export async function loadArtistAliasesFromFirestore(): Promise<void> {
     return;
   }
 
-  try {
-    // Dynamic import to avoid issues on client-side
-    const { adminDb } = await import('@/lib/firebaseAdmin');
-    
-    if (!adminDb) {
-      console.warn('Firestore not available, using default aliases only');
-      return;
-    }
-
-    const aliasesSnapshot = await adminDb.collection('artist_aliases').get();
-    const firestoreAliases: { [key: string]: string[] } = {};
-
-    aliasesSnapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.canonical && data.variations) {
-        firestoreAliases[data.canonical] = data.variations;
-      }
-    });
-
-    // Merge with defaults (Firestore takes precedence)
-    firestoreAliasesCache = firestoreAliases;
-    ARTIST_ALIASES = { ...DEFAULT_ARTIST_ALIASES, ...firestoreAliases };
-    firestoreAliasesLoaded = true;
-
-    console.log(`✅ Loaded ${Object.keys(firestoreAliases).length} artist aliases from Firestore`);
-  } catch (error) {
-    console.error('Error loading artist aliases from Firestore:', error);
-    // Continue with default aliases on error
+  // If a load is already in progress, wait for it
+  if (firestoreLoadPromise) {
+    return firestoreLoadPromise;
   }
+
+  // Start new load and store the promise
+  firestoreLoadPromise = (async () => {
+    try {
+      // Dynamic import to avoid issues on client-side
+      const { adminDb } = await import('@/lib/firebaseAdmin');
+      
+      if (!adminDb) {
+        console.warn('Firestore not available, using default aliases only');
+        return;
+      }
+
+      const aliasesSnapshot = await adminDb.collection('artist_aliases').get();
+      const firestoreAliases: { [key: string]: string[] } = {};
+
+      aliasesSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.canonical && data.variations) {
+          firestoreAliases[data.canonical] = data.variations;
+        }
+      });
+
+      // Merge with defaults (Firestore takes precedence)
+      firestoreAliasesCache = firestoreAliases;
+      ARTIST_ALIASES = { ...DEFAULT_ARTIST_ALIASES, ...firestoreAliases };
+      firestoreAliasesLoaded = true;
+
+      console.log(`✅ Loaded ${Object.keys(firestoreAliases).length} artist aliases from Firestore`);
+    } catch (error) {
+      console.error('Error loading artist aliases from Firestore:', error);
+      // Continue with default aliases on error
+    } finally {
+      // Clear the promise after completion
+      firestoreLoadPromise = null;
+    }
+  })();
+
+  return firestoreLoadPromise;
 }
 
 /**

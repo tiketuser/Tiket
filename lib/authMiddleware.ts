@@ -83,7 +83,7 @@ async function checkIsAdmin(uid: string): Promise<boolean> {
 
     // Alternatively, check if email matches admin email pattern
     // This is a fallback for development
-    if (userRecord.email && userRecord.email.includes('admin@')) {
+    if (userRecord.email && userRecord.email.startsWith('admin@')) {
       return true;
     }
 
