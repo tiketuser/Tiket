@@ -36,8 +36,12 @@ export function initializeAdminApp() {
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     if (!privateKey || !clientEmail || !projectId) {
+      const missing = [];
+      if (!privateKey) missing.push("FIREBASE_PRIVATE_KEY");
+      if (!clientEmail) missing.push("FIREBASE_CLIENT_EMAIL");
+      if (!projectId) missing.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
       console.warn(
-        "Firebase Admin credentials not configured - some server features will be unavailable"
+        `Firebase Admin credentials not configured. Missing: ${missing.join(", ")}. Some server features will be unavailable.`
       );
       return { app: null, auth: null, db: null };
     }
@@ -99,8 +103,12 @@ export async function verifyAdminToken(
     const uid = decodedToken.uid;
     const email = decodedToken.email;
 
-    // Check if user is admin (hardcoded list for now)
-    const ADMIN_EMAILS = ["tiketbizzz@gmail.com", "admin@tiket.com"];
+    // Check if user is admin
+    // TODO: Consider moving admin list to environment variables or Firestore collection
+    const ADMIN_EMAILS = (
+      process.env.ADMIN_EMAILS || "tiketbizzz@gmail.com,admin@tiket.com"
+    ).split(",").map(e => e.trim());
+    
     const isAdmin = email ? ADMIN_EMAILS.includes(email) : false;
 
     return {

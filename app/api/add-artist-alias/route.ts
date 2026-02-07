@@ -45,8 +45,13 @@ export async function POST(request: NextRequest) {
     const result = await addArtistAliasToFirestore(canonical, allVariations);
 
     if (!result.success) {
-      const statusCode = result.error?.includes("already exists") ? 409 : 500;
-      return NextResponse.json({ error: result.error }, { status: statusCode });
+      const statusCode =
+        result.error?.code === "ALREADY_EXISTS" ? 409 :
+        result.error?.code === "UNAVAILABLE" ? 503 : 500;
+      return NextResponse.json(
+        { error: result.error?.message },
+        { status: statusCode }
+      );
     }
 
     return NextResponse.json({
@@ -88,12 +93,16 @@ export async function GET(request: NextRequest) {
     const result = await getAllArtistAliases();
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      const statusCode = result.error?.code === "UNAVAILABLE" ? 503 : 500;
+      return NextResponse.json(
+        { error: result.error?.message },
+        { status: statusCode }
+      );
     }
 
     return NextResponse.json({
       success: true,
-      aliases: result.aliases,
+      aliases: result.data,
     });
   } catch (error) {
     console.error("Error getting artist aliases:", error);

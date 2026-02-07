@@ -11,17 +11,32 @@ export interface ArtistAlias {
   updatedAt: Date;
 }
 
+export interface DbResult<T = void> {
+  success: boolean;
+  data?: T;
+  error?: {
+    message: string;
+    code: "NOT_FOUND" | "ALREADY_EXISTS" | "UNAVAILABLE" | "UNKNOWN";
+  };
+}
+
 /**
  * Add a new artist alias to Firestore
  */
 export async function addArtistAliasToFirestore(
   canonical: string,
   variations: string[]
-): Promise<{ success: boolean; error?: string }> {
+): Promise<DbResult> {
   try {
     const db = getAdminDb();
     if (!db) {
-      return { success: false, error: "Firestore not available" };
+      return {
+        success: false,
+        error: {
+          message: "Firestore not available",
+          code: "UNAVAILABLE",
+        },
+      };
     }
 
     const normalizedCanonical = canonical.toLowerCase().trim();
@@ -33,16 +48,17 @@ export async function addArtistAliasToFirestore(
     if (doc.exists) {
       return {
         success: false,
-        error: `Alias for "${normalizedCanonical}" already exists`,
+        error: {
+          message: `Alias for "${normalizedCanonical}" already exists`,
+          code: "ALREADY_EXISTS",
+        },
       };
     }
 
     // Create the new alias
     const aliasData: ArtistAlias = {
       canonical: normalizedCanonical,
-      variations: variations.filter(
-        (v, i, arr) => arr.indexOf(v) === i // Remove duplicates
-      ),
+      variations: Array.from(new Set(variations)), // Remove duplicates efficiently
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -54,7 +70,10 @@ export async function addArtistAliasToFirestore(
     console.error("Error adding artist alias:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: {
+        message: error instanceof Error ? error.message : "Unknown error",
+        code: "UNKNOWN",
+      },
     };
   }
 }
@@ -62,15 +81,19 @@ export async function addArtistAliasToFirestore(
 /**
  * Get all artist aliases from Firestore
  */
-export async function getAllArtistAliases(): Promise<{
-  success: boolean;
-  aliases?: Record<string, string[]>;
-  error?: string;
-}> {
+export async function getAllArtistAliases(): Promise<
+  DbResult<Record<string, string[]>>
+> {
   try {
     const db = getAdminDb();
     if (!db) {
-      return { success: false, error: "Firestore not available" };
+      return {
+        success: false,
+        error: {
+          message: "Firestore not available",
+          code: "UNAVAILABLE",
+        },
+      };
     }
 
     const snapshot = await db.collection("artist_aliases").get();
@@ -81,12 +104,15 @@ export async function getAllArtistAliases(): Promise<{
       aliases[data.canonical] = data.variations;
     });
 
-    return { success: true, aliases };
+    return { success: true, data: aliases };
   } catch (error) {
     console.error("Error getting artist aliases:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: {
+        message: error instanceof Error ? error.message : "Unknown error",
+        code: "UNKNOWN",
+      },
     };
   }
 }
@@ -97,11 +123,17 @@ export async function getAllArtistAliases(): Promise<{
 export async function updateArtistAlias(
   canonical: string,
   variations: string[]
-): Promise<{ success: boolean; error?: string }> {
+): Promise<DbResult> {
   try {
     const db = getAdminDb();
     if (!db) {
-      return { success: false, error: "Firestore not available" };
+      return {
+        success: false,
+        error: {
+          message: "Firestore not available",
+          code: "UNAVAILABLE",
+        },
+      };
     }
 
     const normalizedCanonical = canonical.toLowerCase().trim();
@@ -111,12 +143,15 @@ export async function updateArtistAlias(
     if (!doc.exists) {
       return {
         success: false,
-        error: `Alias for "${normalizedCanonical}" not found`,
+        error: {
+          message: `Alias for "${normalizedCanonical}" not found`,
+          code: "NOT_FOUND",
+        },
       };
     }
 
     await docRef.update({
-      variations: variations.filter((v, i, arr) => arr.indexOf(v) === i),
+      variations: Array.from(new Set(variations)), // Remove duplicates efficiently
       updatedAt: new Date(),
     });
 
@@ -125,7 +160,10 @@ export async function updateArtistAlias(
     console.error("Error updating artist alias:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: {
+        message: error instanceof Error ? error.message : "Unknown error",
+        code: "UNKNOWN",
+      },
     };
   }
 }
@@ -135,11 +173,17 @@ export async function updateArtistAlias(
  */
 export async function deleteArtistAlias(
   canonical: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<DbResult> {
   try {
     const db = getAdminDb();
     if (!db) {
-      return { success: false, error: "Firestore not available" };
+      return {
+        success: false,
+        error: {
+          message: "Firestore not available",
+          code: "UNAVAILABLE",
+        },
+      };
     }
 
     const normalizedCanonical = canonical.toLowerCase().trim();
@@ -150,7 +194,10 @@ export async function deleteArtistAlias(
     console.error("Error deleting artist alias:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: {
+        message: error instanceof Error ? error.message : "Unknown error",
+        code: "UNKNOWN",
+      },
     };
   }
 }
@@ -160,11 +207,17 @@ export async function deleteArtistAlias(
  */
 export async function getArtistAlias(
   canonical: string
-): Promise<{ success: boolean; alias?: ArtistAlias; error?: string }> {
+): Promise<DbResult<ArtistAlias>> {
   try {
     const db = getAdminDb();
     if (!db) {
-      return { success: false, error: "Firestore not available" };
+      return {
+        success: false,
+        error: {
+          message: "Firestore not available",
+          code: "UNAVAILABLE",
+        },
+      };
     }
 
     const normalizedCanonical = canonical.toLowerCase().trim();
@@ -176,16 +229,22 @@ export async function getArtistAlias(
     if (!doc.exists) {
       return {
         success: false,
-        error: `Alias for "${normalizedCanonical}" not found`,
+        error: {
+          message: `Alias for "${normalizedCanonical}" not found`,
+          code: "NOT_FOUND",
+        },
       };
     }
 
-    return { success: true, alias: doc.data() as ArtistAlias };
+    return { success: true, data: doc.data() as ArtistAlias };
   } catch (error) {
     console.error("Error getting artist alias:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: {
+        message: error instanceof Error ? error.message : "Unknown error",
+        code: "UNKNOWN",
+      },
     };
   }
 }
