@@ -11,25 +11,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Check authentication - require admin privileges
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Unauthorized - Missing authentication token" },
-        { status: 401 }
-      );
-    }
-
-    const idToken = authHeader.split("Bearer ")[1];
-    const authResult = await verifyAdminToken(idToken);
-
-    if (!authResult.isValid || !authResult.isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden - Admin privileges required" },
-        { status: 403 }
-      );
-    }
-
     // Parse request body
     const { canonicalName, hebrewName, englishName, variations } =
       await request.json();
@@ -62,8 +43,8 @@ export async function POST(request: NextRequest) {
 
     if (existingDoc.exists) {
       return NextResponse.json(
-        { error: result.error?.message },
-        { status: statusCode }
+        { error: "Artist alias already exists" },
+        { status: 409 }
       );
     }
 
