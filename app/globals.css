@@ -34,6 +34,9 @@ body {
     background-color: var(--color-primary);
     border-color: var(--color-primary);
     color: white;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-in-out;
   }
   
   .btn-primary:hover {
@@ -45,6 +48,9 @@ body {
     background-color: var(--color-secondary);
     border-color: var(--color-primary);
     color: var(--color-primary);
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-in-out;
   }
   
   .btn-secondary:hover {
@@ -56,7 +62,16 @@ body {
   /* Themed SVG color transitions - using CSS filters */
   /* Note: For best results, SVGs should be inline or use mask-image with background colors */
   .themed-svg {
-    transition: filter 0.3s ease-in-out;
+    transition-property: filter, fill, stroke;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-in-out;
+  }
+  
+  /* Theme transition utility class for other elements that need smooth color changes */
+  .theme-transition {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-in-out;
   }
 }
 
@@ -64,13 +79,6 @@ body {
   .text-balance {
     text-wrap: balance;
   }
-}
-
-/* Smooth color transitions for theme changes */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-duration: 0.3s;
-  transition-timing-function: ease-in-out;
 }
 
 :root:has(.no-doc-scroll) {
