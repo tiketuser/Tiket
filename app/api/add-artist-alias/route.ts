@@ -11,6 +11,26 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Check authentication - require admin privileges
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "Unauthorized - Missing authentication token" },
+        { status: 401 }
+      );
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    const authResult = await verifyAdminToken(idToken);
+
+    if (!authResult.isValid || !authResult.isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden - Admin privileges required" },
+        { status: 403 }
+      );
+    }
+
+    // Parse request body
     const { canonicalName, hebrewName, englishName, variations } =
       await request.json();
 
@@ -42,8 +62,8 @@ export async function POST(request: NextRequest) {
 
     if (existingDoc.exists) {
       return NextResponse.json(
-        { error: `Alias for "${canonical}" already exists` },
-        { status: 409 }
+        { error: result.error?.message },
+        { status: statusCode }
       );
     }
 
@@ -61,9 +81,9 @@ export async function POST(request: NextRequest) {
       alias: { canonical, variations: allVariations },
     });
   } catch (error) {
-    console.error("Error adding artist alias:", error);
+    console.error("Error getting artist aliases:", error);
     return NextResponse.json(
-      { error: "Failed to add artist alias" },
+      { error: "Failed to get artist aliases" },
       { status: 500 }
     );
   }
