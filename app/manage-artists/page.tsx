@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import { getAuth } from "firebase/auth";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -32,6 +33,16 @@ export default function ManageArtistsPage() {
     setIsLoading(true);
 
     try {
+      // Get current user's ID token for authentication
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      const idToken = await user.getIdToken();
+
       // Parse variations
       const variationsList = variations
         .split(",")
@@ -43,6 +54,7 @@ export default function ManageArtistsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           canonicalName,
@@ -196,12 +208,7 @@ export default function ManageArtistsPage() {
                   </h3>
                   <p className="text-sm text-green-800">{successMessage}</p>
                   <p className="text-xs text-green-700 mt-3">
-                    הקובץ{" "}
-                    <code className="bg-white px-2 py-1 rounded">
-                      utils/artistMatcher.ts
-                    </code>{" "}
-                    עודכן אוטומטית. השינויים יכנסו לתוקף לאחר טעינה מחדש של
-                    השרת.
+                    ההתאמה נשמרה ב-Firestore ותהיה זמינה מיד לשימוש.
                   </p>
                 </div>
               </div>
@@ -243,8 +250,7 @@ export default function ManageArtistsPage() {
               </div>
             </div>
             <p className="text-xs text-mutedText mt-4">
-              לצפייה בכל ההתאמות, פתח את הקובץ{" "}
-              <code>utils/artistMatcher.ts</code>
+              ההתאמות מאוחסנות ב-Firestore ונטענות באופן דינמי.
             </p>
           </div>
         </div>
