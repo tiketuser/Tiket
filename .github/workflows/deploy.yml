@@ -79,7 +79,6 @@ jobs:
           env_vars: |
             NODE_ENV=production
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            GOOGLE_APPLICATION_CREDENTIALS=./creds.json
 
       # Show the deployed URL
       - name: Show deployed URL
