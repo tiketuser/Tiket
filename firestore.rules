@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Artist aliases - read by all, write only by admins
+    match /artist_aliases/{aliasId} {
+      allow read: if true; // Public read for artist matching
+      allow write: if false; // Only accessible via authenticated API routes
+    }
+
+    // Temporary open access for development (other collections)
+    // TODO: Add proper security rules for production
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

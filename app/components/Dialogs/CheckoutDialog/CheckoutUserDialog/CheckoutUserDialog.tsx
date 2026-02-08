@@ -44,6 +44,7 @@ const CheckoutUserDialog: React.FC<CheckoutUserDialogInterface> = ({
                         <div className="grid grid-cols-2 gap-4 w-[456px]">
                             <CustomInput 
                                 id="card-number"
+                                name="card-number"
                                 type="text"
                                 placeholder="מספר כרטיס אשראי"
                                 width="w-full"
@@ -53,6 +54,7 @@ const CheckoutUserDialog: React.FC<CheckoutUserDialogInterface> = ({
                         
                             <CustomInput 
                                 id="cvv"
+                                name="cvv"
                                 type="text"
                                 width="w-full"
                                 placeholder="CVV"
@@ -61,6 +63,7 @@ const CheckoutUserDialog: React.FC<CheckoutUserDialogInterface> = ({
 
                             <CustomInput 
                                 id="expiry"
+                                name="expiry"
                                 type="text"
                                 width="w-full"
                                 placeholder="תוקף הכרטיס"

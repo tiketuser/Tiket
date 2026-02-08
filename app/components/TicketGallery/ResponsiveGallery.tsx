@@ -1,10 +1,7 @@
 "use client";
 
 import Card from "../Card/Card";
-import Arrow from "../../../public/images/Home Page/Web/Arrow-1.svg";
-import Image from "next/image";
 import Link from "next/link";
-import cardsData from "@/app/DemoData/cardsData";
 import {
   Carousel,
   CarouselContent,
@@ -14,27 +11,50 @@ import {
   NavigationDotes,
 } from "@/components/ui/carousel";
 
-import { useRouter } from "next/navigation";
+interface CardData {
+  imageSrc: string;
+  id: string | number;
+  title: string;
+  date: string;
+  location: string;
+  ticketsLeft: number;
+  priceBefore: number;
+  price: number;
+  soldOut: boolean;
+  timeLeft: string;
+}
 
-const ResponsiveGallery: React.FC = () => {
-  const router = useRouter();
-  const handleSearch = (query: string) => {
-    router.push(`/SearchResults?query=${encodeURIComponent(query)}`);
-  };
+interface ResponsiveGalleryProps {
+  cardsData: CardData[];
+  openLoginDialog: () => void;
+}
+
+const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
+  cardsData,
+  openLoginDialog,
+}) => {
+  // Determine if we should center the carousel (when there are 3 or fewer cards)
+  const shouldCenter = cardsData.length <= 3;
 
   return (
     <div className="w-full px-1 sm:px-8 sm:mt-10 sm:mb-0 mb-20">
       {/* Carousel for screens >= sm */}
-      <div className="hidden sm:block ">
+      <div className="hidden sm:block">
         <Carousel dir="ltr" className="w-full relative">
-          <CarouselContent className="flex flex-nowrap gap-6 h-[600px]">
+          <CarouselContent
+            className={`flex flex-nowrap gap-6 ${
+              shouldCenter ? "justify-center" : ""
+            }`}
+          >
             {cardsData.map((card) => (
-              <CarouselItem key={card.id} dir="rtl">
-                <Link
-                  href={`/EventPage?title=${encodeURIComponent(card.title)}`}
-                >
-                  <Card {...card} />
-                </Link>
+              <CarouselItem
+                key={card.id}
+                dir="rtl"
+                className={`basis-1/3 ${shouldCenter ? "lg:basis-auto" : ""}`}
+              >
+                <div className="w-[392px] h-[700px]">
+                  <Card {...card} openLoginDialog={openLoginDialog} />
+                </div>
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -42,29 +62,20 @@ const ResponsiveGallery: React.FC = () => {
           <CarouselNext className="absolute right-[-16px]" />
           <NavigationDotes />
         </Carousel>
-
-        <div className="flex justify-center mt-6 mb-14">
-          <Link href="/ViewMore" className="flex items-center gap-2">
-            <span className="text-text-medium font-light text-center">
-              גלה עוד
-            </span>
-            <Image src={Arrow} alt="Arrow Icon" width={9} height={16} />
+        <div className="flex justify-center mt-6">
+          <Link
+            href="/ViewMore"
+            className="hover:text-primary-dark text-text-large transition-colors"
+          >
+            גלה עוד
           </Link>
         </div>
       </div>
-
-      {/* layout for screens < sm (SmartPhoens) */}
-      <div className="sm:hidden flex flex-wrap justify-center gap-3 xs:gap-5 w-full mt-6 mb-8">
+      {/* Grid Layout for screens < sm - 2 cards per row */}
+      <div className="sm:hidden grid grid-cols-2 gap-3 w-full px-3 mt-6 mb-8">
         {cardsData.map((card) => (
-          <div
-            key={card.id}
-            className="xs:max-w-[160px] xs:max-h-[260px] flex justify-center items-center max-w-[155px] max-h-[245px]"
-          >
-            <div className="xs:scale-[0.43] scale-[0.39]">
-              <Link href={`/EventPage?title=${encodeURIComponent(card.title)}`}>
-                <Card {...card} />
-              </Link>
-            </div>
+          <div key={card.id} className="w-full">
+            <Card {...card} openLoginDialog={openLoginDialog} />
           </div>
         ))}
       </div>

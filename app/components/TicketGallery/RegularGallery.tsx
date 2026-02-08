@@ -16,22 +16,29 @@ interface CardData {
 }
 
 interface RegularGalleryProps {
-  cardsData: CardData[]; // Accept cardsData as a prop
+  cardsData: CardData[];
+  openLoginDialog: () => void;
 }
 
-const RegularGallery: React.FC<RegularGalleryProps> = ({ cardsData }) => {
+const RegularGallery: React.FC<RegularGalleryProps> = ({
+  cardsData,
+  openLoginDialog,
+}) => {
   return (
-    <div className="w-full px-1 sm:px-8 mt-10">
-      {/* layout for screens < sm (SmartPhoens) */}
-      <div className="flex flex-wrap justify-center gap-3 xs:gap-5 w-full mt-6 mb-8">
+    <div className="w-full px-0 sm:px-8 sm:mt-10 sm:mb-0 mb-20">
+      {/* Grid Layout for desktop */}
+      <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
         {cardsData.map((card) => (
-          <div
-            key={card.id}
-            className="flex justify-center items-center lg:max-w-[600px] lg:max-h-[600px] sm:max-w-[155px] sm:max-h-[245px] xs:max-w-[160px] xs:max-h-[260px] "
-          >
-            <div className="xs:scale-[0.43] lg:scale-[0.90] scale-[0.39]">
-              <Card {...card} />
-            </div>
+          <div key={card.id} className="w-full">
+            <Card {...card} openLoginDialog={openLoginDialog} />
+          </div>
+        ))}
+      </div>
+      {/* Grid Layout for screens < sm - 2 cards per row */}
+      <div className="sm:hidden grid grid-cols-2 gap-3 w-full">
+        {cardsData.map((card) => (
+          <div key={card.id} className="w-full">
+            <Card {...card} openLoginDialog={openLoginDialog} />
           </div>
         ))}
       </div>
