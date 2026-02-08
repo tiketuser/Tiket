@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import React, { Suspense } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import SingleCard from "../components/SingleCard/SingleCard";
 import Footer from "../components/Footer/Footer";
@@ -8,7 +9,7 @@ import EventUpperSection from "../components/EventUpperSection/EventUpperSection
 import SeatingMap from "../components/SeatingMap/SeatingMap";
 import cardsData from "../DemoData/cardsData";
 
-const EventPage = () => {
+function EventPageContent() {
   const searchParams = useSearchParams();
   const title = searchParams.get("title");
 
@@ -42,7 +43,7 @@ const EventPage = () => {
         time={"20:00"}
         availableTickets={matchingEvents.reduce(
           (sum, event) => sum + event.ticketsLeft,
-          0
+          0,
         )}
       />
 
@@ -68,6 +69,14 @@ const EventPage = () => {
 
       <Footer />
     </div>
+  );
+}
+
+const EventPage = () => {
+  return (
+    <Suspense fallback={<div>טוען...</div>}>
+      <EventPageContent />
+    </Suspense>
   );
 };
 

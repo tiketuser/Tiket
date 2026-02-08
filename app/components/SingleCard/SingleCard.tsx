@@ -37,59 +37,12 @@ const SingleCard: React.FC<SingleCardProps> = ({
 }) => {
   const [isCheckoutDialogOpen, setCheckoutDialogOpen] = useState(false);
 
-  // Parse date string (format: "dd/mm/yyyy" or "dd.mm.yyyy")
+  // Parse date string (supports "dd/mm/yyyy", "dd.mm.yyyy", or Hebrew format like "חמישי, 6 אוק'")
   const parseDateInfo = (dateString: string) => {
-    console.log("=== SingleCard Date Debug ===");
-    console.log("Received date:", dateString);
-    console.log("Date type:", typeof dateString);
-    console.log("Date is empty?", !dateString || dateString === "");
-
     if (!dateString || dateString === "" || dateString === "undefined") {
-      console.error("❌ No valid date provided");
       return { dayOfWeek: "-", day: "-", month: "-" };
     }
 
-    // Normalize date separator to /
-    const normalizedDate = dateString.replace(/\./g, "/");
-    console.log("Normalized date:", normalizedDate);
-
-    const parts = normalizedDate.split("/");
-    console.log("Date parts:", parts);
-
-    if (parts.length !== 3) {
-      console.error(
-        "❌ Invalid date format - expected 3 parts, got:",
-        parts.length
-      );
-      return { dayOfWeek: "-", day: "-", month: "-" };
-    }
-
-    const [day, month, year] = parts.map(Number);
-    console.log("Parsed values:", { day, month, year });
-
-    // Validate parsed values
-    if (isNaN(day) || isNaN(month) || isNaN(year)) {
-      console.error("❌ Invalid date values (NaN):", {
-        day,
-        month,
-        year,
-        dateString,
-      });
-      return { dayOfWeek: "-", day: "-", month: "-" };
-    }
-
-    const dateObj = new Date(year, month - 1, day);
-    console.log("Created date object:", dateObj);
-
-    const hebrewDays = [
-      "ראשון",
-      "שני",
-      "שלישי",
-      "רביעי",
-      "חמישי",
-      "שישי",
-      "שבת",
-    ];
     const hebrewMonths = [
       "ינו׳",
       "פבר׳",
@@ -104,17 +57,65 @@ const SingleCard: React.FC<SingleCardProps> = ({
       "נוב׳",
       "דצמ׳",
     ];
+    const hebrewMonthNames = [
+      "ינו",
+      "פבר",
+      "מרץ",
+      "אפר",
+      "מאי",
+      "יוני",
+      "יולי",
+      "אוג",
+      "ספט",
+      "אוק",
+      "נוב",
+      "דצמ",
+    ];
 
-    const result = {
+    // Check if it's in Hebrew display format like "חמישי, 6 אוק'"
+    const hebrewMatch = dateString.match(/^(.+?)?,?\s*(\d{1,2})\s+(.+?)['׳]?$/);
+    if (hebrewMatch) {
+      const dayOfWeek = hebrewMatch[1]?.trim() || "-";
+      const day = hebrewMatch[2];
+      const monthStr = hebrewMatch[3].trim().replace(/['׳]/g, "");
+      const monthIndex = hebrewMonthNames.findIndex((m) =>
+        monthStr.startsWith(m),
+      );
+      const month = monthIndex >= 0 ? hebrewMonths[monthIndex] : monthStr;
+      return { dayOfWeek, day, month };
+    }
+
+    // Handle dd/mm/yyyy or dd.mm.yyyy format
+    const normalizedDate = dateString.replace(/\./g, "/");
+    const parts = normalizedDate.split("/");
+
+    if (parts.length !== 3) {
+      return { dayOfWeek: "-", day: dateString, month: "-" };
+    }
+
+    const [dayNum, monthNum, year] = parts.map(Number);
+
+    if (isNaN(dayNum) || isNaN(monthNum) || isNaN(year)) {
+      return { dayOfWeek: "-", day: dateString, month: "-" };
+    }
+
+    const dateObj = new Date(year, monthNum - 1, dayNum);
+
+    const hebrewDays = [
+      "ראשון",
+      "שני",
+      "שלישי",
+      "רביעי",
+      "חמישי",
+      "שישי",
+      "שבת",
+    ];
+
+    return {
       dayOfWeek: hebrewDays[dateObj.getDay()],
-      day: day,
-      month: hebrewMonths[month - 1],
+      day: String(dayNum),
+      month: hebrewMonths[monthNum - 1],
     };
-
-    console.log("✅ Final result:", result);
-    console.log("=== End Date Debug ===");
-
-    return result;
   };
 
   const dateInfo = parseDateInfo(date);
