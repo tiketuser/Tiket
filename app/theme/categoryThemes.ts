@@ -46,9 +46,13 @@ export const defaultCategoryThemes: Record<string, CategoryTheme> = {
 
 // Active themes (loaded from Firebase or defaults)
 let loadedThemes: Record<string, CategoryTheme> = { ...defaultCategoryThemes };
+let themesLoaded = false; // Cache flag to prevent re-fetching
 
-// Function to load themes from Firebase
+// Function to load themes from Firebase (cached - only loads once per session)
 export const loadThemesFromFirebase = async (): Promise<void> => {
+  // Skip if already loaded
+  if (themesLoaded) return;
+
   try {
     if (!db) {
       console.warn("Firebase not initialized, using default themes");
@@ -61,11 +65,9 @@ export const loadThemesFromFirebase = async (): Promise<void> => {
       const data = themesDoc.data();
       if (data.themes) {
         loadedThemes = { ...data.themes };
-        console.log("✅ Loaded custom themes from Firebase:", loadedThemes);
       }
-    } else {
-      console.log("No custom themes found, using defaults");
     }
+    themesLoaded = true;
   } catch (error) {
     console.error("Error loading themes from Firebase:", error);
     // Continue with default themes

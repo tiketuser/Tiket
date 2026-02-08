@@ -1,12 +1,11 @@
 import React from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
 import ViewMoreClient from "./ViewMoreClient";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
 
-// Enable dynamic rendering with caching
-export const dynamic = "force-dynamic";
-export const revalidate = 30; // Revalidate every 30 seconds
+// Use ISR - revalidate every 30 seconds
+export const revalidate = 30;
 
 interface CardData {
   id: string;
@@ -56,10 +55,20 @@ async function getViewMoreData() {
       };
     }
 
-    // Fetch all events and tickets in parallel on the server
+    // Fetch only active events and available tickets in parallel
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
-      getDocs(collection(db as any, "concerts")),
-      getDocs(collection(db as any, "tickets")),
+      getDocs(
+        query(
+          collection(db as any, "concerts"),
+          where("status", "==", "active"),
+        ),
+      ),
+      getDocs(
+        query(
+          collection(db as any, "tickets"),
+          where("status", "==", "available"),
+        ),
+      ),
     ]);
 
     // Serialize events - only plain objects
@@ -82,7 +91,7 @@ async function getViewMoreData() {
       })
       .filter(
         (event) =>
-          event && event.status === "active" && event.artist && event.imageData
+          event && event.status === "active" && event.artist && event.imageData,
       );
 
     // Serialize tickets - only plain objects
@@ -103,7 +112,7 @@ async function getViewMoreData() {
         // Get available tickets for this event
         const eventTickets = allTickets.filter(
           (ticket) =>
-            ticket.concertId === event.id && ticket.status === "available"
+            ticket.concertId === event.id && ticket.status === "available",
         );
 
         // Calculate price range
@@ -145,7 +154,7 @@ async function getViewMoreData() {
 
     // Filter by categories for special sections
     const recentlyViewed = eventCards.filter((card: any) =>
-      card.categories?.includes("recently-viewed")
+      card.categories?.includes("recently-viewed"),
     );
 
     // Last minute deals: events within 2 days from now
@@ -168,7 +177,7 @@ async function getViewMoreData() {
     });
 
     const recommendations = eventCards.filter((card: any) =>
-      card.categories?.includes("recommendations")
+      card.categories?.includes("recommendations"),
     );
 
     return {

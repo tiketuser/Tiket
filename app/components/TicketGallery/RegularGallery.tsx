@@ -18,11 +18,13 @@ interface CardData {
 interface RegularGalleryProps {
   cardsData: CardData[];
   openLoginDialog: () => void;
+  userFavorites?: (string | number)[];
 }
 
 const RegularGallery: React.FC<RegularGalleryProps> = ({
   cardsData,
   openLoginDialog,
+  userFavorites,
 }) => {
   return (
     <div className="w-full px-0 sm:px-8 sm:mt-10 sm:mb-0 mb-20">
@@ -30,7 +32,11 @@ const RegularGallery: React.FC<RegularGalleryProps> = ({
       <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
         {cardsData.map((card) => (
           <div key={card.id} className="w-full">
-            <Card {...card} openLoginDialog={openLoginDialog} />
+            <Card
+              {...card}
+              openLoginDialog={openLoginDialog}
+              userFavorites={userFavorites}
+            />
           </div>
         ))}
       </div>
@@ -38,7 +44,11 @@ const RegularGallery: React.FC<RegularGalleryProps> = ({
       <div className="sm:hidden grid grid-cols-2 gap-3 w-full">
         {cardsData.map((card) => (
           <div key={card.id} className="w-full">
-            <Card {...card} openLoginDialog={openLoginDialog} />
+            <Card
+              {...card}
+              openLoginDialog={openLoginDialog}
+              userFavorites={userFavorites}
+            />
           </div>
         ))}
       </div>

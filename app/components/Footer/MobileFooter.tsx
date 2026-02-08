@@ -2,10 +2,22 @@
 
 import React from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import ProfileIcon from "../../../public/images/Home Page/ProfileButton.svg";
-import SignUpDialog from "../Dialogs/SignUpDialog/SignUpDialog";
-import LoginDialog from "../Dialogs/LoginDialog/LoginDialog";
-import ProfileDialog from "../Dialogs/ProfileDialog/ProfileDialog";
+
+// Lazy-load dialogs - only needed on user interaction
+const SignUpDialog = dynamic(
+  () => import("../Dialogs/SignUpDialog/SignUpDialog"),
+  { ssr: false },
+);
+const LoginDialog = dynamic(
+  () => import("../Dialogs/LoginDialog/LoginDialog"),
+  { ssr: false },
+);
+const ProfileDialog = dynamic(
+  () => import("../Dialogs/ProfileDialog/ProfileDialog"),
+  { ssr: false },
+);
 
 const MobileFooter = () => {
   const [isLoginDialogOpen, setLoginDialogOpen] = React.useState(false);

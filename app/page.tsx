@@ -3,9 +3,8 @@ import HeroSection from "./components/HeroSection/HeroSection";
 import Gallery from "./components/Gallery/Gallery";
 import Footer from "./components/Footer/Footer";
 
-// Enable dynamic rendering with caching
-export const dynamic = "force-dynamic";
-export const revalidate = 30; // Revalidate every 30 seconds
+// Use ISR - revalidate every 30 seconds for fresh data with caching
+export const revalidate = 30;
 
 export default function Home() {
   return (

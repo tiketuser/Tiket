@@ -3,6 +3,7 @@
 const nextConfig = {
   output: "standalone",
   images: {
+    // Keep unoptimized since event images are base64 data URIs from Firestore
     unoptimized: true,
   },
   webpack: (config) => {

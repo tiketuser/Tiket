@@ -30,11 +30,13 @@ interface CardData {
 interface RegularGalleryProps {
   cardsData: CardData[];
   openLoginDialog: () => void;
+  userFavorites?: (string | number)[];
 }
 
 const CardCarousel: React.FC<RegularGalleryProps> = ({
   cardsData,
   openLoginDialog,
+  userFavorites,
 }) => {
   return (
     <div className="w-full px-1 sm:px-8 mt-10">
@@ -45,7 +47,11 @@ const CardCarousel: React.FC<RegularGalleryProps> = ({
             {cardsData.map((card) => (
               <CarouselItem key={card.id} dir="rtl">
                 <Link href={`/EventPage/${encodeURIComponent(card.title)}`}>
-                  <Card {...card} openLoginDialog={openLoginDialog} />
+                  <Card
+                    {...card}
+                    openLoginDialog={openLoginDialog}
+                    userFavorites={userFavorites}
+                  />
                 </Link>
               </CarouselItem>
             ))}

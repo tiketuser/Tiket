@@ -1,13 +1,12 @@
 import React from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
 import NavBar from "../components/NavBar/NavBar";
 import FavoritesClient from "./FavoritesClient";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
 
-// Enable dynamic rendering
-export const dynamic = "force-dynamic";
-export const revalidate = 30; // Revalidate every 30 seconds
+// Use ISR - revalidate every 30 seconds
+export const revalidate = 30;
 
 interface Event {
   id: string;
@@ -39,11 +38,20 @@ async function getServerData(): Promise<ServerData> {
       return { events: [], tickets: [] };
     }
 
-    // Fetch all events and tickets in parallel on the server
-    // This happens once per request and is cached
+    // Fetch only active events and available tickets in parallel on the server
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
-      getDocs(collection(db as any, "concerts")),
-      getDocs(collection(db as any, "tickets")),
+      getDocs(
+        query(
+          collection(db as any, "concerts"),
+          where("status", "==", "active"),
+        ),
+      ),
+      getDocs(
+        query(
+          collection(db as any, "tickets"),
+          where("status", "==", "available"),
+        ),
+      ),
     ]);
 
     // Serialize events - convert Firestore data to plain objects
@@ -63,7 +71,7 @@ async function getServerData(): Promise<ServerData> {
       })
       .filter(
         (event: any) =>
-          event.status === "active" && event.artist && event.imageData
+          event.status === "active" && event.artist && event.imageData,
       ) as Event[];
 
     // Serialize tickets - convert Firestore timestamps to plain values

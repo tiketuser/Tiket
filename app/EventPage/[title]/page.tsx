@@ -10,12 +10,11 @@ import { collection, getDocs, query, where, limit } from "firebase/firestore";
 // Dynamically import ViewTracker to avoid SSR issues
 const ViewTracker = dynamicImport(
   () => import("./ViewTracker").then((mod) => mod.ViewTracker),
-  { ssr: false }
+  { ssr: false },
 );
 
-// Enable dynamic rendering with revalidation
-export const dynamic = "force-dynamic";
-export const revalidate = 30; // Revalidate every 30 seconds for faster cache
+// Use ISR - revalidate every 30 seconds for faster cache
+export const revalidate = 30;
 
 interface Concert {
   id: string;
@@ -68,7 +67,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       concertsRef,
       where("artist", "==", decodedTitle),
       where("status", "==", "active"),
-      limit(1) // Only get one concert to save bandwidth
+      limit(1), // Only get one concert to save bandwidth
     );
 
     // Step 2: Fetch tickets in parallel for better performance
@@ -76,7 +75,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     const ticketsQuery = query(
       ticketsRef,
       where("artist", "==", decodedTitle),
-      where("status", "==", "available")
+      where("status", "==", "available"),
     );
 
     // Execute both queries in parallel
@@ -148,32 +147,41 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
           time={concert.time}
           availableTickets={tickets.length}
         />
-        <div className="flex flex-col items-center justify-center sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 pt-8 px-2 sm:px-4 pb-8 gap-4 shadow-small-inner">
+        <div
+          dir="rtl"
+          className="flex flex-col items-stretch sm:items-center sm:dir-ltr pt-6 px-4 pb-8 gap-3 sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 shadow-small-inner"
+        >
           {tickets.map((ticket) => {
-            // Format seat location more efficiently
-            const seatLocation = ticket.isStanding
-              ? `עמידה - ${ticket.section}`
-              : `מושב ${ticket.section}${ticket.row ? `-${ticket.row}` : ""}${
-                  ticket.seat ? `-${ticket.seat}` : ""
-                }`;
+            // Format seat location with labels
+            let seatLocation: string;
+            if (ticket.isStanding) {
+              seatLocation = `עמידה${ticket.section ? ` | ${ticket.section}` : ""}`;
+            } else {
+              const parts: string[] = [];
+              if (ticket.section) parts.push(`אזור ${ticket.section}`);
+              if (ticket.row) parts.push(`שורה ${ticket.row}`);
+              if (ticket.seat) parts.push(`מושב ${ticket.seat}`);
+              seatLocation = parts.join(" | ");
+            }
 
             return (
-              <div key={ticket.id} className="flex items-center justify-center">
-                <div className="w-full">
-                  <SingleCard
-                    title={concert.artist}
-                    imageSrc={concert.imageData || "/images/Artist/default.png"}
-                    date={concert.date}
-                    location={concert.venue}
-                    seatLocation={seatLocation}
-                    priceBefore={ticket.originalPrice}
-                    price={ticket.askingPrice}
-                    soldOut={false}
-                    ticketsLeft={tickets.length}
-                    timeLeft=""
-                    buttonAction="קנה"
-                  />
-                </div>
+              <div
+                key={ticket.id}
+                className="w-full sm:flex sm:items-center sm:justify-center"
+              >
+                <SingleCard
+                  title={concert.artist}
+                  imageSrc={concert.imageData || "/images/Artist/default.png"}
+                  date={concert.date}
+                  location={concert.venue}
+                  seatLocation={seatLocation}
+                  priceBefore={ticket.originalPrice}
+                  price={ticket.askingPrice}
+                  soldOut={false}
+                  ticketsLeft={tickets.length}
+                  timeLeft=""
+                  buttonAction="קנה"
+                />
               </div>
             );
           })}
@@ -211,7 +219,7 @@ export async function generateStaticParams() {
     const concertsQuery = query(
       collection(db, "concerts"),
       where("status", "==", "active"),
-      limit(50) // Limit for faster initial build
+      limit(50), // Limit for faster initial build
     );
     const concertsSnapshot = await getDocs(concertsQuery);
 
@@ -220,8 +228,8 @@ export async function generateStaticParams() {
       new Set(
         concertsSnapshot.docs
           .map((doc) => doc.data().artist)
-          .filter((artist): artist is string => Boolean(artist?.trim()))
-      )
+          .filter((artist): artist is string => Boolean(artist?.trim())),
+      ),
     );
 
     return artists.map((artist) => ({

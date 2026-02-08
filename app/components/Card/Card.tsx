@@ -30,6 +30,7 @@ interface CardProps {
   ticketsLeft: number;
   timeLeft: string;
   openLoginDialog: () => void;
+  userFavorites?: (string | number)[]; // Pre-fetched favorites to avoid N+1 queries
 }
 
 const Card: React.FC<CardProps> = ({
@@ -44,12 +45,18 @@ const Card: React.FC<CardProps> = ({
   soldOut,
   timeLeft,
   openLoginDialog,
+  userFavorites,
 }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
 
-  // Fetch favorites on mount
+  // Use pre-fetched favorites if available, otherwise fetch individually (fallback)
   useEffect(() => {
+    if (userFavorites !== undefined) {
+      setIsFavorited(userFavorites.includes(id));
+      return;
+    }
+    // Fallback: fetch individually (only if userFavorites not provided)
     const fetchFavorites = async () => {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -63,8 +70,7 @@ const Card: React.FC<CardProps> = ({
       }
     };
     fetchFavorites();
-    // Optionally, add [id] to dependencies if cards can change dynamically
-  }, [id]);
+  }, [id, userFavorites]);
 
   const handleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -153,7 +159,7 @@ const Card: React.FC<CardProps> = ({
         "Card: Error formatting date:",
         error,
         "Original:",
-        dateString
+        dateString,
       );
       return dateString;
     }

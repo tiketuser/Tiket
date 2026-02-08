@@ -2,12 +2,16 @@ import React from "react";
 import NavBar from "../../components/NavBar/NavBar";
 import SearchResultsWrapper from "./SearchResultsWrapper";
 import { db } from "../../../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query as firestoreQuery,
+  where,
+} from "firebase/firestore";
 import { calculateTimeLeft } from "../../../utils/timeCalculator";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Use ISR - revalidate every 30 seconds for fresh search results with caching
+export const revalidate = 30;
 
 // Define CardData type here or import it
 interface CardData {
@@ -59,29 +63,51 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
     );
   }
 
-  // Fetch all events (concerts collection)
-  const eventsSnapshot = await getDocs(collection(db, "concerts"));
+  // Fetch only active events (not all events)
+  const eventsSnapshot = await getDocs(
+    firestoreQuery(
+      collection(db as any, "concerts"),
+      where("status", "==", "active"),
+    ),
+  );
   const events: Event[] = eventsSnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as Event[];
 
-  // Fetch all available tickets
-  const ticketsSnapshot = await getDocs(collection(db, "tickets"));
-  const allTickets: Ticket[] = ticketsSnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Ticket[];
-
-  // Filter events that match the search query
+  // Filter events that match the search query (client-side since Firestore doesn't support substring search)
   const matchingEvents = events.filter(
     (event) =>
       event &&
-      event.status === "active" &&
       event.artist &&
       event.imageData &&
-      event.artist.toLowerCase().includes(query.toLowerCase())
+      event.artist.toLowerCase().includes(query.toLowerCase()),
   );
+
+  // Only fetch tickets for matching events (not ALL tickets)
+  const matchingEventIds = matchingEvents.map((e) => e.id);
+  let allTickets: Ticket[] = [];
+  if (matchingEventIds.length > 0) {
+    // Firestore 'in' query supports up to 30 values per query
+    const chunks = [];
+    for (let i = 0; i < matchingEventIds.length; i += 30) {
+      chunks.push(matchingEventIds.slice(i, i + 30));
+    }
+    const ticketSnapshots = await Promise.all(
+      chunks.map((chunk) =>
+        getDocs(
+          firestoreQuery(
+            collection(db as any, "tickets"),
+            where("concertId", "in", chunk),
+            where("status", "==", "available"),
+          ),
+        ),
+      ),
+    );
+    allTickets = ticketSnapshots.flatMap((snap) =>
+      snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Ticket),
+    );
+  }
 
   // Map events to card data with ticket information
   const eventCards: CardData[] = matchingEvents
@@ -89,7 +115,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
       // Get available tickets for this event
       const eventTickets = allTickets.filter(
         (ticket) =>
-          ticket.concertId === event.id && ticket.status === "available"
+          ticket.concertId === event.id && ticket.status === "available",
       );
 
       // Calculate price range
@@ -128,7 +154,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
 
   // Get all artist names for suggestions
   const artistNames = Array.from(
-    new Set(events.map((event) => event.artist).filter(Boolean))
+    new Set(events.map((event) => event.artist).filter(Boolean)),
   );
 
   return (
