@@ -6,6 +6,7 @@ import useEmblaCarousel, {
 } from "embla-carousel-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 type CarouselApi = UseEmblaCarouselType[1];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
@@ -220,12 +221,13 @@ const CarouselPrevious = React.forwardRef<
       onClick={scrollPrev}
       {...props}
     >
-      <img
+      <Image
         src="/images/Home Page/Web/CarusleArrow.svg"
         alt="ArrowLeftIcon"
         width={22}
         height={24}
         className="rotate-180 max-w-[22px]"
+        priority
       />
       <span className="sr-only">Previous slide</span>
     </Button>
@@ -251,11 +253,12 @@ const CarouselNext = React.forwardRef<
       onClick={scrollNext}
       {...props}
     >
-      <img
+      <Image
         src="/images/Home Page/Web/CarusleArrow.svg"
         alt="ArrowRightIcon"
         width={22}
         height={24}
+        priority
       />
       <span className="sr-only">Next slide</span>
     </Button>

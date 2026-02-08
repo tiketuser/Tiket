@@ -4,12 +4,15 @@ import Footer from "../components/Footer/Footer";
 import ContactForm from "../components/ContactForm/ContactForm";
 import ContactInfoSection from "../components/ContactInfoSection/ContactInfoSection";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 const ContactUs = () => {
   return (
     <div>
       <NavBar />
       <ContactSection />
-      <div className="flex justify-center w-full shadow-small-inner pt-14 pr-80 pl-80 pb-14 gap-16">
+      <div className="flex flex-col-reverse lg:flex-row justify-center items-center lg:items-start w-full shadow-small-inner pt-8 md:pt-14 px-4 sm:px-6 md:px-8 lg:px-20 xl:px-80 pb-8 md:pb-14 gap-8 lg:gap-16">
         <ContactForm />
         <ContactInfoSection />
       </div>

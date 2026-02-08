@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface CustomSearchInputProps {
   type?: string;
@@ -15,24 +15,32 @@ interface CustomSearchInputProps {
   placeholderColor?: string; // New prop for placeholder color
   onEnter?: (value: string) => void;
   suggestions?: string[]; // נוסיף אפשרות לקבלת רשימת הצעות
+  value?: string; // Add this
 }
 
 const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
   type = "text",
   id,
-  width = "w-[500px]",
+  width = "sm:w-[500px]",
   placeholder = "",
   image,
   className = "",
   required = false,
   pattern = ".*",
-  placeholderColor = "text-gray-500", // Default placeholder color
   onEnter,
   suggestions = [],
+  value,
 }) => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(value || "");
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Sync internal state with external value prop
+  useEffect(() => {
+    if (value !== undefined) {
+      setInputValue(value);
+    }
+  }, [value]);
 
   // עדכון טקסט וסינון הצעות
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,7 +54,9 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
     }
 
     // סינון הצעות שמתאימות למה שהמשתמש מקליד
-    const filtered = suggestions.filter((s) => s.includes(value.trim()));
+    const filtered = suggestions
+      .filter((s): s is string => typeof s === "string" && !!s)
+      .filter((s) => s.includes(value.trim()));
 
     setFilteredSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);
@@ -88,7 +98,7 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
         required={required}
         placeholder={placeholder}
         pattern={pattern}
-        value={inputValue}
+        value={value !== undefined ? value : inputValue}
         autoComplete="off"
         autoCorrect="off"
         spellCheck="false"

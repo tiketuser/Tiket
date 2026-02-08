@@ -41,10 +41,12 @@ const config: Config = {
       },
 
       colors: {
-        primary: "#b54653",      // ראשי
-        secondary: "#eac4c7",    // משני
+        // Dynamic colors using CSS variables for category theming
+        primary: "var(--color-primary, #B54653)",      // ראשי - defaults to music red
+        secondary: "var(--color-secondary, #EAC4C7)",    // משני - defaults to music light pink
+        highlight: "var(--color-highlight, #8C5A5F)",    // הדגשה - defaults to music dark red
+        // Static colors
         subtext: "#08050A",
-        highlight: "#8C5A5F",    // הדגשה
         strongText: "#3C3E5F",   // טקסט חזק
         weakText: "#CCCCCC",     // טקסט חלש מאוד
         weakTextBluish: "#667085",

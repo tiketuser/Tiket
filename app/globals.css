@@ -5,6 +5,14 @@
 :root {
   --background: rgba(255, 255, 255, 1);
   --foreground: #171717;
+  
+  /* Default category theme colors (Music) */
+  --color-primary: #B54653;
+  --color-secondary: #EAC4C7;
+  --color-highlight: #8C5A5F;
+  
+  /* Smooth transitions for theme changes */
+  transition: --color-primary 0.3s ease, --color-secondary 0.3s ease, --color-highlight 0.3s ease;
 }
 
 @media (prefers-color-scheme: light) {
@@ -18,6 +26,45 @@ body {
   background: var(--background);
   font-family: var(--font-assistant);
   direction: rtl;
+}
+
+@layer components {
+  /* Custom button styles using dynamic theme colors */
+  .btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--color-highlight);
+    border-color: var(--color-highlight);
+  }
+  
+  .btn-secondary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  }
+  
+  .btn-secondary:hover {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+  }
+  
+  /* Themed SVG color transitions - using CSS filters */
+  /* Note: For best results, SVGs should be inline or use mask-image with background colors */
+  .themed-svg {
+    transition: filter 0.3s ease-in-out, fill 0.3s ease-in-out, stroke 0.3s ease-in-out;
+  }
+  
+  /* Theme transition utility class for other elements that need smooth color changes */
+  .theme-transition {
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out, fill 0.3s ease-in-out, stroke 0.3s ease-in-out;
+  }
 }
 
 @layer utilities {
@@ -59,3 +106,21 @@ input:-webkit-autofill:active {
     color: black !important; /* צבע טקסט תקין */
     transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Navigation loading bar animation */
+@keyframes loading-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.5s ease-in-out infinite;
+}
+

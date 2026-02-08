@@ -1,66 +1,83 @@
 "use client";
 
-import React, { useState } from "react";
-import ClosedEyeIcon from "../../../public/images/Profile/ClosedEye.svg";
-import OpenEyeIcon from "../../../public/images/Profile/OpenEyeIcon.svg";
-import Image from "next/image";
+import React, { useEffect, useState } from "react";
+import { getAuth, deleteUser } from "firebase/auth";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../../../firebase";
 
 interface UserDetailsProps {
   section: string;
 }
 
+interface UserData {
+  fname?: string;
+  lname?: string;
+  phone?: string;
+  email?: string;
+  [key: string]: unknown; // For any additional fields
+}
+
 const UserDetails: React.FC<UserDetailsProps> = ({ section }) => {
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const password = "aviv2004"; // הסיסמה בפועל
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user && db) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserData(userSnap.data() as UserData);
+        }
+      }
+      setLoading(false);
+    };
+    fetchUserData();
+  }, []);
+
+  if (loading) return <div>טוען פרטים...</div>;
+  if (!userData) return <div>לא נמצאו פרטים.</div>;
+
   return (
-    <div className="w-3/4 p-6 border-r-[3px] border-highlight mr-16">
+    <div className="sm:w-3/4 xs:w-3/4 p-6 border-r-[3px] border-highlight sm:mr-16">
       {section === "personal" && (
         <div>
-          <div className="grid grid-cols-2 gap-14">
+          <div className="grid grid-cols-2 sm:gap-14 xs:gap-6 gap-1 xs:mb-6 mb-2">
             <div>
-              <h4 className="text-heading-5-desktop font-extrabold leading-10">
+              <h4 className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-regular font-extrabold leading-10">
                 שם פרטי
               </h4>
-              <p className="text-text-large text-strongText leading-8 ">אביב</p>
-            </div>
-            <div>
-              <h4 className="text-heading-5-desktop font-extrabold leading-10">
-                שם משפחה
-              </h4>
-              <p className="text-text-large text-strongText leading-8">ניר</p>
-            </div>
-            <div>
-              <h4 className="text-heading-5-desktop font-extrabold leading-10">
-                מספר טלפון
-              </h4>
-              <p className="text-text-large text-strongText leading-8">
-                054-4437070
+              <p className="sm:text-text-large xs:text-text-regular text-text-small text-strongText leading-8 ">
+                {userData.fname}
               </p>
             </div>
             <div>
-              <h4 className="text-heading-5-desktop font-extrabold leading-10">
+              <h4 className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-regular font-extrabold leading-10">
+                שם משפחה
+              </h4>
+              <p className="sm:text-text-large xs:text-text-regular text-text-small text-strongText leading-8">
+                {userData.lname}
+              </p>
+            </div>
+            {userData.phone && (
+              <div>
+                <h4 className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-regular font-extrabold leading-10">
+                  מספר טלפון
+                </h4>
+                <p className="sm:text-text-large xs:text-text-regular text-text-small text-strongText leading-8">
+                  {userData.phone}
+                </p>
+              </div>
+            )}
+            <div>
+              <h4 className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-regular font-extrabold leading-10">
                 אימייל
               </h4>
-              <p className="text-lg">avivnir2004@gmail.com</p>
-            </div>
-            <div>
-              {/* כותרת "סיסמה" */}
-              <h4 className="text-heading-5-desktop font-extrabold leading-10 mb-2">
-                סיסמה
-              </h4>
-
-              {/* סיסמה + אייקון בשורה אחת */}
-              <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                <p className="text-text-large ml-4">
-                  {isPasswordVisible ? password : "********"}
-                </p>
-                <Image
-                  src={isPasswordVisible ? OpenEyeIcon : ClosedEyeIcon}
-                  alt="Toggle Password Visibility"
-                  className="cursor-pointer transition-transform duration-300 hover:scale-110"
-                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                />
-              </div>
+              <p className="sm:text-text-large xs:text-text-regular text-text-small text-strongText leading-8 ">
+                {userData.email}
+              </p>
             </div>
           </div>
         </div>
@@ -74,6 +91,41 @@ const UserDetails: React.FC<UserDetailsProps> = ({ section }) => {
       )}
       {section === "disconnect" && (
         <h2 className="text-2xl font-bold text-red-600">התנתקות</h2>
+      )}
+      {section === "delete" && (
+        <div>
+          <button
+            className="bg-primary text-white px-6 py-2 rounded font-bold hover:bg-red-700 transition"
+            onClick={async () => {
+              if (
+                window.confirm(
+                  "האם אתה בטוח שברצונך למחוק את החשבון? פעולה זו אינה הפיכה."
+                )
+              ) {
+                const auth = getAuth();
+                const user = auth.currentUser;
+                if (user && db) {
+                  try {
+                    // Delete user document from Firestore
+                    await deleteDoc(doc(db, "users", user.uid));
+                    // Delete user from Firebase Auth
+                    await deleteUser(user);
+                    alert("החשבון נמחק בהצלחה.");
+                    window.location.reload();
+                  } catch (err) {
+                    const msg =
+                      err && typeof err === "object" && "message" in err
+                        ? (err as { message?: string }).message
+                        : String(err);
+                    alert("מחיקת החשבון נכשלה: " + (msg || err));
+                  }
+                }
+              }
+            }}
+          >
+            מחק חשבון לצמיתות
+          </button>
+        </div>
       )}
     </div>
   );

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון P&L עסקי - Tiket+</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* הגדרת פונט Assistant */
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@200..800&display=swap');
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: #f7f9fb; /* רקע בהיר מאוד לדף כולו */
+        }
+       
+        /* צבעים מותאמים אישית בהשראת התמונות ועיצוב נקי */
+        .card-bg {
+            background-color: #ffffff; /* רקע לבן ונקי לכרטיס */
+            color: #1f2937; /* טקסט כהה */
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+        }
+        .color-primary {
+            color: #ef4444; /* אדום/כתום למיתוג וכותרות, דומה ל-L בתמונות */
+        }
+        .color-positive {
+            color: #10b981; /* ירוק מנטה לרווח חיובי */
+        }
+        .color-negative {
+            color: #ef4444; /* אדום להוצאות/הפסד */
+        }
+        .text-label {
+            @apply text-sm font-medium text-gray-500;
+        }
+        .value-display {
+            @apply text-lg font-bold;
+        }
+        .input-box {
+            /* ריווח מוגדל (pr-11) כדי להבטיח ריווח משמעותי יותר מסימן האחוז */
+            @apply w-full p-2 border border-gray-300 bg-white text-gray-800 rounded-md focus:ring-red-500 focus:border-red-500 transition duration-150 text-base text-right font-bold pr-11;
+        }
+        .parameter-label {
+            @apply text-sm font-semibold text-gray-700;
+        }
+        .summary-box {
+            background-color: #f3f4f6; /* רקע אפור בהיר לסיכום המצטבר */
+            border: 1px solid #d1d5db;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+
+    <div class="max-w-7xl mx-auto space-y-10">
+        <!-- כותרת ראשית ומיתוג -->
+        <header class="bg-white p-6 rounded-xl shadow-lg border-t-8 border-red-600">
+            <div class="flex flex-col items-center">
+                <p class="text-4xl font-extrabold color-primary mb-1">L</p>
+                <h1 class="text-2xl font-bold text-gray-700 mb-4">מחשבון P&L עסקי רב-שלבי</h1>
+                <p class="text-center text-gray-500 mb-6">כלי תחזית כלכלית לפרויקט TIKET +</p>
+            </div>
+
+
+            <!-- השקעה ראשונית - נפרד כדי להציג בבירור את העלות ההתחלתית -->
+            <div class="mb-6 p-4 bg-red-50 rounded-lg border border-red-300 text-center">
+                <p class="font-bold text-red-700 text-lg">השקעה ראשונית (עלות שיווק):</p>
+                <p class="text-3xl font-extrabold text-red-900 mt-1" id="initial-investment">
+                    -75,000 ₪
+                </p>
+            </div>
+        </header>
+
+
+        <!-- P&L מצטבר כולל (מחוץ לכרטיסים) -->
+        <section class="bg-white p-6 rounded-xl border border-gray-200 text-center shadow-md">
+            <h2 class="text-xl font-extrabold color-primary mb-3">P&L מצטבר כולל (עד סוף תקופה)</h2>
+            <div class="text-center">
+                <span class="text-4xl font-extrabold" id="cumulative-pnl"></span>
+            </div>
+        </section>
+
+
+
+
+        <!-- כרטיסי שלבים -->
+        <div id="stages-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- כרטיסי השלבים יוכנסו כאן ע"י JavaScript -->
+        </div>
+
+
+    </div>
+
+
+    <script>
+        // הגדרת קבועים ונתונים
+        const INITIAL_INVESTMENT = -75000;
+        // שימוש ב-minimumFractionDigits: 0 כדי להבטיח שלא יהיו ספרות אחרי הנקודה (בנוסף לעיגול ב-Math.round)
+        const currencyFormatter = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 0 });
+
+
+        // נתוני השלבים הקבועים
+        const STAGES = [
+            {
+                id: 1,
+                name: "שלב 1 – “אפס חיכוך”",
+                period: "6 - 0 חודשים",
+                yau: "2K ≈ 0.2%",
+                months: 6,
+                tickets: 400,
+                avgPrice: 100,
+                monthlyOpCost: 130,
+                monthlyTechCost: 0,
+                // ברירות מחדל חדשות
+                defaultCommission: '0', // 0% לקוח
+                defaultProfitShare: '0',  // 0% למפיקים
+            },
+            {
+                id: 2,
+                name: "שלב 2 – “נחיתה רכה”",
+                period: "18 - 7 חודשים",
+                yau: "60K ≈ 15%",
+                months: 12,
+                tickets: 10000,
+                avgPrice: 150,
+                monthlyOpCost: 1100,
+                monthlyTechCost: 3000,
+                // ברירות מחדל חדשות
+                defaultCommission: '2', // 2% לקוח
+                defaultProfitShare: '30',  // 30% למפיקים
+            },
+            {
+                id: 3,
+                name: "שלב 3 – “ביסוס רווחיות”",
+                period: "36 - 19 חודשים",
+                yau: "500K ≈ 80%",
+                months: 18,
+                tickets: 95833,
+                avgPrice: 190,
+                monthlyOpCost: 6500,
+                // עלות תמיכה טכנית בשלב 3
+                monthlyTechCost: 12000,
+                // ברירות מחדל חדשות
+                defaultCommission: '7', // 7% לקוח
+                defaultProfitShare: '30',  // 30% למפיקים
+            }
+        ];
+
+
+        let cumulativePnL = INITIAL_INVESTMENT;
+
+
+        // פונקציית החישוב הראשית
+        function calculate() {
+            let accumulatedPnL = INITIAL_INVESTMENT;
+           
+            // 1. קריאת ערכי האינפוט הקיימים (לפני ניקוי ה-DOM)
+            const currentInputs = {};
+            STAGES.forEach(stage => {
+                // בדיקה האם השדות קיימים ב-DOM כדי לשמור את הקלט של המשתמש אם קיים
+                const commElement = document.getElementById(`commissionRate_${stage.id}`);
+                const shareElement = document.getElementById(`profitShare_${stage.id}`);
+               
+                // שימוש בקלט הקיים, ואם לא קיים - שימוש בברירת המחדל הספציפית לשלב
+                currentInputs[stage.id] = {
+                    commission: commElement ? commElement.value : stage.defaultCommission,
+                    share: shareElement ? shareElement.value : stage.defaultProfitShare
+                };
+            });
+
+
+            // עדכון השקעה ראשונית - מעוגל
+            document.getElementById('initial-investment').textContent = currencyFormatter.format(Math.round(INITIAL_INVESTMENT));
+
+
+            const stagesContainer = document.getElementById('stages-container');
+            stagesContainer.innerHTML = ''; // 2. ניקוי כרטיסים קודמים
+
+
+            // 3. לולאה, חישוב ובנייה מחדש
+            STAGES.forEach(stage => {
+                // שימוש בברירות המחדל שנשמרו ב-currentInputs או שהוגדרו ב-STAGES
+                const defaults = currentInputs[stage.id];
+                const currentCommissionValue = defaults.commission;
+                const currentProfitShareValue = defaults.share;
+
+
+                // המרה לאחוזים עשרוניים (0 עד 1) ובטיחות קלט
+                const commValue = parseFloat(currentCommissionValue);
+                const shareValue = parseFloat(currentProfitShareValue);
+               
+                // שימוש ב-0 אם הקלט לא חוקי או שלילי
+                const commissionRate = (isNaN(commValue) || commValue < 0) ? 0 : commValue / 100;
+                const profitShareRate = (isNaN(shareValue) || shareValue < 0) ? 0 : shareValue / 100;
+
+
+                // 1. הכנסה חודשית מעמלות (ברוטו)
+                const monthlyTotalRevenue = stage.tickets * stage.avgPrice;
+                const monthlyCommissionIncomeGross = monthlyTotalRevenue * commissionRate;
+
+
+                // 2. חישוב חלוקת רווחים למפיקים
+                const monthlyProducerPayout = monthlyCommissionIncomeGross * profitShareRate;
+                const stageProducerPayout = monthlyProducerPayout * stage.months; // חישוב שלבי
+
+
+                // 3. הכנסה חודשית נטו (אחרי חלוקת רווחים)
+                const monthlyCommissionIncomeNet = monthlyCommissionIncomeGross - monthlyProducerPayout;
+
+
+                // 4. עלויות חודשיות
+                const monthlyTotalExpenses = stage.monthlyOpCost + stage.monthlyTechCost;
+
+
+                // 5. P&L חודשי
+                const monthlyPnL = monthlyCommissionIncomeNet - monthlyTotalExpenses;
+
+
+                // 6. חישובים שלביים (סה"כ לתקופה)
+                const stageCommissionIncomeGross = monthlyCommissionIncomeGross * stage.months;
+                const stageCommissionIncomeNet = monthlyCommissionIncomeNet * stage.months;
+                const stageOperatingCost = stage.monthlyOpCost * stage.months;
+                const stageTechCost = stage.monthlyTechCost * stage.months;
+                const stagePnL = monthlyPnL * stage.months;
+
+
+                // 7. עדכון P&L מצטבר
+                accumulatedPnL += stagePnL;
+
+
+                // יצירת כרטיס השלב
+                const cardHtml = createStageCard(stage, {
+                    monthlyCommissionIncomeGross,
+                    stageCommissionIncomeGross,
+                    monthlyCommissionIncomeNet,
+                    stageCommissionIncomeNet,
+                    monthlyProducerPayout,
+                    stageProducerPayout,  
+                    stageOperatingCost,
+                    stageTechCost,
+                    monthlyPnL,
+                    stagePnL,
+                    cumulativePnL: accumulatedPnL
+                }, currentCommissionValue, currentProfitShareValue);
+
+
+                stagesContainer.insertAdjacentHTML('beforeend', cardHtml);
+            });
+           
+            // עדכון ה-P&L המצטבר הכללי וצבע הטקסט - מעוגל
+            cumulativePnL = accumulatedPnL;
+            const cumulativePnlElement = document.getElementById('cumulative-pnl');
+            cumulativePnlElement.textContent = currencyFormatter.format(Math.round(cumulativePnL));
+           
+            // שימוש בצבעים מותאמים אישית לרווח ואדום להפסד
+            cumulativePnlElement.classList.remove('color-positive', 'color-negative');
+            if (cumulativePnL < 0) {
+                cumulativePnlElement.classList.add('color-negative');
+            } else {
+                cumulativePnlElement.classList.add('color-positive');
+            }
+        }
+
+
+        // פונקציה ליצירת כרטיס שלב HTML
+        function createStageCard(stage, results, commissionValue, profitShareValue) {
+           
+            // פונקציית עזר להצגת ערך P&L עם צבע מתאים - מעוגל
+            const formatValue = (value) => {
+                const roundedValue = Math.round(value);
+                const className = roundedValue >= 0 ? 'color-positive' : 'color-negative';
+                return `<span class="value-display ${className}">${currencyFormatter.format(roundedValue)}</span>`;
+            };
+
+
+            // פונקציית עזר להצגת ערך הוצאה (תמיד אדום) - מעוגל
+            const formatExpense = (value) => {
+                const roundedValue = Math.round(value);
+                return `<span class="value-display color-negative">${currencyFormatter.format(roundedValue)}</span>`;
+            };
+
+
+            // קביעת צבע ה-P&L המצטבר
+            const cumulativePnLClass = results.cumulativePnL >= 0 ? 'color-positive' : 'color-negative';
+
+
+            return `
+                <div class="card-bg p-6">
+                    <!-- תקופה וכותרת -->
+                    <div class="text-center mb-6">
+                        <p class="text-sm font-light color-primary mb-1">תקופה: ${stage.period}</p>
+                        <h2 class="text-2xl font-extrabold text-gray-800">${stage.name}</h2>
+                    </div>
+
+
+                    <!-- פרמטרים ואינפוטים -->
+                    <div class="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-200">
+                       
+                        <!-- עמלה מהלקוח - INPUT -->
+                        <div class="text-center">
+                            <label for="commissionRate_${stage.id}" class="parameter-label block mb-1">עמלה מהלקוח</label>
+                            <div class="relative w-2/3 mx-auto">
+                                <input type="number" id="commissionRate_${stage.id}" value="${commissionValue}" min="0" max="100" class="input-box" oninput="calculate()">
+                                <!-- מיקום התו '%': right-1 כדי להיות צמוד לשפה הימנית -->
+                                <span class="absolute inset-y-0 right-1 flex items-center text-gray-600 text-base font-bold">%</span>
+                            </div>
+                        </div>
+
+
+                        <!-- אחוז למפיקים - INPUT -->
+                        <div class="text-center">
+                            <label for="profitShare_${stage.id}" class="parameter-label block mb-1">אחוז למפיקים</label>
+                            <div class="relative w-2/3 mx-auto">
+                                <input type="number" id="profitShare_${stage.id}" value="${profitShareValue}" min="0" max="100" class="input-box" oninput="calculate()">
+                                <span class="absolute inset-y-0 right-1 flex items-center text-gray-600 text-base font-bold">%</span>
+                            </div>
+                        </div>
+                       
+                        <!-- כרטיסים לחודש -->
+                        <div class="text-center mt-4">
+                            <p class="parameter-label">כרטיסים לחודש</p>
+                            <p class="value-display text-gray-800">${stage.tickets.toLocaleString('he-IL')}</p>
+                        </div>
+
+
+                        <!-- ממוצע לכרטיס -->
+                        <div class="text-center mt-4">
+                            <p class="parameter-label">ממוצע לכרטיס</p>
+                            <p class="value-display text-gray-800">${currencyFormatter.format(Math.round(stage.avgPrice))}</p>
+                        </div>
+
+
+                        <!-- YAU (משתרע על 2 עמודות) -->
+                        <div class="col-span-2 text-center mt-4">
+                            <p class="parameter-label">YAU</p>
+                            <p class="value-display text-gray-800">${stage.yau} YAU</p>
+                        </div>
+                    </div>
+                   
+                    <!-- תוצאות P&L - פריסה 2 עמודות (חודשי / שלבי) -->
+                    <div class="grid grid-cols-2 gap-y-4">
+
+
+                        <!-- הכנסה ברוטו -->
+                        <div class="text-right space-y-1 border-b border-gray-100 pb-3">
+                            <p class="text-label">הכנסה חודשית (ברוטו)</p>
+                            <!-- מעוגל -->
+                            <p class="text-base font-semibold text-gray-800">${currencyFormatter.format(Math.round(results.monthlyCommissionIncomeGross))}</p>
+                        </div>
+                        <div class="text-left space-y-1 border-b border-gray-100 pb-3">
+                            <p class="text-label">הכנסה שלבית (ברוטו)</p>
+                            <!-- מעוגל -->
+                            <p class="text-base font-semibold text-gray-800">${currencyFormatter.format(Math.round(results.stageCommissionIncomeGross))}</p>
+                        </div>
+
+
+                        <!-- רווח מפיקים -->
+                        <div class="text-right space-y-1 border-b border-gray-100 pt-3 pb-3">
+                            <p class="text-label">רווח מפיקים חודשי</p>
+                            ${formatExpense(results.monthlyProducerPayout)}
+                        </div>
+                        <div class="text-left space-y-1 border-b border-gray-100 pt-3 pb-3">
+                            <p class="text-label">רווח מפיקים שלבי</p>
+                            ${formatExpense(results.stageProducerPayout)}
+                        </div>
+                       
+                        <!-- רווח נטו TIKET+ -->
+                        <div class="text-right space-y-1 border-b-2 border-red-300 pt-3 pb-3">
+                            <p class="font-bold text-gray-800">רווח נטו חודשי</p>
+                            ${formatValue(results.monthlyCommissionIncomeNet)}
+                        </div>
+                        <div class="text-left space-y-1 border-b-2 border-red-300 pt-3 pb-3">
+                            <p class="font-bold text-gray-800">רווח נטו שלבי</p>
+                            ${formatValue(results.stageCommissionIncomeNet)}
+                        </div>
+
+
+                        <!-- עלות תפעול -->
+                        <div class="text-right space-y-1 pt-3 pb-3">
+                            <p class="text-label">עלות תפעול חודשית</p>
+                            ${formatExpense(stage.monthlyOpCost)}
+                        </div>
+                        <div class="text-left space-y-1 pt-3 pb-3">
+                            <p class="text-label">עלות תפעול שלבית</p>
+                            ${formatExpense(results.stageOperatingCost)}
+                        </div>
+
+
+                        <!-- תמיכה טכנית -->
+                        <div class="text-right space-y-1 border-b border-gray-100 pt-3 pb-3">
+                            <p class="text-label">תמיכה טכנית חודשית</p>
+                            <!-- הצגת הערך המעודכן -->
+                            ${formatExpense(stage.monthlyTechCost)}
+                        </div>
+                        <div class="text-left space-y-1 border-b border-gray-100 pt-3 pb-3">
+                            <p class="text-label">תמיכה טכנית שלבית</p>
+                            ${formatExpense(results.stageTechCost)}
+                        </div>
+
+
+                        <!-- P&L שורה תחתונה -->
+                        <div class="text-right space-y-1 pt-4">
+                            <p class="text-lg font-extrabold text-gray-800">P&L חודשי</p>
+                            ${formatValue(results.monthlyPnL)}
+                        </div>
+                        <div class="text-left space-y-1 pt-4">
+                            <p class="text-lg font-extrabold text-gray-800">P&L שלבי</p>
+                            ${formatValue(results.stagePnL)}
+                        </div>
+                    </div>
+                   
+                    <!-- P&L מצטבר עד סוף השלב (תיבה אפורה בתחתית) -->
+                    <div class="text-center mt-6 p-4 summary-box rounded-lg">
+                        <p class="text-lg font-extrabold text-gray-600 mb-1">P&L מצטבר</p>
+                        <span class="text-3xl font-extrabold ${cumulativePnLClass}">${currencyFormatter.format(Math.round(results.cumulativePnL))}</span>
+                    </div>
+                </div>
+            `;
+        }
+       
+        // הפעלת החישוב הראשונית עם טעינת הדף
+        window.onload = calculate;
+
+
+    </script>
+</body>
+</html>
+
+
+

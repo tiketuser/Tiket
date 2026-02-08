@@ -27,7 +27,7 @@ Extensions that can make ease of usage:
 - ES7+ React/Redux/React-Native snippets
 - vscode-icons
 
-### 🔧 Getting Started with Development
+###  Getting Started with Development
 To ensure smooth collaboration and avoid branch conflicts, follow these steps whenever you start working on a new feature or fix:
 
 1. Pull the Latest Changes from dev
@@ -87,7 +87,7 @@ git push origin bugfix/your-bug-description
 - Add a descriptive title and a detailed description of your changes.
 - Assign reviewers if needed and submit the PR.
   
-### 🔁 Keeping Your Branch Conflict-Free
+###  Keeping Your Branch Conflict-Free
 Always pull the latest changes from dev before starting or continuing work:
 
 ```bash
