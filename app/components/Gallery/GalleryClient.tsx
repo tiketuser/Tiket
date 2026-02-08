@@ -1,13 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import CustomSearchInput from "../CustomSearchInput/CustomSearchInput";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import SearchIcon from "../../../public/images/SearchBar/Search Icon.svg";
 import ResponsiveGallery from "../TicketGallery/ResponsiveGallery";
-import LoginDialog from "../Dialogs/LoginDialog/LoginDialog";
+import dynamic from "next/dynamic";
 import { applyTheme, loadThemesFromFirebase } from "../../theme/categoryThemes";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../../firebase";
+
+const LoginDialog = dynamic(
+  () => import("../Dialogs/LoginDialog/LoginDialog"),
+  { ssr: false },
+);
 import CategoryFilter from "../CategoryFilter/CategoryFilter";
 
 interface CardData {
@@ -34,9 +42,32 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
   const [allCardsData, setAllCardsData] = useState<CardData[]>(initialCards);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [userFavorites, setUserFavorites] = useState<(string | number)[]>([]);
 
   // Define the function once
-  const openLoginDialog = () => setLoginDialogOpen(true);
+  const openLoginDialog = useCallback(() => setLoginDialogOpen(true), []);
+
+  // Fetch user favorites ONCE (instead of N+1 per card)
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && db) {
+        try {
+          const userRef = doc(db as any, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          const favorites = userSnap.exists()
+            ? userSnap.data().favorites || []
+            : [];
+          setUserFavorites(favorites);
+        } catch (error) {
+          console.error("Error fetching favorites:", error);
+        }
+      } else {
+        setUserFavorites([]);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Initialize default theme on mount
   useEffect(() => {
@@ -62,19 +93,25 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
     } else {
       // Filter by selected category
       const filtered = allCardsData.filter(
-        (card) => card.category === selectedCategory
+        (card) => card.category === selectedCategory,
       );
       setCardsData(filtered);
       applyTheme(selectedCategory); // Apply category-specific theme
     }
   }, [selectedCategory, allCardsData]);
 
-  // Extract unique artist names for search suggestions
-  const artistNames = [...new Set(cardsData.map((card) => card.title))];
+  // Extract unique artist names for search suggestions (memoized)
+  const artistNames = useMemo(
+    () => [...new Set(cardsData.map((card) => card.title))],
+    [cardsData],
+  );
 
-  const handleSearch = (query: string) => {
-    router.replace(`/SearchResults/${encodeURIComponent(query)}`);
-  };
+  const handleSearch = useCallback(
+    (query: string) => {
+      router.replace(`/SearchResults/${encodeURIComponent(query)}`);
+    },
+    [router],
+  );
 
   return (
     <div className="shadow-small-inner flex flex-col items-center pt-6 pb-10">
@@ -105,6 +142,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
         <ResponsiveGallery
           cardsData={cardsData}
           openLoginDialog={openLoginDialog}
+          userFavorites={userFavorites}
         />
       )}
       <LoginDialog

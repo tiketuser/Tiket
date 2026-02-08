@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 
-import UploadTicketDialog from "../Dialogs/UploadTicketDialog/UploadTicketDialog";
-import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
+// Lazy-load dialogs - UploadTicketDialog is 702 lines, only needed on button click
+const UploadTicketDialog = dynamic(
+  () => import("../Dialogs/UploadTicketDialog/UploadTicketDialog"),
+  { ssr: false },
+);
+const CheckoutDialog = dynamic(
+  () => import("../Dialogs/CheckoutDialog/CheckoutDialog"),
+  { ssr: false },
+);
 import {
   ThemedGuitarThing,
   ThemedSecondaryHalfCircle,

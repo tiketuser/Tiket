@@ -1,5 +1,5 @@
 import React from "react";
-import { collection, getDocs } from "../../../firebase";
+import { collection, getDocs, query, where } from "../../../firebase";
 import { db } from "../../../firebase";
 import GalleryClient from "./GalleryClient";
 import { calculateTimeLeft } from "../../../utils/timeCalculator";
@@ -47,10 +47,20 @@ async function getGalleryData(): Promise<CardData[]> {
       return [];
     }
 
-    // Fetch all events and tickets in parallel on the server
+    // Fetch only active events and available tickets in parallel on the server
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
-      getDocs(collection(db as any, "concerts")),
-      getDocs(collection(db as any, "tickets")),
+      getDocs(
+        query(
+          collection(db as any, "concerts"),
+          where("status", "==", "active"),
+        ),
+      ),
+      getDocs(
+        query(
+          collection(db as any, "tickets"),
+          where("status", "==", "available"),
+        ),
+      ),
     ]);
 
     // Serialize events - only plain objects
@@ -72,7 +82,7 @@ async function getGalleryData(): Promise<CardData[]> {
       })
       .filter(
         (event) =>
-          event && event.status === "active" && event.artist && event.imageData
+          event && event.status === "active" && event.artist && event.imageData,
       );
 
     // Serialize tickets - only plain objects
@@ -93,7 +103,7 @@ async function getGalleryData(): Promise<CardData[]> {
         // Get available tickets for this event
         const eventTickets = allTickets.filter(
           (ticket) =>
-            ticket.concertId === event.id && ticket.status === "available"
+            ticket.concertId === event.id && ticket.status === "available",
         );
 
         // Calculate price range
@@ -111,7 +121,7 @@ async function getGalleryData(): Promise<CardData[]> {
           originalPrices.length > 0
             ? Math.round(
                 originalPrices.reduce((a, b) => a + b, 0) /
-                  originalPrices.length
+                  originalPrices.length,
               )
             : Math.round(minPrice * 1.2); // Default to 20% markup if no original prices
 

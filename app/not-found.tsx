@@ -7,9 +7,6 @@ import NavBar from "./components/NavBar/NavBar";
 import ContactSection from "./components/ContactSection/ContactSection";
 import Footer from "./components/Footer/Footer";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
-
 export default function NotFound() {
   return (
     <div>

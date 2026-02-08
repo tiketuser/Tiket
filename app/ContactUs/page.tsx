@@ -4,9 +4,6 @@ import Footer from "../components/Footer/Footer";
 import ContactForm from "../components/ContactForm/ContactForm";
 import ContactInfoSection from "../components/ContactInfoSection/ContactInfoSection";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
-
 const ContactUs = () => {
   return (
     <div>

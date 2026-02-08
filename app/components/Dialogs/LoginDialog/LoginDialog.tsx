@@ -2,6 +2,7 @@ import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
 import CustomInput from "../../CustomInput/CustomInput";
 import LoginRegisterButtons from "../LoginRegisterButtons/LoginRegisterButtons";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -25,6 +26,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
   const [error, setError] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const router = useRouter();
 
   // Email login handler
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -38,7 +40,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
       await signInWithEmailAndPassword(auth, email, password);
       setError("");
       onClose();
-      window.location.reload(); // Refresh after login
+      router.refresh(); // Refresh server data without full page reload
     } catch {
       setError("פרטי ההתחברות שגויים.");
     }
@@ -83,7 +85,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
 
       setError("");
       onClose();
-      window.location.reload(); // Refresh after Google login
+      router.refresh(); // Refresh server data without full page reload
     } catch {
       setError("התחברות עם Google נכשלה.");
     }

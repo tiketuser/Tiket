@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   getAuth,
   onAuthStateChanged,
@@ -18,9 +19,19 @@ import HeartIcon from "../../../public/images/NavBar/Heart.svg";
 import Arrow from "../../../public/images/Home Page/Web/Arrow.svg";
 import ProfileButton from "../../../public/images/Home Page/ProfileButton.svg";
 
-import LoginDialog from "../../components/Dialogs/LoginDialog/LoginDialog";
-import SignUpDialog from "../Dialogs/SignUpDialog/SignUpDialog";
-import ProfileDialog from "../Dialogs/ProfileDialog/ProfileDialog";
+// Lazy-load dialogs - they are heavy and only needed on user interaction
+const LoginDialog = dynamic(
+  () => import("../../components/Dialogs/LoginDialog/LoginDialog"),
+  { ssr: false },
+);
+const SignUpDialog = dynamic(
+  () => import("../Dialogs/SignUpDialog/SignUpDialog"),
+  { ssr: false },
+);
+const ProfileDialog = dynamic(
+  () => import("../Dialogs/ProfileDialog/ProfileDialog"),
+  { ssr: false },
+);
 
 const NavBar = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -96,7 +107,7 @@ const NavBar = () => {
     const auth = getAuth();
     await signOut(auth);
     setUser(null);
-    window.location.reload(); // Refresh the page after logout
+    router.refresh(); // Refresh server data without full page reload
   };
 
   return (
@@ -232,7 +243,7 @@ const NavBar = () => {
                   </Link>
                   <Link href="/Admin/pnl-calculator">
                     <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
-                      PNL מחשבון 
+                      PNL מחשבון
                     </div>
                   </Link>
                   {/* <Link href="/fix-dates">

@@ -10,12 +10,11 @@ import { collection, getDocs, query, where, limit } from "firebase/firestore";
 // Dynamically import ViewTracker to avoid SSR issues
 const ViewTracker = dynamicImport(
   () => import("./ViewTracker").then((mod) => mod.ViewTracker),
-  { ssr: false }
+  { ssr: false },
 );
 
-// Enable dynamic rendering with revalidation
-export const dynamic = "force-dynamic";
-export const revalidate = 30; // Revalidate every 30 seconds for faster cache
+// Use ISR - revalidate every 30 seconds for faster cache
+export const revalidate = 30;
 
 interface Concert {
   id: string;
@@ -68,7 +67,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       concertsRef,
       where("artist", "==", decodedTitle),
       where("status", "==", "active"),
-      limit(1) // Only get one concert to save bandwidth
+      limit(1), // Only get one concert to save bandwidth
     );
 
     // Step 2: Fetch tickets in parallel for better performance
@@ -76,7 +75,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     const ticketsQuery = query(
       ticketsRef,
       where("artist", "==", decodedTitle),
-      where("status", "==", "available")
+      where("status", "==", "available"),
     );
 
     // Execute both queries in parallel
@@ -211,7 +210,7 @@ export async function generateStaticParams() {
     const concertsQuery = query(
       collection(db, "concerts"),
       where("status", "==", "active"),
-      limit(50) // Limit for faster initial build
+      limit(50), // Limit for faster initial build
     );
     const concertsSnapshot = await getDocs(concertsQuery);
 
@@ -220,8 +219,8 @@ export async function generateStaticParams() {
       new Set(
         concertsSnapshot.docs
           .map((doc) => doc.data().artist)
-          .filter((artist): artist is string => Boolean(artist?.trim()))
-      )
+          .filter((artist): artist is string => Boolean(artist?.trim())),
+      ),
     );
 
     return artists.map((artist) => ({

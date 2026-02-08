@@ -27,11 +27,13 @@ interface CardData {
 interface ResponsiveGalleryProps {
   cardsData: CardData[];
   openLoginDialog: () => void;
+  userFavorites?: (string | number)[];
 }
 
 const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
   cardsData,
   openLoginDialog,
+  userFavorites,
 }) => {
   // Determine if we should center the carousel (when there are 3 or fewer cards)
   const shouldCenter = cardsData.length <= 3;
@@ -53,7 +55,11 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
                 className={`basis-1/3 ${shouldCenter ? "lg:basis-auto" : ""}`}
               >
                 <div className="w-[392px] h-[700px]">
-                  <Card {...card} openLoginDialog={openLoginDialog} />
+                  <Card
+                    {...card}
+                    openLoginDialog={openLoginDialog}
+                    userFavorites={userFavorites}
+                  />
                 </div>
               </CarouselItem>
             ))}
@@ -75,7 +81,11 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
       <div className="sm:hidden grid grid-cols-2 gap-3 w-full px-3 mt-6 mb-8">
         {cardsData.map((card) => (
           <div key={card.id} className="w-full">
-            <Card {...card} openLoginDialog={openLoginDialog} />
+            <Card
+              {...card}
+              openLoginDialog={openLoginDialog}
+              userFavorites={userFavorites}
+            />
           </div>
         ))}
       </div>
