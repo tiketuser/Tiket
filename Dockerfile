@@ -48,11 +48,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Copy credentials file if it exists
-COPY --from=builder /app/creds.json ./creds.json
-
-# Copy tessdata for OCR support
-COPY --from=builder /app/tessdata ./tessdata
+# Copy tessdata for OCR support (optional)
+RUN mkdir -p ./tessdata
+COPY --from=builder /app/tessdata/ ./tessdata/
 
 USER nextjs
 
