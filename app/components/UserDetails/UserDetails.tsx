@@ -1,130 +1,131 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { getAuth, deleteUser } from "firebase/auth";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../../firebase";
-
-interface UserDetailsProps {
-  section: string;
-}
 
 interface UserData {
   fname?: string;
   lname?: string;
   phone?: string;
   email?: string;
-  [key: string]: unknown; // For any additional fields
+  photoURL?: string;
+  displayName?: string;
+  [key: string]: unknown;
 }
 
-const UserDetails: React.FC<UserDetailsProps> = ({ section }) => {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+interface UserDetailsProps {
+  section: string;
+  userData: UserData | null;
+  loading: boolean;
+}
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (user && db) {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          setUserData(userSnap.data() as UserData);
-        }
-      }
-      setLoading(false);
-    };
-    fetchUserData();
-  }, []);
+const InfoCard = ({
+  label,
+  value,
+  dir,
+}: {
+  label: string;
+  value?: string;
+  dir?: string;
+}) => (
+  <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-1">
+    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+      {label}
+    </span>
+    <span className="text-base font-bold text-gray-900 break-words" dir={dir}>
+      {value || "—"}
+    </span>
+  </div>
+);
 
-  if (loading) return <div>טוען פרטים...</div>;
-  if (!userData) return <div>לא נמצאו פרטים.</div>;
+const UserDetails: React.FC<UserDetailsProps> = ({
+  section,
+  userData,
+  loading,
+}) => {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="bg-gray-100 rounded-xl p-4 h-[68px] animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (!userData && section === "personal") {
+    return (
+      <div className="text-center py-8 text-gray-400">
+        <p className="text-lg font-semibold">לא נמצאו פרטים</p>
+        <p className="text-sm mt-1">נסה להתחבר מחדש</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="sm:w-3/4 xs:w-3/4 p-6 border-r-[3px] border-highlight sm:mr-16">
+    <div className="space-y-6">
       {section === "personal" && (
-        <div>
-          <div className="grid grid-cols-2 sm:gap-14 xs:gap-6 gap-1 xs:mb-6 mb-2">
-            <div>
-              <h4 className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-regular font-extrabold leading-10">
-                שם פרטי
-              </h4>
-              <p className="sm:text-text-large xs:text-text-regular text-text-small text-strongText leading-8 ">
-                {userData.fname}
-              </p>
-            </div>
-            <div>
-              <h4 className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-regular font-extrabold leading-10">
-                שם משפחה
-              </h4>
-              <p className="sm:text-text-large xs:text-text-regular text-text-small text-strongText leading-8">
-                {userData.lname}
-              </p>
-            </div>
-            {userData.phone && (
-              <div>
-                <h4 className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-regular font-extrabold leading-10">
-                  מספר טלפון
-                </h4>
-                <p className="sm:text-text-large xs:text-text-regular text-text-small text-strongText leading-8">
-                  {userData.phone}
-                </p>
-              </div>
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <InfoCard label="שם פרטי" value={userData?.fname} />
+            <InfoCard label="שם משפחה" value={userData?.lname} />
+            <InfoCard label="אימייל" value={userData?.email} dir="ltr" />
+            {userData?.phone && (
+              <InfoCard label="טלפון" value={userData.phone} dir="ltr" />
             )}
-            <div>
-              <h4 className="sm:text-heading-5-desktop xs:text-heading-5-mobile text-text-regular font-extrabold leading-10">
-                אימייל
-              </h4>
-              <p className="sm:text-text-large xs:text-text-regular text-text-small text-strongText leading-8 ">
-                {userData.email}
-              </p>
-            </div>
           </div>
-        </div>
+
+          {/* Delete account */}
+          <div className="pt-4 border-t border-gray-100">
+            <button
+              className="w-full py-3 rounded-xl text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
+              onClick={async () => {
+                if (
+                  window.confirm(
+                    "האם אתה בטוח שברצונך למחוק את החשבון? פעולה זו אינה הפיכה.",
+                  )
+                ) {
+                  const auth = getAuth();
+                  const user = auth.currentUser;
+                  if (user && db) {
+                    try {
+                      await deleteDoc(doc(db, "users", user.uid));
+                      await deleteUser(user);
+                      alert("החשבון נמחק בהצלחה.");
+                      window.location.reload();
+                    } catch (err) {
+                      const msg =
+                        err && typeof err === "object" && "message" in err
+                          ? (err as { message?: string }).message
+                          : String(err);
+                      alert("מחיקת החשבון נכשלה: " + (msg || err));
+                    }
+                  }
+                }
+              }}
+            >
+              מחק חשבון לצמיתות
+            </button>
+          </div>
+        </>
       )}
 
       {section === "payment" && (
-        <h2 className="text-2xl font-bold">פרטי תשלום</h2>
+        <div className="text-center py-8 text-gray-400">
+          <p className="text-lg font-semibold">פרטי תשלום</p>
+          <p className="text-sm mt-1">בקרוב...</p>
+        </div>
       )}
+
       {section === "activity" && (
-        <h2 className="text-2xl font-bold">סיכום פעולות</h2>
-      )}
-      {section === "disconnect" && (
-        <h2 className="text-2xl font-bold text-red-600">התנתקות</h2>
-      )}
-      {section === "delete" && (
-        <div>
-          <button
-            className="bg-primary text-white px-6 py-2 rounded font-bold hover:bg-red-700 transition"
-            onClick={async () => {
-              if (
-                window.confirm(
-                  "האם אתה בטוח שברצונך למחוק את החשבון? פעולה זו אינה הפיכה."
-                )
-              ) {
-                const auth = getAuth();
-                const user = auth.currentUser;
-                if (user && db) {
-                  try {
-                    // Delete user document from Firestore
-                    await deleteDoc(doc(db, "users", user.uid));
-                    // Delete user from Firebase Auth
-                    await deleteUser(user);
-                    alert("החשבון נמחק בהצלחה.");
-                    window.location.reload();
-                  } catch (err) {
-                    const msg =
-                      err && typeof err === "object" && "message" in err
-                        ? (err as { message?: string }).message
-                        : String(err);
-                    alert("מחיקת החשבון נכשלה: " + (msg || err));
-                  }
-                }
-              }
-            }}
-          >
-            מחק חשבון לצמיתות
-          </button>
+        <div className="text-center py-8 text-gray-400">
+          <p className="text-lg font-semibold">סיכום פעולות</p>
+          <p className="text-sm mt-1">בקרוב...</p>
         </div>
       )}
     </div>
