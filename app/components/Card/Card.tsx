@@ -187,13 +187,14 @@ const Card: React.FC<CardProps> = ({
             </div>
           )}
           {/* Artist Image */}
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             width={300}
             height={300}
             src={imageSrc}
             alt={title}
-            unoptimized
             className="w-full h-32 sm:h-[264px] mb-2 sm:mb-4 object-cover"
+            loading="lazy"
           />
           {/* Title and show details section */}
           <div className="grid pt-2 sm:pt-6 pb-1 sm:pb-2 gap-1 sm:gap-3">

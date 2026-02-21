@@ -16,8 +16,18 @@ const nextConfig = {
     ];
   },
   images: {
-    // Keep unoptimized since event images are base64 data URIs from Firestore
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        pathname: "/tiket-9268c.firebasestorage.app/**",
+      },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        pathname: "/**",
+      },
+    ],
   },
   webpack: (config) => {
     config.resolve.fallback = {

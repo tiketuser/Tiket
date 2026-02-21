@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
-import { db } from "../../firebase";
+import { db, storage } from "../../firebase";
 import {
   collection,
   getDocs,
@@ -14,6 +14,7 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Image from "next/image";
 
 // Force dynamic rendering for admin pages
@@ -55,7 +56,7 @@ export default function EditConcertsPage() {
       setLoading(true);
       const concertsQuery = query(
         collection(db, "concerts"),
-        orderBy("date", "desc")
+        orderBy("date", "desc"),
       );
       const snapshot = await getDocs(concertsQuery);
       const concertsData = snapshot.docs.map((doc) => ({
@@ -118,7 +119,7 @@ export default function EditConcertsPage() {
       // Update local state with normalized date
       const updatedForm = { ...editForm, date: normalizedDate };
       setConcerts(
-        concerts.map((c) => (c.id === selectedConcert.id ? updatedForm : c))
+        concerts.map((c) => (c.id === selectedConcert.id ? updatedForm : c)),
       );
 
       alert("האירוע עודכן בהצלחה!");
@@ -172,12 +173,24 @@ export default function EditConcertsPage() {
 
     try {
       setUploadingImage(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setEditForm({ ...editForm, imageData: base64String });
-      };
-      reader.readAsDataURL(file);
+
+      if (storage) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const imageRef = ref(storage, `concert-images/${editForm.id}.${ext}`);
+        const snapshot = await uploadBytes(imageRef, file, {
+          contentType: file.type,
+        });
+        const downloadUrl = await getDownloadURL(snapshot.ref);
+        setEditForm({ ...editForm, imageData: downloadUrl });
+      } else {
+        // Fallback to base64 if storage is not available
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setEditForm({ ...editForm, imageData: base64String });
+        };
+        reader.readAsDataURL(file);
+      }
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("שגיאה בהעלאת התמונה");
@@ -289,15 +302,15 @@ export default function EditConcertsPage() {
                               concert.status === "active"
                                 ? "bg-green-500"
                                 : concert.status === "past"
-                                ? "bg-gray-500"
-                                : "bg-red-500"
+                                  ? "bg-gray-500"
+                                  : "bg-red-500"
                             }`}
                           >
                             {concert.status === "active"
                               ? "פעיל"
                               : concert.status === "past"
-                              ? "עבר"
-                              : "בוטל"}
+                                ? "עבר"
+                                : "בוטל"}
                           </span>
                         </div>
                       </div>
