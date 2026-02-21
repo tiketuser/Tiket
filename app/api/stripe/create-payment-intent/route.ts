@@ -9,24 +9,30 @@ import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 
 export async function POST(request: NextRequest) {
   try {
-    if (!adminAuth || !adminDb) {
+    if (!adminDb) {
       return NextResponse.json(
         { error: "Server services not available" },
         { status: 500 }
       );
     }
 
+    const body = await request.json();
+    const { ticketId, guestEmail, guestPhone } = body;
+
+    // Determine buyer identity: authenticated user or guest
+    let buyerUid: string | null = null;
+    let isGuest = false;
+
     const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    if (authHeader?.startsWith("Bearer ") && adminAuth) {
+      const token = authHeader.substring(7);
+      const decoded = await adminAuth.verifyIdToken(token);
+      buyerUid = decoded.uid;
+    } else if (guestEmail && guestPhone) {
+      isGuest = true;
+    } else {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const token = authHeader.substring(7);
-    const decoded = await adminAuth.verifyIdToken(token);
-    const buyerUid = decoded.uid;
-
-    const body = await request.json();
-    const { ticketId } = body;
 
     if (!ticketId) {
       return NextResponse.json(
@@ -54,8 +60,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prevent self-purchase
-    if (ticket.sellerId === buyerUid) {
+    // Prevent self-purchase (only for authenticated users)
+    if (buyerUid && ticket.sellerId === buyerUid) {
       return NextResponse.json(
         { error: "לא ניתן לרכוש כרטיס שהעלית בעצמך" },
         { status: 400 }
@@ -87,24 +93,32 @@ export async function POST(request: NextRequest) {
     // Reserve the ticket (prevent double purchase)
     await adminDb.collection("tickets").doc(ticketId).update({
       status: "reserved",
-      reservedBy: buyerUid,
+      reservedBy: buyerUid || `guest:${guestEmail}`,
       reservedAt: new Date(),
     });
 
     // All payments go to the admin's Stripe account directly.
     // Seller payouts are tracked in the transactions collection
     // and handled by the admin separately.
+    const metadata: Record<string, string> = {
+      ticketId,
+      concertId: ticket.concertId || "",
+      buyerId: buyerUid || "",
+      sellerId: ticket.sellerId,
+      ticketPrice: ticketPriceILS.toString(),
+      platformFeePercent: getPlatformFeePercent().toString(),
+      isGuest: isGuest.toString(),
+    };
+
+    if (isGuest) {
+      metadata.guestEmail = guestEmail;
+      metadata.guestPhone = guestPhone;
+    }
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAgorot,
       currency: "ils",
-      metadata: {
-        ticketId,
-        concertId: ticket.concertId || "",
-        buyerId: buyerUid,
-        sellerId: ticket.sellerId,
-        ticketPrice: ticketPriceILS.toString(),
-        platformFeePercent: getPlatformFeePercent().toString(),
-      },
+      metadata,
     });
 
     return NextResponse.json({

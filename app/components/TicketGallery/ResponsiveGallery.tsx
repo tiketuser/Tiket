@@ -78,7 +78,7 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
         </div>
       </div>
       {/* Grid Layout for screens < sm - 2 cards per row */}
-      <div className="sm:hidden grid grid-cols-2 gap-3 w-full px-3 mt-6 mb-8">
+      <div className="sm:hidden grid grid-cols-2 gap-2 w-full px-1 mt-4 mb-6">
         {cardsData.map((card) => (
           <div key={card.id} className="w-full">
             <Card

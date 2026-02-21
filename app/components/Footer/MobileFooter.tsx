@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import ProfileIcon from "../../../public/images/Home Page/ProfileButton.svg";
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 
 // Lazy-load dialogs - only needed on user interaction
 const SignUpDialog = dynamic(
@@ -20,9 +21,24 @@ const ProfileDialog = dynamic(
 );
 
 const MobileFooter = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoginDialogOpen, setLoginDialogOpen] = React.useState(false);
   const [isSignUpDialogOpen, setSignUpDialogOpen] = React.useState(false);
   const [isProfileDialogOpen, setProfileDialogOpen] = React.useState(false);
+
+  useEffect(() => {
+    try {
+      const auth = getAuth();
+      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        setUser(firebaseUser);
+      });
+      return () => unsubscribe();
+    } catch {
+      // Firebase not configured
+    }
+  }, []);
+
+  if (user) return null;
 
   return (
     <>

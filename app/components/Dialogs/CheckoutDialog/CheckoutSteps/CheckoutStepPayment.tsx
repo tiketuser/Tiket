@@ -71,25 +71,22 @@ const PaymentForm: React.FC<{
     <form
       onSubmit={handleSubmit}
       className="flex flex-col gap-4 sm:gap-6 w-full"
-      dir="ltr"
+      dir="rtl"
     >
-      <PaymentElement
-        options={{
-          layout: "tabs",
-        }}
-      />
+      <div dir="rtl">
+        <PaymentElement
+          options={{
+            layout: "tabs",
+          }}
+        />
+      </div>
 
-      {error && (
-        <p className="text-red-500 text-sm text-center" dir="rtl">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
       <button
         type="submit"
         disabled={!stripe || isProcessing}
         className="w-full h-[48px] sm:h-[56px] bg-primary text-white rounded-lg font-bold text-text-regular sm:text-heading-5-desktop hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        dir="rtl"
       >
         {isProcessing ? "מעבד תשלום..." : "שלם עכשיו"}
       </button>

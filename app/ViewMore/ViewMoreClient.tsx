@@ -75,7 +75,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
   const applyFilters = (
     events: CardData[],
     filters: FilterState,
-    category: string | null
+    category: string | null,
   ): CardData[] => {
     return events.filter((event) => {
       // Filter by category
@@ -103,7 +103,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
       if (filters.dateRange?.from && filters.dateRange?.to) {
         const normalizedDate = event.date.replace(/\./g, "/");
         const eventDate = new Date(
-          normalizedDate.split("/").reverse().join("-")
+          normalizedDate.split("/").reverse().join("-"),
         );
         const fromDate = new Date(filters.dateRange.from);
         fromDate.setHours(0, 0, 0, 0);
@@ -161,9 +161,9 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
   return (
     <div dir="rtl">
       <NavBar />
-      <div className="pt-14 pb-14 pr-6 pl-6 shadow-small-inner">
+      <div className="pt-6 pb-8 px-3 sm:pt-14 sm:pb-14 sm:px-6 shadow-small-inner">
         {/* Category Filter */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-4 sm:mb-8">
           <CategoryFilter
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
@@ -190,13 +190,13 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
         <TiketFilters onFilterChange={handleFilterChange} />
 
         {cardsData.length === 0 && (
-          <div className="text-center text-lg text-gray-500 py-8">
+          <div className="text-center text-base sm:text-lg text-gray-500 py-6 sm:py-8">
             אין אירועים זמינים כרגע
           </div>
         )}
 
         {displayCards.length === 0 && cardsData.length > 0 && (
-          <div className="text-center text-lg text-gray-500 py-8">
+          <div className="text-center text-base sm:text-lg text-gray-500 py-6 sm:py-8">
             לא נמצאו אירועים התואמים את הסינון
           </div>
         )}
@@ -207,7 +207,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
               <>
                 {recentlyViewed.length > 0 && (
                   <>
-                    <h3 className="text-heading-3-desktop font-extrabold mr-8 text-subtext mb-4 mt-6">
+                    <h3 className="text-heading-4-mobile sm:text-heading-3-desktop font-extrabold mr-2 sm:mr-8 text-subtext mb-3 sm:mb-4 mt-4 sm:mt-6">
                       נצפה לאחרונה
                     </h3>
                     <ResponsiveGallery
@@ -219,7 +219,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
 
                 {lastMinuteDeals.length > 0 && (
                   <>
-                    <h3 className="text-heading-3-desktop font-extrabold mr-8 text-subtext mb-4 mt-6">
+                    <h3 className="text-heading-4-mobile sm:text-heading-3-desktop font-extrabold mr-2 sm:mr-8 text-subtext mb-3 sm:mb-4 mt-4 sm:mt-6">
                       דילים ברגע האחרון
                     </h3>
                     <ResponsiveGallery
@@ -231,7 +231,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
 
                 {recommendations.length > 0 && (
                   <>
-                    <h3 className="text-heading-3-desktop font-extrabold mr-8 text-subtext mb-4 mt-6">
+                    <h3 className="text-heading-4-mobile sm:text-heading-3-desktop font-extrabold mr-2 sm:mr-8 text-subtext mb-3 sm:mb-4 mt-4 sm:mt-6">
                       המלצות שלנו
                     </h3>
                     <ResponsiveGallery
@@ -243,7 +243,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
               </>
             )}
 
-            <h3 className="text-heading-3-desktop font-extrabold mr-8 text-subtext mb-4 mt-6">
+            <h3 className="text-heading-4-mobile sm:text-heading-3-desktop font-extrabold mr-2 sm:mr-8 text-subtext mb-3 sm:mb-4 mt-4 sm:mt-6">
               {hasActiveFilters
                 ? `תוצאות סינון (${displayCards.length})`
                 : `כל האירועים (${displayCards.length})`}

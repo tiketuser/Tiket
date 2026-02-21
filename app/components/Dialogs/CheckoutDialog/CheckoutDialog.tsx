@@ -5,6 +5,7 @@ import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
 import ProgressBar from "../ProgressBar/ProgressBar";
 import CheckoutStepAuth from "./CheckoutSteps/CheckoutStepAuth";
+import type { GuestInfo } from "./CheckoutSteps/CheckoutStepAuth";
 import CheckoutStepSummary from "./CheckoutSteps/CheckoutStepSummary";
 import CheckoutStepPayment from "./CheckoutSteps/CheckoutStepPayment";
 import CheckoutStepConfirmation from "./CheckoutSteps/CheckoutStepConfirmation";
@@ -32,6 +33,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   ticket,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [guestInfo, setGuestInfo] = useState<GuestInfo | null>(null);
   const [step, setStep] = useState(1);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentDetails, setPaymentDetails] = useState<{
@@ -65,6 +67,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setPaymentDetails(null);
       setPaymentError(null);
       setTransactionComplete(false);
+      setGuestInfo(null);
     }
   }, [isOpen, user]);
 
@@ -72,20 +75,37 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     setStep(2);
   }, []);
 
+  const handleGuestCheckout = useCallback((info: GuestInfo) => {
+    setGuestInfo(info);
+    setStep(2);
+  }, []);
+
   const handleProceedToPayment = useCallback(async () => {
-    if (!ticket || !user) return;
+    if (!ticket) return;
+    if (!user && !guestInfo) return;
 
     setPaymentError(null);
 
     try {
-      const idToken = await user.getIdToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (user) {
+        const idToken = await user.getIdToken();
+        headers["Authorization"] = `Bearer ${idToken}`;
+      }
+
+      const body: Record<string, unknown> = { ticketId: ticket.ticketId };
+      if (guestInfo) {
+        body.guestEmail = guestInfo.email;
+        body.guestPhone = guestInfo.phone;
+      }
+
       const response = await fetch("/api/stripe/create-payment-intent", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ ticketId: ticket.ticketId }),
+        headers,
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -106,7 +126,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       console.error("Payment intent error:", error);
       setPaymentError("שגיאה בהתחברות לשרת התשלומים");
     }
-  }, [ticket, user]);
+  }, [ticket, user, guestInfo]);
 
   const handlePaymentSuccess = useCallback(() => {
     setTransactionComplete(true);
@@ -125,8 +145,8 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   const stepHeadings = [
     {
-      heading: "התחבר כדי לרכוש",
-      description: "יש להתחבר או להירשם לפני רכישת כרטיס",
+      heading: "התחבר או המשך כאורח",
+      description: "התחבר, הירשם, או המשך כאורח לרכישה",
     },
     { heading: "סיכום הזמנה", description: "בדוק את פרטי הכרטיס לפני התשלום" },
     { heading: "תשלום", description: "הזן את פרטי התשלום" },
@@ -145,7 +165,12 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       topChildren={<ProgressBar step={step} totalSteps={4} />}
     >
       <div className="w-full max-w-[604px] mx-auto mt-4 sm:mt-6">
-        {step === 1 && <CheckoutStepAuth onAuthComplete={handleAuthComplete} />}
+        {step === 1 && (
+          <CheckoutStepAuth
+            onAuthComplete={handleAuthComplete}
+            onGuestCheckout={handleGuestCheckout}
+          />
+        )}
 
         {step === 2 && (
           <CheckoutStepSummary

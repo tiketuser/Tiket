@@ -102,7 +102,7 @@ const CheckoutStepSummary: React.FC<CheckoutStepSummaryProps> = ({
           </div>
 
           {/* Price */}
-          <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
+          <div className="flex-shrink-0 flex flex-col items-start gap-0.5">
             <span className="text-lg sm:text-xl font-extrabold text-strongText">
               ₪{ticket.price}
             </span>

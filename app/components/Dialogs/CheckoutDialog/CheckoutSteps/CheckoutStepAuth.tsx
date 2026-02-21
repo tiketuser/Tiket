@@ -17,14 +17,21 @@ import CheckBox from "../../../CheckBox/CheckBox";
 
 import Image from "next/image";
 
+export interface GuestInfo {
+  email: string;
+  phone: string;
+}
+
 interface CheckoutStepAuthProps {
   onAuthComplete: () => void;
+  onGuestCheckout?: (guestInfo: GuestInfo) => void;
 }
 
 const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
   onAuthComplete,
+  onGuestCheckout,
 }) => {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "guest">("login");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,6 +47,11 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Guest fields
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestTermsAccepted, setGuestTermsAccepted] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -170,41 +182,69 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
     }
   };
 
+  const handleGuestCheckout = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!guestTermsAccepted) {
+      setError("יש לאשר את תנאי השימוש");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(guestEmail)) {
+      setError("כתובת אימייל לא תקינה");
+      return;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(guestPhone)) {
+      setError("מספר טלפון לא תקין (10 ספרות)");
+      return;
+    }
+
+    onGuestCheckout?.({ email: guestEmail, phone: guestPhone });
+  };
+
   return (
     <div className="flex flex-col items-center w-full gap-4" dir="rtl">
-      {/* Google Sign In */}
-      <button
-        onClick={handleGoogleSignIn}
-        disabled={isLoading}
-        className="flex items-center justify-center gap-3 w-full max-w-[456px] h-[48px] border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-      >
-        <Image
-          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-          alt="Google"
-          width={20}
-          height={20}
-          unoptimized
-        />
-        <span className="text-text-regular font-medium">
-          {mode === "login" ? "התחבר עם Google" : "הירשם עם Google"}
-        </span>
-      </button>
+      {/* Google Sign In - only show for login/signup modes */}
+      {mode !== "guest" && (
+        <>
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+            className="flex items-center justify-center gap-3 w-full max-w-[456px] h-[48px] border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <Image
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              width={20}
+              height={20}
+              unoptimized
+            />
+            <span className="text-text-regular font-medium">
+              {mode === "login" ? "התחבר עם Google" : "הירשם עם Google"}
+            </span>
+          </button>
 
-      {/* Divider */}
-      <div className="flex items-center w-full max-w-[456px]">
-        <div className="flex-1 h-[1px] bg-gray-300" />
-        <span className="px-3 text-sm text-gray-500">או</span>
-        <div className="flex-1 h-[1px] bg-gray-300" />
-      </div>
+          {/* Divider */}
+          <div className="flex items-center w-full max-w-[456px]">
+            <div className="flex-1 h-[1px] bg-gray-300" />
+            <span className="px-3 text-sm text-gray-500">או</span>
+            <div className="flex-1 h-[1px] bg-gray-300" />
+          </div>
+        </>
+      )}
 
-      {/* Toggle Login/Signup */}
-      <div className="flex gap-4 w-full max-w-[456px]">
+      {/* Toggle Login/Signup/Guest */}
+      <div className="flex gap-2 sm:gap-3 w-full max-w-[456px]">
         <button
           onClick={() => {
             setMode("login");
             setError("");
           }}
-          className={`flex-1 py-2 text-center rounded-lg font-bold transition-colors ${
+          className={`flex-1 py-2 text-center rounded-lg font-bold text-sm sm:text-base transition-colors ${
             mode === "login"
               ? "bg-primary text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -217,7 +257,7 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
             setMode("signup");
             setError("");
           }}
-          className={`flex-1 py-2 text-center rounded-lg font-bold transition-colors ${
+          className={`flex-1 py-2 text-center rounded-lg font-bold text-sm sm:text-base transition-colors ${
             mode === "signup"
               ? "bg-primary text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -225,13 +265,28 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
         >
           הרשמה
         </button>
+        <button
+          onClick={() => {
+            setMode("guest");
+            setError("");
+          }}
+          className={`flex-1 py-2 text-center rounded-lg font-bold text-sm sm:text-base transition-colors ${
+            mode === "guest"
+              ? "bg-primary text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          קניית אורח
+        </button>
       </div>
 
       {error && (
-        <p className="text-red-500 text-sm text-center w-full">{error}</p>
+        <p className="text-red-500 text-sm text-center w-full">
+          {error}
+        </p>
       )}
 
-      {mode === "login" ? (
+      {mode === "login" && (
         <form
           onSubmit={handleLogin}
           className="flex flex-col items-center w-full gap-3"
@@ -264,7 +319,9 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
             {isLoading ? "מתחבר..." : "התחבר"}
           </button>
         </form>
-      ) : (
+      )}
+
+      {mode === "signup" && (
         <form
           onSubmit={handleSignup}
           className="flex flex-col items-center w-full gap-3"
@@ -345,6 +402,52 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
             className="w-full max-w-[456px] h-[48px] bg-primary text-white rounded-lg font-bold text-text-regular hover:bg-red-700 transition-colors disabled:opacity-50"
           >
             {isLoading ? "נרשם..." : "הירשם"}
+          </button>
+        </form>
+      )}
+
+      {mode === "guest" && (
+        <form
+          onSubmit={handleGuestCheckout}
+          className="flex flex-col items-center w-full gap-3"
+        >
+          <p className="text-sm text-weakTextBluish text-center w-full max-w-[456px]">
+            הזן את פרטיך ונשלח לך את הכרטיס לאחר הרכישה
+          </p>
+          <CustomInput
+            id="guest-email"
+            name="email"
+            type="email"
+            placeholder="דואר אלקטרוני"
+            width="w-full max-w-[456px]"
+            required
+            value={guestEmail}
+            onChange={(e) => setGuestEmail(e.target.value)}
+          />
+          <CustomInput
+            id="guest-phone"
+            name="phone"
+            type="tel"
+            placeholder="מספר טלפון"
+            width="w-full max-w-[456px]"
+            required
+            pattern="[0-9]{10}"
+            value={guestPhone}
+            onChange={(e) => setGuestPhone(e.target.value)}
+          />
+          <div className="w-full max-w-[456px]">
+            <CheckBox
+              text="אני מאשר את תנאי השימוש ומדיניות הביטולים"
+              required
+              onChange={(checked) => setGuestTermsAccepted(checked)}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={!guestTermsAccepted}
+            className="w-full max-w-[456px] h-[48px] bg-primary text-white rounded-lg font-bold text-text-regular hover:bg-red-700 transition-colors disabled:opacity-50"
+          >
+            המשך לסיכום הזמנה
           </button>
         </form>
       )}

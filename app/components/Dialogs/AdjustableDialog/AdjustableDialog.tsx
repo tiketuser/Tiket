@@ -47,10 +47,10 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
   return (
     isOpen && (
       <>
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm py-4 sm:py-8 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm py-4 sm:py-8">
           {/* Dialog Box */}
           <div
-            className="relative bg-white shadow-lg sm:p-10 my-auto w-[95%] sm:w-auto h-auto py-10 px-3 sm:px-10 max-h-[95vh] overflow-y-auto"
+            className="relative bg-white shadow-lg w-[95%] sm:w-auto flex flex-col max-h-[95vh]"
             style={inlineMaxWidth ? { maxWidth: inlineMaxWidth } : undefined}
           >
             {/* Exit Button */}
@@ -61,25 +61,28 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
               <Image src={exitIcon} alt="exitIcon" height={20} width={20} />
             </button>
 
-            <div className="flex justify-center items-center w-full mt-3">
-              {topChildren && topChildren}
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto flex-1 sm:p-10 py-10 px-3 sm:px-10">
+              <div className="flex justify-center items-center w-full mt-3">
+                {topChildren && topChildren}
+              </div>
+
+              <div className="sm:pt-4 pt-2 select-none" dir="rtl">
+                <h2 className="text-center sm:text-heading-2-desktop text-heading-2-mobile font-extrabold text-gray-950">
+                  {heading}
+                </h2>
+                <p className="text-center text-text-medium font-bold text-strongText">
+                  {description}
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="flex flex-col items-center select-none" dir="rtl">
+                {children}
+              </div>
             </div>
 
-            <div className="sm:pt-4 pt-2 select-none">
-              <h2 className="text-center sm:text-heading-2-desktop text-heading-2-mobile font-extrabold text-gray-950">
-                {heading}
-              </h2>
-              <p className="text-center text-text-medium font-bold text-strongText">
-                {description}
-              </p>
-            </div>
-
-            {/* Content */}
-            <div className="flex flex-col items-center select-none">
-              {children}
-            </div>
-
-            <div className="absolute bottom-0 left-0 right-0 border-t-8 border-highlight"></div>
+            <div className="border-t-8 border-highlight w-full shrink-0"></div>
           </div>
         </div>
       </>

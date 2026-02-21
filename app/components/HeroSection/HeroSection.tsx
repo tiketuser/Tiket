@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
 // Lazy-load dialogs - UploadTicketDialog is 702 lines, only needed on button click
@@ -18,6 +19,7 @@ import {
 import ButtonStar from "../../../public/images/Home Page/Web/Buttom Star.svg";
 
 const HeroSection = () => {
+  const router = useRouter();
   const [isUploadTicketDialogOpen, setUploadTicketDialogOpen] = useState(false);
 
   return (
@@ -39,10 +41,7 @@ const HeroSection = () => {
             <button
               className="btn btn-primary text-heading-5-desktop w-[100px] h-[50px] sm:w-28 sm:h-16 text-gray-50 font-regular sm:text-heading-4-desktop scale-[0.87] sm:scale-90 md:scale-95 lg:scale-100 "
               onClick={() => {
-                const gallery = document.getElementById("gallery");
-                if (gallery) {
-                  gallery.scrollIntoView({ behavior: "smooth" });
-                }
+                router.push("/ViewMore");
               }}
             >
               קנה

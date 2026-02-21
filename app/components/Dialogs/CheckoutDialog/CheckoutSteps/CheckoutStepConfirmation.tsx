@@ -33,7 +33,7 @@ const CheckoutStepConfirmation: React.FC<CheckoutStepConfirmationProps> = ({
         </svg>
       </div>
 
-      <p className="text-text-regular text-strongText text-center">
+      <p className="text-text-regular text-strongText text-center w-full">
         ניתן לראות את הכרטיסים שרכשת יחד עם שאר הכרטיסים בבעלותך
       </p>
 

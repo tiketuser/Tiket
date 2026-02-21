@@ -88,11 +88,19 @@ export async function POST(request: NextRequest) {
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   if (!adminDb) return;
 
-  const { ticketId, concertId, buyerId, sellerId, ticketPrice, platformFeePercent } =
-    paymentIntent.metadata;
+  const {
+    ticketId, concertId, buyerId, sellerId, ticketPrice, platformFeePercent,
+    isGuest, guestEmail, guestPhone,
+  } = paymentIntent.metadata;
 
-  if (!ticketId || !buyerId || !sellerId) {
+  if (!ticketId || !sellerId) {
     console.error("Missing metadata in PaymentIntent:", paymentIntent.id);
+    return;
+  }
+
+  // For guest checkout, buyerId may be empty
+  if (!buyerId && isGuest !== "true") {
+    console.error("Missing buyerId for non-guest payment:", paymentIntent.id);
     return;
   }
 
@@ -108,18 +116,17 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   const ticketRef = adminDb.collection("tickets").doc(ticketId);
   batch.update(ticketRef, {
     status: "sold",
-    soldTo: buyerId,
+    soldTo: buyerId || `guest:${guestEmail}`,
     soldAt: new Date(),
     reservedBy: null,
     reservedAt: null,
   });
 
   // Create transaction record (admin uses this to pay sellers)
-  const transactionRef = adminDb.collection("transactions").doc();
-  batch.set(transactionRef, {
+  const transactionData: Record<string, unknown> = {
     ticketId,
     concertId: concertId || null,
-    buyerId,
+    buyerId: buyerId || null,
     sellerId,
     amount: totalILS,
     ticketPrice: ticketPriceILS,
@@ -131,7 +138,16 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     status: "completed",
     createdAt: new Date(),
     completedAt: new Date(),
-  });
+    isGuest: isGuest === "true",
+  };
+
+  if (isGuest === "true") {
+    transactionData.guestEmail = guestEmail || null;
+    transactionData.guestPhone = guestPhone || null;
+  }
+
+  const transactionRef = adminDb.collection("transactions").doc();
+  batch.set(transactionRef, transactionData);
 
   await batch.commit();
   console.log(
