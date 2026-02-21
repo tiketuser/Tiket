@@ -6,6 +6,7 @@ import TimeLeftIcon from "../../../public/images/Home Page/Web/TimeLeft.svg";
 import Image from "next/image";
 import Link from "next/link";
 import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
+import type { TicketInfo } from "../Dialogs/CheckoutDialog/CheckoutDialog";
 
 interface SingleCardProps {
   imageSrc?: string;
@@ -20,6 +21,8 @@ interface SingleCardProps {
   ticketsLeft?: number;
   timeLeft?: string;
   buttonAction: string;
+  ticketId?: string;
+  sellerId?: string;
 }
 
 const SingleCard: React.FC<SingleCardProps> = ({
@@ -32,6 +35,8 @@ const SingleCard: React.FC<SingleCardProps> = ({
   price,
   timeLeft,
   buttonAction,
+  ticketId,
+  sellerId,
 }) => {
   const [isCheckoutDialogOpen, setCheckoutDialogOpen] = useState(false);
 
@@ -232,20 +237,31 @@ const SingleCard: React.FC<SingleCardProps> = ({
         </div>
 
         {/* Action Button */}
-        <Link href="/EventPage" className="flex-shrink-0">
-          <button
-            className="btn rounded-md btn-primary min-h-0 w-[80px] h-[36px] md:w-[100px] md:h-[40px] text-white text-[10px] md:text-text-large font-normal px-3"
-            onClick={() => setCheckoutDialogOpen(true)}
-          >
-            {buttonAction}
-          </button>
-        </Link>
+        <button
+          className="btn rounded-md btn-primary min-h-0 w-[80px] h-[36px] md:w-[100px] md:h-[40px] text-white text-[10px] md:text-text-large font-normal px-3 flex-shrink-0"
+          onClick={() => setCheckoutDialogOpen(true)}
+        >
+          {buttonAction}
+        </button>
       </div>
 
       <CheckoutDialog
         isOpen={isCheckoutDialogOpen}
         onClose={() => setCheckoutDialogOpen(false)}
-        isUserConnected={false}
+        ticket={
+          ticketId
+            ? {
+                ticketId,
+                title,
+                date,
+                venue: location,
+                seatLocation: seatLocation || location,
+                price,
+                originalPrice: priceBefore,
+                sellerId: sellerId || "",
+              }
+            : null
+        }
       />
     </>
   );

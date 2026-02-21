@@ -96,7 +96,7 @@ for (const concertDoc of concertsSnapshot.docs) {
   const ticketsQuery = query(
     collection(db, "tickets"),
     where("concertId", "==", concertId),
-    where("status", "==", "available")
+    where("status", "==", "available"),
   );
 
   const ticketsSnapshot = await getDocs(ticketsQuery);
@@ -124,7 +124,7 @@ const concertsQuery = query(
   collection(db, "concerts"),
   where("artist", "==", "שלמה ארצי"),
   where("date", "==", "15/10/2025"),
-  where("venue", "==", "היכל מנורה מבטחים")
+  where("venue", "==", "היכל מנורה מבטחים"),
 );
 
 const snapshot = await getDocs(concertsQuery);
@@ -145,6 +145,60 @@ if (!snapshot.empty) {
 ## Next Steps
 
 1.  Update upload dialog to create concerts and link tickets
-2. ⏭ Update Gallery component to fetch concerts + aggregate ticket data
-3. ⏭ Update EventPage to show concert details + available tickets
-4. ⏭ Add admin panel to manage concerts (edit details, merge duplicates)
+2.  Update Gallery component to fetch concerts + aggregate ticket data
+3.  Update EventPage to show concert details + available tickets
+4.  Add admin panel to manage concerts (edit details, merge duplicates)
+
+---
+
+### 3. **transactions** Collection
+
+Records completed purchases for audit trail, refunds, and dashboards.
+
+```typescript
+{
+  ticketId: string; // Reference to ticket document ID
+  concertId: string; // Reference to concert document ID
+  buyerId: string; // Firebase UID of buyer
+  sellerId: string; // Firebase UID of seller
+  amount: number; // Total charged to buyer (ILS, includes fee)
+  ticketPrice: number; // Seller's asking price (ILS)
+  platformFee: number; // Platform fee charged to buyer (ILS)
+  sellerPayout: number; // Amount owed to seller (ILS)
+  sellerPayoutStatus: string; // "pending" | "paid"
+  currency: string; // "ILS"
+  stripePaymentIntentId: string; // Stripe PaymentIntent ID
+  status: string; // "pending" | "completed" | "refunded" | "failed"
+  createdAt: Timestamp;
+  completedAt: Timestamp | null;
+}
+```
+
+**Purpose**: Immutable record of every purchase. Used for transaction history, payout tracking, and dispute resolution. `sellerPayoutStatus` tracks whether the admin has paid the seller their share.
+
+### 4. **users** Collection (updated)
+
+Stores user profile and payment details for sellers.
+
+```typescript
+{
+  email: string;
+  fname: string;
+  lname: string;
+  phone?: string;
+  displayName: string;
+  photoURL?: string;
+  createdAt: Timestamp;
+  favorites?: string[];              // Array of concert IDs
+  paymentDetailsConfigured?: boolean; // Whether seller saved bank details
+  paymentDetails?: {                 // Seller bank account for payouts
+    bankName: string;                // Israeli bank name (e.g. "בנק הפועלים")
+    branchNumber: string;            // 3-4 digit branch number
+    accountNumber: string;           // 6-13 digit account number
+    accountHolderName: string;       // Account holder full name
+    updatedAt: string;               // ISO timestamp of last update
+  };
+}
+```
+
+**Purpose**: User profile. `paymentDetails` stores the seller's Israeli bank account info for receiving payouts. All payments go through the admin's Stripe account; seller payouts are handled manually by the admin.

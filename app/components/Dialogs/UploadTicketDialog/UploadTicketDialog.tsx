@@ -20,6 +20,7 @@ import {
   getDocs,
   Firestore,
 } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import { db } from "../../../../firebase";
 import { artistNamesMatch } from "../../../../utils/artistMatcher";
 
@@ -60,16 +61,16 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     console.log("===== proceedToReview CALLED =====");
     console.log(
       "proceedToReview - updatedTicketData received:",
-      updatedTicketData
+      updatedTicketData,
     );
     console.log("proceedToReview - current ticketData state:", ticketData);
     console.log(
       "proceedToReview - dataToSave (will be added to savedTickets):",
-      dataToSave
+      dataToSave,
     );
     console.log(
       "proceedToReview - dataToSave.ticketDetails.row:",
-      dataToSave?.ticketDetails?.row
+      dataToSave?.ticketDetails?.row,
     );
     console.log("===================================");
     // Save current ticket to the list
@@ -280,7 +281,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
 
         if (matchingConcerts.length > 0) {
           console.log(
-            `✅ Found ${matchingConcerts.length} matching concert(s) via flexible search`
+            `✅ Found ${matchingConcerts.length} matching concert(s) via flexible search`,
           );
         } else {
           console.log("❌ No matching concerts found");
@@ -295,7 +296,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
         } else {
           // No matching concert found - tickets will be marked as pending
           console.log(
-            "Concert not found, tickets will be marked as pending..."
+            "Concert not found, tickets will be marked as pending...",
           );
         }
 
@@ -305,11 +306,11 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           console.log(
             `Publishing ticket ${i + 1}/${tickets.length} for concert ${
               concertId || "pending"
-            }`
+            }`,
           );
           console.log(
             "TICKET DATA BEING PUBLISHED:",
-            JSON.stringify(ticket, null, 2)
+            JSON.stringify(ticket, null, 2),
           );
           console.log("TICKET ROW:", ticket.ticketDetails?.row);
           console.log("TICKET SECTION:", ticket.ticketDetails?.section);
@@ -354,8 +355,8 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
                   existingTicket.status === "available"
                     ? "מפורסם"
                     : existingTicket.status === "pending_approval"
-                    ? "ממתין לאישור"
-                    : "נדחה"
+                      ? "ממתין לאישור"
+                      : "נדחה"
                 }\n\nהכרטיס שניסית להעלות:\n• מיקום: ${
                   ticket.ticketDetails?.section
                     ? `אזור ${ticket.ticketDetails.section}`
@@ -403,7 +404,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             console.error("❌ Duplicate check error:", error);
             // Continue with upload even if duplicate check fails (don't block user)
             console.warn(
-              "⚠️ Continuing with upload despite duplicate check error"
+              "⚠️ Continuing with upload despite duplicate check error",
             );
           }
 
@@ -460,7 +461,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
                   };
                   reader.onerror = reject;
                   reader.readAsDataURL(ticket.uploadedFile as File);
-                }
+                },
               );
               console.log("✅ Converted ticket image to base64");
             } catch (error) {
@@ -515,15 +516,15 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             },
             verificationTimestamp: serverTimestamp(),
             createdAt: serverTimestamp(),
-            sellerId: "anonymous",
+            sellerId: getAuth().currentUser?.uid || "anonymous",
           };
 
           const ticketRef = await addDoc(
             collection(firestore, "tickets"),
-            ticketDoc
+            ticketDoc,
           );
           console.log(
-            `✅ Ticket saved with ID: ${ticketRef.id}, status: ${ticketDoc.status}, concertId: ${ticketDoc.concertId}`
+            `✅ Ticket saved with ID: ${ticketRef.id}, status: ${ticketDoc.status}, concertId: ${ticketDoc.concertId}`,
           );
           console.log("Ticket data:", ticketDoc);
 
@@ -545,7 +546,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       }
 
       console.log(
-        `Successfully processed ${publishedCount} tickets: ${verifiedCount} verified, ${needsReviewCount} needs review, ${rejectedCount} rejected`
+        `Successfully processed ${publishedCount} tickets: ${verifiedCount} verified, ${needsReviewCount} needs review, ${rejectedCount} rejected`,
       );
       setIsPublishing(false);
 
@@ -611,7 +612,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       setPublishError(
         `שגיאה בפרסום הכרטיסים: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
       setIsPublishing(false);
       return false;

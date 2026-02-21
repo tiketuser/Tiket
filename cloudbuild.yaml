@@ -3,60 +3,62 @@ steps:
   # Only NEXT_PUBLIC_* variables are passed as build args since they need to be
   # embedded in the client-side bundle. Server-side secrets like GEMINI_API_KEY
   # are passed at runtime to avoid baking them into image layers.
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     id: build
     args:
-      - 'build'
-      - '-t'
-      - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA'
-      - '-t'
-      - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:latest'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=${_NEXT_PUBLIC_FIREBASE_PROJECT_ID}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}'
-      - '--build-arg'
-      - 'NEXT_PUBLIC_FIREBASE_APP_ID=${_NEXT_PUBLIC_FIREBASE_APP_ID}'
-      - '.'
+      - "build"
+      - "-t"
+      - "me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA"
+      - "-t"
+      - "me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:latest"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_API_KEY=${_NEXT_PUBLIC_FIREBASE_API_KEY}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_PROJECT_ID=${_NEXT_PUBLIC_FIREBASE_PROJECT_ID}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_APP_ID=${_NEXT_PUBLIC_FIREBASE_APP_ID}"
+      - "--build-arg"
+      - "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}"
+      - "."
 
   # Push the image to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     id: push
     args:
-      - 'push'
-      - '--all-tags'
-      - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app'
+      - "push"
+      - "--all-tags"
+      - "me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app"
 
   # Deploy to Cloud Run
   # Pass GEMINI_API_KEY as a runtime environment variable for security
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     id: deploy
     entrypoint: gcloud
     args:
-      - 'run'
-      - 'deploy'
-      - 'tiket-app'
-      - '--image'
-      - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA'
-      - '--region'
-      - 'me-west1'
-      - '--port'
-      - '8080'
-      - '--memory'
-      - '512Mi'
-      - '--allow-unauthenticated'
-      - '--set-env-vars'
-      - 'NODE_ENV=production,GEMINI_API_KEY=${_GEMINI_API_KEY},GOOGLE_APPLICATION_CREDENTIALS=./creds.json'
+      - "run"
+      - "deploy"
+      - "tiket-app"
+      - "--image"
+      - "me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA"
+      - "--region"
+      - "me-west1"
+      - "--port"
+      - "8080"
+      - "--memory"
+      - "512Mi"
+      - "--allow-unauthenticated"
+      - "--set-env-vars"
+      - "NODE_ENV=production,GEMINI_API_KEY=${_GEMINI_API_KEY},GOOGLE_APPLICATION_CREDENTIALS=./creds.json,STRIPE_SECRET_KEY=${_STRIPE_SECRET_KEY},STRIPE_WEBHOOK_SECRET=${_STRIPE_WEBHOOK_SECRET},PLATFORM_FEE_PERCENT=${_PLATFORM_FEE_PERCENT}"
 
 images:
-  - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA'
-  - 'me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:latest'
+  - "me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:$COMMIT_SHA"
+  - "me-west1-docker.pkg.dev/$PROJECT_ID/tiket-repo/tiket-app:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY

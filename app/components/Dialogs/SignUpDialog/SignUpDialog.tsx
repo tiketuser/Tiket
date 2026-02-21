@@ -93,7 +93,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       await updateProfile(userCredential.user, {
         displayName: `${fname} ${lname}`,
@@ -113,7 +113,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
 
       await sendEmailVerification(userCredential.user);
       alert(
-        "נרשמת בהצלחה! נא לאשר את כתובת האימייל שלך דרך ההודעה שנשלחה אליך."
+        "נרשמת בהצלחה! נא לאשר את כתובת האימייל שלך דרך ההודעה שנשלחה אליך.",
       );
       onClose();
     } catch (error) {
@@ -140,7 +140,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
         onChange={(e) => {
           const form = e.currentTarget;
           const button = document.getElementById(
-            "submitButton"
+            "submitButton",
           ) as HTMLButtonElement;
           if (button) {
             button.disabled = !form.checkValidity();

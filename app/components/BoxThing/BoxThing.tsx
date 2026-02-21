@@ -6,38 +6,37 @@ interface BoxThingProps {
   className?: string;
   width?: string;
   height?: string;
-  href?: string; // Optional link
-  onClick?: () => void; // Optional button
+  href?: string;
+  onClick?: () => void;
 }
 
-const BoxThing: React.FC<BoxThingProps> = ({ 
-  children, 
+const BoxThing: React.FC<BoxThingProps> = ({
+  children,
   className = "",
-  width = "w-[604px]",
-  height = "h-[312px]",
+  width = "w-full max-w-[604px]",
+  height = "h-auto min-h-[72px]",
   href,
-  onClick
+  onClick,
 }) => {
   const isButton = href || onClick;
-  
+
   return isButton ? (
     <Link href={href || "#"} passHref legacyBehavior>
       <button
         onClick={onClick}
-        className={` relative bg-white shadow-lg p-6 ${width} ${height} ${className} border-none
-        transition-all duration-300 transform hover:scale-105 `}
+        className={`relative bg-white shadow-lg p-4 sm:p-6 ${width} ${height} ${className} border-none
+        transition-all duration-300 transform hover:scale-105`}
       >
         {children}
-        <div className={`absolute bottom-0 left-0 border-t-8 border-highlight ${width}`} />
+        <div className="absolute bottom-0 left-0 right-0 border-t-8 border-highlight" />
       </button>
     </Link>
   ) : (
-    
-    <div 
-      className={`relative bg-white shadow-lg p-6 ${width} ${height} ${className}`}
+    <div
+      className={`relative bg-white shadow-lg p-4 sm:p-6 ${width} ${height} ${className}`}
     >
       {children}
-      <div className={`absolute bottom-0 left-0 border-t-8 border-highlight ${width}`} />
+      <div className="absolute bottom-0 left-0 right-0 border-t-8 border-highlight" />
     </div>
   );
 };

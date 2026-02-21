@@ -9,10 +9,6 @@ const UploadTicketDialog = dynamic(
   () => import("../Dialogs/UploadTicketDialog/UploadTicketDialog"),
   { ssr: false },
 );
-const CheckoutDialog = dynamic(
-  () => import("../Dialogs/CheckoutDialog/CheckoutDialog"),
-  { ssr: false },
-);
 import {
   ThemedGuitarThing,
   ThemedSecondaryHalfCircle,
@@ -23,7 +19,6 @@ import ButtonStar from "../../../public/images/Home Page/Web/Buttom Star.svg";
 
 const HeroSection = () => {
   const [isUploadTicketDialogOpen, setUploadTicketDialogOpen] = useState(false);
-  const [isCheckoutDialogOpen, setCheckoutDialogOpen] = useState(false);
 
   return (
     <>
@@ -43,7 +38,12 @@ const HeroSection = () => {
           <div className="flex justify-center gap-4 sm:gap-8 md:gap-9 lg:gap-10">
             <button
               className="btn btn-primary text-heading-5-desktop w-[100px] h-[50px] sm:w-28 sm:h-16 text-gray-50 font-regular sm:text-heading-4-desktop scale-[0.87] sm:scale-90 md:scale-95 lg:scale-100 "
-              onClick={() => setCheckoutDialogOpen(true)}
+              onClick={() => {
+                const gallery = document.getElementById("gallery");
+                if (gallery) {
+                  gallery.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
             >
               קנה
             </button>
@@ -78,11 +78,6 @@ const HeroSection = () => {
       <UploadTicketDialog
         isOpen={isUploadTicketDialogOpen}
         onClose={() => setUploadTicketDialogOpen(false)}
-      />
-      <CheckoutDialog
-        isUserConnected={false}
-        isOpen={isCheckoutDialogOpen}
-        onClose={() => setCheckoutDialogOpen(false)}
       />
     </>
   );

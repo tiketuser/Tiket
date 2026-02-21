@@ -181,6 +181,8 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
                   ticketsLeft={tickets.length}
                   timeLeft=""
                   buttonAction="קנה"
+                  ticketId={ticket.id}
+                  sellerId={ticket.sellerId}
                 />
               </div>
             );
