@@ -16,6 +16,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("STRIPE_SECRET_KEY is not configured");
+      return NextResponse.json(
+        { error: "שירות התשלומים אינו זמין כרגע. נסה שוב מאוחר יותר." },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { ticketId, guestEmail, guestPhone } = body;
 
@@ -149,10 +157,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to create payment",
+        error: "שגיאה ביצירת התשלום. נסה שוב מאוחר יותר.",
       },
       { status: 500 }
     );
