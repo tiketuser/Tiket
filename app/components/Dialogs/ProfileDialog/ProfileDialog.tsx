@@ -33,24 +33,28 @@ const ProfileDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return;
     const fetchUserData = async () => {
       setLoading(true);
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (user && db) {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          setUserData(userSnap.data() as UserData);
-        } else {
-          // Fallback: build from Firebase Auth profile
-          const parts = user.displayName?.split(" ") || [];
-          setUserData({
-            fname: parts[0] || "",
-            lname: parts.slice(1).join(" ") || "",
-            email: user.email || "",
-            photoURL: user.photoURL || "",
-            displayName: user.displayName || "",
-          });
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (user && db) {
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            setUserData(userSnap.data() as UserData);
+          } else {
+            // Fallback: build from Firebase Auth profile
+            const parts = user.displayName?.split(" ") || [];
+            setUserData({
+              fname: parts[0] || "",
+              lname: parts.slice(1).join(" ") || "",
+              email: user.email || "",
+              photoURL: user.photoURL || "",
+              displayName: user.displayName || "",
+            });
+          }
         }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
       }
       setLoading(false);
     };
@@ -143,20 +147,6 @@ const ProfileDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
         {/* Bottom accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-primary via-highlight to-primary" />
       </div>
-
-      <style jsx>{`
-        @keyframes slideUp {
-          from {
-            transform: translateY(100%);
-          }
-          to {
-            transform: translateY(0);
-          }
-        }
-        .animate-slideUp {
-          animation: slideUp 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
 };

@@ -124,3 +124,17 @@ input:-webkit-autofill:active {
   animation: loading-bar 1.5s ease-in-out infinite;
 }
 
+/* Bottom-sheet slide-up animation for dialogs */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
