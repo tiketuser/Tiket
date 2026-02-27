@@ -1,8 +1,8 @@
 import NavBar from "../../components/NavBar/NavBar";
-import SingleCard from "../../components/SingleCard/SingleCard";
 import Footer from "../../components/Footer/Footer";
 import EventUpperSection from "../../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../../components/SeatingMap/SeatingMap";
+import TicketListClient from "./TicketListClient";
 import dynamicImport from "next/dynamic";
 import { db } from "../../../firebase";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
@@ -84,14 +84,24 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       getDocs(ticketsQuery),
     ]);
 
-    // Get the first matching concert
-    const concert =
-      concertsSnapshot.docs.length > 0
-        ? {
-            id: concertsSnapshot.docs[0].id,
-            ...(concertsSnapshot.docs[0].data() as Omit<Concert, "id">),
-          }
-        : null;
+    // Get the first matching concert — explicitly pick serializable fields only
+    // (spreading doc.data() would include Firestore Timestamps which can't cross the Server→Client boundary)
+    const concertDoc = concertsSnapshot.docs[0];
+    const concert = concertDoc
+      ? (() => {
+          const d = concertDoc.data();
+          return {
+            id: concertDoc.id,
+            artist: d.artist ?? "",
+            title: d.title ?? "",
+            date: d.date ?? "",
+            time: d.time ?? "",
+            venue: d.venue ?? "",
+            imageData: d.imageData ?? d.imageDataBackup ?? undefined,
+            status: d.status ?? "",
+          } satisfies Concert;
+        })()
+      : null;
 
     // If no concert found
     if (!concert) {
@@ -106,12 +116,27 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       );
     }
 
-    // Filter tickets that match the concert ID (since we queried by artist)
+    // Filter tickets that match the concert ID — explicitly pick serializable fields only
     const tickets: Ticket[] = ticketsSnapshot.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Ticket, "id">),
-      }))
+      .map((doc) => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          concertId: d.concertId ?? "",
+          artist: d.artist ?? "",
+          date: d.date ?? "",
+          venue: d.venue ?? "",
+          time: d.time ?? "",
+          section: d.section ?? "",
+          row: d.row ?? null,
+          seat: d.seat ?? null,
+          isStanding: d.isStanding ?? false,
+          askingPrice: d.askingPrice ?? 0,
+          originalPrice: d.originalPrice ?? 0,
+          status: d.status ?? "",
+          sellerId: d.sellerId ?? "",
+        } satisfies Ticket;
+      })
       .filter((ticket) => ticket.concertId === concert.id);
 
     // If no tickets found
@@ -147,47 +172,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
           time={concert.time}
           availableTickets={tickets.length}
         />
-        <div
-          dir="rtl"
-          className="flex flex-col items-stretch sm:items-center sm:dir-ltr pt-6 px-4 pb-8 gap-3 sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 shadow-small-inner"
-        >
-          {tickets.map((ticket) => {
-            // Format seat location with labels
-            let seatLocation: string;
-            if (ticket.isStanding) {
-              seatLocation = `עמידה${ticket.section ? ` | ${ticket.section}` : ""}`;
-            } else {
-              const parts: string[] = [];
-              if (ticket.section) parts.push(`אזור ${ticket.section}`);
-              if (ticket.row) parts.push(`שורה ${ticket.row}`);
-              if (ticket.seat) parts.push(`מושב ${ticket.seat}`);
-              seatLocation = parts.join(" | ");
-            }
-
-            return (
-              <div
-                key={ticket.id}
-                className="w-full sm:flex sm:items-center sm:justify-center"
-              >
-                <SingleCard
-                  title={concert.artist}
-                  imageSrc={concert.imageData || "/images/Artist/default.png"}
-                  date={concert.date}
-                  location={concert.venue}
-                  seatLocation={seatLocation}
-                  priceBefore={ticket.originalPrice}
-                  price={ticket.askingPrice}
-                  soldOut={false}
-                  ticketsLeft={tickets.length}
-                  timeLeft=""
-                  buttonAction="קנה"
-                  ticketId={ticket.id}
-                  sellerId={ticket.sellerId}
-                />
-              </div>
-            );
-          })}
-        </div>
+        <TicketListClient tickets={tickets} concert={concert} />
         <SeatingMap
           title={"מפת ישיבה"}
           venueName={concert.venue}

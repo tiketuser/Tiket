@@ -6,13 +6,17 @@ import MinimalCard from "../../../MinimalCard/MinimalCard";
 import { TicketInfo } from "../CheckoutDialog";
 
 interface CheckoutStepConfirmationProps {
-  ticket: TicketInfo;
+  tickets: TicketInfo[];
   onClose: () => void;
+  isGuest?: boolean;
+  onLoginRequest?: () => void;
 }
 
 const CheckoutStepConfirmation: React.FC<CheckoutStepConfirmationProps> = ({
-  ticket,
+  tickets,
   onClose,
+  isGuest,
+  onLoginRequest,
 }) => {
   return (
     <div className="flex flex-col items-center w-full gap-4 sm:gap-6" dir="rtl">
@@ -37,25 +41,41 @@ const CheckoutStepConfirmation: React.FC<CheckoutStepConfirmationProps> = ({
         ניתן לראות את הכרטיסים שרכשת יחד עם שאר הכרטיסים בבעלותך
       </p>
 
-      {/* Ticket Preview */}
-      <div className="w-full border border-gray-200 rounded-lg overflow-hidden">
-        <MinimalCard
-          title={ticket.title}
-          date={ticket.date}
-          seatLocation={ticket.seatLocation}
-          venue={ticket.venue}
-          price={ticket.price}
-          priceBefore={ticket.originalPrice}
-        />
+      {/* Ticket Preview(s) */}
+      <div className="w-full flex flex-col gap-3">
+        {tickets.map((ticket) => (
+          <div
+            key={ticket.ticketId}
+            className="border border-gray-200 rounded-lg overflow-hidden"
+          >
+            <MinimalCard
+              title={ticket.title}
+              date={ticket.date}
+              seatLocation={ticket.seatLocation}
+              venue={ticket.venue}
+              price={ticket.price}
+              priceBefore={ticket.originalPrice}
+            />
+          </div>
+        ))}
       </div>
 
       {/* Action Buttons */}
       <div className="flex flex-col w-full gap-2">
-        <Link href="/MyTickets" className="w-full">
-          <button className="w-full h-[48px] bg-primary text-white rounded-lg font-bold text-text-regular hover:bg-red-700 transition-colors">
+        {isGuest ? (
+          <button
+            onClick={onLoginRequest}
+            className="w-full h-[48px] bg-primary text-white rounded-lg font-bold text-text-regular hover:bg-red-700 transition-colors"
+          >
             הכרטיסים שלי
           </button>
-        </Link>
+        ) : (
+          <Link href="/MyTickets" className="w-full">
+            <button className="w-full h-[48px] bg-primary text-white rounded-lg font-bold text-text-regular hover:bg-red-700 transition-colors">
+              הכרטיסים שלי
+            </button>
+          </Link>
+        )}
 
         <button
           onClick={onClose}

@@ -8,6 +8,8 @@ import {
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 
 export async function POST(request: NextRequest) {
+  const reservedIds: string[] = [];
+
   try {
     if (!adminDb) {
       return NextResponse.json(
@@ -17,95 +19,128 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { ticketId, guestEmail, guestPhone } = body;
+    const { ticketIds, guestEmail, guestPhone } = body;
+
+    if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0) {
+      return NextResponse.json(
+        { error: "ticketIds is required" },
+        { status: 400 }
+      );
+    }
 
     // Determine buyer identity: authenticated user or guest
     let buyerUid: string | null = null;
     let isGuest = false;
+    let buyerEmail: string | null = null;
+    let buyerName: string | null = null;
 
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ") && adminAuth) {
       const token = authHeader.substring(7);
       const decoded = await adminAuth.verifyIdToken(token);
       buyerUid = decoded.uid;
+      buyerEmail = decoded.email || null;
+      buyerName = decoded.name || null;
     } else if (guestEmail && guestPhone) {
       isGuest = true;
     } else {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!ticketId) {
-      return NextResponse.json(
-        { error: "ticketId is required" },
-        { status: 400 }
-      );
+    // Fetch all ticket documents
+    const ticketDocs = await Promise.all(
+      ticketIds.map((id: string) =>
+        adminDb!.collection("tickets").doc(id).get()
+      )
+    );
+
+    // Validate all tickets
+    for (const ticketDoc of ticketDocs) {
+      if (!ticketDoc.exists) {
+        return NextResponse.json(
+          { error: "אחד הכרטיסים לא נמצא" },
+          { status: 404 }
+        );
+      }
+      const data = ticketDoc.data()!;
+      if (data.status !== "available") {
+        return NextResponse.json(
+          { error: "אחד הכרטיסים אינו זמין יותר" },
+          { status: 409 }
+        );
+      }
+      if (buyerUid && data.sellerId === buyerUid) {
+        return NextResponse.json(
+          { error: "לא ניתן לרכוש כרטיס שהעלית בעצמך" },
+          { status: 400 }
+        );
+      }
     }
 
-    // Fetch the ticket
-    const ticketDoc = await adminDb.collection("tickets").doc(ticketId).get();
-    if (!ticketDoc.exists) {
-      return NextResponse.json(
-        { error: "Ticket not found" },
-        { status: 404 }
-      );
+    // Verify all unique sellers have payment details configured
+    const sellerIds = [
+      ...new Set(ticketDocs.map((d) => d.data()!.sellerId as string)),
+    ];
+    for (const sellerId of sellerIds) {
+      const sellerDoc = await adminDb.collection("users").doc(sellerId).get();
+      if (!sellerDoc.data()?.paymentDetailsConfigured) {
+        return NextResponse.json(
+          {
+            error:
+              "המוכר טרם הגדיר אמצעי תשלום. לא ניתן לרכוש כרטיס זה כרגע.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
-    const ticket = ticketDoc.data()!;
+    // Calculate total amount
+    const totalTicketPriceILS = ticketDocs.reduce(
+      (sum, d) => sum + (d.data()!.askingPrice as number),
+      0
+    );
+    const platformFeeAgorot = calculatePlatformFee(totalTicketPriceILS);
+    const totalAgorot = ilsToAgorot(totalTicketPriceILS) + platformFeeAgorot;
 
-    // Validate ticket is available
-    if (ticket.status !== "available") {
-      return NextResponse.json(
-        { error: "הכרטיס אינו זמין יותר" },
-        { status: 409 }
-      );
+    // Batch-reserve all tickets
+    const reserveBatch = adminDb.batch();
+    for (const ticketDoc of ticketDocs) {
+      reserveBatch.update(ticketDoc.ref, {
+        status: "reserved",
+        reservedBy: buyerUid || `guest:${guestEmail}`,
+        reservedAt: new Date(),
+      });
+      reservedIds.push(ticketDoc.id);
+    }
+    await reserveBatch.commit();
+
+    // Resolve or create a Stripe Customer for registered buyers (enables saved cards)
+    let stripeCustomerId: string | undefined;
+    if (buyerUid) {
+      const buyerDoc = await adminDb.collection("users").doc(buyerUid).get();
+      const buyerData = buyerDoc.data();
+      if (buyerData?.stripeCustomerId) {
+        stripeCustomerId = buyerData.stripeCustomerId;
+      } else {
+        const customer = await stripe.customers.create({
+          email: buyerEmail || undefined,
+          name: buyerName || undefined,
+          metadata: { firebaseUid: buyerUid },
+        });
+        stripeCustomerId = customer.id;
+        adminDb
+          .collection("users")
+          .doc(buyerUid)
+          .update({ stripeCustomerId: customer.id })
+          .catch((err) => console.error("Failed to save stripeCustomerId:", err));
+      }
     }
 
-    // Prevent self-purchase (only for authenticated users)
-    if (buyerUid && ticket.sellerId === buyerUid) {
-      return NextResponse.json(
-        { error: "לא ניתן לרכוש כרטיס שהעלית בעצמך" },
-        { status: 400 }
-      );
-    }
-
-    // Verify seller has payment details configured (bank account)
-    const sellerDoc = await adminDb
-      .collection("users")
-      .doc(ticket.sellerId)
-      .get();
-    const sellerData = sellerDoc.data();
-
-    if (!sellerData?.paymentDetailsConfigured) {
-      return NextResponse.json(
-        {
-          error:
-            "המוכר טרם הגדיר אמצעי תשלום. לא ניתן לרכוש כרטיס זה כרגע.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Calculate amounts
-    const ticketPriceILS = ticket.askingPrice;
-    const platformFeeAgorot = calculatePlatformFee(ticketPriceILS);
-    const totalAgorot = ilsToAgorot(ticketPriceILS) + platformFeeAgorot;
-
-    // Reserve the ticket (prevent double purchase)
-    await adminDb.collection("tickets").doc(ticketId).update({
-      status: "reserved",
-      reservedBy: buyerUid || `guest:${guestEmail}`,
-      reservedAt: new Date(),
-    });
-
-    // All payments go to the admin's Stripe account directly.
-    // Seller payouts are tracked in the transactions collection
-    // and handled by the admin separately.
+    const concertId = (ticketDocs[0].data()!.concertId as string) || "";
     const metadata: Record<string, string> = {
-      ticketId,
-      concertId: ticket.concertId || "",
+      ticketIds: ticketIds.join(","),
+      concertId,
       buyerId: buyerUid || "",
-      sellerId: ticket.sellerId,
-      ticketPrice: ticketPriceILS.toString(),
       platformFeePercent: getPlatformFeePercent().toString(),
       isGuest: isGuest.toString(),
     };
@@ -119,13 +154,17 @@ export async function POST(request: NextRequest) {
       amount: totalAgorot,
       currency: "ils",
       metadata,
+      ...(stripeCustomerId && {
+        customer: stripeCustomerId,
+        setup_future_usage: "off_session",
+      }),
     });
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
       amount: totalAgorot,
-      ticketPrice: ticketPriceILS,
+      ticketPrice: totalTicketPriceILS,
       platformFee: platformFeeAgorot / 100,
       total: totalAgorot / 100,
       currency: "ILS",
@@ -133,26 +172,27 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Payment intent creation error:", error);
 
-    // If we reserved the ticket but payment intent creation failed, release it
-    try {
-      const body = await request.clone().json();
-      if (body.ticketId && adminDb) {
-        await adminDb.collection("tickets").doc(body.ticketId).update({
-          status: "available",
-          reservedBy: null,
-          reservedAt: null,
-        });
+    // Release any tickets that were reserved before the error
+    if (reservedIds.length > 0 && adminDb) {
+      try {
+        const releaseBatch = adminDb.batch();
+        for (const id of reservedIds) {
+          releaseBatch.update(adminDb.collection("tickets").doc(id), {
+            status: "available",
+            reservedBy: null,
+            reservedAt: null,
+          });
+        }
+        await releaseBatch.commit();
+      } catch {
+        // best-effort release
       }
-    } catch {
-      // best effort release
     }
 
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to create payment",
+          error instanceof Error ? error.message : "Failed to create payment",
       },
       { status: 500 }
     );

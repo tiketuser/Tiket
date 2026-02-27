@@ -2,6 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+const LoginDialog = dynamic(
+  () => import("../LoginDialog/LoginDialog"),
+  { ssr: false }
+);
+const SignUpDialog = dynamic(
+  () => import("../SignUpDialog/SignUpDialog"),
+  { ssr: false }
+);
 import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
 import ProgressBar from "../ProgressBar/ProgressBar";
 import CheckoutStepAuth from "./CheckoutSteps/CheckoutStepAuth";
@@ -24,14 +34,15 @@ export interface TicketInfo {
 interface CheckoutDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  ticket: TicketInfo | null;
+  tickets: TicketInfo[];
 }
 
 const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   isOpen,
   onClose,
-  ticket,
+  tickets,
 }) => {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [guestInfo, setGuestInfo] = useState<GuestInfo | null>(null);
   const [step, setStep] = useState(1);
@@ -43,6 +54,9 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   } | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [transactionComplete, setTransactionComplete] = useState(false);
+  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [isSignUpDialogOpen, setSignUpDialogOpen] = useState(false);
+  const [pendingMyTicketsRedirect, setPendingMyTicketsRedirect] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -51,6 +65,15 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     });
     return () => unsubscribe();
   }, []);
+
+  // Redirect to MyTickets after guest logs in post-purchase
+  useEffect(() => {
+    if (user && pendingMyTicketsRedirect) {
+      setPendingMyTicketsRedirect(false);
+      setLoginDialogOpen(false);
+      router.push("/MyTickets");
+    }
+  }, [user, pendingMyTicketsRedirect, router]);
 
   // Auto-advance past auth step if already logged in
   useEffect(() => {
@@ -81,7 +104,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   }, []);
 
   const handleProceedToPayment = useCallback(async () => {
-    if (!ticket) return;
+    if (!tickets.length) return;
     if (!user && !guestInfo) return;
 
     setPaymentError(null);
@@ -96,7 +119,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         headers["Authorization"] = `Bearer ${idToken}`;
       }
 
-      const body: Record<string, unknown> = { ticketId: ticket.ticketId };
+      const body: Record<string, unknown> = { ticketIds: tickets.map((t) => t.ticketId) };
       if (guestInfo) {
         body.guestEmail = guestInfo.email;
         body.guestPhone = guestInfo.phone;
@@ -126,12 +149,29 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       console.error("Payment intent error:", error);
       setPaymentError("שגיאה בהתחברות לשרת התשלומים");
     }
-  }, [ticket, user, guestInfo]);
+  }, [tickets, user, guestInfo]);
 
-  const handlePaymentSuccess = useCallback(() => {
+  const handlePaymentSuccess = useCallback(async (paymentIntentId: string) => {
     setTransactionComplete(true);
     setStep(4);
-  }, []);
+
+    // Immediately persist the transaction server-side so MyTickets shows it right away.
+    // The Stripe webhook is still the reliable fallback, but this prevents the race condition.
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (user) {
+        const idToken = await user.getIdToken();
+        headers["Authorization"] = `Bearer ${idToken}`;
+      }
+      await fetch("/api/stripe/confirm-payment", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ paymentIntentId }),
+      });
+    } catch (err) {
+      console.error("confirm-payment call failed (webhook will handle it):", err);
+    }
+  }, [user]);
 
   const handlePaymentError = useCallback((message: string) => {
     setPaymentError(message);
@@ -141,7 +181,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     onClose();
   }, [onClose]);
 
-  if (!ticket) return null;
+  if (!tickets.length) return null;
 
   const stepHeadings = [
     {
@@ -156,6 +196,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const currentStep = stepHeadings[step - 1];
 
   return (
+    <>
     <AdjustableDialog
       isOpen={isOpen}
       onClose={handleClose}
@@ -174,9 +215,9 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
         {step === 2 && (
           <CheckoutStepSummary
-            ticket={ticket}
+            tickets={tickets}
             platformFee={paymentDetails?.platformFee ?? 0}
-            total={paymentDetails?.total ?? ticket.price}
+            total={paymentDetails?.total ?? tickets.reduce((s, t) => s + t.price, 0)}
             onProceed={handleProceedToPayment}
             error={paymentError}
           />
@@ -191,10 +232,37 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         )}
 
         {step === 4 && (
-          <CheckoutStepConfirmation ticket={ticket} onClose={handleClose} />
+          <CheckoutStepConfirmation
+            tickets={tickets}
+            onClose={handleClose}
+            isGuest={!user}
+            onLoginRequest={() => {
+              handleClose();
+              setPendingMyTicketsRedirect(true);
+              setTimeout(() => setLoginDialogOpen(true), 300);
+            }}
+          />
         )}
       </div>
     </AdjustableDialog>
+
+    <LoginDialog
+      isOpen={isLoginDialogOpen}
+      onClose={() => setLoginDialogOpen(false)}
+      onSwitchToSignup={() => {
+        setLoginDialogOpen(false);
+        setTimeout(() => setSignUpDialogOpen(true), 200);
+      }}
+    />
+    <SignUpDialog
+      isOpen={isSignUpDialogOpen}
+      onClose={() => setSignUpDialogOpen(false)}
+      onSwitchToLogin={() => {
+        setSignUpDialogOpen(false);
+        setTimeout(() => setLoginDialogOpen(true), 200);
+      }}
+    />
+    </>
   );
 };
 

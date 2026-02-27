@@ -21,7 +21,7 @@ interface CustomSearchInputProps {
 const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
   type = "text",
   id,
-  width = "sm:w-[500px]",
+  width = "sm:w-[500px] sm:h-[47px] w-[70%]",
   placeholder = "",
   image,
   className = "",
@@ -84,7 +84,7 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
       {/* Search Icon (Clickable) */}
       {image && (
         <div
-          className="absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer"
+          className="sm:w-6 xs:w-5 w-4  absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer"
           onClick={triggerSearch}
         >
           {image}
@@ -106,7 +106,7 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
         name="ignore"
         onChange={handleChange}
         onKeyDown={(e) => e.key === "Enter" && triggerSearch()}
-        className="w-full py-3 pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium text-text-small rtl focus:outline-none focus:ring-0 focus:border-gray-300"
+        className="w-full sm:py-3 xs:py-2 py-[6px] pl-12 pr-4 rounded-lg border border-gray-300 sm:text-text-medium xs:text-text-small text-text-extra-small rtl focus:outline-none focus:ring-0 focus:border-gray-300"
       />
 
       {/* Suggestions List */}
@@ -116,7 +116,7 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
             <li
               key={index}
               onClick={() => handleSelectSuggestion(suggestion)}
-              className="px-4 py-2 text-right cursor-pointer hover:bg-gray-100"
+              className="px-4 py-2 sm:text-text-medium xs:text-text-small text-text-extra-small text-right cursor-pointer hover:bg-gray-100"
             >
               {suggestion}
             </li>

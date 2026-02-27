@@ -624,7 +624,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     {
       heading: "העלה את הכרטיס שלך למכירה",
       description: "בחר אחת מהדרכים",
-      height: "h-[90vh] max-h-[912px] sm:h-[912px]",
+      height: "h-auto max-h-[92vh]",
       width: "w-[95vw] max-w-[880px] sm:w-[880px]",
       content: (
         <StepOneUploadTicket
@@ -637,7 +637,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     {
       heading: "תמחר את הכרטיס שלך",
       description: "ציין את המחיר המבוקש",
-      height: "h-[90vh] max-h-[704px] sm:h-[704px]",
+      height: "h-auto max-h-[92vh]",
       width: "w-[95vw] max-w-[880px] sm:w-[880px]",
       content: (
         <StepTwoUploadTicket
@@ -651,7 +651,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     {
       heading: "אשר את הפרטים",
       description: "בדוק את פרטי הכרטיס לפני הפרסום",
-      height: "h-[120vh] max-h-auto sm:h-auto",
+      height: "h-auto max-h-[92vh]",
       width: "w-[95vw] max-w-[880px] sm:w-[880px]",
       content: (
         <StepThreeUploadTicket
@@ -667,7 +667,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     {
       heading: "סקירה סופית ופרסום",
       description: `${savedTickets.length} כרטיסים מוכנים לפרסום`,
-      height: "h-[90vh] max-h-[900px] sm:h-auto",
+      height: "h-auto max-h-[92vh]",
       width: "w-[95vw] max-w-[880px] sm:w-[880px]",
       content: (
         <StepFourUploadTicket
