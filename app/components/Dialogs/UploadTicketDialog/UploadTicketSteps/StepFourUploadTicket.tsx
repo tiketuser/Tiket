@@ -128,7 +128,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
 
   return (
     <div className="px-4 sm:px-0">
-      <div className="w-full max-w-[880px] mt-6 sm:mt-12">
+      <div className="w-full max-w-[880px] mt-2 sm:mt-8">
         {/* Title and Subtitle */}
         <p className="text-lg sm:text-heading-5-desktop font-bold">
           סקירה סופית
@@ -314,7 +314,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
 
           {!showPaymentForm && (
             <>
-              <div className="mt-6 sm:mt-8 w-full max-w-[880px] space-y-4 max-h-[500px] overflow-y-auto">
+              <div className="mt-4 sm:mt-8 w-full max-w-[880px] space-y-4 max-h-[40vh] sm:max-h-[500px] overflow-y-auto">
                 {savedTickets.map((ticket, index) => (
                   <MinimalCard
                     key={index}
@@ -331,7 +331,6 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
                       ticket?.ticketDetails?.isStanding
                         ? "עמידה"
                         : [
-                            ticket?.ticketDetails?.venue,
                             ticket?.ticketDetails?.section,
                             ticket?.ticketDetails?.row,
                             ticket?.ticketDetails?.seat,
@@ -345,7 +344,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
               </div>
 
               {/* Action buttons */}
-              <div className="flex flex-col items-center gap-3 mt-8 w-full max-w-[880px]">
+              <div className="flex flex-col items-center gap-3 mt-4 sm:mt-8 w-full max-w-[880px]">
                 <button
                   className={`btn w-full h-[48px] min-h-0 btn-secondary text-sm sm:text-text-large font-normal ${
                     isPublishing || paymentLoading

@@ -68,7 +68,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
       originalPrice: ticket.originalPrice,
       sellerId: ticket.sellerId,
     }),
-    [concert.artist]
+    [concert.artist],
   );
 
   const toggleSelect = useCallback((id: string) => {
@@ -85,7 +85,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
       setCheckoutTickets([toTicketInfo(ticket)]);
       setIsCheckoutOpen(true);
     },
-    [toTicketInfo]
+    [toTicketInfo],
   );
 
   const openMultiBuy = useCallback(() => {
@@ -149,7 +149,9 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         >
           <div className="flex flex-col">
             <span className="font-bold text-strongText text-base">
-              {totalSelected === 1 ? "כרטיס אחד נבחר" : `${totalSelected} כרטיסים נבחרו`}
+              {totalSelected === 1
+                ? "כרטיס אחד נבחר"
+                : `${totalSelected} כרטיסים נבחרו`}
             </span>
             <span className="text-sm text-weakTextBluish">
               סה&quot;כ: ₪{totalPrice}
@@ -159,7 +161,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
             onClick={openMultiBuy}
             className="btn btn-primary rounded-lg h-[44px] min-h-0 px-6 text-white font-bold text-base"
           >
-            רכוש →
+            רכוש &nbsp;←
           </button>
         </div>
       )}

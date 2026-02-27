@@ -221,7 +221,7 @@ const Card: React.FC<CardProps> = ({
                 <Image
                   src={TicketIcon}
                   alt="Ticket icon"
-                  className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1"
+                  className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 mb-[1px] sm:ml-1"
                 />
                 <span>{ticketsLeft} </span>
               </p>

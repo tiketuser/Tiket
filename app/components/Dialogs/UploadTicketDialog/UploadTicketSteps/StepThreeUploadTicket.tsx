@@ -25,6 +25,9 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   proceedToReview,
 }) => {
   // Local state for editable fields
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const CATEGORIES = ["מוזיקה", "תיאטרון", "סטנדאפ", "ילדים", "ספורט"];
+
   const [editableDetails, setEditableDetails] = useState<ExtendedTicketDetails>(
     {
       artist: "",
@@ -43,6 +46,24 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   const [isDateInPast, setIsDateInPast] = useState(false);
   const [dateError, setDateError] = useState<string>("");
   const [timeError, setTimeError] = useState<string>("");
+
+  // Convert DD/MM/YYYY → YYYY-MM-DD for <input type="date">
+  const toInputDate = (ddmmyyyy: string): string => {
+    if (!ddmmyyyy) return "";
+    const parts = ddmmyyyy.split(/[\/\.]/);
+    if (parts.length !== 3) return "";
+    const [d, m, y] = parts;
+    if (!d || !m || !y) return "";
+    return `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  };
+
+  // Convert YYYY-MM-DD → DD/MM/YYYY (internal format)
+  const fromInputDate = (yyyymmdd: string): string => {
+    if (!yyyymmdd) return "";
+    const [y, m, d] = yyyymmdd.split("-");
+    if (!y || !m || !d) return "";
+    return `${d}/${m}/${y}`;
+  };
 
   // Load ticket details when component mounts
   useEffect(() => {
@@ -285,11 +306,6 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   const formatSeatLocation = () => {
     const parts = [];
 
-    // Only add venue if it has a value
-    if (editableDetails.venue && editableDetails.venue.trim()) {
-      parts.push(editableDetails.venue);
-    }
-
     // If it's a standing ticket, show "עמידה" and skip seat details
     if (editableDetails.isStanding) {
       parts.push("עמידה");
@@ -391,7 +407,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   const hasExtractionError = ticketData?.extractionError;
 
   return (
-    <div className="w-full max-h-[calc(90vh-280px)] sm:max-h-[600px] overflow-y-auto px-2 sm:px-0">
+    <div className="w-full sm:max-h-[600px] sm:overflow-y-auto px-2 sm:px-0">
       <div className="max-w-[500px] mx-auto px-2 sm:px-4 mt-1 sm:mt-2">
         {/* Title and Subtitle */}
 
@@ -428,7 +444,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
       {/* Simple Form */}
       <div className="mt-1.5 sm:mt-2 max-w-[500px] mx-auto px-2 sm:px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
               שם האירוע *
@@ -443,23 +459,38 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label className="block text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 text-gray-700">
               קטגוריה *
             </label>
-            <select
-              id="category"
-              name="category"
-              value={editableDetails.category}
-              onChange={(e) => handleDetailChange("category", e.target.value)}
-              className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            <button
+              type="button"
+              onClick={() => setCategoryOpen((o) => !o)}
+              className="w-full py-3 pr-4 pl-4 text-xs sm:text-text-medium border border-gray-300 rounded-lg bg-white flex items-center justify-between"
+              dir="rtl"
             >
-              <option value="מוזיקה">מוזיקה</option>
-              <option value="תיאטרון">תיאטרון</option>
-              <option value="סטנדאפ">סטנדאפ</option>
-              <option value="ילדים">ילדים</option>
-              <option value="ספורט">ספורט</option>
-            </select>
+              <span>{editableDetails.category}</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {categoryOpen && (
+              <ul className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-medium overflow-hidden" dir="rtl">
+                {CATEGORIES.map((cat) => (
+                  <li
+                    key={cat}
+                    onClick={() => { handleDetailChange("category", cat); setCategoryOpen(false); }}
+                    className={`px-4 py-2.5 text-xs sm:text-text-medium cursor-pointer transition-colors ${
+                      editableDetails.category === cat
+                        ? "bg-primary text-white font-medium"
+                        : "text-strongText hover:bg-secondary/40"
+                    }`}
+                  >
+                    {cat}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div>
@@ -470,22 +501,21 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             >
               תאריך *
             </label>
-            <div className="relative">
-              <CustomInput
-                id="date"
-                name="date"
-                width="w-full"
-                placeholder="DD/MM/YYYY או DD.MM.YYYY"
-                value={editableDetails.date}
-                onChange={(e) => handleDetailChange("date", e.target.value)}
-                error={!!dateError}
-              />
-              {dateError && (
-                <div className="right-0 text-xs text-red-600 font-medium">
-                  ⚠️ {dateError}
-                </div>
-              )}
-            </div>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              value={toInputDate(editableDetails.date)}
+              onChange={(e) => handleDetailChange("date", fromInputDate(e.target.value))}
+              className={`w-full px-3 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary ${
+                dateError ? "border-red-400 ring-1 ring-red-400" : "border-gray-300"
+              }`}
+            />
+            {dateError && (
+              <div className="text-[10px] text-red-600 font-medium mt-0.5">
+                ⚠️ {dateError}
+              </div>
+            )}
           </div>
 
           <div>
@@ -509,22 +539,23 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
           </div>
         </div>
 
-        <div className="mb-1.5 sm:mb-2">
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-            מקום האירוע *
-          </label>
-          <CustomInput
-            id="venue"
-            name="venue"
-            width="w-full"
-            placeholder="היכל מנורה מבטחים"
-            value={editableDetails.venue}
-            onChange={(e) => handleDetailChange("venue", e.target.value)}
-          />
-        </div>
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+              מקום האירוע *
+            </label>
+            <CustomInput
+              id="venue"
+              name="venue"
+              width="w-full"
+              placeholder="היכל מנורה מבטחים"
+              value={editableDetails.venue}
+              onChange={(e) => handleDetailChange("venue", e.target.value)}
+            />
+          </div>
 
-        {/* Barcode Field */}
-        <div className="mb-1.5 sm:mb-2">
+          {/* Barcode Field */}
+          <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
             ברקוד כרטיס{" "}
             <span className="text-gray-400 font-normal">(אופציונלי)</span>
@@ -550,6 +581,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               </div>
             )}
           </div>
+          </div>
         </div>
 
         {/* Standing Ticket Checkbox */}
@@ -569,7 +601,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
         {/* Seat Information - Hidden when standing ticket */}
         {!editableDetails.isStanding && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
                 אזור{" "}
@@ -627,53 +659,42 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         )}
       </div>
 
-      <div className="flex flex-col items-center gap-2 mt-3 sm:mt-4 pb-2">
-        <div className="flex flex-col items-center gap-2 sm:gap-3">
-          {/* Primary actions */}
-          <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 w-full max-w-[700px] px-2">
-            <button
-              type="button"
-              className={`btn h-[40px] sm:h-[46px] sm:max-w-[180px] w-full sm:w-[180px] min-h-0 btn-secondary text-xs sm:text-sm md:text-text-large font-normal ${
-                canProceed
-                  ? "bg-secondary text-primary hover:bg-secondary/90"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              onClick={() => {
-                if (canProceed) {
-                  syncAllDetailsAndAddAnother();
-                }
-              }}
-              disabled={!canProceed}
-            >
-              הוסף כרטיס נוסף
-            </button>
+      <div className="flex flex-col items-center gap-2 mt-3 sm:mt-4 pb-4 px-2 sm:px-0">
+        <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 w-full max-w-[700px]">
+          {/* On mobile: primary first; on desktop: secondary first to keep visual balance */}
+          <button
+            type="button"
+            className={`btn h-[46px] min-h-0 btn-secondary text-sm font-normal order-1 sm:order-2 ${
+              canProceed
+                ? "bg-primary text-white hover:bg-primary/90"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+            onClick={() => { if (canProceed) syncAllDetailsAndProceed(); }}
+            disabled={!canProceed}
+          >
+            המשך לפרסום
+          </button>
 
-            <button
-              type="button"
-              className={`btn h-[40px] sm:h-[46px] min-h-0 btn-secondary text-xs sm:text-sm md:text-text-large font-normal ${
-                canProceed
-                  ? "bg-primary text-white hover:bg-primary/90"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              onClick={() => {
-                if (canProceed) {
-                  syncAllDetailsAndProceed();
-                }
-              }}
-              disabled={!canProceed}
-            >
-              המשך לפרסום
-            </button>
+          <button
+            type="button"
+            className={`btn h-[46px] sm:max-w-[180px] w-full sm:w-[180px] min-h-0 btn-secondary text-sm font-normal order-2 sm:order-1 ${
+              canProceed
+                ? "bg-secondary text-primary hover:bg-secondary/90"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+            onClick={() => { if (canProceed) syncAllDetailsAndAddAnother(); }}
+            disabled={!canProceed}
+          >
+            הוסף כרטיס נוסף
+          </button>
 
-            {/* Back button */}
-            <button
-              type="button"
-              className="btn w-full sm:w-[140px] h-[40px] sm:h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-xs sm:text-sm md:text-text-large font-normal"
-              onClick={() => prevStep && prevStep()}
-            >
-              לשלב הקודם
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn w-full sm:w-[140px] h-[46px] min-h-0 btn-secondary bg-white text-primary border-primary border-[2px] text-sm font-normal order-3"
+            onClick={() => prevStep && prevStep()}
+          >
+            לשלב הקודם
+          </button>
         </div>
       </div>
     </div>

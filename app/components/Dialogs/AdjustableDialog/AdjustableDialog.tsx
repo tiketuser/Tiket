@@ -68,12 +68,12 @@ const AdjustableDialog: React.FC<AdjustableDialogProps> = ({
             </button>
 
             {/* Scrollable Content */}
-            <div className="overflow-y-auto flex-1 sm:p-10 py-10 px-3 sm:px-10">
-              <div className="flex justify-center items-center w-full mt-3">
+            <div className="overflow-y-auto flex-1 sm:p-10 pt-10 pb-5 px-4 sm:px-10">
+              <div className="flex justify-center items-center w-full mt-1 sm:mt-3">
                 {topChildren && topChildren}
               </div>
 
-              <div className="sm:pt-4 pt-2 select-none" dir="rtl">
+              <div className="sm:pt-4 pt-1 select-none" dir="rtl">
                 <h2 className="text-center sm:text-heading-2-desktop text-heading-2-mobile font-extrabold text-gray-950">
                   {heading}
                 </h2>
