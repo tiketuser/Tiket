@@ -129,51 +129,43 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
         </div>
       </div>
 
-      {/* Mobile Layout (visible only on mobile) */}
-      <div className="sm:hidden p-3 space-y-2 border border-gray-200 rounded-lg">
-        {/* Title and Date Row */}
-        <div className="flex justify-between items-start gap-3">
-          <h3 className="text-sm font-bold text-strongText flex-1 leading-tight">
-            {title}
-          </h3>
-          <div className="flex flex-col items-center text-center flex-shrink-0">
-            <span className="text-[10px] font-normal text-strongText leading-tight">
-              {dayOfWeek}
-            </span>
-            <span className="text-lg font-bold text-strongText leading-tight">
-              {day}
-            </span>
-            <span className="text-[10px] font-normal text-strongText leading-tight">
-              {month}
-            </span>
+      {/* Mobile Layout */}
+      <div className="sm:hidden rounded-xl overflow-hidden border border-gray-100 shadow-medium bg-white">
+        {/* Top accent bar */}
+        <div className="h-1 w-full bg-primary" />
+
+        <div className="flex items-stretch">
+          {/* Date column */}
+          <div className="flex flex-col items-center justify-center bg-secondary/30 px-3 py-3 min-w-[56px] flex-shrink-0">
+            <span className="text-[9px] font-medium text-strongText leading-none">{dayOfWeek}</span>
+            <span className="text-xl font-extrabold text-primary leading-tight">{day}</span>
+            <span className="text-[9px] font-medium text-strongText leading-none">{month}</span>
           </div>
-        </div>
 
-        {/* Venue Row - if provided */}
-        {venue && (
-          <div className="text-xs font-medium text-gray-600">{venue}</div>
-        )}
+          {/* Dashed separator */}
+          <div className="flex items-center py-3 flex-shrink-0">
+            <div className="w-px h-full border-l-2 border-dashed border-gray-200" />
+          </div>
 
-        {/* Location Row */}
-        <div className="text-xs font-bold text-weakTextBluish">
-          {seatLocation}
-        </div>
+          {/* Info */}
+          <div className="flex flex-col justify-center flex-1 px-3 py-3 min-w-0 gap-0.5">
+            <span className="text-sm font-bold text-strongText leading-tight truncate">{title}</span>
+            {venue && <span className="text-xs text-mutedText leading-tight truncate">{venue}</span>}
+            <span className="text-xs text-mutedText leading-tight truncate">{seatLocation}</span>
+          </div>
 
-        {/* Price Row */}
-        <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-          <span className="text-strongText text-lg font-extrabold">
-            ₪{price}
-          </span>
-          {priceBefore && (
-            <span className="text-weakTextBluish font-bold text-xs line-through">
-              ₪{priceBefore}
-            </span>
-          )}
-          <Image
-            src={PriceIcon}
-            alt="Price icon"
-            className="h-[20px] w-[10px] mr-auto"
-          />
+          {/* Dashed separator */}
+          <div className="flex items-center py-3 flex-shrink-0">
+            <div className="w-px h-full border-l-2 border-dashed border-gray-200" />
+          </div>
+
+          {/* Price */}
+          <div className="flex flex-col items-center justify-center px-3 py-3 flex-shrink-0">
+            <span className="text-base font-extrabold text-strongText leading-none">₪{price}</span>
+            {priceBefore && (
+              <span className="text-[11px] text-mutedText line-through leading-tight">₪{priceBefore}</span>
+            )}
+          </div>
         </div>
       </div>
     </div>

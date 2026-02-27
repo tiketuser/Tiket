@@ -85,89 +85,136 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Resolve ticket IDs from metadata — supports both old (ticketId) and new (ticketIds) formats
+function resolveTicketIds(metadata: Stripe.PaymentIntent["metadata"]): string[] {
+  if (metadata.ticketIds) return metadata.ticketIds.split(",").filter(Boolean);
+  if (metadata.ticketId) return [metadata.ticketId];
+  return [];
+}
+
+function calcPayoutEligibleAt(dateStr: string): Date {
+  const parts = dateStr.split("/");
+  if (parts.length === 3) {
+    const eventDate = new Date(
+      parseInt(parts[2]),
+      parseInt(parts[1]) - 1,
+      parseInt(parts[0])
+    );
+    eventDate.setDate(eventDate.getDate() + 7);
+    return eventDate;
+  }
+  return new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+}
+
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   if (!adminDb) return;
 
-  const {
-    ticketId, concertId, buyerId, sellerId, ticketPrice, platformFeePercent,
-    isGuest, guestEmail, guestPhone,
-  } = paymentIntent.metadata;
-
-  if (!ticketId || !sellerId) {
-    console.error("Missing metadata in PaymentIntent:", paymentIntent.id);
+  const ticketIds = resolveTicketIds(paymentIntent.metadata);
+  if (ticketIds.length === 0) {
+    console.error("Missing ticketIds in PaymentIntent:", paymentIntent.id);
     return;
   }
 
-  // For guest checkout, buyerId may be empty
+  // Idempotency: skip if the confirm-payment route already wrote these transactions
+  const existingTx = await adminDb
+    .collection("transactions")
+    .where("stripePaymentIntentId", "==", paymentIntent.id)
+    .limit(1)
+    .get();
+
+  if (!existingTx.empty) {
+    console.log(`Transactions already exist for PaymentIntent ${paymentIntent.id}, skipping webhook write.`);
+    return;
+  }
+
+  const { concertId, buyerId, isGuest, guestEmail, guestPhone, platformFeePercent } =
+    paymentIntent.metadata;
+
   if (!buyerId && isGuest !== "true") {
     console.error("Missing buyerId for non-guest payment:", paymentIntent.id);
     return;
   }
 
   const feePercent = parseFloat(platformFeePercent) || 0;
-  const totalILS = paymentIntent.amount / 100;
-  const ticketPriceILS = parseFloat(ticketPrice) || totalILS;
-  const platformFeeILS = feePercent > 0 ? ticketPriceILS * (feePercent / 100) : 0;
-  const sellerPayoutILS = ticketPriceILS - platformFeeILS;
+
+  // Fetch all ticket documents to get per-ticket sellerId, askingPrice, date
+  const ticketSnaps = await Promise.all(
+    ticketIds.map((id) => adminDb!.collection("tickets").doc(id).get())
+  );
 
   const batch = adminDb.batch();
 
-  // Update ticket status to sold
-  const ticketRef = adminDb.collection("tickets").doc(ticketId);
-  batch.update(ticketRef, {
-    status: "sold",
-    soldTo: buyerId || `guest:${guestEmail}`,
-    soldAt: new Date(),
-    reservedBy: null,
-    reservedAt: null,
-  });
+  for (const ticketSnap of ticketSnaps) {
+    const ticketData = ticketSnap.data();
+    if (!ticketData) continue;
 
-  // Create transaction record (admin uses this to pay sellers)
-  const transactionData: Record<string, unknown> = {
-    ticketId,
-    concertId: concertId || null,
-    buyerId: buyerId || null,
-    sellerId,
-    amount: totalILS,
-    ticketPrice: ticketPriceILS,
-    platformFee: platformFeeILS,
-    sellerPayout: sellerPayoutILS,
-    sellerPayoutStatus: "pending",
-    currency: "ILS",
-    stripePaymentIntentId: paymentIntent.id,
-    status: "completed",
-    createdAt: new Date(),
-    completedAt: new Date(),
-    isGuest: isGuest === "true",
-  };
+    const ticketId = ticketSnap.id;
+    const sellerId = ticketData.sellerId as string;
+    const ticketPriceILS = ticketData.askingPrice as number;
+    const platformFeeILS = feePercent > 0 ? ticketPriceILS * (feePercent / 100) : 0;
+    const sellerPayoutILS = ticketPriceILS - platformFeeILS;
+    const payoutEligibleAt = calcPayoutEligibleAt(ticketData.date || "");
 
-  if (isGuest === "true") {
-    transactionData.guestEmail = guestEmail || null;
-    transactionData.guestPhone = guestPhone || null;
+    // Mark ticket as sold
+    batch.update(adminDb.collection("tickets").doc(ticketId), {
+      status: "sold",
+      soldTo: buyerId || `guest:${guestEmail}`,
+      soldAt: new Date(),
+      reservedBy: null,
+      reservedAt: null,
+    });
+
+    // Create one transaction record per ticket
+    const transactionData: Record<string, unknown> = {
+      ticketId,
+      concertId: concertId || null,
+      buyerId: buyerId || null,
+      sellerId,
+      amount: ticketPriceILS + platformFeeILS,
+      ticketPrice: ticketPriceILS,
+      platformFee: platformFeeILS,
+      sellerPayout: sellerPayoutILS,
+      sellerPayoutStatus: "pending",
+      payoutEligibleAt,
+      currency: "ILS",
+      stripePaymentIntentId: paymentIntent.id,
+      status: "completed",
+      createdAt: new Date(),
+      completedAt: new Date(),
+      isGuest: isGuest === "true",
+    };
+
+    if (isGuest === "true") {
+      transactionData.guestEmail = guestEmail || null;
+      transactionData.guestPhone = guestPhone || null;
+    }
+
+    batch.set(adminDb.collection("transactions").doc(), transactionData);
   }
-
-  const transactionRef = adminDb.collection("transactions").doc();
-  batch.set(transactionRef, transactionData);
 
   await batch.commit();
   console.log(
-    `Payment succeeded for ticket ${ticketId}, transaction ${transactionRef.id}, seller payout: ${sellerPayoutILS} ILS`
+    `Payment succeeded for ${ticketIds.length} ticket(s), PaymentIntent: ${paymentIntent.id}`
   );
 }
 
 async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
   if (!adminDb) return;
 
-  const { ticketId } = paymentIntent.metadata;
-  if (!ticketId) return;
+  const ticketIds = resolveTicketIds(paymentIntent.metadata);
+  if (ticketIds.length === 0) return;
 
-  await adminDb.collection("tickets").doc(ticketId).update({
-    status: "available",
-    reservedBy: null,
-    reservedAt: null,
-  });
+  const batch = adminDb.batch();
+  for (const ticketId of ticketIds) {
+    batch.update(adminDb.collection("tickets").doc(ticketId), {
+      status: "available",
+      reservedBy: null,
+      reservedAt: null,
+    });
+  }
+  await batch.commit();
 
   console.log(
-    `Payment failed for ticket ${ticketId}, reservation released`
+    `Payment failed for ${ticketIds.length} ticket(s), reservations released`
   );
 }

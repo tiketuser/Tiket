@@ -70,7 +70,7 @@ function generateTicketsForConcert(concert, count) {
       askingPrice: askingPrice,
       originalPrice: originalPrice,
       status: 'available',
-      sellerId: 'admin_generated',
+      sellerId: 'XzttD4gMV6TRxUUZGBTXxYiZtP02',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   }
@@ -107,7 +107,7 @@ function generateTicketsForConcert(concert, count) {
       askingPrice: askingPrice,
       originalPrice: originalPrice,
       status: 'available',
-      sellerId: 'admin_generated',
+      sellerId: 'XzttD4gMV6TRxUUZGBTXxYiZtP02',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   }
