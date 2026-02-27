@@ -43,9 +43,19 @@ const NavBar = () => {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pendingFavoritesRedirect, setPendingFavoritesRedirect] =
     useState(false);
+  const [pendingMyTicketsRedirect, setPendingMyTicketsRedirect] =
+    useState(false);
+  const [pendingMyListingsRedirect, setPendingMyListingsRedirect] =
+    useState(false);
   let closeTimeout: NodeJS.Timeout;
   let adminCloseTimeout: NodeJS.Timeout;
   const router = useRouter();
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isMobileMenuOpen]);
 
   // Check if user is admin
   const isAdmin =
@@ -68,10 +78,26 @@ const NavBar = () => {
   useEffect(() => {
     if (user && pendingFavoritesRedirect) {
       setPendingFavoritesRedirect(false);
-      setLoginDialogOpen(false); // This will close the dialog after login is confirmed
+      setLoginDialogOpen(false);
       router.push("/Favorites");
     }
   }, [user, pendingFavoritesRedirect, router]);
+
+  useEffect(() => {
+    if (user && pendingMyTicketsRedirect) {
+      setPendingMyTicketsRedirect(false);
+      setLoginDialogOpen(false);
+      router.push("/MyTickets");
+    }
+  }, [user, pendingMyTicketsRedirect, router]);
+
+  useEffect(() => {
+    if (user && pendingMyListingsRedirect) {
+      setPendingMyListingsRedirect(false);
+      setLoginDialogOpen(false);
+      router.push("/MyListings");
+    }
+  }, [user, pendingMyListingsRedirect, router]);
 
   const handleDropdownToggle = () => {
     setDropdownOpen((prev) => !prev);
@@ -169,12 +195,30 @@ const NavBar = () => {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
               >
-                <Link href="/MyTickets">
+                <Link
+                  href={user ? "/MyTickets" : "#"}
+                  onClick={(e) => {
+                    if (!user) {
+                      e.preventDefault();
+                      setPendingMyTicketsRedirect(true);
+                      setLoginDialogOpen(true);
+                    }
+                  }}
+                >
                   <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-gray-100 cursor-pointer">
                     אירועים קרובים
                   </div>
                 </Link>
-                <Link href="/MyListings">
+                <Link
+                  href={user ? "/MyListings" : "#"}
+                  onClick={(e) => {
+                    if (!user) {
+                      e.preventDefault();
+                      setPendingMyListingsRedirect(true);
+                      setLoginDialogOpen(true);
+                    }
+                  }}
+                >
                   <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-gray-100 cursor-pointer">
                     המודעות שלי
                   </div>
@@ -338,173 +382,146 @@ const NavBar = () => {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 top-16 bg-white z-40 overflow-y-auto"
+          className="lg:hidden fixed inset-0 top-16 bg-white z-40 flex flex-col"
           dir="rtl"
         >
-          <div className="flex flex-col p-4 space-y-4">
-            {/* My Tickets Section */}
-            <div className="border-b pb-4">
-              <h3 className="text-heading-6-desktop font-bold mb-2">
-                הכרטיסים שלי
-              </h3>
-              <Link href="/MyTickets" onClick={() => setMobileMenuOpen(false)}>
-                <div className="px-4 py-2 text-text-regular hover:bg-gray-100 rounded">
-                  אירועים קרובים
-                </div>
-              </Link>
-              <Link href="/MyListings" onClick={() => setMobileMenuOpen(false)}>
-                <div className="px-4 py-2 text-text-regular hover:bg-gray-100 rounded">
-                  המודעות שלי
-                </div>
-              </Link>
-            </div>
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto px-4 pt-5 pb-4 space-y-1">
 
-            {/* Admin Section - Only visible to admin */}
-            {isAdmin && (
-              <div className="border-b pb-4">
-                <h3 className="text-heading-6-desktop font-bold mb-2 text-purple-600">
-                  ניהול
-                </h3>
-                <Link href="/Admin" onClick={() => setMobileMenuOpen(false)}>
-                  <div className="px-4 py-2 text-text-regular hover:bg-purple-100 rounded">
-                    יצירת אירועים
-                  </div>
-                </Link>
-                <Link
-                  href="/edit-events"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="px-4 py-2 text-text-regular hover:bg-purple-100 rounded">
-                    עריכת אירועים
-                  </div>
-                </Link>
-                <Link
-                  href="/manage-categories"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="px-4 py-2 text-text-regular hover:bg-purple-100 rounded">
-                    ניהול קטגוריות
-                  </div>
-                </Link>
-                <Link
-                  href="/manage-themes"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="px-4 py-2 text-text-regular hover:bg-purple-100 rounded">
-                    צבע קטגוריות
-                  </div>
-                </Link>
-                <Link
-                  href="/approve-tickets"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="px-4 py-2 text-text-regular hover:bg-purple-100 rounded">
-                    אישור כרטיסים
-                  </div>
-                </Link>
-                <Link
-                  href="/regenerate-tickets"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="px-4 py-2 text-text-regular hover:bg-purple-100 rounded">
-                    יצירת כרטיסים
-                  </div>
-                </Link>
-                <Link
-                  href="/manage-artists"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="px-4 py-2 text-text-regular hover:bg-purple-100 rounded">
-                    ניהול אמנים
-                  </div>
-                </Link>
-                <Link
-                  href="/diagnostic"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="px-4 py-2 text-text-regular hover:bg-purple-100 rounded">
-                    אבחון מערכת
-                  </div>
-                </Link>
+            {/* My Tickets group */}
+            <p className="text-lg font-bold px-3 pb-1">הכרטיסים שלי</p>
+
+            <Link
+              href={user ? "/MyTickets" : "#"}
+              onClick={(e) => {
+                if (!user) { e.preventDefault(); setPendingMyTicketsRedirect(true); setLoginDialogOpen(true); }
+                setMobileMenuOpen(false);
+              }}
+            >
+              <div className="flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                {/* Ticket icon */}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 9a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v1.5a2.5 2.5 0 0 0 0 5V17a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1.5a2.5 2.5 0 0 0 0-5V9z"/>
+                </svg>
+                <span className="text-base font-medium">אירועים קרובים</span>
               </div>
-            )}
+            </Link>
+
+            <Link
+              href={user ? "/MyListings" : "#"}
+              onClick={(e) => {
+                if (!user) { e.preventDefault(); setPendingMyListingsRedirect(true); setLoginDialogOpen(true); }
+                setMobileMenuOpen(false);
+              }}
+            >
+              <div className="flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                {/* List icon */}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                  <circle cx="3" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="3" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="3" cy="18" r="1" fill="currentColor" stroke="none"/>
+                </svg>
+                <span className="text-base font-medium">המודעות שלי</span>
+              </div>
+            </Link>
+
+            <div className="h-px bg-gray-100 my-2" />
 
             {/* Favorites */}
             <Link
               href={user ? "/Favorites" : "#"}
               onClick={(e) => {
-                if (!user) {
-                  e.preventDefault();
-                  setPendingFavoritesRedirect(true);
-                  setLoginDialogOpen(true);
-                  setMobileMenuOpen(false);
-                } else {
-                  setMobileMenuOpen(false);
-                }
+                if (!user) { e.preventDefault(); setPendingFavoritesRedirect(true); setLoginDialogOpen(true); }
+                setMobileMenuOpen(false);
               }}
             >
-              <div className="px-4 py-3 text-text-regular hover:bg-red-50 rounded flex items-center gap-2">
-                <Image
-                  src={HeartIcon}
-                  alt="heart icon"
-                  width={20}
-                  height={20}
-                />
-                <span>המועדפים שלי</span>
+              <div className="flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                {/* Heart icon */}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <span className="text-base font-medium">המועדפים שלי</span>
               </div>
             </Link>
 
             {/* Profile */}
             <button
-              className="px-4 py-3 text-text-regular hover:bg-gray-100 rounded flex items-center gap-2 w-full text-right"
+              className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors"
               onClick={() => {
                 setMobileMenuOpen(false);
-                if (user) {
-                  setProfileDialogOpen(true);
-                } else {
-                  setLoginDialogOpen(true);
-                }
+                if (user) { setProfileDialogOpen(true); } else { setLoginDialogOpen(true); }
               }}
             >
-              <Image src={ProfileButton} alt="Profile" width={20} height={20} />
-              <span>פרופיל</span>
+              {/* Person icon */}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <span className="text-base font-medium">פרופיל</span>
             </button>
 
-            {/* Auth Buttons */}
-            <div className="flex flex-col gap-3 pt-4">
-              {user ? (
-                <button
-                  className="btn btn-primary w-full text-gray-50 text-text-regular font-normal"
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  התנתק
-                </button>
-              ) : (
-                <>
+            {/* Auth buttons — below Profile, only when logged out */}
+            {!user && (
+              <>
+                <div className="h-px bg-gray-100 my-2" />
+                <div className="flex gap-2 px-1">
                   <button
-                    className="btn btn-primary w-full text-gray-50 text-text-regular font-normal"
-                    onClick={() => {
-                      setLoginDialogOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
+                    className="flex-1 btn btn-primary text-white text-base font-semibold h-11 min-h-0 rounded-xl"
+                    onClick={() => { setLoginDialogOpen(true); setMobileMenuOpen(false); }}
                   >
                     התחבר
                   </button>
                   <button
-                    className="btn btn-secondary border-primary border-[2px] bg-white w-full text-primary text-text-regular font-normal"
-                    onClick={() => {
-                      setSignUpDialogOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
+                    className="flex-1 btn border-2 border-primary bg-white text-primary text-base font-semibold h-11 min-h-0 rounded-xl"
+                    onClick={() => { setSignUpDialogOpen(true); setMobileMenuOpen(false); }}
                   >
                     הירשם
                   </button>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
+
+            {/* Logout — only when logged in */}
+            {user && (
+              <>
+                <div className="h-px bg-gray-100 my-2" />
+                <button
+                  className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-red-50 active:bg-red-100 transition-colors text-primary"
+                  onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                >
+                  {/* Logout icon */}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  <span className="text-base font-medium">התנתק</span>
+                </button>
+              </>
+            )}
+
+            {/* Admin Section */}
+            {isAdmin && (
+              <>
+                <div className="h-px bg-gray-100 my-2" />
+                <p className="text-xs font-semibold text-purple-400 uppercase tracking-widest px-3 pb-1">ניהול</p>
+                {[
+                  { href: "/Admin", label: "יצירת אירועים" },
+                  { href: "/edit-events", label: "עריכת אירועים" },
+                  { href: "/manage-categories", label: "ניהול קטגוריות" },
+                  { href: "/manage-themes", label: "צבע קטגוריות" },
+                  { href: "/approve-tickets", label: "אישור כרטיסים" },
+                  { href: "/regenerate-tickets", label: "יצירת כרטיסים" },
+                  { href: "/manage-artists", label: "ניהול אמנים" },
+                  { href: "/diagnostic", label: "אבחון מערכת" },
+                ].map(({ href, label }) => (
+                  <Link key={href} href={href} onClick={() => setMobileMenuOpen(false)}>
+                    <div className="flex items-center px-3 py-3 rounded-xl hover:bg-purple-50 active:bg-purple-100 transition-colors">
+                      <span className="text-base text-purple-700">{label}</span>
+                    </div>
+                  </Link>
+                ))}
+              </>
+            )}
           </div>
         </div>
       )}

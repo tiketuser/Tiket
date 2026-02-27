@@ -73,7 +73,7 @@ function generateTicketsForConcert(concert: any, count: number) {
         apiResponse: { verified: true, confidence: 100, status: 'verified' },
       },
       verificationTimestamp: serverTimestamp(),
-      sellerId: 'admin_generated',
+      sellerId: 'XzttD4gMV6TRxUUZGBTXxYiZtP02',
       createdAt: serverTimestamp(),
     });
   }

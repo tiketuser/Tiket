@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { db } from "../../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { db, auth } from "../../firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import NavBar from "../components/NavBar/NavBar";
-import SingleCard from "../components/SingleCard/SingleCard";
+import MyTicketCard from "../components/MyTicketCard/MyTicketCard";
 import Footer from "../components/Footer/Footer";
 import TitleSubtitle from "../components/TitleSubtitle/TitleSubtitle";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
@@ -38,6 +38,12 @@ interface Ticket {
   createdAt: any;
 }
 
+const seatLabel = (ticket: Ticket) =>
+  ticket.time ||
+  (ticket.isStanding
+    ? "עמידה"
+    : `${ticket.section ? `אזור ${ticket.section}` : ""} ${ticket.row ? `שורה ${ticket.row}` : ""} ${ticket.seat ? `מושב ${ticket.seat}` : ""}`.trim() || "מיקום לא צוין");
+
 const MyListings = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +62,19 @@ const MyListings = () => {
         return;
       }
 
-      // Fetch all tickets uploaded by this user (seller)
-      const ticketsSnapshot = await getDocs(collection(db as any, "tickets"));
+      const currentUser = auth?.currentUser;
+      if (!currentUser) {
+        console.error("User not authenticated");
+        setLoading(false);
+        return;
+      }
+
+      // Fetch only this seller's tickets
+      const q = query(
+        collection(db as any, "tickets"),
+        where("sellerId", "==", currentUser.uid)
+      );
+      const ticketsSnapshot = await getDocs(q);
       const ticketsData = ticketsSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -142,29 +159,15 @@ const MyListings = () => {
               </div>
             ) : (
               activeTickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="flex items-center justify-center"
-                >
-                  <div className="flex mb-8 w-full justify-center items-center">
-                    <SingleCard
-                      location={ticket.venue}
-                      date={ticket.date || ""}
-                      title={ticket.artist}
-                      price={ticket.askingPrice}
-                      timeLeft={
-                        ticket.time ||
-                        (ticket.isStanding
-                          ? "עמידה"
-                          : `${
-                              ticket.section ? `אזור ${ticket.section}` : ""
-                            } ${ticket.row ? `שורה ${ticket.row}` : ""} ${
-                              ticket.seat ? `מושב ${ticket.seat}` : ""
-                            }`.trim() || "מיקום לא צוין")
-                      }
-                      buttonAction="ביטול מכירה"
-                    />
-                  </div>
+                <div key={ticket.id} className="mb-4 w-full">
+                  <MyTicketCard
+                    artist={ticket.artist}
+                    date={ticket.date || ""}
+                    venue={ticket.venue}
+                    price={ticket.askingPrice}
+                    seatLabel={seatLabel(ticket)}
+                    buttonLabel="ביטול מכירה"
+                  />
                 </div>
               ))
             ))}
@@ -195,28 +198,17 @@ const MyListings = () => {
               rejectedTickets.map((ticket) => (
                 <div
                   key={ticket.id}
-                  className="flex flex-col items-center justify-center mb-8"
+                  className="flex flex-col items-center justify-center mb-4"
                 >
-                  <div className="flex w-full justify-center items-center">
-                    <SingleCard
-                      location={ticket.venue}
-                      date={ticket.date || ""}
-                      title={ticket.artist}
-                      price={ticket.askingPrice}
-                      timeLeft={
-                        ticket.time ||
-                        (ticket.isStanding
-                          ? "עמידה"
-                          : `${
-                              ticket.section ? `אזור ${ticket.section}` : ""
-                            } ${ticket.row ? `שורה ${ticket.row}` : ""} ${
-                              ticket.seat ? `מושב ${ticket.seat}` : ""
-                            }`.trim() || "מיקום לא צוין")
-                      }
-                      buttonAction="מחק"
-                      tag="נדחה"
-                    />
-                  </div>
+                  <MyTicketCard
+                    artist={ticket.artist}
+                    date={ticket.date || ""}
+                    venue={ticket.venue}
+                    price={ticket.askingPrice}
+                    seatLabel={seatLabel(ticket)}
+                    tag="נדחה"
+                    buttonLabel="מחק"
+                  />
 
                   {/* Display admin comment if available */}
                   {ticket.adminComment && (
@@ -280,30 +272,16 @@ const MyListings = () => {
               </div>
             ) : (
               soldTickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="flex items-center justify-center"
-                >
-                  <div className="flex mb-10 w-full justify-center items-center">
-                    <SingleCard
-                      location={ticket.venue}
-                      date={ticket.date || ""}
-                      title={ticket.artist}
-                      price={ticket.askingPrice}
-                      timeLeft={
-                        ticket.time ||
-                        (ticket.isStanding
-                          ? "עמידה"
-                          : `${
-                              ticket.section ? `אזור ${ticket.section}` : ""
-                            } ${ticket.row ? `שורה ${ticket.row}` : ""} ${
-                              ticket.seat ? `מושב ${ticket.seat}` : ""
-                            }`.trim() || "מיקום לא צוין")
-                      }
-                      tag="Sold"
-                      buttonAction="צפייה בכרטיס"
-                    />
-                  </div>
+                <div key={ticket.id} className="mb-4 w-full">
+                  <MyTicketCard
+                    artist={ticket.artist}
+                    date={ticket.date || ""}
+                    venue={ticket.venue}
+                    price={ticket.askingPrice}
+                    seatLabel={seatLabel(ticket)}
+                    tag="נמכר"
+                    buttonLabel="צפייה בכרטיס"
+                  />
                 </div>
               ))
             ))}

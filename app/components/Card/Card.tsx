@@ -5,7 +5,6 @@ import React, { useState, useEffect } from "react";
 import TicketIcon from "../../../public/images/Home Page/Web/Ticket Icon.svg";
 import PriceIcon from "../../../public/images/Home Page/Web/Price Icon.svg";
 import TimeLeftIcon from "../../../public/images/Home Page/Web/TimeLeft.svg";
-import HeartIcon from "../../../public/images/Home Page/Web/Favorite Tag.svg";
 import Image from "next/image";
 import Link from "next/link";
 import { getAuth } from "firebase/auth";
@@ -49,6 +48,7 @@ const Card: React.FC<CardProps> = ({
 }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [loadingFavorite, setLoadingFavorite] = useState(false);
 
   // Use pre-fetched favorites if available, otherwise fetch individually (fallback)
   useEffect(() => {
@@ -75,23 +75,27 @@ const Card: React.FC<CardProps> = ({
   const handleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) {
-      openLoginDialog();
-      return;
-    }
-    const userRef = doc(db as any, "users", user.uid);
-    if (isFavorited) {
-      // Remove from favorites
-      await setDoc(userRef, { favorites: arrayRemove(id) }, { merge: true });
-      setIsFavorited(false);
-    } else {
-      // Add to favorites
-      await setDoc(userRef, { favorites: arrayUnion(id) }, { merge: true });
-      setIsFavorited(true);
-      setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 2000);
+    setLoadingFavorite(true);
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        setLoadingFavorite(false);
+        openLoginDialog();
+        return;
+      }
+      const userRef = doc(db as any, "users", user.uid);
+      if (isFavorited) {
+        await setDoc(userRef, { favorites: arrayRemove(id) }, { merge: true });
+        setIsFavorited(false);
+      } else {
+        await setDoc(userRef, { favorites: arrayUnion(id) }, { merge: true });
+        setIsFavorited(true);
+        setShowPopup(true);
+        setTimeout(() => setShowPopup(false), 2000);
+      }
+    } finally {
+      setLoadingFavorite(false);
     }
   };
 
@@ -166,7 +170,7 @@ const Card: React.FC<CardProps> = ({
   };
 
   return (
-    <div className="relative block w-full h-auto">
+    <div className="group/card relative block w-full h-auto">
       <Link
         href={`/EventPage/${encodeURIComponent(title)}`}
         prefetch={true}
@@ -217,7 +221,7 @@ const Card: React.FC<CardProps> = ({
                 <Image
                   src={TicketIcon}
                   alt="Ticket icon"
-                  className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1"
+                  className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 mb-[1px] sm:ml-1"
                 />
                 <span>{ticketsLeft} </span>
               </p>
@@ -269,23 +273,33 @@ const Card: React.FC<CardProps> = ({
           </div>
         </div>
       </Link>
-      {/* Heart Icon - Outside Link to prevent nesting */}
+
+      {/* Heart button is outside Link to prevent navigation on click */}
       <button
         type="button"
-        className="absolute w-12 h-12 sm:w-[100px] sm:h-[100px] top-2 sm:top-4 right-2 sm:right-8 btn btn-ghost btn-circle hover:transition-transform hover:duration-300 hover:scale-125 z-10"
+        className="group/heart absolute top-6 sm:top-10 right-6 sm:right-10 w-7 h-7 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-white/80 opacity-60 hover:opacity-100 shadow-sm hover:shadow-md transition-all duration-200 z-10 group-hover/card:scale-110"
         onClick={handleFavorite}
         aria-label="הוסף למועדפים"
+        disabled={loadingFavorite}
+        style={loadingFavorite ? { opacity: 0.6, pointerEvents: "none" } : {}}
       >
-        <Image
-          src={HeartIcon}
-          alt="Heart Icon"
-          width={80}
-          style={{
-            filter: isFavorited
-              ? "brightness(0) invert(23%) sepia(700%) saturate(7496%)"
-              : "none",
-          }}
-        />
+        {loadingFavorite ? (
+          <span className="w-5 h-5 block animate-spin border-2 border-red-400 border-t-transparent rounded-full"></span>
+        ) : (
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill={isFavorited ? "#dc2626" : "none"}
+            stroke={isFavorited ? "#dc2626" : "currentColor"}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="transition-colors duration-200 group-hover/heart:stroke-red-600 group-hover/heart:fill-red-600"
+          >
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        )}
       </button>
     </div>
   );

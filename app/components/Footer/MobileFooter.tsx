@@ -42,7 +42,7 @@ const MobileFooter = () => {
 
   return (
     <>
-      <footer className="sm:hidden bottom-0 w-full bg-transparent h-16 fixed">
+      <footer className="sm:hidden bottom-0 w-full bg-transparent h-16 fixed z-20">
         {/* Profile Button */}
         <button
           className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-full shadow-lg w-12 h-12 flex justify-center items-center border-2 border-primary"

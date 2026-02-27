@@ -22,8 +22,8 @@ export const stripe = new Proxy({} as Stripe, {
   },
 });
 
-// Platform fee percentage — read from env var, default 0%
-// Can be overridden per-transaction or updated via Firestore config doc
+// Platform fee percentage — read from env var, default 5%
+// Set PLATFORM_FEE_PERCENT in Cloud Run environment variables to override
 export function getPlatformFeePercent(): number {
   const envFee = process.env.PLATFORM_FEE_PERCENT;
   if (envFee) {
@@ -32,7 +32,7 @@ export function getPlatformFeePercent(): number {
       return parsed;
     }
   }
-  return 0;
+  return 5;
 }
 
 // Calculate platform fee in agorot (ILS smallest unit) from a price in ILS

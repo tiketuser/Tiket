@@ -191,77 +191,66 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         ודא שהתמונה ברורה ושכל פרטי הכרטיס נראים היטב.
       </p>
 
-      {/* Mobile Layout: Button with side preview */}
-      <div className="sm:hidden mt-4">
-        <div className="flex items-center gap-3">
-          {/* Upload Button */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex-1 w-[90px] h-[27px] max-w-[90px] min-h-0 btn btn-outline border-2 border-primary text-primary bg-white hover:bg-primary hover:text-white text-text-small font-normal"
-          >
-            בחר קובץ
-          </button>
+      {/* Mobile Layout: tap-to-upload zone + status */}
+      <div className="sm:hidden mt-4 flex flex-col gap-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          id="fileUpload"
+          className="hidden"
+          accept="image/*"
+          onChange={handleFileUpload}
+        />
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            id="fileUpload"
-            className="hidden"
-            accept="image/*"
-            onChange={handleFileUpload}
-          />
-          {/* Status Message */}
-          <div className="relative -right-[90px] top-10 min-h-[40px]">
-            {ticketData?.extractionError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-2">
-                <p className="text-xs font-semibold text-red-700">⚠️ שגיאה</p>
-                <p className="text-[10px] text-red-600 mt-0.5">
-                  {uploadStatus}
-                </p>
+        {/* Upload tap zone */}
+        <div
+          className="w-full h-[140px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors bg-gray-50 active:bg-primary/5 border-gray-300"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="object-contain h-full w-full rounded-xl"
+            />
+          ) : (
+            <>
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
               </div>
-            )}
-
-            {!ticketData?.extractionError && (
-              <p
-                className={`text-xs font-bold ${
-                  ticketData?.isProcessing
-                    ? "text-blue-600"
-                    : ticketData?.uploadedFile
-                    ? "text-primary"
-                    : "text-gray-500"
-                }`}
-              >
-                {uploadStatus}
-              </p>
-            )}
-
-            {ticketData?.isProcessing && (
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <div className="loading loading-spinner loading-sm"></div>
-                <span className="text-xs text-blue-600">מעבד את התמונה...</span>
-              </div>
-            )}
-          </div>
-          {/* Small Preview */}
-          <div className="w-[80px] h-[106px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
-            {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="object-cover w-full h-full"
-              />
-            ) : (
-              <Image
-                src={EmptyImage}
-                alt="Placeholder"
-                width={32}
-                height={32}
-                className="opacity-40"
-              />
-            )}
-          </div>
+              <p className="text-sm font-semibold text-gray-600">הקש לבחירת תמונה</p>
+              <p className="text-[11px] text-gray-400">JPG, PNG, WEBP</p>
+            </>
+          )}
         </div>
+
+        {/* Upload button */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full h-[44px] min-h-0 btn btn-outline border-2 border-primary text-primary bg-white hover:bg-primary hover:text-white text-sm font-semibold rounded-xl"
+        >
+          {previewUrl ? "החלף תמונה" : "בחר קובץ"}
+        </button>
+
+        {/* Status */}
+        {ticketData?.extractionError ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
+            <p className="text-xs font-semibold text-red-700">⚠️ שגיאה</p>
+            <p className="text-[11px] text-red-600 mt-0.5">{uploadStatus}</p>
+          </div>
+        ) : ticketData?.isProcessing ? (
+          <div className="flex items-center justify-center gap-2 py-1">
+            <div className="loading loading-spinner loading-sm text-primary"></div>
+            <span className="text-sm text-blue-600 font-medium">מעבד את התמונה...</span>
+          </div>
+        ) : (
+          <p className={`text-xs text-center font-medium ${ticketData?.uploadedFile ? "text-primary" : "text-gray-400"}`}>
+            {uploadStatus}
+          </p>
+        )}
       </div>
 
       {/* Desktop Layout: Drag and drop with separate preview */}
