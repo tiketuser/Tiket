@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
     ];
     for (const sellerId of sellerIds) {
       const sellerDoc = await adminDb.collection("users").doc(sellerId).get();
-      if (!sellerDoc.data()?.paymentDetailsConfigured) {
+      const sellerData = sellerDoc.data();
+      if (!sellerData?.paymentDetailsConfigured && !sellerData?.paymentDetails) {
         return NextResponse.json(
           {
             error:
