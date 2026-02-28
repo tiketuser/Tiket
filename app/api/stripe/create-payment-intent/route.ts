@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     if (!adminDb) {
+      console.error('[create-payment-intent] adminDb is null — Firebase Admin failed to initialize');
       return NextResponse.json(
         { error: "Server services not available" },
         { status: 500 }

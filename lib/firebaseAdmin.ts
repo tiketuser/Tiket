@@ -12,20 +12,24 @@ if (!admin.apps.length) {
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
+    console.log('[FirebaseAdmin] Init check — projectId:', projectId || 'MISSING');
+    console.log('[FirebaseAdmin] Init check — clientEmail:', clientEmail || 'MISSING');
+    console.log('[FirebaseAdmin] Init check — privateKey present:', !!privateKey);
+
     if (privateKey && clientEmail && projectId) {
-      // Explicit service account credentials (set as env vars in CI/CD)
+      console.log('[FirebaseAdmin] Using explicit service account credentials');
       admin.initializeApp({
         credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
       });
     } else {
-      // Application Default Credentials — works on Cloud Run with attached service account
+      console.log('[FirebaseAdmin] Falling back to Application Default Credentials (ADC)');
       admin.initializeApp({
         credential: admin.credential.applicationDefault(),
       });
     }
-    console.log('Firebase Admin initialized successfully');
+    console.log('[FirebaseAdmin] Initialized successfully');
   } catch (error) {
-    console.error('Firebase Admin initialization error:', error);
+    console.error('[FirebaseAdmin] Initialization error:', error);
   }
 }
 
