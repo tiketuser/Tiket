@@ -39,7 +39,7 @@ interface Event {
   date: string;
   time: string;
   venue: string;
-  imageData: string;
+  imageUrl: string;
   status: string;
   views: number;
   createdAt: any;
@@ -73,12 +73,12 @@ export default function AdminPage() {
     text: string;
   } | null>(null);
 
-  // Fetch existing events with ticket counts (concerts collection)
+  // Fetch existing events with ticket counts
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const eventsQuery = query(
-          collection(db as any, "concerts"),
+          collection(db as any, "events"),
           orderBy("createdAt", "desc")
         );
         const snapshot = await getDocs(eventsQuery);
@@ -89,7 +89,7 @@ export default function AdminPage() {
             // Fetch tickets count for this event
             const ticketsQuery = query(
               collection(db as any, "tickets"),
-              where("concertId", "==", doc.id),
+              where("eventId", "==", doc.id),
               where("status", "==", "available")
             );
             const ticketsSnapshot = await getDocs(ticketsQuery);
@@ -164,13 +164,19 @@ export default function AdminPage() {
     return null;
   };
 
-  const convertImageToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+  const uploadImageToStorage = async (file: File): Promise<string> => {
+    const uploadFormData = new FormData();
+    uploadFormData.append("file", file);
+    const res = await fetch("/api/upload-event-image", {
+      method: "POST",
+      body: uploadFormData,
     });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Image upload failed");
+    }
+    const { imageUrl } = await res.json();
+    return imageUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -186,19 +192,19 @@ export default function AdminPage() {
     setMessage(null);
 
     try {
-      // Get image data: use uploaded image or default category image
-      let imageData: string;
+      // Get image URL: upload to Firebase Storage or use default category image
+      let imageUrl: string;
       if (formData.imageFile) {
-        imageData = await convertImageToBase64(formData.imageFile);
+        imageUrl = await uploadImageToStorage(formData.imageFile);
       } else {
         // Use default category image
-        imageData = await getDefaultCategoryImage(formData.category);
+        imageUrl = await getDefaultCategoryImage(formData.category);
       }
 
       // Normalize date to use / separator
       const normalizedDate = formData.date.trim().replace(/\./g, "/");
 
-      // Create event document (concerts collection)
+      // Create event document
       const eventData = {
         artist: formData.artist.trim(),
         title: formData.artist.trim(), // Set title same as artist for backwards compatibility
@@ -206,14 +212,14 @@ export default function AdminPage() {
         date: normalizedDate,
         time: formData.time.trim(),
         venue: formData.venue.trim(),
-        imageData: imageData,
+        imageUrl: imageUrl,
         status: "active",
         views: 0,
         createdAt: serverTimestamp(),
       };
 
       const newEventRef = await addDoc(
-        collection(db as any, "concerts"),
+        collection(db as any, "events"),
         eventData
       );
 
@@ -343,7 +349,7 @@ export default function AdminPage() {
           const category = eventJson.category || "מוזיקה";
 
           // Get default image for category
-          const imageData = await getDefaultCategoryImage(category);
+          const imageUrl = await getDefaultCategoryImage(category);
 
           // Create event document
           const eventData = {
@@ -353,14 +359,14 @@ export default function AdminPage() {
             date: normalizedDate,
             time: eventJson.time.trim(),
             venue: eventJson.location.trim(),
-            imageData: imageData,
+            imageUrl: imageUrl,
             status: "active",
             views: 0,
             createdAt: serverTimestamp(),
           };
 
           const newEventRef = await addDoc(
-            collection(db as any, "concerts"),
+            collection(db as any, "events"),
             eventData
           );
 
@@ -855,9 +861,9 @@ export default function AdminPage() {
                     <div className="flex flex-col md:flex-row">
                       {/* Image */}
                       <div className="md:w-48 h-48 bg-secondary relative flex-shrink-0">
-                        {event.imageData && (
+                        {event.imageUrl && (
                           <img
-                            src={event.imageData}
+                            src={event.imageUrl}
                             alt={event.title}
                             className="w-full h-full object-cover"
                           />

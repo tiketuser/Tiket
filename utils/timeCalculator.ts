@@ -1,5 +1,5 @@
 /**
- * Calculate time left until a concert
+ * Calculate time left until an event
  * @param dateString - Date in format DD/MM/YYYY or DD.MM.YYYY
  * @param timeString - Time in format HH:MM (optional)
  * @returns Hebrew string describing time until event
@@ -16,7 +16,7 @@ export const calculateTimeLeft = (
       ? timeString.split(":")
       : ["12", "00"];
     
-    const concertDate = new Date(
+    const eventDate = new Date(
       parseInt(year),
       parseInt(month) - 1,
       parseInt(day),
@@ -25,7 +25,7 @@ export const calculateTimeLeft = (
     );
 
     const now = new Date();
-    const diffMs = concertDate.getTime() - now.getTime();
+    const diffMs = eventDate.getTime() - now.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
