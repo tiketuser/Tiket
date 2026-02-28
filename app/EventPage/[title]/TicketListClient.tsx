@@ -7,7 +7,7 @@ import type { TicketInfo } from "../../components/Dialogs/CheckoutDialog/Checkou
 
 interface Ticket {
   id: string;
-  concertId: string;
+  eventId: string;
   artist: string;
   date: string;
   venue: string;
@@ -22,20 +22,20 @@ interface Ticket {
   sellerId: string;
 }
 
-interface Concert {
+interface Event {
   id: string;
   artist: string;
   title: string;
   date: string;
   time: string;
   venue: string;
-  imageData?: string;
+  imageUrl?: string;
   status: string;
 }
 
 interface TicketListClientProps {
   tickets: Ticket[];
-  concert: Concert;
+  concert: Event;
 }
 
 function formatSeatLocation(ticket: Ticket): string {
@@ -120,7 +120,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
           >
             <SingleCard
               title={concert.artist}
-              imageSrc={concert.imageData || "/images/Artist/default.png"}
+              imageSrc={concert.imageUrl || "/images/Artist/default.png"}
               date={ticket.date}
               location={ticket.venue}
               seatLocation={formatSeatLocation(ticket)}

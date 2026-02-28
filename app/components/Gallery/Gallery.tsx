@@ -26,14 +26,14 @@ interface Event {
   date: string;
   time: string;
   venue: string;
-  imageData: string;
+  imageUrl: string;
   status: string;
   views: number;
 }
 
 interface Ticket {
   id: string;
-  concertId: string;
+  eventId: string;
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -51,7 +51,7 @@ async function getGalleryData(): Promise<CardData[]> {
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
       getDocs(
         query(
-          collection(db as any, "concerts"),
+          collection(db as any, "events"),
           where("status", "==", "active"),
         ),
       ),
@@ -75,14 +75,14 @@ async function getGalleryData(): Promise<CardData[]> {
           date: data.date,
           time: data.time,
           venue: data.venue,
-          imageData: data.imageData,
+          imageUrl: data.imageUrl,
           status: data.status,
           views: data.views || 0,
         };
       })
       .filter(
         (event) =>
-          event && event.status === "active" && event.artist && event.imageData,
+          event && event.status === "active" && event.artist && event.imageUrl,
       );
 
     // Serialize tickets - only plain objects
@@ -90,7 +90,7 @@ async function getGalleryData(): Promise<CardData[]> {
       const data = doc.data();
       return {
         id: doc.id,
-        concertId: data.concertId,
+        eventId: data.eventId,
         askingPrice: data.askingPrice,
         originalPrice: data.originalPrice,
         status: data.status,
@@ -103,7 +103,7 @@ async function getGalleryData(): Promise<CardData[]> {
         // Get available tickets for this event
         const eventTickets = allTickets.filter(
           (ticket) =>
-            ticket.concertId === event.id && ticket.status === "available",
+            ticket.eventId === event.id && ticket.status === "available",
         );
 
         // Calculate price range
@@ -129,7 +129,7 @@ async function getGalleryData(): Promise<CardData[]> {
           id: event.id || "",
           title: event.artist || "אמן לא ידוע",
           category: event.category || "מוזיקה",
-          imageSrc: event.imageData || "",
+          imageSrc: event.imageUrl || "",
           date: event.date || "",
           location: event.venue || "מיקום לא ידוע",
           priceBefore: maxPrice > minPrice ? maxPrice : avgOriginalPrice,

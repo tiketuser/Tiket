@@ -29,7 +29,7 @@ interface Event {
   date: string;
   time: string;
   venue: string;
-  imageData: string;
+  imageUrl: string;
   status: string;
   views: number;
   categories?: string[];
@@ -37,7 +37,7 @@ interface Event {
 
 interface Ticket {
   id: string;
-  concertId: string;
+  eventId: string;
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -59,7 +59,7 @@ async function getViewMoreData() {
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
       getDocs(
         query(
-          collection(db as any, "concerts"),
+          collection(db as any, "events"),
           where("status", "==", "active"),
         ),
       ),
@@ -83,7 +83,7 @@ async function getViewMoreData() {
           date: data.date,
           time: data.time,
           venue: data.venue,
-          imageData: data.imageData,
+          imageUrl: data.imageUrl,
           status: data.status,
           views: data.views || 0,
           categories: data.categories || [],
@@ -91,7 +91,7 @@ async function getViewMoreData() {
       })
       .filter(
         (event) =>
-          event && event.status === "active" && event.artist && event.imageData,
+          event && event.status === "active" && event.artist && event.imageUrl,
       );
 
     // Serialize tickets - only plain objects
@@ -99,7 +99,7 @@ async function getViewMoreData() {
       const data = doc.data();
       return {
         id: doc.id,
-        concertId: data.concertId,
+        eventId: data.eventId,
         askingPrice: data.askingPrice,
         originalPrice: data.originalPrice,
         status: data.status,
@@ -112,7 +112,7 @@ async function getViewMoreData() {
         // Get available tickets for this event
         const eventTickets = allTickets.filter(
           (ticket) =>
-            ticket.concertId === event.id && ticket.status === "available",
+            ticket.eventId === event.id && ticket.status === "available",
         );
 
         // Calculate price range
@@ -138,7 +138,7 @@ async function getViewMoreData() {
           id: event.id,
           title: event.artist || event.title,
           category: event.category,
-          imageSrc: event.imageData,
+          imageSrc: event.imageUrl,
           date: event.date,
           location: event.venue,
           priceBefore: Math.round(avgOriginalPrice),
@@ -167,9 +167,9 @@ async function getViewMoreData() {
       try {
         const normalizedDate = card.date.replace(/\./g, "/");
         const [day, month, year] = normalizedDate.split("/").map(Number);
-        const concertDate = new Date(year, month - 1, day);
+        const eventDate = new Date(year, month - 1, day);
 
-        return concertDate >= now && concertDate <= twoDaysFromNow;
+        return eventDate >= now && eventDate <= twoDaysFromNow;
       } catch (error) {
         console.error("Error parsing date for last minute deals:", card.date);
         return false;

@@ -191,8 +191,7 @@ const Card: React.FC<CardProps> = ({
             </div>
           )}
           {/* Artist Image */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             width={300}
             height={300}
             src={imageSrc}

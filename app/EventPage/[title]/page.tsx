@@ -16,20 +16,20 @@ const ViewTracker = dynamicImport(
 // Use ISR - revalidate every 30 seconds for faster cache
 export const revalidate = 30;
 
-interface Concert {
+interface Event {
   id: string;
   artist: string;
   title: string;
   date: string;
   time: string;
   venue: string;
-  imageData?: string;
+  imageUrl?: string;
   status: string;
 }
 
 interface Ticket {
   id: string;
-  concertId: string;
+  eventId: string;
   artist: string;
   date: string;
   venue: string;
@@ -61,13 +61,13 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       );
     }
 
-    // Step 1: Query concerts by artist name directly (more efficient)
-    const concertsRef = collection(db, "concerts");
+    // Step 1: Query events by artist name directly (more efficient)
+    const eventsRef = collection(db, "events");
     const concertsQuery = query(
-      concertsRef,
+      eventsRef,
       where("artist", "==", decodedTitle),
       where("status", "==", "active"),
-      limit(1), // Only get one concert to save bandwidth
+      limit(1), // Only get one event to save bandwidth
     );
 
     // Step 2: Fetch tickets in parallel for better performance
@@ -79,31 +79,31 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     );
 
     // Execute both queries in parallel
-    const [concertsSnapshot, ticketsSnapshot] = await Promise.all([
+    const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
       getDocs(concertsQuery),
       getDocs(ticketsQuery),
     ]);
 
-    // Get the first matching concert — explicitly pick serializable fields only
+    // Get the first matching event — explicitly pick serializable fields only
     // (spreading doc.data() would include Firestore Timestamps which can't cross the Server→Client boundary)
-    const concertDoc = concertsSnapshot.docs[0];
-    const concert = concertDoc
+    const eventDoc = eventsSnapshot.docs[0];
+    const concert = eventDoc
       ? (() => {
-          const d = concertDoc.data();
+          const d = eventDoc.data();
           return {
-            id: concertDoc.id,
+            id: eventDoc.id,
             artist: d.artist ?? "",
             title: d.title ?? "",
             date: d.date ?? "",
             time: d.time ?? "",
             venue: d.venue ?? "",
-            imageData: d.imageData ?? d.imageDataBackup ?? undefined,
+            imageUrl: d.imageUrl ?? undefined,
             status: d.status ?? "",
-          } satisfies Concert;
+          } satisfies Event;
         })()
       : null;
 
-    // If no concert found
+    // If no event found
     if (!concert) {
       return (
         <div>
@@ -116,13 +116,13 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       );
     }
 
-    // Filter tickets that match the concert ID — explicitly pick serializable fields only
+    // Filter tickets that match the event ID — explicitly pick serializable fields only
     const tickets: Ticket[] = ticketsSnapshot.docs
       .map((doc) => {
         const d = doc.data();
         return {
           id: doc.id,
-          concertId: d.concertId ?? "",
+          eventId: d.eventId ?? "",
           artist: d.artist ?? "",
           date: d.date ?? "",
           venue: d.venue ?? "",
@@ -137,7 +137,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
           sellerId: d.sellerId ?? "",
         } satisfies Ticket;
       })
-      .filter((ticket) => ticket.concertId === concert.id);
+      .filter((ticket) => ticket.eventId === concert.id);
 
     // If no tickets found
     if (tickets.length === 0) {
@@ -145,7 +145,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
         <div>
           <NavBar />
           <EventUpperSection
-            imageSrc={concert.imageData || "/images/Artist/default.png"}
+            imageSrc={concert.imageUrl || "/images/Artist/default.png"}
             title={concert.artist}
             date={concert.date}
             location={concert.venue}
@@ -162,10 +162,10 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
 
     return (
       <div>
-        <ViewTracker concertId={concert.id} />
+        <ViewTracker eventId={concert.id} />
         <NavBar />
         <EventUpperSection
-          imageSrc={concert.imageData || "/images/Artist/default.png"}
+          imageSrc={concert.imageUrl || "/images/Artist/default.png"}
           title={concert.artist}
           date={concert.date}
           location={concert.venue}
@@ -202,13 +202,13 @@ export async function generateStaticParams() {
       return [];
     }
 
-    // Get only active concerts and limit to reduce initial load
-    const concertsQuery = query(
-      collection(db, "concerts"),
+    // Get only active events and limit to reduce initial load
+    const eventsQuery = query(
+      collection(db, "events"),
       where("status", "==", "active"),
       limit(50), // Limit for faster initial build
     );
-    const concertsSnapshot = await getDocs(concertsQuery);
+    const concertsSnapshot = await getDocs(eventsQuery);
 
     // Extract unique artists more efficiently
     const artists = Array.from(

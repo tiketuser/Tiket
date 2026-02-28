@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { doc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../../../firebase";
 
-export function ViewTracker({ concertId }: { concertId: string }) {
+export function ViewTracker({ eventId }: { eventId: string }) {
   useEffect(() => {
     if (typeof window === "undefined") return; // Only run on client
 
@@ -15,15 +15,15 @@ export function ViewTracker({ concertId }: { concertId: string }) {
       }
 
       try {
-        const concertRef = doc(db, "concerts", concertId);
-        await updateDoc(concertRef, { views: increment(1) });
+        const eventRef = doc(db, "events", eventId);
+        await updateDoc(eventRef, { views: increment(1) });
       } catch (error) {
         console.error("Error incrementing view:", error);
       }
     };
 
     incrementView();
-  }, [concertId]);
+  }, [eventId]);
 
   return null;
 }
