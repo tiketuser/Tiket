@@ -6,27 +6,12 @@
 import * as admin from 'firebase-admin';
 
 // Initialize Firebase Admin SDK (singleton pattern)
+// Uses Application Default Credentials (ADC) — works automatically on Cloud Run
+// via the attached service account (firebase-adminsdk-fbsvc@tiket-9268c.iam.gserviceaccount.com)
 if (!admin.apps.length) {
   try {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-    console.log('[FirebaseAdmin] Init check — projectId:', projectId || 'MISSING');
-    console.log('[FirebaseAdmin] Init check — clientEmail:', clientEmail || 'MISSING');
-    console.log('[FirebaseAdmin] Init check — privateKey present:', !!privateKey);
-
-    if (privateKey && clientEmail && projectId) {
-      console.log('[FirebaseAdmin] Using explicit service account credentials');
-      admin.initializeApp({
-        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
-      });
-    } else {
-      console.log('[FirebaseAdmin] Falling back to Application Default Credentials (ADC)');
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      });
-    }
+    console.log('[FirebaseAdmin] Initializing with ADC...');
+    admin.initializeApp();
     console.log('[FirebaseAdmin] Initialized successfully');
   } catch (error) {
     console.error('[FirebaseAdmin] Initialization error:', error);
