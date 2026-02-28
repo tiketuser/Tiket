@@ -77,10 +77,10 @@ jobs:
             --min-instances=0
             --max-instances=10
             --allow-unauthenticated
+            --service-account=firebase-adminsdk-fbsvc@tiket-9268c.iam.gserviceaccount.com
           env_vars: |
             NODE_ENV=production
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            GOOGLE_APPLICATION_CREDENTIALS=./creds.json
             STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
             STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
             PLATFORM_FEE_PERCENT=${{ secrets.PLATFORM_FEE_PERCENT }}
