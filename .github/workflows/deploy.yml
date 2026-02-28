@@ -85,6 +85,15 @@ jobs:
             STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
             PLATFORM_FEE_PERCENT=${{ secrets.PLATFORM_FEE_PERCENT }}
 
+      # Remove stale env vars that must not exist (e.g. GOOGLE_APPLICATION_CREDENTIALS
+      # pointing to a local creds file — Cloud Run uses ADC via attached service account)
+      - name: Remove stale env vars
+        run: |
+          gcloud run services update ${{ env.SERVICE_NAME }} \
+            --region=${{ env.REGION }} \
+            --remove-env-vars=GOOGLE_APPLICATION_CREDENTIALS \
+            --quiet || true
+
       # Show the deployed URL
       - name: Show deployed URL
         run: |
