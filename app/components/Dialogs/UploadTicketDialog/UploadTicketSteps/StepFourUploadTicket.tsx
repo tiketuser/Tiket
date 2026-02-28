@@ -25,6 +25,8 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
   publishWarning,
   handleClose,
   prevStep,
+  canSplit,
+  setCanSplit,
 }) => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -137,6 +139,43 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
           בדוק את כל הכרטיסים לפני הפרסום ({savedTickets.length} כרטיסים)
         </p>
       </div>
+
+      {/* Bundle split preference — only shown for multi-ticket uploads and before publishing */}
+      {savedTickets.length > 1 && !publishSuccess && !publishWarning && (
+        <div className="mt-4 w-full max-w-[880px] p-4 bg-secondary/20 border border-secondary rounded-xl" dir="rtl">
+          <p className="font-semibold text-strongText text-sm mb-3">
+            הגדרת מכירה קבוצתית ({savedTickets.length} כרטיסים)
+          </p>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-secondary/30 transition-colors">
+              <input
+                type="radio"
+                name="canSplit"
+                className="radio radio-primary radio-sm"
+                checked={canSplit === true}
+                onChange={() => setCanSplit?.(true)}
+              />
+              <div>
+                <p className="text-sm font-semibold text-strongText">מכירה חלקית מותרת</p>
+                <p className="text-xs text-mutedText">קונים יוכלו לבחור ולרכוש כרטיסים בודדים מהחבילה</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-secondary/30 transition-colors">
+              <input
+                type="radio"
+                name="canSplit"
+                className="radio radio-primary radio-sm"
+                checked={canSplit === false}
+                onChange={() => setCanSplit?.(false)}
+              />
+              <div>
+                <p className="text-sm font-semibold text-strongText">חובה לרכוש את כל הכרטיסים</p>
+                <p className="text-xs text-mutedText">הקונה יצטרך לרכוש את כל {savedTickets.length} הכרטיסים יחד</p>
+              </div>
+            </label>
+          </div>
+        </div>
+      )}
 
       {/* Success Message Display */}
       {publishSuccess && (

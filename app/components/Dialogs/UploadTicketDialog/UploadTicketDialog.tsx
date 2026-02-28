@@ -40,6 +40,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
   const [publishWarning, setPublishWarning] = useState<string | null>(null); // New warning state
+  const [canSplit, setCanSplit] = useState<boolean>(true);
 
   // Save current ticket and add another
   const saveAndAddAnother = (updatedTicketData?: TicketData) => {
@@ -123,6 +124,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     setIsPublishing(false);
     setPublishError(null);
     setPublishSuccess(null);
+    setCanSplit(true);
     onClose();
   };
 
@@ -181,9 +183,10 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           // Convert dots to slashes first
           const normalized = dateStr.replace(/\./g, "/");
 
-          // If already in dd/mm/yyyy format, return as is
-          if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalized)) {
-            return normalized;
+          // If already in dd/mm/yyyy format (possibly single-digit), zero-pad and return
+          if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(normalized)) {
+            const [d, m, y] = normalized.split("/");
+            return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
           }
 
           // Try to parse other date formats
@@ -245,11 +248,11 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           venue: normalizedVenue,
         });
 
-        // Fetch all concerts and do flexible matching (case-insensitive)
+        // Fetch all events and do flexible matching (case-insensitive)
         // This avoids Firestore case-sensitive query limitations
-        console.log("Fetching all concerts for flexible matching...");
+        console.log("Fetching all events for flexible matching...");
 
-        const allConcertsQuery = query(collection(firestore, "concerts"));
+        const allConcertsQuery = query(collection(firestore, "events"));
         const allConcerts = await getDocs(allConcertsQuery);
 
         const matchingConcerts = allConcerts.docs.filter((doc) => {
@@ -260,14 +263,20 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
 
           // Use smart artist matching (handles Hebrew/English variations)
           const artistMatch = artistNamesMatch(artist, concertArtist);
-          const venueMatch = concertVenue === normalizedVenue;
+
+          // Venue: partial match — one must contain the other (handles "היכל מנורה" vs "היכל מנורה מבטחים")
+          const venueMatch =
+            concertVenue === normalizedVenue ||
+            concertVenue.includes(normalizedVenue) ||
+            normalizedVenue.includes(concertVenue);
+
           const dateMatch = concertDate === normalizedDate;
 
           console.log(`Comparing with concert ${doc.id}:`, {
             ticketArtist: artist,
             concertArtist: concertArtist,
             artistMatch,
-            venueMatch: `"${concertVenue}" === "${normalizedVenue}" = ${venueMatch}`,
+            venueMatch: `"${concertVenue}" ~ "${normalizedVenue}" = ${venueMatch}`,
             dateMatch: `"${concertDate}" === "${normalizedDate}" = ${dateMatch}`,
           });
 
@@ -299,6 +308,11 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             "Concert not found, tickets will be marked as pending...",
           );
         }
+
+        // Generate a bundleId for this concert group if it has 2+ tickets
+        const bundleId: string | null =
+          tickets.length > 1 ? crypto.randomUUID() : null;
+        const bundleSize = tickets.length;
 
         // Now publish all tickets for this concert
         for (let i = 0; i < tickets.length; i++) {
@@ -445,27 +459,25 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             };
           }
 
-          // Convert uploaded image to base64 for storage
-          let ticketImageBase64 = null;
+          // Upload ticket image to Firebase Storage
+          let ticketImageUrl: string | null = null;
           if (ticket.uploadedFile) {
             try {
-              const reader = new FileReader();
-              ticketImageBase64 = await new Promise<string>(
-                (resolve, reject) => {
-                  reader.onloadend = () => {
-                    if (typeof reader.result === "string") {
-                      resolve(reader.result);
-                    } else {
-                      reject(new Error("Failed to read file"));
-                    }
-                  };
-                  reader.onerror = reject;
-                  reader.readAsDataURL(ticket.uploadedFile as File);
-                },
-              );
-              console.log("✅ Converted ticket image to base64");
+              const uploadFormData = new FormData();
+              uploadFormData.append("file", ticket.uploadedFile);
+              const uploadRes = await fetch("/api/upload-ticket-image", {
+                method: "POST",
+                body: uploadFormData,
+              });
+              if (uploadRes.ok) {
+                const { imageUrl } = await uploadRes.json();
+                ticketImageUrl = imageUrl;
+                console.log("✅ Uploaded ticket image to Storage");
+              } else {
+                console.warn("Failed to upload ticket image to Storage");
+              }
             } catch (error) {
-              console.warn("Failed to convert ticket image:", error);
+              console.warn("Failed to upload ticket image:", error);
             }
           }
 
@@ -498,7 +510,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             minPrice: ticket.pricing?.minPrice || null,
             maxPrice: ticket.pricing?.maxPrice || null,
             extractedText: ticket.extractedText || null,
-            ticketImage: ticketImageBase64, // Store uploaded ticket image
+            ticketImage: ticketImageUrl, // Storage URL for uploaded ticket image
             status: ticketStatus, // Set based on verification result
             // Verification details
             verificationStatus: verificationResult.status,
@@ -517,6 +529,9 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             verificationTimestamp: serverTimestamp(),
             createdAt: serverTimestamp(),
             sellerId: getAuth().currentUser?.uid || "anonymous",
+            bundleId: bundleId,
+            canSplit: bundleId !== null ? canSplit : null,
+            bundleSize: bundleId !== null ? bundleSize : null,
           };
 
           const ticketRef = await addDoc(
@@ -679,6 +694,8 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           publishWarning={publishWarning}
           handleClose={handleClose}
           prevStep={prevStep}
+          canSplit={canSplit}
+          setCanSplit={setCanSplit}
         />
       ),
     },

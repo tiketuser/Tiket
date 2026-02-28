@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { storage } from "../../../firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import admin from "@/lib/firebaseAdmin";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,31 +13,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!storage) {
+    if (!admin.apps.length) {
       return NextResponse.json(
-        {
-          error: "Firebase Storage not initialized. Please enable Firebase Storage in Firebase Console: https://console.firebase.google.com/project/tiket-9268c/storage",
-          hint: "Go to Firebase Console → Storage → Get Started",
-        },
+        { error: "Firebase Admin not initialized" },
         { status: 503 }
       );
     }
 
-    // Convert File to Buffer
+    const bucket = admin.storage().bucket(
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    );
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload to Firebase Storage
-    const imageRef = ref(
-      storage,
-      `event-images/${Date.now()}-${file.name}`
-    );
+    const fileName = `event-images/${Date.now()}-${file.name}`;
+    const fileRef = bucket.file(fileName);
 
-    const snapshot = await uploadBytes(imageRef, buffer as any, {
-      contentType: file.type,
-    });
+    await fileRef.save(buffer, { contentType: file.type });
+    await fileRef.makePublic();
 
-    const imageUrl = await getDownloadURL(snapshot.ref);
+    const imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
 
     return NextResponse.json({ imageUrl }, { status: 200 });
   } catch (error) {

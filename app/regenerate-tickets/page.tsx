@@ -141,7 +141,7 @@ export default function RegenerateTicketsPage() {
               </div>
 
               {/* Statistics */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
                 <div className="bg-white rounded-lg p-4 text-center shadow-medium">
                   <div className="text-heading-2-desktop font-bold text-primary mb-1">
                     {result.concerts}
@@ -159,6 +159,12 @@ export default function RegenerateTicketsPage() {
                     {result.newTicketsCreated}
                   </div>
                   <div className="text-body-small text-mutedText">נוצרו</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 text-center shadow-medium">
+                  <div className="text-heading-2-desktop font-bold text-purple-600 mb-1">
+                    {result.bundlesCreated}
+                  </div>
+                  <div className="text-body-small text-mutedText">חבילות</div>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center shadow-medium">
                   <div className="text-heading-2-desktop font-bold text-highlight mb-1">
@@ -193,6 +199,11 @@ export default function RegenerateTicketsPage() {
                         <div className="text-body-medium font-semibold text-primary">
                           {concert.ticketCount} כרטיסים
                         </div>
+                        {concert.bundleCount > 0 && (
+                          <div className="text-body-small text-purple-600">
+                            {concert.bundleCount} חבילות
+                          </div>
+                        )}
                         <div className="text-body-small text-mutedText">
                           {concert.priceRange}
                         </div>
@@ -255,6 +266,12 @@ export default function RegenerateTicketsPage() {
                   <span>6.</span>
                   <span>
                     מייצר טווחי מחירים ריאליסטיים (150-1000 ש״ח) עם הנחות
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span>7.</span>
+                  <span>
+                    כ-30% מהכרטיסים נמכרים כחבילות (2-4 כרטיסים יחד), חלקן עם אפשרות מכירה חלקית
                   </span>
                 </li>
               </ul>

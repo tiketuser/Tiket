@@ -152,7 +152,7 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
               timeLeft: timeLeft,
             };
           })
-          .filter((event) => !event.soldOut);
+;
 
         setFavoriteCards(eventCards);
         setFilteredCards(eventCards);

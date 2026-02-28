@@ -12,6 +12,8 @@ export interface UploadTicketInterface {
     publishSuccess?: string | null;
     publishWarning?: string | null; // New warning message state
     handleClose?: () => void;
+    canSplit?: boolean;
+    setCanSplit?: (value: boolean) => void;
 }
 
 export interface TicketData {
@@ -42,4 +44,7 @@ export interface TicketData {
     };
     isProcessing?: boolean;
     extractionError?: string;
+    bundleId?: string | null;
+    canSplit?: boolean | null;
+    bundleSize?: number | null;
 }

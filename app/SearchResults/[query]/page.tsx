@@ -66,7 +66,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
   // Fetch only active events (not all events)
   const eventsSnapshot = await getDocs(
     firestoreQuery(
-      collection(db as any, "concerts"),
+      collection(db as any, "events"),
       where("status", "==", "active"),
     ),
   );

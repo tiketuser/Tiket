@@ -86,6 +86,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Verify bundle completeness — if any ticket belongs to a non-splittable bundle,
+    // all siblings must be present in the request
+    const nonSplitBundleIds = new Set<string>();
+    for (const ticketDoc of ticketDocs) {
+      const data = ticketDoc.data()!;
+      if (data.bundleId && data.canSplit === false) {
+        nonSplitBundleIds.add(data.bundleId as string);
+      }
+    }
+
+    if (nonSplitBundleIds.size > 0) {
+      const ticketIdsInRequest = new Set<string>(ticketIds);
+      for (const bundleId of nonSplitBundleIds) {
+        const bundleSnap = await adminDb!
+          .collection("tickets")
+          .where("bundleId", "==", bundleId)
+          .where("status", "in", ["available", "reserved"])
+          .get();
+        const allBundleIds = bundleSnap.docs.map((d) => d.id);
+        if (allBundleIds.some((id) => !ticketIdsInRequest.has(id))) {
+          return NextResponse.json(
+            { error: "יש לרכוש את כל הכרטיסים בחבילה יחד" },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     // Verify all unique sellers have payment details configured
     const sellerIds = [
       ...new Set(ticketDocs.map((d) => d.data()!.sellerId as string)),

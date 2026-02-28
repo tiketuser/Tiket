@@ -55,7 +55,7 @@ export default function EditConcertsPage() {
     try {
       setLoading(true);
       const concertsQuery = query(
-        collection(db, "concerts"),
+        collection(db, "events"),
         orderBy("date", "desc"),
       );
       const snapshot = await getDocs(concertsQuery);
@@ -105,7 +105,7 @@ export default function EditConcertsPage() {
       // Normalize date to use / separator
       const normalizedDate = editForm.date.replace(/\./g, "/");
 
-      const concertRef = doc(db, "concerts", selectedConcert.id);
+      const concertRef = doc(db, "events", selectedConcert.id);
       await updateDoc(concertRef, {
         artist: editForm.artist,
         title: editForm.artist, // Set title same as artist for backwards compatibility
@@ -143,7 +143,7 @@ export default function EditConcertsPage() {
     }
 
     try {
-      await deleteDoc(doc(db, "concerts", concertId));
+      await deleteDoc(doc(db, "events", concertId));
       setConcerts(concerts.filter((c) => c.id !== concertId));
       alert("האירוע נמחק בהצלחה!");
 

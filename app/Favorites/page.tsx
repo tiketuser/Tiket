@@ -42,7 +42,7 @@ async function getServerData(): Promise<ServerData> {
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
       getDocs(
         query(
-          collection(db as any, "concerts"),
+          collection(db as any, "events"),
           where("status", "==", "active"),
         ),
       ),

@@ -86,35 +86,35 @@ export default function ManageDefaultImagesPage() {
     setMessage(null);
 
     try {
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Data = reader.result as string;
+      // Upload to Firebase Storage via API
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+      const res = await fetch("/api/upload-event-image", {
+        method: "POST",
+        body: uploadFormData,
+      });
 
-        // Update in Firestore
-        await updateDefaultCategoryImage(category, base64Data);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Image upload failed");
+      }
 
-        // Update local state
-        setCategories((prev) =>
-          prev.map((cat) =>
-            cat.category === category ? { ...cat, imageData: base64Data } : cat
-          )
-        );
+      const { imageUrl } = await res.json();
 
-        setMessage({
-          type: "success",
-          text: `✅ תמונת ברירת מחדל עבור ${category} עודכנה בהצלחה`,
-        });
-      };
+      // Save Storage URL to Firestore
+      await updateDefaultCategoryImage(category, imageUrl);
 
-      reader.onerror = () => {
-        setMessage({
-          type: "error",
-          text: "שגיאה בקריאת הקובץ",
-        });
-      };
+      // Update local state with the URL
+      setCategories((prev) =>
+        prev.map((cat) =>
+          cat.category === category ? { ...cat, imageData: imageUrl } : cat
+        )
+      );
 
-      reader.readAsDataURL(file);
+      setMessage({
+        type: "success",
+        text: `✅ תמונת ברירת מחדל עבור ${category} עודכנה בהצלחה`,
+      });
     } catch (error) {
       console.error("Error updating default image:", error);
       setMessage({

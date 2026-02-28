@@ -29,7 +29,7 @@ interface Event {
 
 interface Ticket {
   id: string;
-  eventId: string;
+  concertId: string;
   artist: string;
   date: string;
   venue: string;
@@ -42,6 +42,9 @@ interface Ticket {
   originalPrice: number;
   status: string;
   sellerId: string;
+  bundleId: string | null;
+  canSplit: boolean | null;
+  bundleSize: number | null;
 }
 
 const EventPage = async ({ params }: { params: { title: string } }) => {
@@ -122,7 +125,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
         const d = doc.data();
         return {
           id: doc.id,
-          eventId: d.eventId ?? "",
+          concertId: d.concertId ?? "",
           artist: d.artist ?? "",
           date: d.date ?? "",
           venue: d.venue ?? "",
@@ -135,9 +138,12 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
           originalPrice: d.originalPrice ?? 0,
           status: d.status ?? "",
           sellerId: d.sellerId ?? "",
+          bundleId: d.bundleId ?? null,
+          canSplit: d.canSplit ?? null,
+          bundleSize: d.bundleSize ?? null,
         } satisfies Ticket;
       })
-      .filter((ticket) => ticket.eventId === concert.id);
+      .filter((ticket) => ticket.concertId === concert.id);
 
     // If no tickets found
     if (tickets.length === 0) {

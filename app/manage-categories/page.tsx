@@ -37,7 +37,7 @@ export default function ManageCategoriesPage() {
   const fetchConcerts = async () => {
     try {
       setLoading(true);
-      const concertsSnapshot = await getDocs(collection(db as any, "concerts"));
+      const concertsSnapshot = await getDocs(collection(db as any, "events"));
       const concertsData: Concert[] = concertsSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -63,7 +63,7 @@ export default function ManageCategoriesPage() {
         ? currentCategories.filter((cat) => cat !== categoryId)
         : [...currentCategories, categoryId];
 
-      await updateDoc(doc(db as any, "concerts", concertId), {
+      await updateDoc(doc(db as any, "events", concertId), {
         categories: newCategories,
       });
 

@@ -40,7 +40,7 @@ if (hasValidConfig) {
   // Initialize Firebase with real config
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
-  auth = getAuth();
+  auth = getAuth(app);
   storage = getStorage(app);
   setPersistence(auth, browserLocalPersistence);
 } else {

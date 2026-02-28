@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import SingleCard from "../../components/SingleCard/SingleCard";
+import BundleCard from "../../components/BundleCard/BundleCard";
+import type { BundleTicket } from "../../components/BundleCard/BundleCard";
 import CheckoutDialog from "../../components/Dialogs/CheckoutDialog/CheckoutDialog";
 import type { TicketInfo } from "../../components/Dialogs/CheckoutDialog/CheckoutDialog";
 
@@ -20,6 +22,9 @@ interface Ticket {
   originalPrice: number;
   status: string;
   sellerId: string;
+  bundleId: string | null;
+  canSplit: boolean | null;
+  bundleSize: number | null;
 }
 
 interface Event {
@@ -49,6 +54,23 @@ function formatSeatLocation(ticket: Ticket): string {
   return parts.join(" | ");
 }
 
+function ticketToBundleTicket(ticket: Ticket): BundleTicket {
+  return {
+    id: ticket.id,
+    date: ticket.date,
+    venue: ticket.venue,
+    section: ticket.section,
+    row: ticket.row,
+    seat: ticket.seat,
+    isStanding: ticket.isStanding,
+    askingPrice: ticket.askingPrice,
+    originalPrice: ticket.originalPrice,
+    sellerId: ticket.sellerId,
+    canSplit: ticket.canSplit,
+    bundleSize: ticket.bundleSize,
+  };
+}
+
 const TicketListClient: React.FC<TicketListClientProps> = ({
   tickets,
   concert,
@@ -71,6 +93,26 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
     [concert.artist],
   );
 
+  // Group tickets by bundleId; tickets without a bundleId go into soloTickets
+  const { bundledGroups, soloTickets } = useMemo(() => {
+    const groupMap = new Map<string, Ticket[]>();
+    const solo: Ticket[] = [];
+
+    for (const ticket of tickets) {
+      if (ticket.bundleId) {
+        const existing = groupMap.get(ticket.bundleId) ?? [];
+        groupMap.set(ticket.bundleId, [...existing, ticket]);
+      } else {
+        solo.push(ticket);
+      }
+    }
+
+    return {
+      bundledGroups: Array.from(groupMap.values()),
+      soloTickets: solo,
+    };
+  }, [tickets]);
+
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -89,12 +131,31 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
   );
 
   const openMultiBuy = useCallback(() => {
-    const selected = tickets
+    const selected = soloTickets
       .filter((t) => selectedIds.has(t.id))
       .map(toTicketInfo);
     setCheckoutTickets(selected);
     setIsCheckoutOpen(true);
-  }, [tickets, selectedIds, toTicketInfo]);
+  }, [soloTickets, selectedIds, toTicketInfo]);
+
+  // Bundle buy handler — maps BundleTicket[] back to TicketInfo[] via concert context
+  const openBundleBuy = useCallback(
+    (bundleTickets: BundleTicket[]) => {
+      const infos: TicketInfo[] = bundleTickets.map((t) => ({
+        ticketId: t.id,
+        title: concert.artist,
+        date: t.date,
+        venue: t.venue,
+        seatLocation: formatSeatLocation(t as unknown as Ticket),
+        price: t.askingPrice,
+        originalPrice: t.originalPrice,
+        sellerId: t.sellerId,
+      }));
+      setCheckoutTickets(infos);
+      setIsCheckoutOpen(true);
+    },
+    [concert.artist],
+  );
 
   const handleCheckoutClose = useCallback(() => {
     setIsCheckoutOpen(false);
@@ -103,7 +164,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
   }, []);
 
   const totalSelected = selectedIds.size;
-  const totalPrice = tickets
+  const totalPrice = soloTickets
     .filter((t) => selectedIds.has(t.id))
     .reduce((sum, t) => sum + t.askingPrice, 0);
 
@@ -113,7 +174,57 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         dir="rtl"
         className="flex flex-col items-stretch sm:items-center pt-6 px-4 pb-8 gap-3 sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 shadow-small-inner w-full"
       >
-        {tickets.map((ticket) => (
+        {/* Render bundle groups first */}
+        {bundledGroups.map((group) => {
+          // If only 1 ticket remains in a bundle (partial sell), fall back to SingleCard
+          if (group.length === 1) {
+            const ticket = group[0];
+            return (
+              <div
+                key={ticket.id}
+                className="w-full sm:flex sm:items-center sm:justify-center"
+              >
+                <SingleCard
+                  title={concert.artist}
+                  imageSrc={concert.imageUrl || "/images/Artist/default.png"}
+                  date={ticket.date}
+                  location={ticket.venue}
+                  seatLocation={formatSeatLocation(ticket)}
+                  priceBefore={ticket.originalPrice}
+                  price={ticket.askingPrice}
+                  soldOut={false}
+                  ticketsLeft={soloTickets.length + 1}
+                  timeLeft=""
+                  buttonAction="קנה"
+                  ticketId={ticket.id}
+                  sellerId={ticket.sellerId}
+                  isSelectable={true}
+                  isSelected={selectedIds.has(ticket.id)}
+                  onToggleSelect={() => toggleSelect(ticket.id)}
+                  onInstantBuy={() => openInstantBuy(ticket)}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={group[0].bundleId}
+              className="w-full sm:flex sm:items-center sm:justify-center"
+            >
+              <BundleCard
+                tickets={group.map(ticketToBundleTicket)}
+                concertTitle={concert.artist}
+                canSplit={group[0].canSplit}
+                onBuyAll={openBundleBuy}
+                onBuySelected={openBundleBuy}
+              />
+            </div>
+          );
+        })}
+
+        {/* Render solo tickets */}
+        {soloTickets.map((ticket) => (
           <div
             key={ticket.id}
             className="w-full sm:flex sm:items-center sm:justify-center"
@@ -127,7 +238,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
               priceBefore={ticket.originalPrice}
               price={ticket.askingPrice}
               soldOut={false}
-              ticketsLeft={tickets.length}
+              ticketsLeft={soloTickets.length}
               timeLeft=""
               buttonAction="קנה"
               ticketId={ticket.id}
@@ -141,7 +252,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         ))}
       </div>
 
-      {/* Sticky multi-buy bar — shown when 1+ tickets selected */}
+      {/* Sticky multi-buy bar — only for solo ticket selections */}
       {totalSelected > 0 && (
         <div
           dir="rtl"

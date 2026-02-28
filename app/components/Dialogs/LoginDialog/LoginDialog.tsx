@@ -4,13 +4,12 @@ import LoginRegisterButtons from "../LoginRegisterButtons/LoginRegisterButtons";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  getAuth,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
-import { db } from "../../../../firebase";
+import { db, auth } from "../../../../firebase";
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -36,7 +35,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     try {
-      const auth = getAuth();
+      if (!auth) throw new Error("Auth not initialized");
       await signInWithEmailAndPassword(auth, email, password);
       setError("");
       onClose();

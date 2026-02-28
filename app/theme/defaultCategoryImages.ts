@@ -5,7 +5,7 @@
 
 export interface DefaultCategoryImage {
   category: string;
-  imageData: string; // Base64 or URL
+  imageData: string; // Firebase Storage URL or fallback SVG data URL
   updatedAt?: Date;
 }
 
@@ -91,10 +91,11 @@ export const getDefaultCategoryImage = async (
 
 /**
  * Update default image for a category in Firestore
+ * imageUrl should be a Firebase Storage HTTPS URL
  */
 export const updateDefaultCategoryImage = async (
   category: string,
-  imageData: string
+  imageUrl: string
 ): Promise<void> => {
   const {
     db,
@@ -124,14 +125,14 @@ export const updateDefaultCategoryImage = async (
     // Update existing
     const docRef = doc(db as any, "defaultCategoryImages", snapshot.docs[0].id);
     await updateDoc(docRef, {
-      imageData,
+      imageData: imageUrl,
       updatedAt: serverTimestamp(),
     });
   } else {
     // Create new
     await addDoc(collection(db as any, "defaultCategoryImages"), {
       category,
-      imageData,
+      imageData: imageUrl,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
