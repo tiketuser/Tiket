@@ -1,37 +1,10 @@
 // app/api/ocr-extract/route.ts
 import { NextResponse } from "next/server";
 import vision from "@google-cloud/vision";
-import path from "path";
-import fs from "fs";
 
-// Initialize Vision API client with credentials
-function createVisionClient() {
-  // Try multiple possible paths for creds.json
-  const possiblePaths = [
-    path.join(process.cwd(), "creds.json"),
-    path.join(process.cwd(), "app", "creds.json"),
-  ];
-
-  for (const credPath of possiblePaths) {
-    if (fs.existsSync(credPath)) {
-      console.log(`Using credentials from: ${credPath}`);
-      const credentials = JSON.parse(fs.readFileSync(credPath, "utf-8"));
-      return new vision.ImageAnnotatorClient({
-        credentials: {
-          client_email: credentials.client_email,
-          private_key: credentials.private_key,
-        },
-        projectId: credentials.project_id,
-      });
-    }
-  }
-
-  // Fallback: let it use GOOGLE_APPLICATION_CREDENTIALS env var or ADC
-  console.warn("No creds.json found, falling back to application default credentials");
-  return new vision.ImageAnnotatorClient();
-}
-
-const visionClient = createVisionClient();
+// Use Application Default Credentials (ADC) — works automatically on Cloud Run
+// via the attached service account, and locally via GOOGLE_APPLICATION_CREDENTIALS
+const visionClient = new vision.ImageAnnotatorClient();
 
 interface TicketData {
   artist: string | null;
