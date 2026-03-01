@@ -128,7 +128,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     onClose();
   };
 
-  // Find or create concert, then publish tickets
+  // Find or create event, then publish tickets
   const publishAllTickets = async () => {
     console.log("publishAllTickets called, savedTickets:", savedTickets);
 
@@ -151,28 +151,28 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       let needsReviewCount = 0; // Manual review needed
       let rejectedCount = 0; // Failed verification
 
-      // Group tickets by concert (artist + date + venue)
+      // Group tickets by event (artist + date + venue)
       const ticketsByConcert = new Map<string, typeof savedTickets>();
 
       for (const ticket of savedTickets) {
-        const concertKey = `${ticket.ticketDetails?.artist}-${ticket.ticketDetails?.date}-${ticket.ticketDetails?.venue}`;
-        if (!ticketsByConcert.has(concertKey)) {
-          ticketsByConcert.set(concertKey, []);
+        const eventKey = `${ticket.ticketDetails?.artist}-${ticket.ticketDetails?.date}-${ticket.ticketDetails?.venue}`;
+        if (!ticketsByConcert.has(eventKey)) {
+          ticketsByConcert.set(eventKey, []);
         }
-        ticketsByConcert.get(concertKey)?.push(ticket);
+        ticketsByConcert.get(eventKey)?.push(ticket);
       }
 
-      console.log(`Found ${ticketsByConcert.size} unique concerts`);
+      console.log(`Found ${ticketsByConcert.size} unique events`);
 
-      // Process each concert group
-      for (const [concertKey, tickets] of ticketsByConcert) {
+      // Process each event group
+      for (const [eventKey, tickets] of ticketsByConcert) {
         const firstTicket = tickets[0];
         const artist = firstTicket.ticketDetails?.artist || "";
         const date = firstTicket.ticketDetails?.date || "";
         const venue = firstTicket.ticketDetails?.venue || "";
         const time = firstTicket.ticketDetails?.time || "";
 
-        console.log(`Processing concert: ${artist} on ${date} at ${venue}`);
+        console.log(`Processing event: ${artist} on ${date} at ${venue}`);
 
         // Normalize strings for better matching
         const normalizeString = (str: string) =>
@@ -257,69 +257,69 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
 
         const matchingConcerts = allConcerts.docs.filter((doc) => {
           const data = doc.data();
-          const concertArtist = data.artist || "";
-          const concertVenue = normalizeString(data.venue || "");
-          const concertDate = normalizeDate(data.date || "");
+          const eventArtist = data.artist || "";
+          const eventVenue = normalizeString(data.venue || "");
+          const eventDate = normalizeDate(data.date || "");
 
           // Use smart artist matching (handles Hebrew/English variations)
-          const artistMatch = artistNamesMatch(artist, concertArtist);
+          const artistMatch = artistNamesMatch(artist, eventArtist);
 
           // Venue: partial match — one must contain the other (handles "היכל מנורה" vs "היכל מנורה מבטחים")
           const venueMatch =
-            concertVenue === normalizedVenue ||
-            concertVenue.includes(normalizedVenue) ||
-            normalizedVenue.includes(concertVenue);
+            eventVenue === normalizedVenue ||
+            eventVenue.includes(normalizedVenue) ||
+            normalizedVenue.includes(eventVenue);
 
-          const dateMatch = concertDate === normalizedDate;
+          const dateMatch = eventDate === normalizedDate;
 
-          console.log(`Comparing with concert ${doc.id}:`, {
+          console.log(`Comparing with event ${doc.id}:`, {
             ticketArtist: artist,
-            concertArtist: concertArtist,
+            eventArtist: eventArtist,
             artistMatch,
-            venueMatch: `"${concertVenue}" ~ "${normalizedVenue}" = ${venueMatch}`,
-            dateMatch: `"${concertDate}" === "${normalizedDate}" = ${dateMatch}`,
+            venueMatch: `"${eventVenue}" ~ "${normalizedVenue}" = ${venueMatch}`,
+            dateMatch: `"${eventDate}" === "${normalizedDate}" = ${dateMatch}`,
           });
 
           return artistMatch && venueMatch && dateMatch;
         });
 
-        let concertsSnapshot = {
+        let eventsSnapshot = {
           empty: matchingConcerts.length === 0,
           docs: matchingConcerts,
         } as any;
 
         if (matchingConcerts.length > 0) {
           console.log(
-            `✅ Found ${matchingConcerts.length} matching concert(s) via flexible search`,
+            `✅ Found ${matchingConcerts.length} matching event(s) via flexible search`,
           );
         } else {
-          console.log("❌ No matching concerts found");
+          console.log("❌ No matching events found");
         }
 
-        let concertId: string | null = null;
+        let eventId: string | null = null;
 
-        if (!concertsSnapshot.empty) {
+        if (!eventsSnapshot.empty) {
           // Concert exists, use existing ID
-          concertId = concertsSnapshot.docs[0].id;
-          console.log(`Found existing concert with ID: ${concertId}`);
+          eventId = eventsSnapshot.docs[0].id;
+          console.log(`Found existing event with ID: ${eventId}`);
         } else {
-          // No matching concert found - tickets will be marked as pending
+          // No matching event found - tickets will be marked as pending
           console.log(
             "Concert not found, tickets will be marked as pending...",
           );
         }
 
-        // Generate a bundleId for this concert group if it has 2+ tickets
+        // Generate a bundleId for this event group if it has 2+ tickets
         const bundleId: string | null =
           tickets.length > 1 ? crypto.randomUUID() : null;
         const bundleSize = tickets.length;
 
-        // Now publish all tickets for this concert
+        // Now publish all tickets for this event
         for (let i = 0; i < tickets.length; i++) {
           const ticket = tickets[i];
           console.log(
-            `Publishing ticket ${i + 1}/${tickets.length} for concert ${
-              concertId || "pending"
+            `Publishing ticket ${i + 1}/${tickets.length} for event ${
+              eventId || "pending"
             }`,
           );
           console.log(
@@ -492,7 +492,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           }
 
           const ticketDoc = {
-            concertId: concertId || null, // null if no matching concert
+            eventId: eventId || null, // null if no matching event
             artist: ticket.ticketDetails?.artist || "",
             category: ticket.ticketDetails?.category || "מוזיקה",
             date: normalizedDate, // Use normalized date format
@@ -539,7 +539,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             ticketDoc,
           );
           console.log(
-            `✅ Ticket saved with ID: ${ticketRef.id}, status: ${ticketDoc.status}, concertId: ${ticketDoc.concertId}`,
+            `✅ Ticket saved with ID: ${ticketRef.id}, status: ${ticketDoc.status}, eventId: ${ticketDoc.eventId}`,
           );
           console.log("Ticket data:", ticketDoc);
 
@@ -553,8 +553,8 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             rejectedCount++;
           }
 
-          // Track if concert is missing
-          if (!concertId) {
+          // Track if event is missing
+          if (!eventId) {
             skippedCount++;
           }
         }

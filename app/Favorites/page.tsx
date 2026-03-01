@@ -21,7 +21,7 @@ interface Event {
 
 interface Ticket {
   id: string;
-  concertId: string;
+  eventId: string;
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -79,7 +79,7 @@ async function getServerData(): Promise<ServerData> {
       const data = doc.data();
       return {
         id: doc.id,
-        concertId: data.concertId,
+        eventId: data.eventId,
         askingPrice: data.askingPrice,
         originalPrice: data.originalPrice,
         status: data.status,

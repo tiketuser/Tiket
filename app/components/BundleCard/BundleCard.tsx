@@ -19,7 +19,7 @@ export interface BundleTicket {
 
 interface BundleCardProps {
   tickets: BundleTicket[];
-  concertTitle: string;
+  eventTitle: string;
   canSplit: boolean | null;
   onBuyAll: (tickets: BundleTicket[]) => void;
   onBuySelected: (tickets: BundleTicket[]) => void;
@@ -38,7 +38,7 @@ function formatSeat(ticket: BundleTicket): string {
 
 const BundleCard: React.FC<BundleCardProps> = ({
   tickets,
-  concertTitle,
+  eventTitle,
   canSplit,
   onBuyAll,
   onBuySelected,

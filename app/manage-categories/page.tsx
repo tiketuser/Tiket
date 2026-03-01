@@ -26,7 +26,7 @@ const AVAILABLE_CATEGORIES = [
 ];
 
 export default function ManageCategoriesPage() {
-  const [concerts, setConcerts] = useState<Concert[]>([]);
+  const [events, setConcerts] = useState<Concert[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -37,40 +37,40 @@ export default function ManageCategoriesPage() {
   const fetchConcerts = async () => {
     try {
       setLoading(true);
-      const concertsSnapshot = await getDocs(collection(db as any, "events"));
-      const concertsData: Concert[] = concertsSnapshot.docs.map((doc) => ({
+      const eventsSnapshot = await getDocs(collection(db as any, "events"));
+      const eventsData: Concert[] = eventsSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Concert[];
 
-      setConcerts(concertsData.filter((c) => c.artist && c.date));
+      setConcerts(eventsData.filter((c) => c.artist && c.date));
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching concerts:", error);
+      console.error("Error fetching events:", error);
       setLoading(false);
     }
   };
 
-  const toggleCategory = async (concertId: string, categoryId: string) => {
-    setSaving(concertId);
+  const toggleCategory = async (eventId: string, categoryId: string) => {
+    setSaving(eventId);
 
     try {
-      const concert = concerts.find((c) => c.id === concertId);
-      if (!concert) return;
+      const event = events.find((c) => c.id === eventId);
+      if (!event) return;
 
-      const currentCategories = concert.categories || [];
+      const currentCategories = event.categories || [];
       const newCategories = currentCategories.includes(categoryId)
         ? currentCategories.filter((cat) => cat !== categoryId)
         : [...currentCategories, categoryId];
 
-      await updateDoc(doc(db as any, "events", concertId), {
+      await updateDoc(doc(db as any, "events", eventId), {
         categories: newCategories,
       });
 
       // Update local state
       setConcerts((prev) =>
         prev.map((c) =>
-          c.id === concertId ? { ...c, categories: newCategories } : c
+          c.id === eventId ? { ...c, categories: newCategories } : c
         )
       );
 
@@ -102,13 +102,13 @@ export default function ManageCategoriesPage() {
             </div>
           )}
 
-          {!loading && concerts.length === 0 && (
+          {!loading && events.length === 0 && (
             <div className="text-center text-lg text-gray-500 py-8">
               אין אירועים זמינים
             </div>
           )}
 
-          {!loading && concerts.length > 0 && (
+          {!loading && events.length > 0 && (
             <div className="bg-white rounded-xl shadow-large p-8">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -134,36 +134,36 @@ export default function ManageCategoriesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {concerts.map((concert) => (
+                    {events.map((event) => (
                       <tr
-                        key={concert.id}
+                        key={event.id}
                         className="border-b border-gray-100 hover:bg-gray-50"
                       >
                         <td className="px-4 py-4 text-strongText">
-                          {concert.artist}
+                          {event.artist}
                         </td>
                         <td className="px-4 py-4 text-mutedText">
-                          {concert.date}
+                          {event.date}
                         </td>
                         <td className="px-4 py-4 text-mutedText">
-                          {concert.venue}
+                          {event.venue}
                         </td>
                         {AVAILABLE_CATEGORIES.map((cat) => (
                           <td key={cat.id} className="px-4 py-4 text-center">
                             <button
-                              onClick={() => toggleCategory(concert.id, cat.id)}
-                              disabled={saving === concert.id}
+                              onClick={() => toggleCategory(event.id, cat.id)}
+                              disabled={saving === event.id}
                               className={`w-8 h-8 rounded border-2 transition-colors ${
-                                concert.categories?.includes(cat.id)
+                                event.categories?.includes(cat.id)
                                   ? "bg-primary border-primary"
                                   : "bg-white border-gray-300 hover:border-primary"
                               } ${
-                                saving === concert.id
+                                saving === event.id
                                   ? "opacity-50 cursor-not-allowed"
                                   : "cursor-pointer"
                               }`}
                             >
-                              {concert.categories?.includes(cat.id) && (
+                              {event.categories?.includes(cat.id) && (
                                 <span className="text-white text-sm">✓</span>
                               )}
                             </button>

@@ -10,7 +10,7 @@ import Footer from "../components/Footer/Footer";
 export const dynamic = "force-dynamic";
 
 export default function DiagnosticPage() {
-  const [concerts, setConcerts] = useState<any[]>([]);
+  const [events, setConcerts] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,15 +22,15 @@ export default function DiagnosticPage() {
           return;
         }
 
-        // Fetch concerts
-        const concertsSnapshot = await getDocs(
-          collection(db as any, "concerts")
+        // Fetch events
+        const eventsSnapshot = await getDocs(
+          collection(db as any, "events")
         );
-        const concertsData = concertsSnapshot.docs.map((doc) => ({
+        const eventsData = eventsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setConcerts(concertsData);
+        setConcerts(eventsData);
 
         // Fetch tickets
         const ticketsSnapshot = await getDocs(collection(db as any, "tickets"));
@@ -65,7 +65,7 @@ export default function DiagnosticPage() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-white rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-primary">
-                {concerts.length}
+                {events.length}
               </div>
               <div className="text-sm text-mutedText">הופעות</div>
             </div>
@@ -77,7 +77,7 @@ export default function DiagnosticPage() {
             </div>
             <div className="bg-white rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-green-600">
-                {concerts.filter((c) => c.status === "active").length}
+                {events.filter((c) => c.status === "active").length}
               </div>
               <div className="text-sm text-mutedText">הופעות פעילות</div>
             </div>
@@ -99,9 +99,9 @@ export default function DiagnosticPage() {
         {/* Concerts Section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-4 text-primary">
-            הופעות ({concerts.length})
+            הופעות ({events.length})
           </h2>
-          {concerts.length === 0 ? (
+          {events.length === 0 ? (
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-right">
               <p className="text-red-800 font-bold mb-2">אין הופעות במערכת!</p>
               <p className="text-red-600">
@@ -144,14 +144,14 @@ export default function DiagnosticPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {concerts.map((concert, index) => (
-                      <tr key={concert.id} className="hover:bg-gray-50">
+                    {events.map((event, index) => (
+                      <tr key={event.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm">{index + 1}</td>
                         <td className="px-4 py-3">
-                          {concert.imageData ? (
+                          {event.imageData ? (
                             <img
-                              src={concert.imageData}
-                              alt={concert.artist}
+                              src={event.imageData}
+                              alt={event.artist}
                               className="w-16 h-16 object-cover rounded"
                             />
                           ) : (
@@ -161,27 +161,27 @@ export default function DiagnosticPage() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-primary">
-                          {concert.artist || "ללא שם"}
+                          {event.artist || "ללא שם"}
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          {concert.title || "ללא כותרת"}
+                          {event.title || "ללא כותרת"}
                         </td>
-                        <td className="px-4 py-3 text-sm">{concert.date}</td>
-                        <td className="px-4 py-3 text-sm">{concert.time}</td>
-                        <td className="px-4 py-3 text-sm">{concert.venue}</td>
+                        <td className="px-4 py-3 text-sm">{event.date}</td>
+                        <td className="px-4 py-3 text-sm">{event.time}</td>
+                        <td className="px-4 py-3 text-sm">{event.venue}</td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              concert.status === "active"
+                              event.status === "active"
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {concert.status}
+                            {event.status}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          {concert.category || "מוזיקה"}
+                          {event.category || "מוזיקה"}
                         </td>
                       </tr>
                     ))}

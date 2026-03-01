@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { ticketIds: ticketIdsRaw, ticketId: singleTicketId, buyerId, concertId, isGuest, guestEmail, guestPhone, platformFeePercent } =
+    const { ticketIds: ticketIdsRaw, ticketId: singleTicketId, buyerId, eventId, isGuest, guestEmail, guestPhone, platformFeePercent } =
       paymentIntent.metadata;
 
     const ticketIds = ticketIdsRaw
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       // Create transaction record
       const transactionData: Record<string, unknown> = {
         ticketId,
-        concertId: concertId || null,
+        eventId: eventId || null,
         buyerId: buyerId || null,
         sellerId,
         amount: ticketPriceILS + platformFeeILS,

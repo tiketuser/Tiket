@@ -34,8 +34,8 @@ function imageToBase64(imagePath: string): string | null {
 }
 
 // Check if artist name matches
-function matchesArtist(concertArtist: string, possibleNames: string[]): boolean {
-  const normalizedConcert = concertArtist.toLowerCase().trim();
+function matchesArtist(eventArtist: string, possibleNames: string[]): boolean {
+  const normalizedConcert = eventArtist.toLowerCase().trim();
   return possibleNames.some(name => {
     const normalized = name.toLowerCase().trim();
     return normalizedConcert.includes(normalized) || normalized.includes(normalizedConcert);
@@ -48,18 +48,18 @@ export async function POST() {
       return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
     }
 
-    // Get all concerts
-    const concertsSnapshot = await getDocs(collection(db as any, 'concerts'));
+    // Get all events
+    const eventsSnapshot = await getDocs(collection(db as any, 'events'));
 
-    if (concertsSnapshot.empty) {
+    if (eventsSnapshot.empty) {
       return NextResponse.json({ 
-        error: 'No concerts found',
-        message: 'Please create concerts first via /Admin or run migration'
+        error: 'No events found',
+        message: 'Please create events first via /Admin or run migration'
       }, { status: 404 });
     }
 
     const results = {
-      total: concertsSnapshot.size,
+      total: eventsSnapshot.size,
       updated: 0,
       skipped: 0,
       notFound: 0,
@@ -67,11 +67,11 @@ export async function POST() {
       details: [] as any[]
     };
 
-    // Process each concert
-    for (const docSnapshot of concertsSnapshot.docs) {
-      const concert = docSnapshot.data();
-      const concertId = docSnapshot.id;
-      const artistName = concert.artist;
+    // Process each event
+    for (const docSnapshot of eventsSnapshot.docs) {
+      const event = docSnapshot.data();
+      const eventId = docSnapshot.id;
+      const artistName = event.artist;
 
       const result: any = {
         artist: artistName,
@@ -79,7 +79,7 @@ export async function POST() {
       };
 
       // Check if already has image
-      if (concert.imageData && concert.imageData.startsWith('data:image')) {
+      if (event.imageData && event.imageData.startsWith('data:image')) {
         result.status = 'skipped';
         result.message = 'Already has image';
         results.skipped++;
@@ -118,8 +118,8 @@ export async function POST() {
           continue;
         }
 
-        // Update concert
-        await updateDoc(doc(db as any, 'concerts', concertId), {
+        // Update event
+        await updateDoc(doc(db as any, 'events', eventId), {
           imageData: base64Image
         });
 
@@ -143,7 +143,7 @@ export async function POST() {
     });
 
   } catch (error: any) {
-    console.error('Error updating concert images:', error);
+    console.error('Error updating event images:', error);
     return NextResponse.json({ 
       error: 'Failed to update images',
       message: error.message 

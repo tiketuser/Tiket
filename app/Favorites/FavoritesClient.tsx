@@ -36,7 +36,7 @@ interface Event {
 
 interface Ticket {
   id: string;
-  concertId: string;
+  eventId: string;
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -116,7 +116,7 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
             // Get available tickets for this event
             const eventTickets = tickets.filter(
               (ticket) =>
-                ticket.concertId === event.id && ticket.status === "available"
+                ticket.eventId === event.id && ticket.status === "available"
             );
 
             // Calculate price range

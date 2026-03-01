@@ -41,7 +41,7 @@ interface Event {
 
 interface Ticket {
   id: string;
-  concertId: string; // References concerts collection in Firebase
+  eventId: string;
   askingPrice: number;
   originalPrice?: number;
   status: string;
@@ -97,7 +97,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
         getDocs(
           firestoreQuery(
             collection(db as any, "tickets"),
-            where("concertId", "in", chunk),
+            where("eventId", "in", chunk),
             where("status", "==", "available"),
           ),
         ),
@@ -114,7 +114,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
       // Get available tickets for this event
       const eventTickets = allTickets.filter(
         (ticket) =>
-          ticket.concertId === event.id && ticket.status === "available",
+          ticket.eventId === event.id && ticket.status === "available",
       );
 
       // Calculate price range

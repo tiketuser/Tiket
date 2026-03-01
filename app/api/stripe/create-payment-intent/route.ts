@@ -181,10 +181,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const concertId = (ticketDocs[0].data()!.concertId as string) || "";
+    const eventId = (ticketDocs[0].data()!.eventId as string) || "";
     const metadata: Record<string, string> = {
       ticketIds: ticketIds.join(","),
-      concertId,
+      eventId,
       buyerId: buyerUid || "",
       platformFeePercent: getPlatformFeePercent().toString(),
       isGuest: isGuest.toString(),

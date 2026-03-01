@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 interface Ticket {
   id: string;
-  concertId: string | null;
+  eventId: string | null;
   artist: string;
   date: string;
   venue: string;
@@ -61,7 +61,7 @@ interface Event {
 
 export default function ApproveTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [concerts, setConcerts] = useState<Event[]>([]);
+  const [events, setConcerts] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingTicketId, setProcessingTicketId] = useState<string | null>(
     null
@@ -122,11 +122,11 @@ export default function ApproveTicketsPage() {
 
       // Fetch all events for reference
       const eventsSnapshot = await getDocs(collection(db as any, "events"));
-      const concertsData = eventsSnapshot.docs.map((doc) => ({
+      const eventsData = eventsSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Event[];
-      setConcerts(concertsData);
+      setConcerts(eventsData);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -143,7 +143,7 @@ export default function ApproveTicketsPage() {
   const callTicketAction = async (
     action: "approve" | "reject" | "link",
     ticketIds: string[],
-    extra?: { adminComment?: string; concertId?: string }
+    extra?: { adminComment?: string; eventId?: string }
   ) => {
     const auth = getAuth();
     const token = await auth.currentUser?.getIdToken();
@@ -207,16 +207,16 @@ export default function ApproveTicketsPage() {
   };
 
   const getConcertForTicket = (ticket: Ticket): Event | null => {
-    if (!ticket.concertId) return null;
-    return concerts.find((c) => c.id === ticket.concertId) || null;
+    if (!ticket.eventId) return null;
+    return events.find((c) => c.id === ticket.eventId) || null;
   };
 
   // Get suggested events for tickets without a match
   const getSuggestedConcerts = (ticket: Ticket): Event[] => {
-    if (ticket.concertId) return []; // Already has a concert
+    if (ticket.eventId) return []; // Already has a event
 
-    // Find concerts with similar artist names
-    const artistList = concerts.map((c) => c.artist);
+    // Find events with similar artist names
+    const artistList = events.map((c) => c.artist);
     const { match: bestArtistMatch } = findBestArtistMatch(
       ticket.artist,
       artistList,
@@ -225,14 +225,14 @@ export default function ApproveTicketsPage() {
 
     if (!bestArtistMatch) return [];
 
-    // Filter concerts with matching or similar artist
-    return concerts.filter((c) =>
+    // Filter events with matching or similar artist
+    return events.filter((c) =>
       artistNamesMatch(ticket.artist, c.artist, 0.7)
     );
   };
 
-  // Manually link ticket (and its bundle siblings) to a concert
-  const handleLinkToConcert = async (ticketId: string, concertId: string) => {
+  // Manually link ticket (and its bundle siblings) to a event
+  const handleLinkToConcert = async (ticketId: string, eventId: string) => {
     const ticket = tickets.find((t) => t.id === ticketId);
     const ids = ticket ? getBundleTicketIds(ticket) : [ticketId];
     const isBundle = ids.length > 1;
@@ -240,9 +240,9 @@ export default function ApproveTicketsPage() {
 
     setProcessingTicketId(ticketId);
     try {
-      await callTicketAction("link", ids, { concertId });
+      await callTicketAction("link", ids, { eventId });
       setTickets((prev) =>
-        prev.map((t) => (ids.includes(t.id) ? { ...t, concertId } : t))
+        prev.map((t) => (ids.includes(t.id) ? { ...t, eventId } : t))
       );
       alert(isBundle ? "כל הכרטיסים קושרו לאירוע בהצלחה!" : "הכרטיס קושר לאירוע בהצלחה!");
     } catch (error) {
@@ -347,8 +347,8 @@ export default function ApproveTicketsPage() {
                 return groups.map((group) => {
                   const representative = group[0];
                   const isBundle = group.length > 1;
-                  const concert = getConcertForTicket(representative);
-                  const hasConcert = !!concert;
+                  const event = getConcertForTicket(representative);
+                  const hasConcert = !!event;
 
                   return (
                     <div
@@ -519,14 +519,14 @@ export default function ApproveTicketsPage() {
                           <h3 className="text-heading-4-desktop font-bold text-strongText">
                             אירוע מתאים
                           </h3>
-                          {concert ? (
+                          {event ? (
                             <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2 text-sm">
                               <p className="text-green-800 font-bold">נמצא אירוע מתאים</p>
-                              <p><strong>אמן:</strong> {concert.artist}</p>
-                              <p><strong>כותרת:</strong> {concert.title}</p>
-                              <p><strong>תאריך:</strong> {concert.date}</p>
-                              <p><strong>מקום:</strong> {concert.venue}</p>
-                              <p className="text-xs text-green-600 mt-2">ID: {concert.id}</p>
+                              <p><strong>אמן:</strong> {event.artist}</p>
+                              <p><strong>כותרת:</strong> {event.title}</p>
+                              <p><strong>תאריך:</strong> {event.date}</p>
+                              <p><strong>מקום:</strong> {event.venue}</p>
+                              <p className="text-xs text-green-600 mt-2">ID: {event.id}</p>
                             </div>
                           ) : (
                             <>

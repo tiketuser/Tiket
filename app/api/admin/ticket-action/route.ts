@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { action, ticketIds, adminComment, concertId } = body;
+    const { action, ticketIds, adminComment, eventId } = body;
 
     if (!action || !Array.isArray(ticketIds) || ticketIds.length === 0) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
@@ -42,11 +42,11 @@ export async function POST(request: NextRequest) {
         });
       }
     } else if (action === "link") {
-      if (!concertId) {
-        return NextResponse.json({ error: "Missing concertId for link action" }, { status: 400 });
+      if (!eventId) {
+        return NextResponse.json({ error: "Missing eventId for link action" }, { status: 400 });
       }
       for (const id of ticketIds) {
-        batch.update(db.collection("tickets").doc(id), { concertId });
+        batch.update(db.collection("tickets").doc(id), { eventId });
       }
     } else {
       return NextResponse.json({ error: "Unknown action" }, { status: 400 });

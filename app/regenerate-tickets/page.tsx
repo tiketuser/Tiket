@@ -144,7 +144,7 @@ export default function RegenerateTicketsPage() {
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
                 <div className="bg-white rounded-lg p-4 text-center shadow-medium">
                   <div className="text-heading-2-desktop font-bold text-primary mb-1">
-                    {result.concerts}
+                    {result.events}
                   </div>
                   <div className="text-body-small text-mutedText">הופעות</div>
                 </div>
@@ -182,30 +182,30 @@ export default function RegenerateTicketsPage() {
                   פירוט הופעות
                 </h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {result.concertDetails.map((concert: any, index: number) => (
+                  {result.eventDetails.map((event: any, index: number) => (
                     <div
                       key={index}
                       className="bg-white rounded-lg p-4 shadow-medium flex items-center justify-between"
                     >
                       <div>
                         <div className="text-body-large font-semibold text-strongText">
-                          {concert.artist}
+                          {event.artist}
                         </div>
                         <div className="text-body-small text-mutedText">
-                          {concert.date} | {concert.venue}
+                          {event.date} | {event.venue}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-body-medium font-semibold text-primary">
-                          {concert.ticketCount} כרטיסים
+                          {event.ticketCount} כרטיסים
                         </div>
-                        {concert.bundleCount > 0 && (
+                        {event.bundleCount > 0 && (
                           <div className="text-body-small text-purple-600">
-                            {concert.bundleCount} חבילות
+                            {event.bundleCount} חבילות
                           </div>
                         )}
                         <div className="text-body-small text-mutedText">
-                          {concert.priceRange}
+                          {event.priceRange}
                         </div>
                       </div>
                     </div>

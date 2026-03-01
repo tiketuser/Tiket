@@ -29,7 +29,7 @@ interface Event {
 
 interface Ticket {
   id: string;
-  concertId: string;
+  eventId: string;
   artist: string;
   date: string;
   venue: string;
@@ -66,7 +66,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
 
     // Step 1: Query events by artist name directly (more efficient)
     const eventsRef = collection(db, "events");
-    const concertsQuery = query(
+    const eventsQuery = query(
       eventsRef,
       where("artist", "==", decodedTitle),
       where("status", "==", "active"),
@@ -83,14 +83,14 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
 
     // Execute both queries in parallel
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
-      getDocs(concertsQuery),
+      getDocs(eventsQuery),
       getDocs(ticketsQuery),
     ]);
 
     // Get the first matching event — explicitly pick serializable fields only
     // (spreading doc.data() would include Firestore Timestamps which can't cross the Server→Client boundary)
     const eventDoc = eventsSnapshot.docs[0];
-    const concert = eventDoc
+    const event= eventDoc
       ? (() => {
           const d = eventDoc.data();
           return {
@@ -107,7 +107,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       : null;
 
     // If no event found
-    if (!concert) {
+    if (!event) {
       return (
         <div>
           <NavBar />
@@ -125,7 +125,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
         const d = doc.data();
         return {
           id: doc.id,
-          concertId: d.concertId ?? "",
+          eventId: d.eventId ?? "",
           artist: d.artist ?? "",
           date: d.date ?? "",
           venue: d.venue ?? "",
@@ -143,7 +143,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
           bundleSize: d.bundleSize ?? null,
         } satisfies Ticket;
       })
-      .filter((ticket) => ticket.concertId === concert.id);
+      .filter((ticket) => ticket.eventId === event.id);
 
     // If no tickets found
     if (tickets.length === 0) {
@@ -151,11 +151,11 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
         <div>
           <NavBar />
           <EventUpperSection
-            imageSrc={concert.imageUrl || "/images/Artist/default.png"}
-            title={concert.artist}
-            date={concert.date}
-            location={concert.venue}
-            time={concert.time}
+            imageSrc={event.imageUrl || "/images/Artist/default.png"}
+            title={event.artist}
+            date={event.date}
+            location={event.venue}
+            time={event.time}
             availableTickets={0}
           />
           <div className="text-center text-red-500 text-xl mt-20 mb-20">
@@ -168,20 +168,20 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
 
     return (
       <div>
-        <ViewTracker eventId={concert.id} />
+        <ViewTracker eventId={event.id} />
         <NavBar />
         <EventUpperSection
-          imageSrc={concert.imageUrl || "/images/Artist/default.png"}
-          title={concert.artist}
-          date={concert.date}
-          location={concert.venue}
-          time={concert.time}
+          imageSrc={event.imageUrl || "/images/Artist/default.png"}
+          title={event.artist}
+          date={event.date}
+          location={event.venue}
+          time={event.time}
           availableTickets={tickets.length}
         />
-        <TicketListClient tickets={tickets} concert={concert} />
+        <TicketListClient tickets={tickets} event={event} />
         <SeatingMap
           title={"מפת ישיבה"}
-          venueName={concert.venue}
+          venueName={event.venue}
           SeatingMapsvg="/images/Event Page/Web/Seats.svg"
         />
         <Footer />
@@ -214,12 +214,12 @@ export async function generateStaticParams() {
       where("status", "==", "active"),
       limit(50), // Limit for faster initial build
     );
-    const concertsSnapshot = await getDocs(eventsQuery);
+    const eventsSnapshot = await getDocs(eventsQuery);
 
     // Extract unique artists more efficiently
     const artists = Array.from(
       new Set(
-        concertsSnapshot.docs
+        eventsSnapshot.docs
           .map((doc) => doc.data().artist)
           .filter((artist): artist is string => Boolean(artist?.trim())),
       ),

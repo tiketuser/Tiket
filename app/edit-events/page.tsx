@@ -33,7 +33,7 @@ interface Concert {
 }
 
 export default function EditConcertsPage() {
-  const [concerts, setConcerts] = useState<Concert[]>([]);
+  const [events, setConcerts] = useState<Concert[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConcert, setSelectedConcert] = useState<Concert | null>(null);
   const [editForm, setEditForm] = useState<Concert | null>(null);
@@ -54,27 +54,27 @@ export default function EditConcertsPage() {
 
     try {
       setLoading(true);
-      const concertsQuery = query(
+      const eventsQuery = query(
         collection(db, "events"),
         orderBy("date", "desc"),
       );
-      const snapshot = await getDocs(concertsQuery);
-      const concertsData = snapshot.docs.map((doc) => ({
+      const snapshot = await getDocs(eventsQuery);
+      const eventsData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Concert[];
-      setConcerts(concertsData);
+      setConcerts(eventsData);
     } catch (error) {
-      console.error("Error loading concerts:", error);
+      console.error("Error loading events:", error);
       alert("שגיאה בטעינת אירועים");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (concert: Concert) => {
-    setSelectedConcert(concert);
-    setEditForm({ ...concert });
+  const handleEdit = (event: Concert) => {
+    setSelectedConcert(event);
+    setEditForm({ ...event });
   };
 
   const handleCancel = () => {
@@ -105,8 +105,8 @@ export default function EditConcertsPage() {
       // Normalize date to use / separator
       const normalizedDate = editForm.date.replace(/\./g, "/");
 
-      const concertRef = doc(db, "events", selectedConcert.id);
-      await updateDoc(concertRef, {
+      const eventRef = doc(db, "events", selectedConcert.id);
+      await updateDoc(eventRef, {
         artist: editForm.artist,
         title: editForm.artist, // Set title same as artist for backwards compatibility
         date: normalizedDate,
@@ -119,20 +119,20 @@ export default function EditConcertsPage() {
       // Update local state with normalized date
       const updatedForm = { ...editForm, date: normalizedDate };
       setConcerts(
-        concerts.map((c) => (c.id === selectedConcert.id ? updatedForm : c)),
+        events.map((c) => (c.id === selectedConcert.id ? updatedForm : c)),
       );
 
       alert("האירוע עודכן בהצלחה!");
       handleCancel();
     } catch (error) {
-      console.error("Error updating concert:", error);
+      console.error("Error updating event:", error);
       alert("שגיאה בעדכון האירוע");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (concertId: string, artistName: string) => {
+  const handleDelete = async (eventId: string, artistName: string) => {
     if (!confirm(`האם אתה בטוח שברצונך למחוק את האירוע של ${artistName}?`)) {
       return;
     }
@@ -143,16 +143,16 @@ export default function EditConcertsPage() {
     }
 
     try {
-      await deleteDoc(doc(db, "events", concertId));
-      setConcerts(concerts.filter((c) => c.id !== concertId));
+      await deleteDoc(doc(db, "events", eventId));
+      setConcerts(events.filter((c) => c.id !== eventId));
       alert("האירוע נמחק בהצלחה!");
 
-      // If the deleted concert was being edited, close the edit form
-      if (selectedConcert?.id === concertId) {
+      // If the deleted event was being edited, close the edit form
+      if (selectedConcert?.id === eventId) {
         handleCancel();
       }
     } catch (error) {
-      console.error("Error deleting concert:", error);
+      console.error("Error deleting event:", error);
       alert("שגיאה במחיקת האירוע");
     }
   };
@@ -176,7 +176,7 @@ export default function EditConcertsPage() {
 
       if (storage) {
         const ext = file.name.split(".").pop() || "jpg";
-        const imageRef = ref(storage, `concert-images/${editForm.id}.${ext}`);
+        const imageRef = ref(storage, `event-images/${editForm.id}.${ext}`);
         const snapshot = await uploadBytes(imageRef, file, {
           contentType: file.type,
         });
@@ -206,12 +206,12 @@ export default function EditConcertsPage() {
     }
   };
 
-  const filteredConcerts = concerts.filter((concert) => {
+  const filteredConcerts = events.filter((event) => {
     const matchesSearch =
-      concert.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      concert.venue.toLowerCase().includes(searchTerm.toLowerCase());
+      event.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.venue.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" || concert.status === statusFilter;
+      statusFilter === "all" || event.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -269,24 +269,24 @@ export default function EditConcertsPage() {
                   </div>
                 </div>
                 <div className="mt-4 text-center text-mutedText">
-                  מציג {filteredConcerts.length} מתוך {concerts.length} אירועים
+                  מציג {filteredConcerts.length} מתוך {events.length} אירועים
                 </div>
               </div>
 
               {/* Concerts List */}
               {!selectedConcert ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredConcerts.map((concert) => (
+                  {filteredConcerts.map((event) => (
                     <div
-                      key={concert.id}
+                      key={event.id}
                       className="bg-white border border-secondary rounded-lg overflow-hidden shadow-large hover:shadow-xl transition-shadow"
                     >
                       {/* Concert Image */}
                       <div className="relative h-48 bg-secondary">
-                        {concert.imageData ? (
+                        {event.imageData ? (
                           <Image
-                            src={concert.imageData}
-                            alt={concert.artist}
+                            src={event.imageData}
+                            alt={event.artist}
                             fill
                             className="object-cover"
                           />
@@ -299,16 +299,16 @@ export default function EditConcertsPage() {
                         <div className="absolute top-2 right-2">
                           <span
                             className={`px-3 py-1 rounded-full text-white text-text-small font-bold ${
-                              concert.status === "active"
+                              event.status === "active"
                                 ? "bg-green-500"
-                                : concert.status === "past"
+                                : event.status === "past"
                                   ? "bg-gray-500"
                                   : "bg-red-500"
                             }`}
                           >
-                            {concert.status === "active"
+                            {event.status === "active"
                               ? "פעיל"
-                              : concert.status === "past"
+                              : event.status === "past"
                                 ? "עבר"
                                 : "בוטל"}
                           </span>
@@ -318,26 +318,26 @@ export default function EditConcertsPage() {
                       {/* Concert Info */}
                       <div className="p-4 text-right">
                         <h3 className="text-text-large font-bold text-primary mb-2">
-                          {concert.artist}
+                          {event.artist}
                         </h3>
                         <div className="space-y-1 text-text-medium text-strongText">
-                          <p>{concert.date}</p>
-                          <p>{concert.time}</p>
-                          <p>{concert.venue}</p>
-                          {concert.views !== undefined && (
-                            <p>{concert.views} צפיות</p>
+                          <p>{event.date}</p>
+                          <p>{event.time}</p>
+                          <p>{event.venue}</p>
+                          {event.views !== undefined && (
+                            <p>{event.views} צפיות</p>
                           )}
                         </div>
                         <div className="flex gap-2 mt-4">
                           <button
-                            onClick={() => handleEdit(concert)}
+                            onClick={() => handleEdit(event)}
                             className="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-highlight transition-colors font-bold"
                           >
                             ערוך אירוע
                           </button>
                           <button
                             onClick={() =>
-                              handleDelete(concert.id, concert.artist)
+                              handleDelete(event.id, event.artist)
                             }
                             className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors font-bold"
                             title="מחק אירוע"

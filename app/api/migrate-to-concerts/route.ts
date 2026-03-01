@@ -11,9 +11,9 @@ import {
 
 /**
  * Migration API Route
- * POST /api/migrate-to-concerts
+ * POST /api/migrate-to-events
  * 
- * Converts existing tickets to concerts + tickets structure
+ * Converts existing tickets to events + tickets structure
  */
 
 export async function POST(request: NextRequest) {
@@ -36,16 +36,16 @@ export async function POST(request: NextRequest) {
 
     console.log(`Found ${oldTickets.length} existing tickets`);
 
-    // Step 2: Group by concert
-    const concertMap = new Map();
+    // Step 2: Group by event
+    const eventMap = new Map();
 
     oldTickets.forEach((ticket: any) => {
       const key = `${ticket.artist || "Unknown"}_${ticket.date || "No Date"}_${
         ticket.venue || "Unknown Venue"
       }`;
 
-      if (!concertMap.has(key)) {
-        concertMap.set(key, {
+      if (!eventMap.has(key)) {
+        eventMap.set(key, {
           artist: ticket.artist || "Unknown Artist",
           title: ticket.title || ticket.artist || "Unknown Concert",
           date: ticket.date || "",
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log(`Identified ${concertMap.size} unique concerts`);
+    console.log(`Identified ${eventMap.size} unique events`);
 
     // Step 3: Backup old tickets
     const backupBatch = writeBatch(db);
@@ -74,25 +74,25 @@ export async function POST(request: NextRequest) {
     await backupBatch.commit();
     console.log(`Backed up ${backupCount} tickets`);
 
-    // Step 4: Create concerts and collect their IDs
-    const concertIds = new Map();
+    // Step 4: Create events and collect their IDs
+    const eventIds = new Map();
 
-    for (const [key, concertData] of concertMap) {
-      const concertRef = await addDoc(
-        collection(db, "concerts"),
-        concertData as any
+    for (const [key, eventData] of eventMap) {
+      const eventRef = await addDoc(
+        collection(db, "events"),
+        eventData as any
       );
-      concertIds.set(key, concertRef.id);
+      eventIds.set(key, eventRef.id);
     }
 
-    console.log(`Created ${concertIds.size} concerts`);
+    console.log(`Created ${eventIds.size} events`);
 
-    // Step 5: Generate tickets for each concert
+    // Step 5: Generate tickets for each event
     const sections = ["A", "B", "C", "D", "VIP"];
     let totalTickets = 0;
 
-    for (const [key, concertId] of concertIds) {
-      const concert: any = concertMap.get(key);
+    for (const [key, eventId] of eventIds) {
+      const event: any = eventMap.get(key);
       const ticketCount = Math.floor(Math.random() * 8) + 3; // 3-10 tickets
 
       for (let i = 0; i < ticketCount; i++) {
@@ -102,10 +102,10 @@ export async function POST(request: NextRequest) {
         const askingPrice = Math.floor(basePrice * (1 - discount));
 
         const ticket: any = {
-          concertId,
-          artist: concert.artist,
-          date: concert.date,
-          venue: concert.venue,
+          eventId,
+          artist: event.artist,
+          date: event.date,
+          venue: event.venue,
           isStanding,
           askingPrice,
           originalPrice: basePrice,
@@ -138,9 +138,9 @@ export async function POST(request: NextRequest) {
         message: "Migration completed successfully",
         stats: {
           oldTicketsBackedUp: backupCount,
-          concertsCreated: concertIds.size,
+          eventsCreated: eventIds.size,
           newTicketsGenerated: totalTickets,
-          averageTicketsPerConcert: Math.floor(totalTickets / concertIds.size),
+          averageTicketsPerConcert: Math.floor(totalTickets / eventIds.size),
         },
       },
       { status: 200 }

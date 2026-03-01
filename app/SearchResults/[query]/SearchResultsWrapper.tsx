@@ -51,28 +51,28 @@ export default function SearchResultsWrapper({
 
   // Apply filters to tickets
   const applyFilters = (
-    concerts: CardData[],
+    events: CardData[],
     filters: FilterState
   ): CardData[] => {
-    return concerts.filter((concert) => {
+    return events.filter((event) => {
       // Filter by cities
       if (filters.cities.length > 0) {
-        if (!filters.cities.includes(concert.location)) {
+        if (!filters.cities.includes(event.location)) {
           return false;
         }
       }
 
       // Filter by venues
       if (filters.venues.length > 0) {
-        if (!filters.venues.includes(concert.location)) {
+        if (!filters.venues.includes(event.location)) {
           return false;
         }
       }
 
       // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
-        const normalizedDate = concert.date.replace(/\./g, "/");
-        const concertDate = new Date(
+        const normalizedDate = event.date.replace(/\./g, "/");
+        const eventDate = new Date(
           normalizedDate.split("/").reverse().join("-")
         );
         const fromDate = new Date(filters.dateRange.from);
@@ -80,15 +80,15 @@ export default function SearchResultsWrapper({
         const toDate = new Date(filters.dateRange.to);
         toDate.setHours(23, 59, 59, 999);
 
-        if (concertDate < fromDate || concertDate > toDate) {
+        if (eventDate < fromDate || eventDate > toDate) {
           return false;
         }
       }
 
       // Filter by price range
       if (
-        concert.price < filters.priceRange[0] ||
-        concert.price > filters.priceRange[1]
+        event.price < filters.priceRange[0] ||
+        event.price > filters.priceRange[1]
       ) {
         return false;
       }

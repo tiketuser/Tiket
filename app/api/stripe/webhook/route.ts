@@ -127,7 +127,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     return;
   }
 
-  const { concertId, buyerId, isGuest, guestEmail, guestPhone, platformFeePercent } =
+  const { eventId, buyerId, isGuest, guestEmail, guestPhone, platformFeePercent } =
     paymentIntent.metadata;
 
   if (!buyerId && isGuest !== "true") {
@@ -167,7 +167,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     // Create one transaction record per ticket
     const transactionData: Record<string, unknown> = {
       ticketId,
-      concertId: concertId || null,
+      eventId: eventId || null,
       buyerId: buyerId || null,
       sellerId,
       amount: ticketPriceILS + platformFeeILS,

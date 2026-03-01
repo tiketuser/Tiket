@@ -40,7 +40,7 @@ interface Event {
 
 interface TicketListClientProps {
   tickets: Ticket[];
-  concert: Event;
+  event: Event;
 }
 
 function formatSeatLocation(ticket: Ticket): string {
@@ -73,7 +73,7 @@ function ticketToBundleTicket(ticket: Ticket): BundleTicket {
 
 const TicketListClient: React.FC<TicketListClientProps> = ({
   tickets,
-  concert,
+  event,
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [checkoutTickets, setCheckoutTickets] = useState<TicketInfo[]>([]);
@@ -82,7 +82,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
   const toTicketInfo = useCallback(
     (ticket: Ticket): TicketInfo => ({
       ticketId: ticket.id,
-      title: concert.artist,
+      title: event.artist,
       date: ticket.date,
       venue: ticket.venue,
       seatLocation: formatSeatLocation(ticket),
@@ -90,7 +90,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
       originalPrice: ticket.originalPrice,
       sellerId: ticket.sellerId,
     }),
-    [concert.artist],
+    [event.artist],
   );
 
   // Group tickets by bundleId; tickets without a bundleId go into soloTickets
@@ -138,12 +138,12 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
     setIsCheckoutOpen(true);
   }, [soloTickets, selectedIds, toTicketInfo]);
 
-  // Bundle buy handler — maps BundleTicket[] back to TicketInfo[] via concert context
+  // Bundle buy handler — maps BundleTicket[] back to TicketInfo[] via event context
   const openBundleBuy = useCallback(
     (bundleTickets: BundleTicket[]) => {
       const infos: TicketInfo[] = bundleTickets.map((t) => ({
         ticketId: t.id,
-        title: concert.artist,
+        title: event.artist,
         date: t.date,
         venue: t.venue,
         seatLocation: formatSeatLocation(t as unknown as Ticket),
@@ -154,7 +154,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
       setCheckoutTickets(infos);
       setIsCheckoutOpen(true);
     },
-    [concert.artist],
+    [event.artist],
   );
 
   const handleCheckoutClose = useCallback(() => {
@@ -185,8 +185,8 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
                 className="w-full sm:flex sm:items-center sm:justify-center"
               >
                 <SingleCard
-                  title={concert.artist}
-                  imageSrc={concert.imageUrl || "/images/Artist/default.png"}
+                  title={event.artist}
+                  imageSrc={event.imageUrl || "/images/Artist/default.png"}
                   date={ticket.date}
                   location={ticket.venue}
                   seatLocation={formatSeatLocation(ticket)}
@@ -213,7 +213,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
             >
               <BundleCard
                 tickets={group.map(ticketToBundleTicket)}
-                concertTitle={concert.artist}
+                eventTitle={event.artist}
                 canSplit={group[0].canSplit}
                 onBuyAll={openBundleBuy}
                 onBuySelected={openBundleBuy}
@@ -229,8 +229,8 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
             className="w-full sm:flex sm:items-center sm:justify-center"
           >
             <SingleCard
-              title={concert.artist}
-              imageSrc={concert.imageUrl || "/images/Artist/default.png"}
+              title={event.artist}
+              imageSrc={event.imageUrl || "/images/Artist/default.png"}
               date={ticket.date}
               location={ticket.venue}
               seatLocation={formatSeatLocation(ticket)}

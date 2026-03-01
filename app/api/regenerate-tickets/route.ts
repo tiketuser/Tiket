@@ -91,7 +91,7 @@ function generateTicketsForEvent(event: any, count: number) {
 
   // Build final ticket objects
   return specs.map((spec, idx) => ({
-    concertId: event.id,
+    eventId: event.id,
     artist: event.artist,
     category: event.category || 'מוזיקה',
     date: event.date,
@@ -151,7 +151,7 @@ export async function POST() {
 
     let totalTicketsCreated = 0;
     let totalBundlesCreated = 0;
-    const concertDetails: any[] = [];
+    const eventDetails: any[] = [];
 
     for (const event of events) {
       const ticketCount = Math.floor(Math.random() * 16) + 5;
@@ -161,7 +161,7 @@ export async function POST() {
       await Promise.all(tickets.map(ticket => adminDb!.collection('tickets').add(ticket)));
       totalTicketsCreated += tickets.length;
       totalBundlesCreated += bundleCount;
-      concertDetails.push({
+      eventDetails.push({
         artist: event.artist,
         date: event.date,
         venue: event.venue,
@@ -173,12 +173,12 @@ export async function POST() {
 
     const summary = {
       success: true,
-      concerts: events.length,
+      events: events.length,
       oldTicketsDeleted: deleteCount,
       newTicketsCreated: totalTicketsCreated,
       bundlesCreated: totalBundlesCreated,
       averagePerConcert: Math.round(totalTicketsCreated / events.length),
-      concertDetails,
+      eventDetails,
     };
 
     console.log('✨ TICKET REGENERATION COMPLETE!', summary);

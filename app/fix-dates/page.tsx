@@ -20,7 +20,7 @@ interface Concert {
 }
 
 export default function FixConcertDatesPage() {
-  const [concerts, setConcerts] = useState<Concert[]>([]);
+  const [events, setConcerts] = useState<Concert[]>([]);
   const [loading, setLoading] = useState(true);
   const [fixing, setFixing] = useState(false);
   const [message, setMessage] = useState<{
@@ -34,20 +34,20 @@ export default function FixConcertDatesPage() {
 
   const fetchConcerts = async () => {
     try {
-      const concertsSnapshot = await getDocs(collection(db as any, "concerts"));
-      const concertsData: Concert[] = [];
+      const eventsSnapshot = await getDocs(collection(db as any, "events"));
+      const eventsData: Concert[] = [];
 
-      concertsSnapshot.forEach((doc) => {
-        concertsData.push({
+      eventsSnapshot.forEach((doc) => {
+        eventsData.push({
           id: doc.id,
           ...(doc.data() as any),
         });
       });
 
-      setConcerts(concertsData);
+      setConcerts(eventsData);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching concerts:", error);
+      console.error("Error fetching events:", error);
       setLoading(false);
     }
   };
@@ -55,7 +55,7 @@ export default function FixConcertDatesPage() {
   const fixAllDates = async () => {
     if (
       !confirm(
-        "This will set default dates for concerts missing dates. Continue?"
+        "This will set default dates for events missing dates. Continue?"
       )
     ) {
       return;
@@ -77,18 +77,18 @@ export default function FixConcertDatesPage() {
         "15/07/2026",
       ];
 
-      for (let i = 0; i < concerts.length; i++) {
-        const concert = concerts[i];
+      for (let i = 0; i < events.length; i++) {
+        const event = events[i];
 
         if (
-          !concert.date ||
-          concert.date === "" ||
-          concert.date === "undefined"
+          !event.date ||
+          event.date === "" ||
+          event.date === "undefined"
         ) {
           const defaultDate = defaultDates[i % defaultDates.length];
           const defaultTime = "20:00";
 
-          await updateDoc(doc(db as any, "concerts", concert.id), {
+          await updateDoc(doc(db as any, "events", event.id), {
             date: defaultDate,
             time: defaultTime,
           });
@@ -99,7 +99,7 @@ export default function FixConcertDatesPage() {
 
       setMessage({
         type: "success",
-        text: `Fixed ${fixedCount} concerts with missing dates!`,
+        text: `Fixed ${fixedCount} events with missing dates!`,
       });
 
       // Refresh data
@@ -123,7 +123,7 @@ export default function FixConcertDatesPage() {
         <div className="min-h-screen bg-white py-12 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <div className="text-heading-3-desktop text-strongText">
-              Loading concerts...
+              Loading events...
             </div>
           </div>
         </div>
@@ -132,7 +132,7 @@ export default function FixConcertDatesPage() {
     );
   }
 
-  const concertsWithMissingDates = concerts.filter(
+  const eventsWithMissingDates = events.filter(
     (c) => !c.date || c.date === "" || c.date === "undefined"
   );
 
@@ -147,7 +147,7 @@ export default function FixConcertDatesPage() {
               📅 Fix Concert Dates
             </h1>
             <p className="text-body-large text-mutedText">
-              Check and fix any concerts with missing or invalid dates
+              Check and fix any events with missing or invalid dates
             </p>
           </div>
 
@@ -155,7 +155,7 @@ export default function FixConcertDatesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-blue-50 rounded-xl p-6 text-center">
               <div className="text-heading-2-desktop font-bold text-blue-600 mb-2">
-                {concerts.length}
+                {events.length}
               </div>
               <div className="text-body-medium text-blue-800">
                 Total Concerts
@@ -164,7 +164,7 @@ export default function FixConcertDatesPage() {
             <div className="bg-green-50 rounded-xl p-6 text-center">
               <div className="text-heading-2-desktop font-bold text-green-600 mb-2">
                 {
-                  concerts.filter(
+                  events.filter(
                     (c) => c.date && c.date !== "" && c.date !== "undefined"
                   ).length
                 }
@@ -175,7 +175,7 @@ export default function FixConcertDatesPage() {
             </div>
             <div className="bg-red-50 rounded-xl p-6 text-center">
               <div className="text-heading-2-desktop font-bold text-red-600 mb-2">
-                {concertsWithMissingDates.length}
+                {eventsWithMissingDates.length}
               </div>
               <div className="text-body-medium text-red-800">Missing Dates</div>
             </div>
@@ -195,7 +195,7 @@ export default function FixConcertDatesPage() {
           )}
 
           {/* Fix Button */}
-          {concertsWithMissingDates.length > 0 && (
+          {eventsWithMissingDates.length > 0 && (
             <div className="mb-8 text-center">
               <button
                 onClick={fixAllDates}
@@ -205,10 +205,10 @@ export default function FixConcertDatesPage() {
               >
                 {fixing
                   ? "Fixing..."
-                  : `🔧 Fix ${concertsWithMissingDates.length} Concerts`}
+                  : `🔧 Fix ${eventsWithMissingDates.length} Concerts`}
               </button>
               <p className="text-body-small text-mutedText mt-2">
-                This will set default dates for concerts missing dates
+                This will set default dates for events missing dates
               </p>
             </div>
           )}
@@ -219,15 +219,15 @@ export default function FixConcertDatesPage() {
               All Concerts
             </h2>
             <div className="space-y-4">
-              {concerts.map((concert) => {
+              {events.map((event) => {
                 const hasDate =
-                  concert.date &&
-                  concert.date !== "" &&
-                  concert.date !== "undefined";
+                  event.date &&
+                  event.date !== "" &&
+                  event.date !== "undefined";
 
                 return (
                   <div
-                    key={concert.id}
+                    key={event.id}
                     className={`p-4 rounded-lg border-2 ${
                       hasDate
                         ? "bg-green-50 border-green-200"
@@ -237,20 +237,20 @@ export default function FixConcertDatesPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-heading-5-desktop font-bold text-strongText">
-                          🎤 {concert.artist}
+                          🎤 {event.artist}
                         </div>
                         <div className="text-body-small text-mutedText mt-1">
-                          📍 {concert.venue || "No venue"}
+                          📍 {event.venue || "No venue"}
                         </div>
                       </div>
                       <div className="text-right">
                         {hasDate ? (
                           <>
                             <div className="text-body-medium font-semibold text-green-700">
-                              ✅ {concert.date}
+                              ✅ {event.date}
                             </div>
                             <div className="text-body-small text-green-600">
-                              {concert.time || "No time"}
+                              {event.time || "No time"}
                             </div>
                           </>
                         ) : (
@@ -261,7 +261,7 @@ export default function FixConcertDatesPage() {
                       </div>
                     </div>
                     <div className="mt-2 text-body-extra-small text-mutedText">
-                      ID: {concert.id}
+                      ID: {event.id}
                     </div>
                   </div>
                 );
