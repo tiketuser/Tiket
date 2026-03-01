@@ -113,7 +113,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
   );
 
   return (
-    <div className="shadow-small-inner flex flex-col items-center pt-6 pb-10">
+    <div className="shadow-small-inner flex flex-col items-center sm:pt-6 pt-0 pb-10">
       {/* Category Filter Buttons */}
       <div className="sm:mt-[40px] xs:mt-[30px] mt-[20px] sm:mb-[40px] xs:mb-[30px] mb-[20px]">
         <CategoryFilter

@@ -28,7 +28,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-100 shadow-sm py-2 sm:py-3 -mx-4 sm:-mx-10 px-4 sm:px-10">
+    <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm  py-2 sm:py-3 -mx-4 sm:-mx-10 px-4 sm:px-10">
       <div className="flex gap-2 sm:gap-3 flex-nowrap overflow-x-auto whitespace-nowrap justify-start sm:justify-center scrollbar-hide">
         {categories.map((category) => (
           <button
