@@ -719,7 +719,7 @@ const NavBar = () => {
         </div>
 
         {/* Bar itself */}
-        <div className="relative bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="relative bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {/* Sliding active indicator
                JSX order (LTR flex positions): Home=0, Favorites=1, Sell=2, MyTickets=3, Profile=4
                dir="rtl" flips visual order but CSS left still measures from physical left.
@@ -739,24 +739,24 @@ const NavBar = () => {
               />
             );
           })()}
-          <div className="flex items-stretch h-16" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div className="flex items-stretch h-16">
 
             {/* Home */}
-            <Link href="/" className="flex flex-col items-center justify-center gap-1 flex-1 group" onClick={() => setMyTicketsPopoverOpen(false)}>
+            <Link href="/" className="flex flex-col items-center justify-center gap-1 flex-1 group transition-transform duration-150 active:scale-90" onClick={() => setMyTicketsPopoverOpen(false)}>
               <svg
                 width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                className={`transition-colors duration-150 ${pathname === "/" ? "stroke-primary" : "stroke-gray-500 group-active:stroke-primary"}`}
+                className={`transition-all duration-200 ${pathname === "/" ? "stroke-primary scale-110" : "stroke-gray-500 group-active:stroke-primary"}`}
               >
                 <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z"/>
                 <path d="M9 21V12h6v9"/>
               </svg>
-              <span className={`text-[10px] font-medium transition-colors duration-150 ${pathname === "/" ? "text-primary" : "text-gray-500"}`}>בית</span>
+              <span className={`text-[10px] font-medium transition-all duration-200 ${pathname === "/" ? "text-primary" : "text-gray-500"}`}>בית</span>
             </Link>
 
             {/* Favorites */}
             <Link
               href={user ? "/Favorites" : "#"}
-              className="flex flex-col items-center justify-center gap-1 flex-1 group"
+              className="flex flex-col items-center justify-center gap-1 flex-1 group transition-transform duration-150 active:scale-90"
               onClick={(e) => {
                 setMyTicketsPopoverOpen(false);
                 if (!user) { e.preventDefault(); setPendingFavoritesRedirect(true); openLogin(); }
@@ -766,7 +766,7 @@ const NavBar = () => {
               <div className="relative">
                 <svg
                   width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                  className={`transition-colors duration-150 ${pathname === "/Favorites" ? "stroke-primary" : "stroke-gray-500 group-active:stroke-primary"}`}
+                  className={`transition-all duration-200 ${pathname === "/Favorites" ? "stroke-primary scale-110" : "stroke-gray-500 group-active:stroke-primary"}`}
                 >
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
@@ -774,12 +774,12 @@ const NavBar = () => {
                   <span className="absolute -top-1 -left-1 w-2 h-2 bg-primary rounded-full" />
                 )}
               </div>
-              <span className={`text-[10px] font-medium transition-colors duration-150 ${pathname === "/Favorites" ? "text-primary" : "text-gray-500"}`}>מועדפים</span>
+              <span className={`text-[10px] font-medium transition-all duration-200 ${pathname === "/Favorites" ? "text-primary" : "text-gray-500"}`}>מועדפים</span>
             </Link>
 
             {/* Sell — center prominent */}
             <button
-              className="flex flex-col items-center justify-center gap-1 flex-1 group relative before:absolute before:left-0 before:top-1/4 before:h-1/2 before:w-px before:bg-gray-300 after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-gray-300"
+              className="flex flex-col items-center justify-center gap-1 flex-1 group relative transition-transform duration-150 active:scale-90 before:absolute before:left-0 before:top-1/4 before:h-1/2 before:w-px before:bg-gray-300 after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-gray-300"
               onClick={() => {
                 setMyTicketsPopoverOpen(false);
                 if (!user) { setPendingSellRedirect(true); openLogin(); }
@@ -791,13 +791,13 @@ const NavBar = () => {
 
             {/* My Tickets */}
             <button
-              className="flex flex-col items-center justify-center gap-1 flex-1 group relative"
+              className="flex flex-col items-center justify-center gap-1 flex-1 group relative transition-transform duration-150 active:scale-90"
               onClick={() => setMyTicketsPopoverOpen((prev) => !prev)}
             >
               <div className="relative">
                 <svg
                   width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                  className={`transition-colors duration-150 ${isMyTicketsPopoverOpen || pathname === "/MyTickets" || pathname === "/MyListings" ? "stroke-primary" : "stroke-gray-500 group-active:stroke-primary"}`}
+                  className={`transition-all duration-200 ${isMyTicketsPopoverOpen || pathname === "/MyTickets" || pathname === "/MyListings" ? "stroke-primary scale-110" : "stroke-gray-500 group-active:stroke-primary"}`}
                 >
                   <path d="M2 9a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v1.5a2.5 2.5 0 0 0 0 5V17a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1.5a2.5 2.5 0 0 0 0-5V9z"/>
                 </svg>
@@ -805,14 +805,14 @@ const NavBar = () => {
                   <span className="absolute -top-1 -left-1 w-2 h-2 bg-primary rounded-full" />
                 )}
               </div>
-              <span className={`text-[10px] font-medium transition-colors duration-150 ${isMyTicketsPopoverOpen || pathname === "/MyTickets" || pathname === "/MyListings" ? "text-primary" : "text-gray-500"}`}>
+              <span className={`text-[10px] font-medium transition-all duration-200 ${isMyTicketsPopoverOpen || pathname === "/MyTickets" || pathname === "/MyListings" ? "text-primary" : "text-gray-500"}`}>
                 הכרטיסים שלי
               </span>
             </button>
 
             {/* Profile */}
             <button
-              className="flex flex-col items-center justify-center gap-1 flex-1 group"
+              className="flex flex-col items-center justify-center gap-1 flex-1 group transition-transform duration-150 active:scale-90"
               onClick={() => {
                 setMyTicketsPopoverOpen(false);
                 if (user) { setProfileDialogOpen(true); }
@@ -821,12 +821,12 @@ const NavBar = () => {
             >
               <svg
                 width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                className="stroke-gray-500 transition-colors duration-150 group-active:stroke-primary"
+                className="stroke-gray-500 transition-all duration-200 group-active:stroke-primary"
               >
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
-              <span className="text-[10px] font-medium text-gray-500 transition-colors duration-150 group-active:text-primary">פרופיל</span>
+              <span className="text-[10px] font-medium text-gray-500 transition-all duration-200 group-active:text-primary">פרופיל</span>
             </button>
 
           </div>

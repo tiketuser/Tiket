@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs grep -l \"profile\\\\|seller\\\\|payment\")"
+      "Bash(xargs grep -l \"profile\\\\|seller\\\\|payment\")",
+      "Bash(npm audit --json)"
     ]
   }
 }
