@@ -12,7 +12,7 @@ export function ViewTracker({ eventId }: { eventId: string }) {
     if (!db) return;
 
     // Increment global view count
-    const eventRef = doc(db, "events", eventId);
+    const eventRef = doc(db as any, "events", eventId);
     updateDoc(eventRef, { views: increment(1) }).catch(() => {});
 
     // Save to user's recently viewed (auth optional — only for logged-in users)
@@ -21,7 +21,7 @@ export function ViewTracker({ eventId }: { eventId: string }) {
       if (!user) return;
 
       try {
-        const userRef = doc(db, "users", user.uid);
+        const userRef = doc(db as any, "users", user.uid);
         const userSnap = await getDoc(userRef);
         const existing: string[] = userSnap.exists()
           ? userSnap.data().recentlyViewed ?? []
