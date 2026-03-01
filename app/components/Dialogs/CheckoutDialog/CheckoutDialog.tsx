@@ -4,12 +4,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-const LoginDialog = dynamic(
-  () => import("../LoginDialog/LoginDialog"),
-  { ssr: false }
-);
-const SignUpDialog = dynamic(
-  () => import("../SignUpDialog/SignUpDialog"),
+const AuthDialog = dynamic(
+  () => import("../AuthDialog/AuthDialog"),
   { ssr: false }
 );
 import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
@@ -56,8 +52,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   } | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [transactionComplete, setTransactionComplete] = useState(false);
-  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
-  const [isSignUpDialogOpen, setSignUpDialogOpen] = useState(false);
+  const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
   const [pendingMyTicketsRedirect, setPendingMyTicketsRedirect] = useState(false);
   const [reservationSecondsLeft, setReservationSecondsLeft] = useState<number | null>(null);
   const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
@@ -100,7 +95,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   useEffect(() => {
     if (user && pendingMyTicketsRedirect) {
       setPendingMyTicketsRedirect(false);
-      setLoginDialogOpen(false);
+      setAuthDialogOpen(false);
       router.push("/MyTickets");
     }
   }, [user, pendingMyTicketsRedirect, router]);
@@ -321,28 +316,16 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             onLoginRequest={() => {
               handleClose();
               setPendingMyTicketsRedirect(true);
-              setTimeout(() => setLoginDialogOpen(true), 300);
+              setTimeout(() => setAuthDialogOpen(true), 300);
             }}
           />
         )}
       </div>
     </AdjustableDialog>
 
-    <LoginDialog
-      isOpen={isLoginDialogOpen}
-      onClose={() => setLoginDialogOpen(false)}
-      onSwitchToSignup={() => {
-        setLoginDialogOpen(false);
-        setTimeout(() => setSignUpDialogOpen(true), 200);
-      }}
-    />
-    <SignUpDialog
-      isOpen={isSignUpDialogOpen}
-      onClose={() => setSignUpDialogOpen(false)}
-      onSwitchToLogin={() => {
-        setSignUpDialogOpen(false);
-        setTimeout(() => setLoginDialogOpen(true), 200);
-      }}
+    <AuthDialog
+      isOpen={isAuthDialogOpen}
+      onClose={() => setAuthDialogOpen(false)}
     />
     </>
   );

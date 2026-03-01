@@ -273,37 +273,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 <InfoCard label="אימייל" value={userData.email} />
               </div>
 
-              <div className="pt-4 border-t border-gray-100">
-                <button
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
-                  onClick={async () => {
-                    if (
-                      window.confirm(
-                        "האם אתה בטוח שברצונך למחוק את החשבון? פעולה זו אינה הפיכה.",
-                      )
-                    ) {
-                      const auth = getAuth();
-                      const user = auth.currentUser;
-                      if (user && db) {
-                        try {
-                          await deleteDoc(doc(db, "users", user.uid));
-                          await deleteUser(user);
-                          alert("החשבון נמחק בהצלחה.");
-                          window.location.reload();
-                        } catch (err) {
-                          const msg =
-                            err && typeof err === "object" && "message" in err
-                              ? (err as { message?: string }).message
-                              : String(err);
-                          alert("מחיקת החשבון נכשלה: " + (msg || err));
-                        }
-                      }
-                    }
-                  }}
-                >
-                  מחיקת חשבון
-                </button>
-              </div>
             </>
           )}
         </>
@@ -557,6 +526,37 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               );
             })
           )}
+
+          <div className="pt-4 border-t border-gray-100 text-center">
+            <button
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+              onClick={async () => {
+                if (
+                  window.confirm(
+                    "האם אתה בטוח שברצונך למחוק את החשבון? פעולה זו אינה הפיכה.",
+                  )
+                ) {
+                  const auth = getAuth();
+                  const user = auth.currentUser;
+                  if (user && db) {
+                    try {
+                      await deleteDoc(doc(db, "users", user.uid));
+                      await deleteUser(user);
+                      window.location.reload();
+                    } catch (err) {
+                      const msg =
+                        err && typeof err === "object" && "message" in err
+                          ? (err as { message?: string }).message
+                          : String(err);
+                      alert("מחיקת החשבון נכשלה: " + (msg || err));
+                    }
+                  }
+                }
+              }}
+            >
+              מחיקת חשבון
+            </button>
+          </div>
         </div>
       )}
     </div>

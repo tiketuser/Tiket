@@ -7,12 +7,8 @@ import ProfileIcon from "../../../public/images/Home Page/ProfileButton.svg";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 
 // Lazy-load dialogs - only needed on user interaction
-const SignUpDialog = dynamic(
-  () => import("../Dialogs/SignUpDialog/SignUpDialog"),
-  { ssr: false },
-);
-const LoginDialog = dynamic(
-  () => import("../Dialogs/LoginDialog/LoginDialog"),
+const AuthDialog = dynamic(
+  () => import("../Dialogs/AuthDialog/AuthDialog"),
   { ssr: false },
 );
 const ProfileDialog = dynamic(
@@ -22,8 +18,8 @@ const ProfileDialog = dynamic(
 
 const MobileFooter = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoginDialogOpen, setLoginDialogOpen] = React.useState(false);
-  const [isSignUpDialogOpen, setSignUpDialogOpen] = React.useState(false);
+  const [isAuthDialogOpen, setAuthDialogOpen] = React.useState(false);
+  const [authDialogMode, setAuthDialogMode] = React.useState<"login" | "signup">("login");
   const [isProfileDialogOpen, setProfileDialogOpen] = React.useState(false);
 
   useEffect(() => {
@@ -56,7 +52,7 @@ const MobileFooter = () => {
           {/* Buy Button */}
           <button
             className="flex-1 bg-primary text-white text-text-large font-normal text-center rounded-t-xl"
-            onClick={() => setLoginDialogOpen(true)}
+            onClick={() => { setAuthDialogMode("login"); setAuthDialogOpen(true); }}
           >
             התחבר
           </button>
@@ -64,20 +60,17 @@ const MobileFooter = () => {
           {/* Sell Button */}
           <button
             className="flex-1 bg-white border-2 border-primary text-primary text-text-large font-normal text-center rounded-t-xl"
-            onClick={() => setSignUpDialogOpen(true)}
+            onClick={() => { setAuthDialogMode("signup"); setAuthDialogOpen(true); }}
           >
             הירשם
           </button>
         </div>
       </footer>
 
-      <SignUpDialog
-        isOpen={isSignUpDialogOpen}
-        onClose={() => setSignUpDialogOpen(false)}
-      />
-      <LoginDialog
-        isOpen={isLoginDialogOpen}
-        onClose={() => setLoginDialogOpen(false)}
+      <AuthDialog
+        isOpen={isAuthDialogOpen}
+        onClose={() => setAuthDialogOpen(false)}
+        initialMode={authDialogMode}
       />
       <ProfileDialog
         isOpen={isProfileDialogOpen}

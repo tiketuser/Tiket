@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getAuth } from "firebase/auth";
+import { getAuth, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../../firebase";
 import ProfileMenu from "../../ProfileMenu/ProfileMenu";
@@ -134,6 +134,25 @@ const ProfileDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
             userData={userData}
             loading={loading}
           />
+        </div>
+
+        <div className="px-5 sm:px-8 py-3 border-t border-gray-100">
+          <button
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-center gap-2"
+            dir="rtl"
+            onClick={async () => {
+              await signOut(getAuth());
+              onClose();
+              window.location.reload();
+            }}
+          >
+            התנתק
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
         </div>
 
         <div className="h-1.5 bg-gradient-to-r from-primary via-highlight to-primary" />

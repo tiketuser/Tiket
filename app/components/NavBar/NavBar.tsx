@@ -20,12 +20,8 @@ import Arrow from "../../../public/images/Home Page/Web/Arrow.svg";
 import ProfileButton from "../../../public/images/Home Page/ProfileButton.svg";
 
 // Lazy-load dialogs - they are heavy and only needed on user interaction
-const LoginDialog = dynamic(
-  () => import("../../components/Dialogs/LoginDialog/LoginDialog"),
-  { ssr: false },
-);
-const SignUpDialog = dynamic(
-  () => import("../Dialogs/SignUpDialog/SignUpDialog"),
+const AuthDialog = dynamic(
+  () => import("../Dialogs/AuthDialog/AuthDialog"),
   { ssr: false },
 );
 const ProfileDialog = dynamic(
@@ -35,8 +31,8 @@ const ProfileDialog = dynamic(
 
 const NavBar = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
-  const [isSignUpDialogOpen, setSignUpDialogOpen] = useState(false);
+  const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
+  const [authDialogMode, setAuthDialogMode] = useState<"login" | "signup">("login");
   const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
@@ -75,10 +71,13 @@ const NavBar = () => {
     return () => unsubscribe();
   }, []);
 
+  const openLogin = () => { setAuthDialogMode("login"); setAuthDialogOpen(true); };
+  const openSignup = () => { setAuthDialogMode("signup"); setAuthDialogOpen(true); };
+
   useEffect(() => {
     if (user && pendingFavoritesRedirect) {
       setPendingFavoritesRedirect(false);
-      setLoginDialogOpen(false);
+      setAuthDialogOpen(false);
       router.push("/Favorites");
     }
   }, [user, pendingFavoritesRedirect, router]);
@@ -86,7 +85,7 @@ const NavBar = () => {
   useEffect(() => {
     if (user && pendingMyTicketsRedirect) {
       setPendingMyTicketsRedirect(false);
-      setLoginDialogOpen(false);
+      setAuthDialogOpen(false);
       router.push("/MyTickets");
     }
   }, [user, pendingMyTicketsRedirect, router]);
@@ -94,7 +93,7 @@ const NavBar = () => {
   useEffect(() => {
     if (user && pendingMyListingsRedirect) {
       setPendingMyListingsRedirect(false);
-      setLoginDialogOpen(false);
+      setAuthDialogOpen(false);
       router.push("/MyListings");
     }
   }, [user, pendingMyListingsRedirect, router]);
@@ -201,7 +200,7 @@ const NavBar = () => {
                     if (!user) {
                       e.preventDefault();
                       setPendingMyTicketsRedirect(true);
-                      setLoginDialogOpen(true);
+                      openLogin();
                     }
                   }}
                 >
@@ -215,7 +214,7 @@ const NavBar = () => {
                     if (!user) {
                       e.preventDefault();
                       setPendingMyListingsRedirect(true);
-                      setLoginDialogOpen(true);
+                      openLogin();
                     }
                   }}
                 >
@@ -320,7 +319,7 @@ const NavBar = () => {
                 if (!user) {
                   e.preventDefault();
                   setPendingFavoritesRedirect(true);
-                  setLoginDialogOpen(true);
+                  openLogin();
                 }
               }}
             >
@@ -344,13 +343,13 @@ const NavBar = () => {
             <>
               <button
                 className="hidden sm:flex btn btn-secondary border-primary border-[2px] bg-white w-24 text-primary text-text-large font-normal"
-                onClick={() => setSignUpDialogOpen(true)}
+                onClick={openSignup}
               >
                 הירשם
               </button>
               <button
                 className="hidden sm:flex btn btn-primary w-24 text-gray-50 text-text-large font-normal"
-                onClick={() => setLoginDialogOpen(true)}
+                onClick={openLogin}
               >
                 התחבר
               </button>
@@ -366,7 +365,7 @@ const NavBar = () => {
               if (user) {
                 setProfileDialogOpen(true);
               } else {
-                setLoginDialogOpen(true);
+                openLogin();
               }
             }}
           >
@@ -394,7 +393,7 @@ const NavBar = () => {
             <Link
               href={user ? "/MyTickets" : "#"}
               onClick={(e) => {
-                if (!user) { e.preventDefault(); setPendingMyTicketsRedirect(true); setLoginDialogOpen(true); }
+                if (!user) { e.preventDefault(); setPendingMyTicketsRedirect(true); openLogin(); }
                 setMobileMenuOpen(false);
               }}
             >
@@ -410,7 +409,7 @@ const NavBar = () => {
             <Link
               href={user ? "/MyListings" : "#"}
               onClick={(e) => {
-                if (!user) { e.preventDefault(); setPendingMyListingsRedirect(true); setLoginDialogOpen(true); }
+                if (!user) { e.preventDefault(); setPendingMyListingsRedirect(true); openLogin(); }
                 setMobileMenuOpen(false);
               }}
             >
@@ -430,7 +429,7 @@ const NavBar = () => {
             <Link
               href={user ? "/Favorites" : "#"}
               onClick={(e) => {
-                if (!user) { e.preventDefault(); setPendingFavoritesRedirect(true); setLoginDialogOpen(true); }
+                if (!user) { e.preventDefault(); setPendingFavoritesRedirect(true); openLogin(); }
                 setMobileMenuOpen(false);
               }}
             >
@@ -448,7 +447,7 @@ const NavBar = () => {
               className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl hover:bg-gray-100 active:bg-gray-200 transition-colors"
               onClick={() => {
                 setMobileMenuOpen(false);
-                if (user) { setProfileDialogOpen(true); } else { setLoginDialogOpen(true); }
+                if (user) { setProfileDialogOpen(true); } else { openLogin(); }
               }}
             >
               {/* Person icon */}
@@ -466,13 +465,13 @@ const NavBar = () => {
                 <div className="flex gap-2 px-1">
                   <button
                     className="flex-1 btn btn-primary text-white text-base font-semibold h-11 min-h-0 rounded-xl"
-                    onClick={() => { setLoginDialogOpen(true); setMobileMenuOpen(false); }}
+                    onClick={() => { openLogin(); setMobileMenuOpen(false); }}
                   >
                     התחבר
                   </button>
                   <button
                     className="flex-1 btn border-2 border-primary bg-white text-primary text-base font-semibold h-11 min-h-0 rounded-xl"
-                    onClick={() => { setSignUpDialogOpen(true); setMobileMenuOpen(false); }}
+                    onClick={() => { openSignup(); setMobileMenuOpen(false); }}
                   >
                     הירשם
                   </button>
@@ -527,21 +526,10 @@ const NavBar = () => {
       )}
 
       {/* Dialogs */}
-      <SignUpDialog
-        isOpen={isSignUpDialogOpen}
-        onClose={() => setSignUpDialogOpen(false)}
-        onSwitchToLogin={() => {
-          setSignUpDialogOpen(false);
-          setTimeout(() => setLoginDialogOpen(true), 200);
-        }}
-      />
-      <LoginDialog
-        isOpen={isLoginDialogOpen}
-        onClose={() => setLoginDialogOpen(false)}
-        onSwitchToSignup={() => {
-          setLoginDialogOpen(false);
-          setTimeout(() => setSignUpDialogOpen(true), 200);
-        }}
+      <AuthDialog
+        isOpen={isAuthDialogOpen}
+        onClose={() => setAuthDialogOpen(false)}
+        initialMode={authDialogMode}
       />
       <ProfileDialog
         isOpen={isProfileDialogOpen}

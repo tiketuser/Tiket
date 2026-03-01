@@ -12,8 +12,8 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
 
-const LoginDialog = dynamic(
-  () => import("../Dialogs/LoginDialog/LoginDialog"),
+const AuthDialog = dynamic(
+  () => import("../Dialogs/AuthDialog/AuthDialog"),
   { ssr: false },
 );
 import CategoryFilter from "../CategoryFilter/CategoryFilter";
@@ -40,11 +40,13 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
   const [cardsData, setCardsData] = useState<CardData[]>(initialCards);
   const [allCardsData, setAllCardsData] = useState<CardData[]>(initialCards);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
   const [userFavorites, setUserFavorites] = useState<(string | number)[]>([]);
+  const [filtersVisible, setFiltersVisible] = useState(true);
+  const [isSticky, setIsSticky] = useState(false);
 
   // Define the function once
-  const openLoginDialog = useCallback(() => setLoginDialogOpen(true), []);
+  const openLoginDialog = useCallback(() => setAuthDialogOpen(true), []);
 
   // Fetch user favorites ONCE (instead of N+1 per card)
   useEffect(() => {
@@ -112,24 +114,52 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
     [router],
   );
 
+  // Hide filters on scroll down, show on scroll up
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const THRESHOLD = 80; // px from top before sticky kicks in
+
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      setIsSticky(currentY > THRESHOLD);
+      setFiltersVisible(currentY <= THRESHOLD || currentY < lastScrollY);
+      lastScrollY = currentY;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <div className="shadow-small-inner flex flex-col items-center pt-6 pb-10">
-      {/* Category Filter Buttons */}
-      <div className="sm:mt-[40px] xs:mt-[30px] mt-[20px] sm:mb-[40px] xs:mb-[30px] mb-[20px]">
-        <CategoryFilter
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
+      {/* Sticky filters bar — hides on scroll down, reveals on scroll up */}
+      <div
+        className={`
+          sticky z-40 w-full flex flex-col items-center bg-white
+          transition-transform duration-300 ease-in-out
+          ${isSticky ? "shadow-sm" : ""}
+          ${filtersVisible ? "translate-y-0" : "-translate-y-full"}
+        `}
+        style={{ top: "64px" }}
+      >
+        <div className="sm:mt-[24px] xs:mt-[18px] mt-[14px] sm:mb-[24px] xs:mb-[18px] mb-[14px]">
+          <CategoryFilter
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+        </div>
+        <div className="pb-4 w-full flex justify-center">
+          <CustomSearchInput
+            id="search-bar"
+            placeholder="חפש אירוע"
+            image={
+              <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />
+            }
+            onEnter={handleSearch}
+            suggestions={artistNames}
+          />
+        </div>
       </div>
-      <CustomSearchInput
-        id="search-bar"
-        placeholder="חפש אירוע"
-        image={
-          <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />
-        }
-        onEnter={handleSearch}
-        suggestions={artistNames}
-      />
       {cardsData.length === 0 && (
         <div className="text-center text-lg text-gray-500 py-8">
           {selectedCategory === null
@@ -144,9 +174,9 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
           userFavorites={userFavorites}
         />
       )}
-      <LoginDialog
-        isOpen={isLoginDialogOpen}
-        onClose={() => setLoginDialogOpen(false)}
+      <AuthDialog
+        isOpen={isAuthDialogOpen}
+        onClose={() => setAuthDialogOpen(false)}
       />
     </div>
   );
