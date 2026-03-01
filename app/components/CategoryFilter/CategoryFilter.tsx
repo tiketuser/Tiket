@@ -34,7 +34,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
           <button
             key={category.value}
             onClick={() => handleCategoryClick(category.value)}
-            className={`px-4 sm:px-10 py-1.5 sm:py-3 rounded-full text-sm sm:text-base font-medium transition-colors duration-150 shrink-0 ${
+            className={`px-4 sm:px-10 py-1.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors duration-150 shrink-0 ${
               selectedCategory === category.value
                 ? "bg-primary text-white shadow-sm"
                 : "bg-white text-gray-600 border border-gray-200 hover:border-primary hover:text-primary"
