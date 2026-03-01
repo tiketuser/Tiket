@@ -113,42 +113,37 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
   );
 
   return (
-    <div className="shadow-small-inner flex flex-col items-center pt-6 sm:pb-10">
+    <div className="shadow-small-inner flex flex-col items-center pt-6 pb-10">
       {/* Category Filter Buttons */}
-      <div className="sm:mt-[40px] xs:mt-[30px] mt-[20px] sm:mb-[40px] xs:mb-[30px] mb-[20px] w-full flex justify-center">
+      <div className="sm:mt-[40px] xs:mt-[30px] mt-[20px] sm:mb-[40px] xs:mb-[30px] mb-[20px]">
         <CategoryFilter
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
         />
       </div>
-      <div className="w-full flex justify-center px-4 sm:px-0">
-        <CustomSearchInput
-          id="search-bar"
-          placeholder="חפש אירוע"
-          image={
-            <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />
-          }
-          onEnter={handleSearch}
-          suggestions={artistNames}
+      <CustomSearchInput
+        id="search-bar"
+        placeholder="חפש אירוע"
+        image={
+          <Image src={SearchIcon} alt="Search Icon" width={24} height={24} />
+        }
+        onEnter={handleSearch}
+        suggestions={artistNames}
+      />
+      {cardsData.length === 0 && (
+        <div className="text-center text-lg text-gray-500 py-8">
+          {selectedCategory === null
+            ? "אין אירועים זמינים כרגע"
+            : `אין אירועי ${selectedCategory} זמינים כרגע`}
+        </div>
+      )}
+      {cardsData.length > 0 && (
+        <ResponsiveGallery
+          cardsData={cardsData}
+          openLoginDialog={openLoginDialog}
+          userFavorites={userFavorites}
         />
-      </div>
-      {/* On mobile: scrollable gallery area, desktop renders normally */}
-      <div className="sm:contents w-full overflow-y-auto overscroll-contain mt-2 pb-20 max-h-[calc(100dvh-280px)] sm:max-h-none">
-        {cardsData.length === 0 && (
-          <div className="text-center text-lg text-gray-500 py-8">
-            {selectedCategory === null
-              ? "אין אירועים זמינים כרגע"
-              : `אין אירועי ${selectedCategory} זמינים כרגע`}
-          </div>
-        )}
-        {cardsData.length > 0 && (
-          <ResponsiveGallery
-            cardsData={cardsData}
-            openLoginDialog={openLoginDialog}
-            userFavorites={userFavorites}
-          />
-        )}
-      </div>
+      )}
       <AuthDialog
         isOpen={isAuthDialogOpen}
         onClose={() => setAuthDialogOpen(false)}

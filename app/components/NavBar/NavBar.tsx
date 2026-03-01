@@ -50,6 +50,7 @@ const NavBar = () => {
   const [isAdminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMyTicketsPopoverOpen, setMyTicketsPopoverOpen] = useState(false);
+  const [isNavVisible, setNavVisible] = useState(true);
   const [pendingFavoritesRedirect, setPendingFavoritesRedirect] =
     useState(false);
   const [pendingMyTicketsRedirect, setPendingMyTicketsRedirect] =
@@ -83,6 +84,22 @@ const NavBar = () => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [isMobileMenuOpen]);
+
+  // Hide bottom nav on scroll down, show on scroll up
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY > lastY && currentY > 50) {
+        setNavVisible(false);
+      } else {
+        setNavVisible(true);
+      }
+      lastY = currentY;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Check if user is admin
   const isAdmin =
@@ -668,7 +685,7 @@ const NavBar = () => {
         className={`
           lg:hidden fixed bottom-0 left-0 right-0 z-50
           transition-transform duration-300 ease-in-out
-          ${isAuthDialogOpen || isProfileDialogOpen || isUploadDialogOpen
+          ${isAuthDialogOpen || isProfileDialogOpen || isUploadDialogOpen || !isNavVisible
             ? "translate-y-full"
             : "translate-y-0"}
         `}
