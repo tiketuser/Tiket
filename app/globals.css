@@ -34,6 +34,14 @@ body {
   background: var(--background);
   font-family: var(--font-assistant);
   direction: rtl;
+  /* Space for fixed bottom nav on mobile */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @layer components {
