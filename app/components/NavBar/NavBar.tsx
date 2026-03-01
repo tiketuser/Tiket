@@ -727,15 +727,18 @@ const NavBar = () => {
                So physical-left index: Profile=0, MyTickets=1, Sell=2, Favorites=3, Home=4 */}
           {(() => {
             const physicalIndex =
-              pathname === "/" ? 4                                              // Home — rightmost
-              : pathname === "/Favorites" ? 3                                   // Favorites
-              : pathname === "/MyTickets" || pathname === "/MyListings" ? 1     // MyTickets
+              pathname === "/" ? 4
+              : pathname === "/Favorites" ? 3
+              : pathname === "/MyTickets" || pathname === "/MyListings" ? 1
               : -1;
-            if (physicalIndex === -1) return null;
             return (
               <span
                 className="absolute top-0 h-0.5 bg-primary transition-all duration-300 ease-in-out"
-                style={{ left: `${physicalIndex * 20}%`, width: "20%" }}
+                style={{
+                  left: `${physicalIndex * 20}%`,
+                  width: "20%",
+                  opacity: physicalIndex === -1 ? 0 : 1,
+                }}
               />
             );
           })()}
