@@ -48,6 +48,7 @@ const MyListings = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLivePosts, setShowLivePosts] = useState(true);
+  const [showPending, setShowPending] = useState(true);
   const [showSold, setShowSold] = useState(true);
   const [showRejected, setShowRejected] = useState(true);
   const [cancelTicketId, setCancelTicketId] = useState<string | null>(null);
@@ -119,6 +120,10 @@ const MyListings = () => {
     setShowSold((prev) => !prev);
   };
 
+  const togglePendingCardsVisibility = () => {
+    setShowPending((prev) => !prev);
+  };
+
   const toggleRejectedCardsVisibility = () => {
     setShowRejected((prev) => !prev);
   };
@@ -126,6 +131,10 @@ const MyListings = () => {
   // Filter tickets by status
   const activeTickets = tickets.filter(
     (t) => t.verificationStatus === "verified" || t.status === "available"
+  );
+
+  const pendingTickets = tickets.filter(
+    (t) => t.verificationStatus === "needs_review"
   );
 
   const soldTickets = tickets.filter((t) => t.status === "sold");
@@ -185,6 +194,58 @@ const MyListings = () => {
                     buttonLabel="ביטול מכירה"
                     onButtonClick={() => setCancelTicketId(ticket.id)}
                   />
+                </div>
+              ))
+            ))}
+        </div>
+      </div>
+
+      <TitleSubtitle title="ממתין לאישור" subtitle="בבדיקת מנהל" />
+      <div className="pt-5 md:pt-14 px-4 md:px-8 lg:px-32 pb-5 md:pb-14 gap-4 md:gap-8 shadow-small-inner w-full">
+        <Image
+          src={ArrowIcon}
+          alt="Arrow icon"
+          onClick={togglePendingCardsVisibility}
+          className={`w-6 h-7 md:w-8 md:h-5 float-end cursor-pointer transition-transform duration-700 ${
+            showPending ? "rotate-0" : "rotate-180"
+          }`}
+        />
+        <div
+          className={`mt-14 transition-all duration-700 ease-in-out ${
+            showPending ? "opacity-100 h-auto" : "opacity-0 h-0"
+          }`}
+        >
+          {showPending &&
+            (pendingTickets.length === 0 ? (
+              <div className="text-center py-8 text-gray-600">
+                אין כרטיסים הממתינים לאישור
+              </div>
+            ) : (
+              pendingTickets.map((ticket) => (
+                <div key={ticket.id} className="flex flex-col items-center justify-center mb-4">
+                  <MyTicketCard
+                    artist={ticket.artist}
+                    date={ticket.date || ""}
+                    venue={ticket.venue}
+                    price={ticket.askingPrice}
+                    seatLabel={seatLabel(ticket)}
+                    tag="ממתין"
+                    buttonLabel="מחק"
+                    onButtonClick={() => setCancelTicketId(ticket.id)}
+                  />
+                  <div className="w-full max-w-[320px] sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] mt-3 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="text-xl">⏳</div>
+                      <div className="flex-1">
+                        <p className="font-bold text-yellow-800 text-sm mb-1">
+                          הכרטיס בבדיקה
+                        </p>
+                        <p className="text-yellow-700 text-sm">
+                          הכרטיס שהעלית נמצא כעת בבדיקת המנהל. תקבל עדכון בהקדם.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))
             ))}
@@ -297,7 +358,8 @@ const MyListings = () => {
                     price={ticket.askingPrice}
                     seatLabel={seatLabel(ticket)}
                     tag="נמכר"
-                    buttonLabel="צפייה בכרטיס"
+                    buttonLabel="הסר"
+                    onButtonClick={() => setTickets((prev) => prev.filter((t) => t.id !== ticket.id))}
                   />
                 </div>
               ))
