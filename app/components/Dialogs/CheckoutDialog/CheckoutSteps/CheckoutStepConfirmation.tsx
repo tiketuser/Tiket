@@ -54,7 +54,6 @@ const CheckoutStepConfirmation: React.FC<CheckoutStepConfirmationProps> = ({
               seatLocation={ticket.seatLocation}
               venue={ticket.venue}
               price={ticket.price}
-              priceBefore={ticket.originalPrice}
             />
           </div>
         ))}

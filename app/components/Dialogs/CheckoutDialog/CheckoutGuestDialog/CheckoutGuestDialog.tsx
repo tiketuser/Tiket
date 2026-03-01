@@ -109,7 +109,6 @@ const CheckoutGuestDialog: React.FC<CheckoutGuestDialogInterface> = ({
       <div className="absolute bottom-1 left-0">
         <MinimalCard
           price={500}
-          priceBefore={600}
           title="עלמה גוב"
           date="15 אוק׳"
           seatLocation="היכל התרבות - תל אביב"

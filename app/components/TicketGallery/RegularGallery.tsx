@@ -9,7 +9,6 @@ interface CardData {
   date: string;
   location: string;
   ticketsLeft: number;
-  priceBefore: number;
   price: number;
   soldOut: boolean;
   timeLeft: string;

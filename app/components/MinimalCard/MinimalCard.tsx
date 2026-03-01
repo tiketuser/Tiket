@@ -7,7 +7,6 @@ interface MinimalCardProps {
   date: string;
   seatLocation: string;
   venue?: string;
-  priceBefore?: number;
   price: number;
   width?: string;
 }
@@ -17,7 +16,6 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
   date,
   seatLocation,
   venue,
-  priceBefore,
   price,
   width = "w-auto",
 }) => {
@@ -116,11 +114,6 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
           <span className="text-strongText text-heading-4-desktop font-extraBold leading-10">
             ₪{price}
           </span>
-          {priceBefore && (
-            <span className="text-weakTextBluish font-bold text-text-large line-through leading-7">
-              ₪{priceBefore}
-            </span>
-          )}
           <Image
             src={PriceIcon}
             alt="Price icon"
@@ -162,9 +155,6 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
           {/* Price */}
           <div className="flex flex-col items-center justify-center px-3 py-3 flex-shrink-0">
             <span className="text-base font-extrabold text-strongText leading-none">₪{price}</span>
-            {priceBefore && (
-              <span className="text-[11px] text-mutedText line-through leading-tight">₪{priceBefore}</span>
-            )}
           </div>
         </div>
       </div>

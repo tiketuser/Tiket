@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fade-in-down {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.animate-fade-in-down {
+  animation: fade-in-down 0.2s ease-out both;
+}
+
 :root {
   --background: rgba(255, 255, 255, 1);
   --foreground: #171717;

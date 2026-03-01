@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../../firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, deleteDoc } from "firebase/firestore";
 import NavBar from "../components/NavBar/NavBar";
 import MyTicketCard from "../components/MyTicketCard/MyTicketCard";
 import Footer from "../components/Footer/Footer";
@@ -50,6 +50,8 @@ const MyListings = () => {
   const [showLivePosts, setShowLivePosts] = useState(true);
   const [showSold, setShowSold] = useState(true);
   const [showRejected, setShowRejected] = useState(true);
+  const [cancelTicketId, setCancelTicketId] = useState<string | null>(null);
+  const [canceling, setCanceling] = useState(false);
 
   useEffect(() => {
     fetchMyListings();
@@ -92,6 +94,20 @@ const MyListings = () => {
       console.error("Error fetching listings:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const confirmCancelListing = async () => {
+    if (!cancelTicketId || !db) return;
+    setCanceling(true);
+    try {
+      await deleteDoc(doc(db as any, "tickets", cancelTicketId));
+      setTickets((prev) => prev.filter((t) => t.id !== cancelTicketId));
+    } catch (error) {
+      console.error("Error canceling listing:", error);
+    } finally {
+      setCanceling(false);
+      setCancelTicketId(null);
     }
   };
 
@@ -167,6 +183,7 @@ const MyListings = () => {
                     price={ticket.askingPrice}
                     seatLabel={seatLabel(ticket)}
                     buttonLabel="ביטול מכירה"
+                    onButtonClick={() => setCancelTicketId(ticket.id)}
                   />
                 </div>
               ))
@@ -288,6 +305,34 @@ const MyListings = () => {
         </div>
       </div>
       <Footer />
+
+      {/* Cancel confirmation dialog */}
+      {cancelTicketId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" dir="rtl">
+          <div className="bg-white rounded-xl shadow-large p-6 mx-4 w-full max-w-sm flex flex-col gap-4">
+            <h2 className="text-lg font-bold text-strongText text-center">ביטול מכירה</h2>
+            <p className="text-sm text-mutedText text-center">
+              האם אתה בטוח שברצונך לבטל את המכירה? הכרטיס יוסר מהמודעות הפעילות.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setCancelTicketId(null)}
+                disabled={canceling}
+                className="btn btn-outline rounded-md min-h-0 h-10 px-5 text-sm font-medium flex-1"
+              >
+                חזרה
+              </button>
+              <button
+                onClick={confirmCancelListing}
+                disabled={canceling}
+                className="btn btn-primary rounded-md min-h-0 h-10 px-5 text-white text-sm font-medium flex-1"
+              >
+                {canceling ? <span className="loading loading-spinner loading-sm" /> : "כן, בטל מכירה"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

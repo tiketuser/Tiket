@@ -79,7 +79,6 @@ const ThankYou: React.FC<ThankYouProps> = ({ isOpen, onClose }) => {
         <div className="mt-6 w-full absolute bottom-0">
           <MinimalCard
             price={358}
-            priceBefore={457}
             title="עלמה גוב"
             date="15 אוק׳"
             seatLocation="אזור 4, שורה 21 כיסא 3"

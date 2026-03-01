@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
@@ -11,7 +10,7 @@ import {
   sendEmailVerification,
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "../../../../../firebase";
+import { db, auth } from "../../../../../firebase";
 import CustomInput from "../../../CustomInput/CustomInput";
 import CheckBox from "../../../CheckBox/CheckBox";
 
@@ -57,7 +56,7 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
     setIsLoading(true);
     setError("");
     try {
-      const auth = getAuth();
+      if (!auth) { setError("שגיאה פנימית - נסה לרענן את הדף"); setIsLoading(false); return; }
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
@@ -94,7 +93,7 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
     setIsLoading(true);
     setError("");
     try {
-      const auth = getAuth();
+      if (!auth) { setError("שגיאה פנימית - נסה לרענן את הדף"); setIsLoading(false); return; }
       await signInWithEmailAndPassword(auth, email, password);
       onAuthComplete();
     } catch (err: unknown) {
@@ -138,7 +137,7 @@ const CheckoutStepAuth: React.FC<CheckoutStepAuthProps> = ({
     }
 
     try {
-      const auth = getAuth();
+      if (!auth) { setError("שגיאה פנימית - נסה לרענן את הדף"); setIsLoading(false); return; }
       const result = await createUserWithEmailAndPassword(
         auth,
         signupEmail,

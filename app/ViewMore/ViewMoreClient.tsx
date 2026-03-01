@@ -20,7 +20,6 @@ interface CardData {
   imageSrc: string;
   date: string;
   location: string;
-  priceBefore: number;
   price: number;
   soldOut: boolean;
   ticketsLeft: number;

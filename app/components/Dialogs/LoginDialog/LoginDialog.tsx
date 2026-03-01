@@ -48,7 +48,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
   // Google login handler
   const handleGoogleLogin = async () => {
     setError("");
-    const auth = getAuth();
+    if (!auth) { setError("שגיאה פנימית - נסה לרענן את הדף"); return; }
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);

@@ -2,16 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { db } from "../../firebase";
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-} from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
@@ -148,6 +140,30 @@ export default function ApproveTicketsPage() {
     return tickets.filter((t) => t.bundleId === ticket.bundleId).map((t) => t.id);
   };
 
+  const callTicketAction = async (
+    action: "approve" | "reject" | "link",
+    ticketIds: string[],
+    extra?: { adminComment?: string; concertId?: string }
+  ) => {
+    const auth = getAuth();
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) throw new Error("Not authenticated");
+
+    const res = await fetch("/api/admin/ticket-action", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action, ticketIds, ...extra }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+  };
+
   const handleApprove = async (ticket: Ticket) => {
     const ids = getBundleTicketIds(ticket);
     const isBundle = ids.length > 1;
@@ -155,9 +171,7 @@ export default function ApproveTicketsPage() {
 
     setProcessingTicketId(ticket.id);
     try {
-      await Promise.all(
-        ids.map((id) => updateDoc(doc(db as any, "tickets", id), { status: "available" }))
-      );
+      await callTicketAction("approve", ids);
       setTickets((prev) => prev.filter((t) => !ids.includes(t.id)));
       alert(isBundle ? `${ids.length} כרטיסים אושרו בהצלחה!` : "הכרטיס אושר בהצלחה!");
     } catch (error) {
@@ -176,16 +190,7 @@ export default function ApproveTicketsPage() {
     setProcessingTicketId(ticket.id);
     try {
       const comment = adminComments[ticket.id] || "";
-      await Promise.all(
-        ids.map((id) =>
-          updateDoc(doc(db as any, "tickets", id), {
-            status: "rejected",
-            verificationStatus: "rejected",
-            adminComment: comment || "הכרטיס נדחה על ידי המנהל",
-            rejectedAt: new Date().toISOString(),
-          })
-        )
-      );
+      await callTicketAction("reject", ids, { adminComment: comment });
       setTickets((prev) => prev.filter((t) => !ids.includes(t.id)));
       setAdminComments((prev) => {
         const newComments = { ...prev };
@@ -235,9 +240,7 @@ export default function ApproveTicketsPage() {
 
     setProcessingTicketId(ticketId);
     try {
-      await Promise.all(
-        ids.map((id) => updateDoc(doc(db as any, "tickets", id), { concertId }))
-      );
+      await callTicketAction("link", ids, { concertId });
       setTickets((prev) =>
         prev.map((t) => (ids.includes(t.id) ? { ...t, concertId } : t))
       );

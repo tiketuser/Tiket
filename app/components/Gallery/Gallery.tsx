@@ -11,7 +11,6 @@ interface CardData {
   imageSrc: string;
   date: string;
   location: string;
-  priceBefore: number;
   price: number;
   soldOut: boolean;
   ticketsLeft: number;
@@ -132,7 +131,6 @@ async function getGalleryData(): Promise<CardData[]> {
           imageSrc: event.imageUrl || "",
           date: event.date || "",
           location: event.venue || "מיקום לא ידוע",
-          priceBefore: maxPrice > minPrice ? maxPrice : avgOriginalPrice,
           price: minPrice || 0,
           soldOut: eventTickets.length === 0,
           ticketsLeft: eventTickets.length,

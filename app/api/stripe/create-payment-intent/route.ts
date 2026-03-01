@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   stripe,
   calculatePlatformFee,
@@ -151,6 +152,12 @@ export async function POST(request: NextRequest) {
       reservedIds.push(ticketDoc.id);
     }
     await reserveBatch.commit();
+
+    // Revalidate the event page so other viewers see the ticket is gone
+    const artist = ticketDocs[0].data()!.artist as string | undefined;
+    if (artist) {
+      revalidatePath(`/EventPage/${encodeURIComponent(artist)}`);
+    }
 
     // Resolve or create a Stripe Customer for registered buyers (enables saved cards)
     let stripeCustomerId: string | undefined;

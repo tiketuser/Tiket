@@ -18,7 +18,6 @@ interface CardData {
   date: string;
   location: string;
   ticketsLeft: number;
-  priceBefore: number;
   price: number;
   soldOut: boolean;
   timeLeft: string;
@@ -31,7 +30,7 @@ interface Event {
   date: string;
   time: string;
   venue: string;
-  imageData: string;
+  imageUrl: string;
   status: string;
 }
 
@@ -142,10 +141,9 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
             return {
               id: event.id,
               title: event.artist,
-              imageSrc: event.imageData,
+              imageSrc: event.imageUrl,
               date: event.date,
               location: event.venue,
-              priceBefore: Math.round(avgOriginalPrice),
               price: minPrice,
               soldOut: eventTickets.length === 0,
               ticketsLeft: eventTickets.length,

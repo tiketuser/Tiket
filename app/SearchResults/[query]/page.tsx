@@ -20,7 +20,6 @@ interface CardData {
   imageSrc: string;
   date: string;
   location: string;
-  priceBefore: number;
   price: number;
   soldOut: boolean;
   ticketsLeft: number;
@@ -143,7 +142,6 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
         imageSrc: event.imageData,
         date: event.date,
         location: event.venue,
-        priceBefore: Math.round(avgOriginalPrice),
         price: minPrice === maxPrice ? minPrice : minPrice,
         soldOut: eventTickets.length === 0,
         ticketsLeft: eventTickets.length,

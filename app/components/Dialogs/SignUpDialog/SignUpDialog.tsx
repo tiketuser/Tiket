@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
@@ -8,7 +7,7 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
-import { db } from "../../../../firebase";
+import { db, auth } from "../../../../firebase";
 
 import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
 import CustomInput from "../../CustomInput/CustomInput";
@@ -30,7 +29,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
 
   const handleGoogleSignUp = async () => {
     setError("");
-    const auth = getAuth();
+    if (!auth) { setError("שגיאה פנימית - נסה לרענן את הדף"); return; }
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -89,7 +88,7 @@ const SignUpDialog: React.FC<LoginDialogProps> = ({
     const password = formData.get("password") as string;
 
     try {
-      const auth = getAuth();
+      if (!auth) { setError("שגיאה פנימית - נסה לרענן את הדף"); return; }
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,

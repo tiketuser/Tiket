@@ -13,7 +13,6 @@ interface SingleCardProps {
   title: string;
   date: string;
   location: string;
-  priceBefore?: number;
   price: number;
   soldOut?: boolean;
   tag?: string;
@@ -37,7 +36,6 @@ const SingleCard: React.FC<SingleCardProps> = ({
   date,
   tag,
   location,
-  priceBefore,
   seatLocation,
   price,
   timeLeft,
@@ -147,7 +145,6 @@ const SingleCard: React.FC<SingleCardProps> = ({
         venue: location,
         seatLocation: seatLocation || location,
         price,
-        originalPrice: priceBefore,
         sellerId: sellerId || "",
       }
     : null;
@@ -160,24 +157,43 @@ const SingleCard: React.FC<SingleCardProps> = ({
         {showMobileHeader && (
           <div className="flex items-center justify-between px-1 pb-1.5">
             <span className="text-sm font-bold text-strongText">{title}</span>
-            <span className="text-xs text-mutedText">{dateInfo.day} {dateInfo.month}</span>
+            <span className="text-xs text-mutedText">
+              {dateInfo.day} {dateInfo.month}
+            </span>
           </div>
         )}
 
         {/* Modern ticket card */}
-        <div className={`relative bg-white rounded-xl shadow-medium border overflow-hidden transition-all duration-200 ${isSelected ? "border-primary ring-2 ring-primary/20" : "border-gray-100"}`}>
+        <div
+          className={`relative bg-white rounded-xl shadow-medium border overflow-hidden transition-all duration-200 ${isSelected ? "border-primary ring-2 ring-primary/20" : "border-gray-100"}`}
+        >
           {/* Top accent bar */}
           <div className="h-1 w-full bg-primary" />
 
           <div className="flex items-stretch">
             {/* Seat info */}
-            <div className="flex flex-col justify-center flex-1 px-3 py-3 min-w-0">
+            <div className="flex flex-wrap items-center gap-1 flex-1 px-3 py-3 min-w-0">
               {tag && (
-                <span className="self-start bg-highlight text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-sm leading-none mb-1">
+                <span className="inline-flex items-center bg-highlight text-white text-[10px] font-bold px-1.5 py-0.5 rounded leading-none">
                   {tag}
                 </span>
               )}
-              <span className="text-sm font-bold text-strongText leading-tight truncate">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-strongText bg-gray-100 px-1.5 py-0.5 rounded leading-none">
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="flex-shrink-0"
+                >
+                  <path d="M2 9V5a2 2 0 012-2h16a2 2 0 012 2v4" />
+                  <path d="M2 15v4a2 2 0 002 2h16a2 2 0 002-2v-4" />
+                  <path d="M6 9h12M6 15h12" />
+                </svg>
                 {seatLocation || location}
               </span>
             </div>
@@ -189,10 +205,9 @@ const SingleCard: React.FC<SingleCardProps> = ({
 
             {/* Price */}
             <div className="flex flex-col items-center justify-center px-3 py-3 flex-shrink-0 min-w-[56px]">
-              <span className="text-base font-extrabold text-strongText leading-none">₪{price}</span>
-              {priceBefore && priceBefore > price && (
-                <span className="text-[11px] text-mutedText line-through leading-tight">₪{priceBefore}</span>
-              )}
+              <span className="text-base font-extrabold text-strongText leading-none">
+                ₪{price}
+              </span>
             </div>
 
             {/* Dashed separator */}
@@ -220,13 +235,25 @@ const SingleCard: React.FC<SingleCardProps> = ({
                   <button
                     onClick={onToggleSelect}
                     className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
-                      isSelected ? "bg-primary border-primary" : "bg-white border-gray-300"
+                      isSelected
+                        ? "bg-primary border-primary"
+                        : "bg-white border-gray-300"
                     }`}
                     aria-label="בחר כרטיס"
                   >
                     {isSelected && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     )}
                   </button>
@@ -239,58 +266,43 @@ const SingleCard: React.FC<SingleCardProps> = ({
 
       {/* ===== DESKTOP LAYOUT (>= sm) ===== */}
       <div className="hidden sm:flex items-center justify-center w-full gap-3">
-        <div className="flex flex-row items-center justify-between border-b-4 border-highlight pt-4 pr-8 pb-4 pl-6 gap-4 sm:gap-6 md:gap-12 lg:gap-14 shadow-large flex-1 max-w-[700px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] min-h-[100px] md:min-h-[128px] bg-white select-none transition-transform duration-700 hover:scale-[1.01] cursor-pointer">
-          {/* Date Section */}
-          <div className="flex flex-col items-center justify-center min-w-[60px]">
-            <span className="text-text-small md:text-text-large leading-tight font-normal text-strongText">
-              {dateInfo.dayOfWeek}
+        <div className="flex flex-row items-center justify-between border-b-4 border-highlight pt-4 pr-8 pb-4 pl-6 gap-4 sm:gap-6 md:gap-12 lg:gap-14 shadow-large flex-1 max-w-[700px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] min-h-[100px] md:min-h-[128px] bg-white select-none">
+          {/* "כרטיס יחיד" label — mirrors BundleCard's count column */}
+          <div className="flex flex-col items-center justify-center min-w-[60px] flex-shrink-0">
+            <span className="text-heading-6-desktop md:text-heading-3-desktop font-bold text-strongText leading-tight">
+              כרטיס
             </span>
             <span className="text-heading-6-desktop md:text-heading-3-desktop font-bold text-strongText leading-tight">
-              {dateInfo.day}
-            </span>
-            <span className="text-text-small md:text-text-large leading-tight font-normal text-strongText">
-              {dateInfo.month}
+              יחיד
             </span>
           </div>
 
-          {/* Divider */}
-          <div className="w-[3px] h-20 md:h-24 bg-strongText flex-shrink-0"></div>
+          {/* Strong divider — mirrors BundleCard */}
+          <div className="w-[3px] h-20 md:h-24 bg-strongText flex-shrink-0" />
 
-          {/* Event Title Section */}
-          <div className="flex flex-col items-center justify-center flex-1 min-w-[80px] px-2">
+          {/* Seat location chip — mirrors BundleCard seat chips */}
+          <div className="flex flex-wrap gap-2 flex-1 min-w-0 items-center">
             {tag && (
-              <div className="flex items-center justify-center mb-1">
-                <span className="flex justify-center items-center bg-highlight px-2 w-12 h-6 md:w-14 md:h-7 text-white text-[10px] md:text-text-extra-small leading-tight font-semibold rounded-sm">
-                  {tag}
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-1.5 bg-highlight text-white text-text-extra-small md:text-text-large font-bold px-2.5 py-1 rounded-md">
+                {tag}
+              </span>
             )}
-            <span className="text-text-small md:text-heading-5-desktop lg:text-heading-4-desktop font-bold text-strongText text-center w-full">
-              {title}
-            </span>
-            {timeLeft && (
-              <div dir="rtl" className="flex items-center gap-2 mt-2">
-                <Image
-                  src={TimeLeftIcon}
-                  alt="Time Left"
-                  className="w-[12px] h-[12px] md:w-[15px] md:h-[15px]"
-                />
-                <span className="text-[10px] md:text-text-medium font-light text-mutedText">
-                  זמן לאירוע:
-                </span>
-                <span className="text-[10px] md:text-text-medium font-semibold text-primary">
-                  {timeLeft}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="w-[3px] h-20 md:h-24 bg-weakText flex-shrink-0"></div>
-
-          {/* Location Section */}
-          <div className="flex items-center justify-center text-center text-text-extra-small md:text-heading-5-desktop font-bold text-weakTextBluish min-w-[80px] md:min-w-[160px] px-1">
-            <span className="line-clamp-2 max-w-full">
+            <span className="inline-flex items-center gap-1.5 bg-gray-100 text-weakTextBluish text-text-extra-small md:text-text-large font-bold px-2.5 py-1 rounded-md">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="flex-shrink-0"
+              >
+                <path d="M2 9V5a2 2 0 012-2h16a2 2 0 012 2v4" />
+                <path d="M2 15v4a2 2 0 002 2h16a2 2 0 002-2v-4" />
+                <path d="M6 9h12M6 15h12" />
+              </svg>
               {seatLocation || location}
             </span>
           </div>
@@ -299,15 +311,10 @@ const SingleCard: React.FC<SingleCardProps> = ({
           <div className="w-[3px] h-20 md:h-24 bg-weakText flex-shrink-0"></div>
 
           {/* Price Section */}
-          <div className="flex flex-row items-center justify-center text-center gap-2 md:gap-4 min-w-[70px] md:min-w-[130px]">
+          <div className="flex flex-row items-center justify-center text-center gap-2 md:gap-4 min-w-[70px] md:min-w-[130px] flex-shrink-0">
             <span className="text-strongText text-heading-6-mobile md:text-heading-4-desktop font-extraBold leading-tight">
               ₪{price}
             </span>
-            {priceBefore && (
-              <span className="text-weakTextBluish font-bold text-text-small md:text-text-large line-through leading-tight">
-                ₪{priceBefore}
-              </span>
-            )}
             <Image
               src={PriceIcon}
               alt="Price icon"
@@ -330,13 +337,25 @@ const SingleCard: React.FC<SingleCardProps> = ({
               <button
                 onClick={onToggleSelect}
                 className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
-                  isSelected ? "bg-primary border-primary" : "bg-white border-gray-300"
+                  isSelected
+                    ? "bg-primary border-primary"
+                    : "bg-white border-gray-300"
                 }`}
                 aria-label="בחר כרטיס"
               >
                 {isSelected && (
-                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-3.5 h-3.5 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 )}
               </button>

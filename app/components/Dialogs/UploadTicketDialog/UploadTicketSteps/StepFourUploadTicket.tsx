@@ -358,7 +358,6 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
                   <MinimalCard
                     key={index}
                     price={ticket?.pricing?.askingPrice || 0}
-                    priceBefore={ticket?.ticketDetails?.originalPrice}
                     title={
                       ticket?.ticketDetails?.artist ||
                       ticket?.ticketDetails?.title || // Fallback for backwards compatibility

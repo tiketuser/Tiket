@@ -15,7 +15,7 @@ interface Event {
   date: string;
   time: string;
   venue: string;
-  imageData: string;
+  imageUrl: string;
   status: string;
 }
 
@@ -65,13 +65,13 @@ async function getServerData(): Promise<ServerData> {
           date: data.date,
           time: data.time,
           venue: data.venue,
-          imageData: data.imageData,
+          imageUrl: data.imageUrl,
           status: data.status,
         };
       })
       .filter(
         (event: any) =>
-          event.status === "active" && event.artist && event.imageData,
+          event.status === "active" && event.artist,
       ) as Event[];
 
     // Serialize tickets - convert Firestore timestamps to plain values

@@ -25,6 +25,7 @@ interface PurchasedTicket {
   seat?: string;
   isStanding?: boolean;
   amount: number;
+  ticketImage?: string;
 }
 
 function parseTicketDate(dateStr: string): Date | null {
@@ -40,6 +41,7 @@ export default function MyTicketsPage() {
   const [loading, setLoading] = useState(true);
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPast, setShowPast] = useState(true);
+  const [viewTicket, setViewTicket] = useState<PurchasedTicket | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth?.onAuthStateChanged((user) => {
@@ -86,6 +88,7 @@ export default function MyTicketsPage() {
             seat: ticket.seat,
             isStanding: ticket.isStanding,
             amount: tx.ticketPrice || tx.amount,
+            ticketImage: ticket.ticketImage || null,
           });
         })
       );
@@ -167,7 +170,8 @@ export default function MyTicketsPage() {
                     venue={ticket.venue}
                     price={ticket.amount}
                     seatLabel={seatLabel(ticket)}
-                    buttonLabel="הורד כרטיס"
+                    buttonLabel="צפייה בכרטיס"
+                    onButtonClick={() => setViewTicket(ticket)}
                   />
                 </div>
               ))
@@ -206,6 +210,7 @@ export default function MyTicketsPage() {
                     seatLabel={seatLabel(ticket)}
                     tag="עבר"
                     buttonLabel="צפייה בכרטיס"
+                    onButtonClick={() => setViewTicket(ticket)}
                   />
                 </div>
               ))
@@ -213,6 +218,54 @@ export default function MyTicketsPage() {
         </div>
       </div>
       <Footer />
+
+      {/* Ticket viewer dialog */}
+      {viewTicket && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setViewTicket(null)}
+          dir="rtl"
+        >
+          <div
+            className="bg-white rounded-xl shadow-large w-full max-w-md flex flex-col gap-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-strongText">{viewTicket.artist}</h2>
+              <button
+                onClick={() => setViewTicket(null)}
+                className="text-mutedText hover:text-strongText text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
+              {viewTicket.ticketImage ? (
+                <img
+                  src={viewTicket.ticketImage}
+                  alt="כרטיס"
+                  className="w-full h-auto object-contain max-h-[60vh]"
+                />
+              ) : (
+                <p className="text-mutedText text-sm py-8">אין תמונת כרטיס</p>
+              )}
+            </div>
+
+            {viewTicket.ticketImage && (
+              <a
+                href={viewTicket.ticketImage}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary rounded-md min-h-0 h-10 text-white text-sm font-medium w-full text-center"
+              >
+                הורד כרטיס
+              </a>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

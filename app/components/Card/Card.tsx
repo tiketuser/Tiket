@@ -23,7 +23,6 @@ interface CardProps {
   title: string;
   date: string;
   location: string;
-  priceBefore: number;
   price: number;
   soldOut: boolean;
   ticketsLeft: number;
@@ -39,7 +38,6 @@ const Card: React.FC<CardProps> = ({
   date,
   location,
   ticketsLeft,
-  priceBefore,
   price,
   soldOut,
   timeLeft,
@@ -179,8 +177,11 @@ const Card: React.FC<CardProps> = ({
         <div className="select-none transition-transform relative w-full h-full border-b-[4px] border-highlight p-3 sm:p-[32px] shadow-xlarge hover:duration-500 hover:scale-105 cursor-pointer">
           {/* Popup */}
           {showPopup && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50 text-xs sm:text-sm">
-              נוסף למועדפים!
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white/95 backdrop-blur-sm border border-red-100 text-strongText px-3 py-2 rounded-full shadow-lg text-xs font-semibold animate-fade-in-down whitespace-nowrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#dc2626" className="flex-shrink-0">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              נוסף למועדפים
             </div>
           )}
 
@@ -235,23 +236,9 @@ const Card: React.FC<CardProps> = ({
                 alt="Price icon"
                 className="h-6 w-3 sm:h-[42px] sm:w-[21px]"
               />
-              {/* Show price range if different min and max prices */}
-              {price !== priceBefore && priceBefore > price ? (
-                <>
-                  <span className="text-base sm:text-heading-4-desktop font-semibold text-strongText text-center">
-                    ₪{price} - ₪{priceBefore}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="text-xs sm:text-heading-5-mobile font-bold text-mutedText line-through">
-                    {priceBefore}
-                  </span>
-                  <span className="text-base sm:text-heading-4-desktop font-semibold text-strongText text-center">
-                    {price} ₪
-                  </span>
-                </>
-              )}
+              <span className="text-base sm:text-heading-4-desktop font-semibold text-strongText text-center">
+                {price} ₪
+              </span>
             </div>
             <div
               dir="rtl"
