@@ -28,20 +28,22 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   };
 
   return (
-    <div className="flex gap-2 xs:gap-2 sm:gap-3 flex-nowrap overflow-x-auto whitespace-nowrap min-w-0 justify-start sm:justify-center px-0.5 xs:px-1 sm:px-4 scrollbar-hide">
-      {categories.map((category) => (
-        <button
-          key={category.value}
-          onClick={() => handleCategoryClick(category.value)}
-          className={`px-2 xs:px-4 sm:px-8 py-1.5 xs:py-2 sm:py-3 rounded-btn text-sm xs:text-sm font-medium transition-all  ${
-            selectedCategory === category.value
-              ? "bg-primary text-white shadow-md"
-              : "bg-white text-gray-700 border border-gray-300 hover:border-primary hover:text-primary"
-          }`}
-        >
-          {category.label}
-        </button>
-      ))}
+    <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-100 shadow-sm py-2 sm:py-3 -mx-4 sm:-mx-10 px-4 sm:px-10">
+      <div className="flex gap-2 sm:gap-3 flex-nowrap overflow-x-auto whitespace-nowrap justify-start sm:justify-center scrollbar-hide">
+        {categories.map((category) => (
+          <button
+            key={category.value}
+            onClick={() => handleCategoryClick(category.value)}
+            className={`px-4 sm:px-10 py-1.5 sm:py-3 rounded-full text-sm sm:text-base font-medium transition-colors duration-150 shrink-0 ${
+              selectedCategory === category.value
+                ? "bg-primary text-white shadow-sm"
+                : "bg-white text-gray-600 border border-gray-200 hover:border-primary hover:text-primary"
+            }`}
+          >
+            {category.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

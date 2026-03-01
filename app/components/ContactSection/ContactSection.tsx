@@ -19,7 +19,7 @@ const ContactSection = () => {
         </p>
       </div>
       <div className="flex justify-center w-full pt-10 md:pt-14">
-        <div className="flex flex-col md:flex-row justify-center items-stretch w-full max-w-[950px] gap-6 md:gap-8 lg:gap-12">
+        <div className="flex flex-row justify-center items-start w-full max-w-[950px] gap-2 sm:gap-8 lg:gap-12">
           {/* Office */}
           <ContactItem
             icon={

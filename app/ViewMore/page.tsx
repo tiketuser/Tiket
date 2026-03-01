@@ -150,10 +150,8 @@ async function getViewMoreData() {
       })
       .filter((event) => !event.soldOut);
 
-    // Filter by categories for special sections
-    const recentlyViewed = eventCards.filter((card: any) =>
-      card.categories?.includes("recently-viewed"),
-    );
+    // recentlyViewed is resolved per-user on the client
+    const recentlyViewed: CardData[] = [];
 
     // Last minute deals: events within 2 days from now
     const now = new Date();

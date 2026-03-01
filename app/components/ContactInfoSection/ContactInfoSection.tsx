@@ -8,7 +8,7 @@ import Image from "next/image";
 
 const ContactInfoSection = () => {
   return (
-    <div className="flex flex-col text-right w-full max-w-[500px] space-y-6 px-4 lg:px-0">
+    <div className="flex flex-col text-right w-full max-w-[500px] space-y-6 px-0 lg:px-0">
       {/* כותרת ראשית */}
       <h2 className="text-heading-3-desktop lg:text-heading-2-desktop font-bold text-subtext leading-tight w-full text-center lg:text-right">
         נשמח לשמוע ממך
@@ -43,57 +43,21 @@ const ContactInfoSection = () => {
         <h6 className="text-heading-6-desktop font-bold text-subtext leading-[28px] mb-3">
           מוזמנים לעקוב אחרינו ברשתות החברתיות
         </h6>
-        <div className="flex flex-wrap justify-end gap-2 text-text-regular lg:text-text-large text-[#08050A]">
-          <span className="text-text-regular lg:text-text-large leading-8">
-            Tiket@
-          </span>
-          <Image
-            src={YoutubeIcon}
-            alt="Youtube Icon"
-            width={24}
-            height={24}
-            className="ml-2"
-          />
-          <span className="text-text-regular lg:text-text-large leading-8">
-            Tiket@
-          </span>
-          <Image
-            src={FacebookIcon}
-            alt="Facebook Icon"
-            width={24}
-            height={24}
-            className="ml-2"
-          />
-          <span className="text-text-regular lg:text-text-large leading-8">
-            Tiket@
-          </span>
-          <Image
-            src={TwitetrkIcon}
-            alt="Twitetr Icon"
-            width={24}
-            height={24}
-            className="ml-2"
-          />
-          <span className="text-text-regular lg:text-text-large leading-8">
-            Tiket@
-          </span>
-          <Image
-            src={TiktokIcon}
-            alt="Tiktok Icon"
-            width={24}
-            height={24}
-            className="ml-2"
-          />
-          <span className="text-text-regular lg:text-text-large leading-8">
-            Tiket@
-          </span>
-          <Image
-            src={InstegramIcon}
-            alt="Instegram Icon"
-            width={24}
-            height={24}
-            className="ml-2"
-          />
+        <div className="flex flex-row flex-wrap justify-end gap-x-4 gap-y-2">
+          {[
+            { src: YoutubeIcon, alt: "Youtube Icon" },
+            { src: FacebookIcon, alt: "Facebook Icon" },
+            { src: TwitetrkIcon, alt: "Twitter Icon" },
+            { src: TiktokIcon, alt: "Tiktok Icon" },
+            { src: InstegramIcon, alt: "Instagram Icon" },
+          ].map(({ src, alt }) => (
+            <div key={alt} className="flex items-center gap-1.5">
+              <span className="text-text-regular lg:text-text-large text-[#08050A] leading-6">
+                @Tiket
+              </span>
+              <Image src={src} alt={alt} width={24} height={24} />
+            </div>
+          ))}
         </div>
       </div>
     </div>

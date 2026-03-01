@@ -46,7 +46,7 @@ const ContactForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-[529px] p-4 sm:p-6">
+    <form onSubmit={handleSubmit} className="w-full max-w-[529px] px-0 py-4 sm:py-6">
       {/* שם מלא */}
       <input
         autoComplete="off"

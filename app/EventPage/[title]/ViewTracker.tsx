@@ -1,28 +1,45 @@
 "use client";
 
 import { useEffect } from "react";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, updateDoc, increment, setDoc, arrayRemove, arrayUnion, getDoc } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../../firebase";
+
+const MAX_RECENTLY_VIEWED = 20;
 
 export function ViewTracker({ eventId }: { eventId: string }) {
   useEffect(() => {
-    if (typeof window === "undefined") return; // Only run on client
+    if (!db) return;
 
-    const incrementView = async () => {
-      if (!db) {
-        console.warn("Firebase not initialized");
-        return;
-      }
+    // Increment global view count
+    const eventRef = doc(db, "events", eventId);
+    updateDoc(eventRef, { views: increment(1) }).catch(() => {});
+
+    // Save to user's recently viewed (auth optional — only for logged-in users)
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
 
       try {
-        const eventRef = doc(db, "events", eventId);
-        await updateDoc(eventRef, { views: increment(1) });
-      } catch (error) {
-        console.error("Error incrementing view:", error);
-      }
-    };
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const existing: string[] = userSnap.exists()
+          ? userSnap.data().recentlyViewed ?? []
+          : [];
 
-    incrementView();
+        // Remove if already present (to re-insert at front), then cap at max
+        const updated = [eventId, ...existing.filter((id) => id !== eventId)].slice(
+          0,
+          MAX_RECENTLY_VIEWED,
+        );
+
+        await setDoc(userRef, { recentlyViewed: updated }, { merge: true });
+      } catch {
+        // Non-critical — silently ignore
+      }
+    });
+
+    return () => unsubscribe();
   }, [eventId]);
 
   return null;

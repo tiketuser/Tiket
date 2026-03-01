@@ -80,6 +80,7 @@ const Carousel = React.forwardRef<
       setCanScrollPrev(api.canScrollPrev());
       setCanScrollNext(api.canScrollNext());
       setSelectedIndex(api.selectedScrollSnap());
+      setItemCount(api.scrollSnapList().length);
     }, []);
 
     const scrollToIndex = React.useCallback(
@@ -122,12 +123,13 @@ const Carousel = React.forwardRef<
       if (!api) {
         return;
       }
-      setItemCount(api.slideNodes().length); // Update item count
+      setItemCount(api.scrollSnapList().length);
       onSelect(api);
       api.on("reInit", onSelect);
       api.on("select", onSelect);
 
       return () => {
+        api?.off("reInit", onSelect);
         api?.off("select", onSelect);
       };
     }, [api, onSelect]);
@@ -272,42 +274,28 @@ const NavigationDotes = React.forwardRef<
 >(({ className, ...props }, ref) => {
   const { selectedIndex, scrollToIndex, itemCount } = useCarousel();
 
-  const dotsCount = 4; // Fixed number of dots
-  const slidesPerDot = Math.ceil(itemCount / dotsCount); // Number of slides per dot
-
-  // Ensure selectedIndex is normalized to an integer
-  const normalizedIndex = Math.round(selectedIndex);
-
-  const isActiveDot = (dotIndex: number) => {
-    const start = dotIndex * slidesPerDot;
-    const end = Math.min((dotIndex + 1) * slidesPerDot - 1, itemCount - 1);
-    return normalizedIndex >= start && normalizedIndex <= end;
-  };
-
-  const handleDotClick = (dotIndex: number) => {
-    const targetIndex = Math.min(dotIndex * slidesPerDot, itemCount - 1);
-    scrollToIndex(targetIndex);
-  };
+  if (itemCount <= 1) return null;
 
   return (
     <div
       ref={ref}
       className={cn(
-        "flex justify-center items-center mt-8 space-x-[12px]",
+        "flex justify-center items-center space-x-[12px]",
         className
       )}
       {...props}
     >
-      {Array.from({ length: dotsCount }).map((_, dotIndex) => (
+      {Array.from({ length: itemCount }).map((_, dotIndex) => (
         <button
           key={dotIndex}
+          aria-label={`Go to slide ${dotIndex + 1}`}
           className={cn(
             "rounded-full transition-all duration-300",
-            isActiveDot(dotIndex)
+            selectedIndex === dotIndex
               ? "w-3 h-3 bg-mutedText"
               : "w-2 h-2 bg-weakText"
           )}
-          onClick={() => handleDotClick(dotIndex)}
+          onClick={() => scrollToIndex(dotIndex)}
         />
       ))}
     </div>

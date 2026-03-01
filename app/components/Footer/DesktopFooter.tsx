@@ -34,15 +34,15 @@ const DesktopFooter = () => {
         >
           צור קשר
         </Link>
-        <a href="#" className="link link-hover text-text-medium font-light">
+        <Link href="/Terms" className="link link-hover text-text-medium font-light">
           תנאי שימוש
-        </a>
-        <a href="#" className="link link-hover text-text-medium font-light">
+        </Link>
+        <Link href="/Privacy" className="link link-hover text-text-medium font-light">
           מדיניות פרטיות
-        </a>
-        <a href="#" className="link link-hover text-text-medium font-light">
+        </Link>
+        <Link href="/HowItWorks" className="link link-hover text-text-medium font-light">
           שאלות נפוצות / עזרה
-        </a>
+        </Link>
       </div>
       <div className="relative border-t-2 border-gray-300 flex-grow mr-7"></div>
     </footer>
