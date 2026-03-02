@@ -432,6 +432,16 @@ const NavBar = () => {
                       ניהול אמנים
                     </div>
                   </Link>
+                  <Link href="/Admin/venue-providers">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                     ניהול ספקים
+                    </div>
+                  </Link>
+                  <Link href="/Admin/users">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      ניהול משתמשים
+                    </div>
+                  </Link>
 
                   <Link href="/diagnostic">
                     <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer border-t border-purple-200">
@@ -517,7 +527,7 @@ const NavBar = () => {
           className="lg:hidden fixed inset-0 top-16 bg-white z-40 flex flex-col"
           dir="rtl"
         >
-          <div className="flex-1 overflow-y-auto px-4 pt-6 pb-6 space-y-1">
+          <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-1">
 
             {/* Auth: Login + Signup (logged out) */}
             {!user && (
@@ -599,6 +609,8 @@ const NavBar = () => {
                   { href: "/approve-tickets", label: "אישור כרטיסים" },
                   { href: "/regenerate-tickets", label: "יצירת כרטיסים" },
                   { href: "/manage-artists", label: "ניהול אמנים" },
+                  { href: "/Admin/venue-providers", label: "ספקי API לאימות" },
+                  { href: "/Admin/users", label: "ניהול משתמשים" },
                   { href: "/diagnostic", label: "אבחון מערכת" },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href} onClick={() => setMobileMenuOpen(false)}>

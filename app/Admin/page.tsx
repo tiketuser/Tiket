@@ -454,6 +454,12 @@ export default function AdminPage() {
               >
                 מחשבון P&L
               </a>
+              <a
+                href="/Admin/users"
+                className="inline-block px-6 py-2 bg-secondary text-primary rounded-lg hover:bg-highlight hover:text-white transition-colors font-semibold"
+              >
+                ניהול משתמשים
+              </a>
             </div>
           </div>
 

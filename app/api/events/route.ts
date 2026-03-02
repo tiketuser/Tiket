@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const lastDocId = searchParams.get("lastDocId");
+    const category = searchParams.get("category");
     const pageSize = parseInt(searchParams.get("pageSize") ?? String(PAGE_SIZE));
 
     // Fetch tickets and cursor doc in parallel
@@ -70,6 +71,7 @@ export async function GET(request: NextRequest) {
     // Build paginated events query (client SDK functional syntax)
     const constraints = [
       where("status", "==", "active"),
+      ...(category ? [where("category", "==", category)] : []),
       limit(pageSize),
       ...(cursorDoc ? [startAfter(cursorDoc)] : []),
     ];

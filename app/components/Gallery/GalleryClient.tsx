@@ -44,6 +44,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const isFetchingRef = useRef(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isCategoryLoading, setIsCategoryLoading] = useState<boolean>(false);
   const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
   const [userFavorites, setUserFavorites] = useState<(string | number)[]>([]);
 
@@ -81,23 +82,44 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
     initializeThemes();
   }, []);
 
-  // Reset when ISR revalidates and sends new initialCards
+  // Reset when ISR revalidates and sends new initialCards (only when no category is active)
   useEffect(() => {
+    if (selectedCategory !== null) return;
     setAllCards(initialCards);
     setLastDocId(initialLastDocId);
     setHasMore(initialLastDocId !== null);
-  }, [initialCards, initialLastDocId]);
+  }, [initialCards, initialLastDocId, selectedCategory]);
 
-  // Apply theme when category changes
+  // Apply theme + fetch fresh page when category changes
   useEffect(() => {
     applyTheme(selectedCategory);
+
+    const fetchByCategory = async () => {
+      isFetchingRef.current = true;
+      setIsCategoryLoading(true);
+      try {
+        const url = selectedCategory
+          ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
+          : `/api/events`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch events for category");
+        const data = await res.json();
+        setAllCards(data.cards);
+        setLastDocId(data.lastDocId);
+        setHasMore(data.hasMore);
+      } catch (error) {
+        console.error("Error loading category events:", error);
+      } finally {
+        setIsCategoryLoading(false);
+        isFetchingRef.current = false;
+      }
+    };
+
+    fetchByCategory();
   }, [selectedCategory]);
 
-  // Derived: filtered cards for display
-  const displayedCards = useMemo(() => {
-    if (selectedCategory === null) return allCards;
-    return allCards.filter((card) => card.category === selectedCategory);
-  }, [allCards, selectedCategory]);
+  // Derived: filtered cards for display (single source of truth — server already filters)
+  const displayedCards = useMemo(() => allCards, [allCards]);
 
   // Fetch next page from API
   const fetchMore = useCallback(async () => {
@@ -105,7 +127,9 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
     isFetchingRef.current = true;
     setIsLoadingMore(true);
     try {
-      const res = await fetch(`/api/events?lastDocId=${lastDocId}`);
+      const params = new URLSearchParams({ lastDocId });
+      if (selectedCategory) params.set("category", selectedCategory);
+      const res = await fetch(`/api/events?${params}`);
       if (!res.ok) throw new Error("Failed to fetch more events");
       const data = await res.json();
       setAllCards((prev) => {
@@ -120,7 +144,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
       setIsLoadingMore(false);
       isFetchingRef.current = false;
     }
-  }, [hasMore, lastDocId]);
+  }, [hasMore, lastDocId, selectedCategory]);
 
   // Extract unique artist names for search suggestions (memoized)
   const artistNames = useMemo(
@@ -153,7 +177,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
         onEnter={handleSearch}
         suggestions={artistNames}
       />
-      {displayedCards.length === 0 && !isLoadingMore && (
+      {displayedCards.length === 0 && !isLoadingMore && !isCategoryLoading && (
         <div className="text-center text-lg text-gray-500 py-8">
           {selectedCategory === null
             ? "אין אירועים זמינים כרגע"
