@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import CustomSearchInput from "../CustomSearchInput/CustomSearchInput";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -33,12 +33,16 @@ interface CardData {
 
 interface GalleryClientProps {
   initialCards: CardData[];
+  lastDocId: string | null;
 }
 
-const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
+const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: initialLastDocId }) => {
   const router = useRouter();
-  const [cardsData, setCardsData] = useState<CardData[]>(initialCards);
-  const [allCardsData, setAllCardsData] = useState<CardData[]>(initialCards);
+  const [allCards, setAllCards] = useState<CardData[]>(initialCards);
+  const [lastDocId, setLastDocId] = useState<string | null>(initialLastDocId);
+  const [hasMore, setHasMore] = useState<boolean>(initialLastDocId !== null);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const isFetchingRef = useRef(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
   const [userFavorites, setUserFavorites] = useState<(string | number)[]>([]);
@@ -77,32 +81,51 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
     initializeThemes();
   }, []);
 
-  // Update cards when initialCards change
+  // Reset when ISR revalidates and sends new initialCards
   useEffect(() => {
-    setAllCardsData(initialCards);
-    setCardsData(initialCards);
-  }, [initialCards]);
+    setAllCards(initialCards);
+    setLastDocId(initialLastDocId);
+    setHasMore(initialLastDocId !== null);
+  }, [initialCards, initialLastDocId]);
 
-  // Filter cards by category and apply theme
+  // Apply theme when category changes
   useEffect(() => {
-    if (selectedCategory === null) {
-      // No category selected - show all events and apply default theme
-      setCardsData(allCardsData);
-      applyTheme(null); // Apply default theme (music)
-    } else {
-      // Filter by selected category
-      const filtered = allCardsData.filter(
-        (card) => card.category === selectedCategory,
-      );
-      setCardsData(filtered);
-      applyTheme(selectedCategory); // Apply category-specific theme
+    applyTheme(selectedCategory);
+  }, [selectedCategory]);
+
+  // Derived: filtered cards for display
+  const displayedCards = useMemo(() => {
+    if (selectedCategory === null) return allCards;
+    return allCards.filter((card) => card.category === selectedCategory);
+  }, [allCards, selectedCategory]);
+
+  // Fetch next page from API
+  const fetchMore = useCallback(async () => {
+    if (isFetchingRef.current || !hasMore || !lastDocId) return;
+    isFetchingRef.current = true;
+    setIsLoadingMore(true);
+    try {
+      const res = await fetch(`/api/events?lastDocId=${lastDocId}`);
+      if (!res.ok) throw new Error("Failed to fetch more events");
+      const data = await res.json();
+      setAllCards((prev) => {
+        const ids = new Set(prev.map((c) => c.id));
+        return [...prev, ...data.cards.filter((c: CardData) => !ids.has(c.id))];
+      });
+      setLastDocId(data.lastDocId);
+      setHasMore(data.hasMore);
+    } catch (error) {
+      console.error("Error loading more events:", error);
+    } finally {
+      setIsLoadingMore(false);
+      isFetchingRef.current = false;
     }
-  }, [selectedCategory, allCardsData]);
+  }, [hasMore, lastDocId]);
 
   // Extract unique artist names for search suggestions (memoized)
   const artistNames = useMemo(
-    () => [...new Set(cardsData.map((card) => card.title))],
-    [cardsData],
+    () => [...new Set(displayedCards.map((card) => card.title))],
+    [displayedCards],
   );
 
   const handleSearch = useCallback(
@@ -130,18 +153,21 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards }) => {
         onEnter={handleSearch}
         suggestions={artistNames}
       />
-      {cardsData.length === 0 && (
+      {displayedCards.length === 0 && !isLoadingMore && (
         <div className="text-center text-lg text-gray-500 py-8">
           {selectedCategory === null
             ? "אין אירועים זמינים כרגע"
             : `אין אירועי ${selectedCategory} זמינים כרגע`}
         </div>
       )}
-      {cardsData.length > 0 && (
+      {displayedCards.length > 0 && (
         <ResponsiveGallery
-          cardsData={cardsData}
+          cardsData={displayedCards}
           openLoginDialog={openLoginDialog}
           userFavorites={userFavorites}
+          onNearEnd={fetchMore}
+          isLoadingMore={isLoadingMore}
+          hasMore={hasMore}
         />
       )}
       <AuthDialog

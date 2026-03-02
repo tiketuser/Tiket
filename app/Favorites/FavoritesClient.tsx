@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -10,6 +10,8 @@ import HeartIcon from "../../public/images/Favorites/Heart.svg";
 import Image from "next/image";
 import { DateRange } from "react-day-picker";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
+
+const PAGE_SIZE = 12;
 
 interface CardData {
   imageSrc: string;
@@ -59,10 +61,10 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
   tickets,
 }) => {
   const [favoriteCards, setFavoriteCards] = useState<CardData[]>([]);
-  const [filteredCards, setFilteredCards] = useState<CardData[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [activeFilters, setActiveFilters] = useState<FilterState>({
     cities: [],
     venues: [],
@@ -81,79 +83,46 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
 
   useEffect(() => {
     if (!authChecked || !user || !db) {
-      if (authChecked) {
-        setLoading(false);
-      }
+      if (authChecked) setLoading(false);
       return;
     }
 
     const processFavorites = async () => {
       try {
         setLoading(true);
-
-        // Get user's favorite concert IDs
         const userDoc = await getDoc(doc(db as any, "users", user.uid));
-        const favorites = userDoc.exists()
-          ? userDoc.data().favorites || []
-          : [];
+        const favorites = userDoc.exists() ? userDoc.data().favorites || [] : [];
 
         if (favorites.length === 0) {
           setFavoriteCards([]);
-          setFilteredCards([]);
           setLoading(false);
           return;
         }
 
-        // Use server-fetched data instead of fetching again
-        // Filter events that are in favorites
-        const favoriteEvents = events.filter((event) =>
-          favorites.includes(event.id)
-        );
+        const favoriteEvents = events.filter((event) => favorites.includes(event.id));
 
-        // Map events to card data using server-fetched tickets
-        const eventCards: CardData[] = favoriteEvents
-          .map((event) => {
-            // Get available tickets for this event
-            const eventTickets = tickets.filter(
-              (ticket) =>
-                ticket.eventId === event.id && ticket.status === "available"
-            );
+        const eventCards: CardData[] = favoriteEvents.map((event) => {
+          const eventTickets = tickets.filter(
+            (ticket) => ticket.eventId === event.id && ticket.status === "available"
+          );
+          const prices = eventTickets.map((t) => t.askingPrice).filter((p) => p && !isNaN(p));
+          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
 
-            // Calculate price range
-            const prices = eventTickets
-              .map((t) => t.askingPrice)
-              .filter((p) => p && !isNaN(p));
-            const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-
-            // Calculate average original price
-            const originalPrices = eventTickets
-              .map((t) => t.originalPrice || t.askingPrice)
-              .filter((p) => p && !isNaN(p));
-            const avgOriginalPrice =
-              originalPrices.length > 0
-                ? originalPrices.reduce((a, b) => a + b, 0) /
-                  originalPrices.length
-                : minPrice;
-
-            // Calculate time until event
-            const timeLeft = calculateTimeLeft(event.date, event.time);
-
-            return {
-              id: event.id,
-              title: event.artist,
-              imageSrc: event.imageUrl,
-              date: event.date,
-              location: event.venue,
-              price: minPrice,
-              soldOut: eventTickets.length === 0,
-              ticketsLeft: eventTickets.length,
-              timeLeft: timeLeft,
-            };
-          })
-;
+          return {
+            id: event.id,
+            title: event.artist,
+            imageSrc: event.imageUrl,
+            date: event.date,
+            location: event.venue,
+            price: minPrice,
+            soldOut: eventTickets.length === 0,
+            ticketsLeft: eventTickets.length,
+            timeLeft: calculateTimeLeft(event.date, event.time),
+          };
+        });
 
         setFavoriteCards(eventCards);
-        setFilteredCards(eventCards);
+        setVisibleCount(PAGE_SIZE);
         setLoading(false);
       } catch (error) {
         console.error("Error processing favorites:", error);
@@ -164,62 +133,31 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
     processFavorites();
   }, [authChecked, user, events, tickets]);
 
-  // Apply filters to events
-  const applyFilters = (
-    events: CardData[],
-    filters: FilterState
-  ): CardData[] => {
-    return events.filter((event) => {
-      // Filter by cities
-      if (filters.cities.length > 0) {
-        if (!filters.cities.includes(event.location)) {
-          return false;
-        }
-      }
+  const applyFilters = (cards: CardData[], filters: FilterState): CardData[] => {
+    return cards.filter((event) => {
+      if (filters.cities.length > 0 && !filters.cities.includes(event.location)) return false;
+      if (filters.venues.length > 0 && !filters.venues.includes(event.location)) return false;
 
-      // Filter by venues
-      if (filters.venues.length > 0) {
-        if (!filters.venues.includes(event.location)) {
-          return false;
-        }
-      }
-
-      // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
         const normalizedDate = event.date.replace(/\./g, "/");
-        const eventDate = new Date(
-          normalizedDate.split("/").reverse().join("-")
-        );
+        const eventDate = new Date(normalizedDate.split("/").reverse().join("-"));
         const fromDate = new Date(filters.dateRange.from);
         fromDate.setHours(0, 0, 0, 0);
         const toDate = new Date(filters.dateRange.to);
         toDate.setHours(23, 59, 59, 999);
-
-        if (eventDate < fromDate || eventDate > toDate) {
-          return false;
-        }
+        if (eventDate < fromDate || eventDate > toDate) return false;
       }
 
-      // Filter by price range
-      if (
-        event.price < filters.priceRange[0] ||
-        event.price > filters.priceRange[1]
-      ) {
-        return false;
-      }
-
+      if (event.price < filters.priceRange[0] || event.price > filters.priceRange[1]) return false;
       return true;
     });
   };
 
-  // Handle filter changes
-  const handleFilterChange = (filters: FilterState) => {
+  const handleFilterChange = useCallback((filters: FilterState) => {
     setActiveFilters(filters);
-    const filtered = applyFilters(favoriteCards, filters);
-    setFilteredCards(filtered);
-  };
+    setVisibleCount(PAGE_SIZE);
+  }, []);
 
-  // Check if any filters are active
   const hasActiveFilters =
     activeFilters.cities.length > 0 ||
     activeFilters.venues.length > 0 ||
@@ -227,10 +165,15 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
     activeFilters.priceRange[0] !== 0 ||
     activeFilters.priceRange[1] !== 1000;
 
-  // Use filtered cards if filters are active, otherwise use all cards
-  const displayCards = hasActiveFilters ? filteredCards : favoriteCards;
+  const filteredCards = hasActiveFilters ? applyFilters(favoriteCards, activeFilters) : favoriteCards;
+  const displayCards = filteredCards.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredCards.length;
 
-  const openLoginDialog = () => {};
+  const loadMore = useCallback(() => {
+    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredCards.length));
+  }, [filteredCards.length]);
+
+  const openLoginDialog = useCallback(() => {}, []);
 
   return (
     <div className="shadow-small-inner py-6 sm:py-14 px-4 sm:px-24">
@@ -241,9 +184,7 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
           <Image src={HeartIcon} alt="Example Icon" width={22} height={20} />
         }
         subText="אלו המופעים ששמרת במועדפים"
-        artistNames={Array.from(
-          new Set(favoriteCards.map((card) => card.title))
-        )}
+        artistNames={Array.from(new Set(favoriteCards.map((card) => card.title)))}
         onFilterChange={handleFilterChange}
       />
       {!authChecked || loading ? (
@@ -267,6 +208,9 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
         <RegularGallery
           cardsData={displayCards}
           openLoginDialog={openLoginDialog}
+          onNearEnd={loadMore}
+          isLoadingMore={false}
+          hasMore={hasMore}
         />
       )}
     </div>

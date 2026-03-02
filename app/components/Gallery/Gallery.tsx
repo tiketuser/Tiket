@@ -1,5 +1,6 @@
 import React from "react";
 import { collection, getDocs, query, where } from "../../../firebase";
+import { limit } from "firebase/firestore";
 import { db } from "../../../firebase";
 import GalleryClient from "./GalleryClient";
 import { calculateTimeLeft } from "../../../utils/timeCalculator";
@@ -38,20 +39,23 @@ interface Ticket {
   status: string;
 }
 
-async function getGalleryData(): Promise<CardData[]> {
+const INITIAL_PAGE_SIZE = 12;
+
+async function getGalleryData(): Promise<{ cards: CardData[]; lastDocId: string | null }> {
   try {
     // Check if db is initialized
     if (!db) {
       console.error("Firebase database not initialized");
-      return [];
+      return { cards: [], lastDocId: null };
     }
 
-    // Fetch only active events and available tickets in parallel on the server
+    // Fetch first page of active events and all available tickets in parallel
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
       getDocs(
         query(
           collection(db as any, "events"),
           where("status", "==", "active"),
+          limit(INITIAL_PAGE_SIZE),
         ),
       ),
       getDocs(
@@ -139,17 +143,18 @@ async function getGalleryData(): Promise<CardData[]> {
       })
       .filter((event) => !event.soldOut);
 
-    return eventCards;
+    const lastDoc = eventsSnapshot.docs[eventsSnapshot.docs.length - 1];
+    return { cards: eventCards, lastDocId: lastDoc?.id ?? null };
   } catch (error) {
     console.error("Error fetching gallery data:", error);
-    return [];
+    return { cards: [], lastDocId: null };
   }
 }
 
 const Gallery = async () => {
-  const initialCards = await getGalleryData();
+  const { cards, lastDocId } = await getGalleryData();
 
-  return <GalleryClient initialCards={initialCards} />;
+  return <GalleryClient initialCards={cards} lastDocId={lastDocId} />;
 };
 
 export default Gallery;

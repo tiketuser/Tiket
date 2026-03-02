@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import CustomSearchInput from "../components/CustomSearchInput/CustomSearchInput";
@@ -38,7 +38,8 @@ interface FilterState {
 
 interface ViewMoreClientProps {
   initialCards: CardData[];
-  recentlyViewed: CardData[]; // server-passed (empty — resolved client-side)
+  lastDocId: string | null;
+  recentlyViewed: CardData[];
   lastMinuteDeals: CardData[];
   recommendations: CardData[];
 }
@@ -47,12 +48,16 @@ type SectionKey = "all" | "recentlyViewed" | "lastMinute" | "recommendations";
 
 const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
   initialCards,
+  lastDocId: initialLastDocId,
   lastMinuteDeals,
   recommendations,
 }) => {
   const router = useRouter();
-  const [cardsData] = useState<CardData[]>(initialCards);
-  const [filteredCards, setFilteredCards] = useState<CardData[]>(initialCards);
+  const [allCards, setAllCards] = useState<CardData[]>(initialCards);
+  const [lastDocId, setLastDocId] = useState<string | null>(initialLastDocId);
+  const [hasMore, setHasMore] = useState<boolean>(initialLastDocId !== null);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const isFetchingRef = useRef(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionKey>("all");
   const [recentlyViewed, setRecentlyViewed] = useState<CardData[]>([]);
@@ -63,7 +68,37 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
     priceRange: [0, 1000],
   });
 
-  const openLoginDialog = () => {};
+  const openLoginDialog = useCallback(() => {}, []);
+
+  // Reset when ISR revalidates
+  useEffect(() => {
+    setAllCards(initialCards);
+    setLastDocId(initialLastDocId);
+    setHasMore(initialLastDocId !== null);
+  }, [initialCards, initialLastDocId]);
+
+  // Fetch next page from API
+  const fetchMore = useCallback(async () => {
+    if (isFetchingRef.current || !hasMore || !lastDocId) return;
+    isFetchingRef.current = true;
+    setIsLoadingMore(true);
+    try {
+      const res = await fetch(`/api/events?lastDocId=${lastDocId}`);
+      if (!res.ok) throw new Error("Failed to fetch more events");
+      const data = await res.json();
+      setAllCards((prev) => {
+        const ids = new Set(prev.map((c) => c.id));
+        return [...prev, ...data.cards.filter((c: CardData) => !ids.has(c.id))];
+      });
+      setLastDocId(data.lastDocId);
+      setHasMore(data.hasMore);
+    } catch (error) {
+      console.error("Error loading more events:", error);
+    } finally {
+      setIsLoadingMore(false);
+      isFetchingRef.current = false;
+    }
+  }, [hasMore, lastDocId]);
 
   // Resolve the user's recently viewed events from their Firestore doc
   useEffect(() => {
@@ -80,12 +115,9 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
         const recentIds: string[] = userSnap.exists()
           ? userSnap.data().recentlyViewed ?? []
           : [];
-
-        // Map IDs back to card data, preserving recency order
         const cards = recentIds
           .map((id) => initialCards.find((c) => c.id === id))
           .filter((c): c is CardData => c !== undefined);
-
         setRecentlyViewed(cards);
       } catch {
         setRecentlyViewed([]);
@@ -128,30 +160,15 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
     });
   };
 
-  const handleFilterChange = (filters: FilterState) => {
+  const handleFilterChange = useCallback((filters: FilterState) => {
     setActiveFilters(filters);
-    setFilteredCards(applyFilters(cardsData, filters, selectedCategory));
-  };
+  }, []);
 
-  useEffect(() => {
-    setFilteredCards(applyFilters(cardsData, activeFilters, selectedCategory));
-  }, [selectedCategory, cardsData, activeFilters]);
-
-  const artistNames = [...new Set(cardsData.map((card) => card.title))];
-
-  const handleSearch = (query: string) => {
-    router.push(`/SearchResults?query=${encodeURIComponent(query)}`);
-  };
-
-  const hasActiveFilters =
-    selectedCategory !== null ||
-    activeFilters.cities.length > 0 ||
-    activeFilters.venues.length > 0 ||
-    activeFilters.dateRange !== undefined ||
-    activeFilters.priceRange[0] !== 0 ||
-    activeFilters.priceRange[1] !== 1000;
-
-  const displayCards = hasActiveFilters ? filteredCards : cardsData;
+  // Derived: filtered cards for display in the "all" tab
+  const displayCards = (() => {
+    const filtered = applyFilters(allCards, activeFilters, selectedCategory);
+    return filtered;
+  })();
 
   const tabs: { key: SectionKey; label: string; cards: CardData[] }[] = [
     { key: "all", label: "כל האירועים", cards: displayCards },
@@ -167,6 +184,12 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
   ];
 
   const currentTab = tabs.find((t) => t.key === activeSection) ?? tabs[0];
+
+  const artistNames = [...new Set(allCards.map((card) => card.title))];
+
+  const handleSearch = (query: string) => {
+    router.push(`/SearchResults?query=${encodeURIComponent(query)}`);
+  };
 
   return (
     <div dir="rtl" className="min-h-dvh flex flex-col bg-white">
@@ -204,7 +227,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
       </div>
 
       {/* Section tabs */}
-      {cardsData.length > 0 && tabs.length > 1 && (
+      {allCards.length > 0 && tabs.length > 1 && (
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-10 flex gap-1 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => (
@@ -233,7 +256,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
       {/* Content */}
       <main className="flex-1 px-4 sm:px-10 pb-16 max-w-[80%] mx-auto w-full">
 
-        {cardsData.length === 0 && (
+        {allCards.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-300">
               <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -244,7 +267,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
           </div>
         )}
 
-        {cardsData.length > 0 && currentTab.cards.length === 0 && (
+        {allCards.length > 0 && currentTab.cards.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-300">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -254,11 +277,14 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
           </div>
         )}
 
-        {cardsData.length > 0 && currentTab.cards.length > 0 && (
+        {allCards.length > 0 && currentTab.cards.length > 0 && (
           <ResponsiveGallery
             cardsData={currentTab.cards}
             openLoginDialog={openLoginDialog}
             hideViewMore
+            onNearEnd={activeSection === "all" ? fetchMore : () => {}}
+            isLoadingMore={activeSection === "all" ? isLoadingMore : false}
+            hasMore={activeSection === "all" ? hasMore : false}
           />
         )}
       </main>

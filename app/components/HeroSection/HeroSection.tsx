@@ -64,12 +64,14 @@ const HeroSection = () => {
         <Image
           src={ButtonStar}
           alt="bottom star"
+          priority
           className="absolute right-2 xs:right-4 top-20 sm:top-[178px] sm:right-[70px] z-0 h-[10.62px] w-[9.91px] sm:h-[16.53px] sm:w-[14.42px]"
         />
 
         <Image
           src={ButtonStar}
           alt="top star"
+          priority
           className="absolute top-7 right-[87px] sm:top-14 sm:right-[133px] z-0 h-[7.62px] w-[6.91px] sm:h-[13.53px] sm:w-[11.42px]"
         />
       </div>

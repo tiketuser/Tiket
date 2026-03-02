@@ -1,8 +1,10 @@
 import React from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "../../firebase";
 import ViewMoreClient from "./ViewMoreClient";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
+
+const INITIAL_PAGE_SIZE = 12;
 
 // Use ISR - revalidate every 30 seconds
 export const revalidate = 30;
@@ -48,6 +50,7 @@ async function getViewMoreData() {
       console.error("Firebase database not initialized");
       return {
         allCards: [],
+        lastDocId: null,
         recentlyViewed: [],
         lastMinuteDeals: [],
         recommendations: [],
@@ -60,6 +63,7 @@ async function getViewMoreData() {
         query(
           collection(db as any, "events"),
           where("status", "==", "active"),
+          limit(INITIAL_PAGE_SIZE),
         ),
       ),
       getDocs(
@@ -176,8 +180,11 @@ async function getViewMoreData() {
       card.categories?.includes("recommendations"),
     );
 
+    const lastDoc = eventsSnapshot.docs[eventsSnapshot.docs.length - 1];
+
     return {
       allCards: eventCards,
+      lastDocId: lastDoc?.id ?? null,
       recentlyViewed,
       lastMinuteDeals,
       recommendations,
@@ -186,6 +193,7 @@ async function getViewMoreData() {
     console.error("Error fetching view more data:", error);
     return {
       allCards: [],
+      lastDocId: null,
       recentlyViewed: [],
       lastMinuteDeals: [],
       recommendations: [],
@@ -199,6 +207,7 @@ const ViewMore = async () => {
   return (
     <ViewMoreClient
       initialCards={data.allCards}
+      lastDocId={data.lastDocId}
       recentlyViewed={data.recentlyViewed}
       lastMinuteDeals={data.lastMinuteDeals}
       recommendations={data.recommendations}
