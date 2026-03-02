@@ -1,6 +1,8 @@
 // app/api/ocr-extract/route.ts
 import { NextResponse } from "next/server";
 import vision from "@google-cloud/vision";
+import { readBarcodes } from "zxing-wasm/reader";
+import sharp from "sharp";
 
 // Use Application Default Credentials (ADC) — works automatically on Cloud Run
 // via the attached service account, and locally via GOOGLE_APPLICATION_CREDENTIALS
@@ -65,6 +67,19 @@ const GEMINI_MODELS = [
   "gemini-1.5-flash",
 ];
 
+
+// Convert ALL CAPS English names to Title Case; leave Hebrew untouched
+function normalizeName(name: string | null): string | null {
+  if (!name) return null;
+  // Only apply if the string is all uppercase English letters (and spaces/punctuation)
+  if (/^[A-Z][A-Z\s\-&'.]+$/.test(name.trim())) {
+    return name
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return name;
+}
+
 async function analyzeWithGemini(text: string): Promise<TicketData> {
   // Try each model; if one hits quota limits, try the next
   for (const model of GEMINI_MODELS) {
@@ -96,18 +111,49 @@ async function analyzeWithModel(text: string, model: string): Promise<TicketData
         contents: [{
           parts: [{
             text: `
-              Extract ticket information from this text.
-              Return a JSON object (no markdown, no backticks) with these fields:
-              - artist: name of performer or event (string or null)
-              - category: classify the event type. Must be one of: "מוזיקה" (music concerts), "תיאטרון" (theater/plays), "סטנדאפ" (stand-up comedy), "ילדים" (kids shows), "ספורט" (sports events). Default to "מוזיקה" if unsure.
-              - price: numeric value only (number or null)
-            - venue: location name (string or null)
-            - date: event date in format "DD MMM" or "DD/MM/YYYY" (string or null)
-            - time: event time in format "HH:MM" (string or null)
-            - barcode: ticket barcode/serial number if visible (string or null)
-            - seatInfo: object with seat, row, section (all string or null)
+              Extract ticket information from this Israeli event ticket text (may be in Hebrew, English, or mixed).
+              Return ONLY a raw JSON object (no markdown, no backticks, no explanation) with exactly these fields:
 
-            Input text:
+              - artist: the main event or performer name (string or null).
+                Prefer the largest/most prominent text. For sports, use "Team A vs Team B" format.
+                If the name is in ALL CAPS (e.g. "OMER ADAM"), convert it to title case (e.g. "Omer Adam").
+                Do not include the venue or date in this field.
+
+              - category: classify the event. Must be exactly one of:
+                "מוזיקה" (concerts, music events),
+                "תיאטרון" (theater, opera, dance, musicals),
+                "סטנדאפ" (stand-up comedy, improv),
+                "ילדים" (children's shows),
+                "ספורט" (sports: football, basketball, tennis, etc.).
+                Default to "מוזיקה" if unclear.
+
+              - price: the face value / original ticket price as a number only (number or null).
+                Look for labels like: מחיר, מחיר כרטיס, סכום, ₪, NIS.
+                Ignore service fees or totals if multiple prices appear — take the base ticket price.
+
+              - venue: the venue/arena/stadium name only (string or null).
+                Look for labels like: מיקום, אולם, אצטדיון, היכל.
+                Do not include the city name unless it is part of the official venue name.
+
+              - date: the event date as "DD/MM/YYYY" (string or null).
+                Israeli tickets always use DD/MM/YYYY or DD.MM.YY format (day first, then month).
+                NEVER swap day and month — if the ticket shows "6.8.25" the date is 06/08/2025, NOT 08/06/2025.
+                If the year is 2 digits (e.g. "25"), expand to full year (e.g. "2025").
+                Look for labels like: תאריך, דצמ, ינו, פבר, מרץ, אפר, מאי, יונ, יול, אוג, ספט, אוקט, נוב, or month names in English.
+                If only day and month are visible (no year), infer the most upcoming future year.
+
+              - time: the event start time as "HH:MM" (string or null).
+                Look for labels like: שעה, כניסה, התחלה. Use 24-hour format.
+
+              - barcode: always return null.
+
+              - seatInfo: object with these three fields (all string or null):
+                - seat: seat/chair number. Hebrew labels: כיסא, מושב, מקום. Return the value only (e.g. "12").
+                - row: row number or letter. Hebrew labels: שורה, טור. Return the value only (e.g. "5" or "C").
+                - section: section, zone, or stand. Hebrew labels: אזור, יציע, טריבונה, גזרה, מרפסת, קומה. English: "Floor", "VIP", "A", "B". Return the value only (e.g. "יציע מזרח" or "VIP").
+                If the ticket says עמידה or standing, set all three to null.
+
+              Input text:
               ${text}
             `
           }]
@@ -137,13 +183,13 @@ async function analyzeWithModel(text: string, model: string): Promise<TicketData
     try {
       const parsed = JSON.parse(jsonString);
       return {
-        artist: parsed.artist || null,
+        artist: normalizeName(parsed.artist || null),
         category: parsed.category || "מוזיקה",
         price: typeof parsed.price === "number" ? parsed.price : null,
         venue: parsed.venue || null,
         date: parsed.date || null,
         time: parsed.time || null,
-        barcode: parsed.barcode || null,
+        barcode: null, // always null; barcode detected visually via zxing-wasm
         seatInfo: {
           seat: parsed.seatInfo?.seat || null,
           row: parsed.seatInfo?.row || null,
@@ -186,30 +232,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No text detected" }, { status: 400 });
     }
 
-    // Step 2: Detect barcodes using Vision API
+    // Step 2: Detect and decode visual barcodes/QR codes using zxing-wasm
+    // Supports QR Code, Code-128, EAN-13, PDF-417, and more — no native deps
     let detectedBarcode: string | null = null;
     try {
-      const [barcodeResult] = await visionClient.textDetection(buffer);
-      
-      // Try to find barcode in the detected text
-      // Barcodes are typically long numeric strings (12-13 digits for EAN/UPC, or alphanumeric)
-      const barcodePatterns = [
-        /\b\d{12,13}\b/g,           // EAN-13, UPC-A (12-13 digits)
-        /\b[A-Z0-9]{8,20}\b/g,      // Alphanumeric codes (8-20 chars)
-        /\b\d{8,}\b/g,              // Any long numeric string (8+ digits)
-      ];
+      // sharp decodes the image to raw RGBA pixels that zxing-wasm can process
+      const { data, info } = await sharp(buffer)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
 
-      for (const pattern of barcodePatterns) {
-        const matches = fullText.match(pattern);
-        if (matches && matches.length > 0) {
-          // Take the longest match as it's likely the barcode
-          detectedBarcode = matches.reduce((a, b) => a.length > b.length ? a : b);
-          console.log(`✅ Detected barcode: ${detectedBarcode}`);
-          break;
-        }
+      const imageData = {
+        data: new Uint8ClampedArray(data.buffer),
+        width: info.width,
+        height: info.height,
+      };
+
+      const results = await readBarcodes(imageData as ImageData, {
+        tryHarder: true,
+        formats: [],  // empty = try all formats
+      });
+
+      if (results.length > 0 && results[0].isValid) {
+        detectedBarcode = results[0].text
+          .replace(/<NUL>/gi, "")
+          .trim();
+        console.log(`✅ Detected visual barcode: ${detectedBarcode} (format: ${results[0].format})`);
+      } else {
+        console.log("No visual barcode detected in image");
       }
     } catch (error) {
-      console.warn("Barcode detection failed, continuing without barcode:", error);
+      console.warn("Visual barcode detection failed, continuing without barcode:", error);
     }
 
     // Step 3: Analyze with Gemini (with retry logic)

@@ -113,7 +113,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
           row: data.seatInfo?.row || "",
           section: data.seatInfo?.section || "",
           price: data.price || null,
-          barcode: data.barcode || null, // Add barcode to ticket details
+          barcode: data.barcode ? data.barcode.replace(/<NUL>/gi, "").trim() || null : null,
         },
         isProcessing: false,
       });

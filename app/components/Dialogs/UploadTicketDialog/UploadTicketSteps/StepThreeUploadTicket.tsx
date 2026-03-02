@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import CustomInput from "@/app/components/CustomInput/CustomInput";
 import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
+import { Calendar } from "@/components/ui/calendar";
+import DateIcon from "@/public/images/SearchResult/Date Icon.svg";
+import VenueIcon from "@/public/images/SearchResult/Venue Icon.svg";
 
 interface ExtendedTicketDetails {
   artist: string;
@@ -47,21 +51,24 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   const [dateError, setDateError] = useState<string>("");
   const [timeError, setTimeError] = useState<string>("");
 
-  // Convert DD/MM/YYYY → YYYY-MM-DD for <input type="date">
-  const toInputDate = (ddmmyyyy: string): string => {
-    if (!ddmmyyyy) return "";
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  // Parse DD/MM/YYYY → Date object
+  const parseDate = (ddmmyyyy: string): Date | undefined => {
+    if (!ddmmyyyy) return undefined;
     const parts = ddmmyyyy.split(/[\/\.]/);
-    if (parts.length !== 3) return "";
+    if (parts.length !== 3) return undefined;
     const [d, m, y] = parts;
-    if (!d || !m || !y) return "";
-    return `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    const fullYear = y.length <= 2 ? 2000 + parseInt(y) : parseInt(y);
+    const date = new Date(fullYear, parseInt(m) - 1, parseInt(d));
+    return isNaN(date.getTime()) ? undefined : date;
   };
 
-  // Convert YYYY-MM-DD → DD/MM/YYYY (internal format)
-  const fromInputDate = (yyyymmdd: string): string => {
-    if (!yyyymmdd) return "";
-    const [y, m, d] = yyyymmdd.split("-");
-    if (!y || !m || !d) return "";
+  // Format Date → DD/MM/YYYY
+  const formatDate = (date: Date): string => {
+    const d = String(date.getDate()).padStart(2, "0");
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const y = String(date.getFullYear());
     return `${d}/${m}/${y}`;
   };
 
@@ -84,7 +91,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         seat: details.seat || "",
         row: details.row || "",
         section: details.section || "",
-        barcode: details.barcode || "",
+        barcode: details.barcode ? details.barcode.replace(/<NUL>/gi, "").trim() : "",
         isStanding: details.isStanding || false,
       };
 
@@ -456,6 +463,11 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               placeholder="עומר אדם, מכבי תל אביב נגד הפועל"
               value={editableDetails.artist}
               onChange={(e) => handleDetailChange("artist", e.target.value)}
+              image={
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+              }
             />
           </div>
 
@@ -493,7 +505,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             )}
           </div>
 
-          <div>
+          <div className="relative">
             <label
               className={`block text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 ${
                 dateError ? "text-red-600" : "text-gray-700"
@@ -501,16 +513,34 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             >
               תאריך *
             </label>
-            <input
-              type="date"
-              id="date"
-              name="date"
-              value={toInputDate(editableDetails.date)}
-              onChange={(e) => handleDetailChange("date", fromInputDate(e.target.value))}
-              className={`w-full px-3 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary ${
-                dateError ? "border-red-400 ring-1 ring-red-400" : "border-gray-300"
+            <button
+              type="button"
+              onClick={() => setCalendarOpen((o) => !o)}
+              className={`w-full px-4 py-3 text-sm border rounded-lg bg-white text-right focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between gap-2 ${
+                dateError ? "border-red-400" : "border-gray-300"
               }`}
-            />
+            >
+              <span className={editableDetails.date ? "text-gray-900" : "text-gray-400"}>
+                {editableDetails.date || "בחר תאריך"}
+              </span>
+              <Image src={DateIcon} alt="date" width={16} height={16} className="flex-shrink-0" />
+            </button>
+            {calendarOpen && (
+              <div className="absolute top-full mt-1 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg">
+                <Calendar
+                  mode="single"
+                  selected={parseDate(editableDetails.date)}
+                  onSelect={(date) => {
+                    if (date) {
+                      handleDetailChange("date", formatDate(date));
+                    }
+                    setCalendarOpen(false);
+                  }}
+                  defaultMonth={parseDate(editableDetails.date) || new Date()}
+                  initialFocus
+                />
+              </div>
+            )}
             {dateError && (
               <div className="text-[10px] text-red-600 font-medium mt-0.5">
                 ⚠️ {dateError}
@@ -530,6 +560,11 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               value={editableDetails.time}
               onChange={(e) => handleDetailChange("time", e.target.value)}
               error={!!timeError}
+              image={
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
             />
             {timeError && (
               <div className="right-0 text-[10px] sm:text-xs text-red-600 font-medium">
@@ -551,6 +586,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               placeholder="היכל מנורה מבטחים"
               value={editableDetails.venue}
               onChange={(e) => handleDetailChange("venue", e.target.value)}
+              image={<Image src={VenueIcon} alt="venue" width={16} height={16} />}
             />
           </div>
 
@@ -565,21 +601,10 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               id="barcode"
               name="barcode"
               width="w-full"
-              placeholder={
-                editableDetails.barcode
-                  ? "ברקוד זוהה אוטומטית ✅"
-                  : "לא זוהה ברקוד"
-              }
+              placeholder="לא זוהה ברקוד"
               value={editableDetails.barcode}
               onChange={(e) => handleDetailChange("barcode", e.target.value)}
             />
-            {editableDetails.barcode && (
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <span className="text-xs text-green-600 font-semibold bg-green-50 px-2 py-1 rounded">
-                  ✅ זוהה
-                </span>
-              </div>
-            )}
           </div>
           </div>
         </div>

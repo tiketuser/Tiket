@@ -48,7 +48,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
           error
             ? "border-red-500 focus:border-red-500"
             : "border-gray-300 focus:border-gray-300"
-        } text-xs sm:text-text-medium rtl focus:outline-none focus:ring-0 placeholder:text-xs placeholder:sm:text-text-medium`}
+        } text-sm sm:text-base rtl focus:outline-none focus:ring-0 placeholder:text-sm placeholder:sm:text-base`}
       />
     </div>
   );
