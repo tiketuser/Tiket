@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
@@ -30,12 +30,48 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
 }) => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  // null = still checking, true = show form, false = confirmed has details
+  const [showPaymentForm, setShowPaymentForm] = useState<boolean | null>(null);
+  const [paymentDetailsConfirmed, setPaymentDetailsConfirmed] = useState(false);
   const [bankName, setBankName] = useState("");
   const [branchNumber, setBranchNumber] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountHolderName, setAccountHolderName] = useState("");
   const [savingDetails, setSavingDetails] = useState(false);
+
+  // Check payment details on mount — blocks rendering until resolved
+  useEffect(() => {
+    const checkOnMount = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        setShowPaymentForm(false);
+        return;
+      }
+
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch("/api/seller/payment-details", {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.hasPaymentDetails) {
+            setPaymentDetailsConfirmed(true);
+            setShowPaymentForm(false);
+          } else {
+            setShowPaymentForm(true);
+          }
+        } else {
+          // Can't confirm — let user proceed, publish will re-check
+          setShowPaymentForm(false);
+        }
+      } catch {
+        setShowPaymentForm(false);
+      }
+    };
+    checkOnMount();
+  }, []);
 
   const checkPaymentAndPublish = async () => {
     const auth = getAuth();
@@ -45,6 +81,17 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
       setPaymentError("יש להתחבר לחשבון כדי לפרסם כרטיסים");
       return;
     }
+
+    // Already confirmed on mount — go straight to publish
+    if (paymentDetailsConfirmed) {
+      if (publishAllTickets) {
+        await publishAllTickets();
+      }
+      return;
+    }
+
+    // Form is already showing or still loading — don't proceed
+    if (showPaymentForm === true || showPaymentForm === null) return;
 
     setPaymentLoading(true);
     setPaymentError(null);
@@ -56,22 +103,24 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
         headers: { Authorization: `Bearer ${idToken}` },
       });
 
+      setPaymentLoading(false);
+
       if (res.ok) {
         const data = await res.json();
         if (data.hasPaymentDetails) {
-          setPaymentLoading(false);
+          setPaymentDetailsConfirmed(true);
           if (publishAllTickets) {
             await publishAllTickets();
           }
           return;
         }
+        setShowPaymentForm(true);
+      } else {
+        setPaymentError("שגיאה בבדיקת פרטי התשלום. נסה שוב.");
       }
-
-      setPaymentLoading(false);
-      setShowPaymentForm(true);
     } catch {
       setPaymentLoading(false);
-      setShowPaymentForm(true);
+      setPaymentError("שגיאת רשת. בדוק את החיבור ונסה שוב.");
     }
   };
 
@@ -113,6 +162,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
       }
 
       setShowPaymentForm(false);
+      setPaymentDetailsConfirmed(true);
       setSavingDetails(false);
 
       if (publishAllTickets) {
@@ -127,6 +177,15 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
   const handlePublish = async () => {
     await checkPaymentAndPublish();
   };
+
+  // Still checking payment status — show nothing until resolved
+  if (showPaymentForm === null) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="loading loading-spinner loading-md text-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 sm:px-0">
@@ -267,7 +326,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
                     <select
                       value={bankName}
                       onChange={(e) => setBankName(e.target.value)}
-                      className="w-full h-[44px] border border-gray-300 rounded-lg px-3 text-sm bg-white"
+                      className="w-full h-[44px] border border-gray-300 rounded-lg px-3 text-sm bg-white relative z-10 pointer-events-auto"
                     >
                       <option value="">בחר בנק</option>
                       {ISRAELI_BANKS.map((bank) => (

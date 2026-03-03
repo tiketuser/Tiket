@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
+import AuthDialog from "../AuthDialog/AuthDialog";
 import ProgressBar from "../ProgressBar/ProgressBar";
 
 import StepOneUploadTicket from "./UploadTicketSteps/StepOneUploadTicket";
 import StepTwoUploadTicket from "./UploadTicketSteps/StepTwoUploadTicket";
 import StepThreeUploadTicket from "./UploadTicketSteps/StepThreeUploadTicket";
-import StepFourUploadTicket from "./UploadTicketSteps/StepFourUploadTicket";
+import StepFourBankDetails from "./UploadTicketSteps/StepFourBankDetails";
+import StepFiveUploadTicket from "./UploadTicketSteps/StepFiveUploadTicket";
 import { TicketData } from "./UploadTicketSteps/UploadTicketInterface.types";
 
 // Firebase imports
@@ -35,12 +37,18 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
 }) => {
   const [step, setStep] = useState(1);
   const [ticketData, setTicketData] = useState<TicketData>({});
-  const [savedTickets, setSavedTickets] = useState<TicketData[]>([]); // Store multiple tickets
+  const [savedTickets, setSavedTickets] = useState<TicketData[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
-  const [publishWarning, setPublishWarning] = useState<string | null>(null); // New warning state
+  const [publishWarning, setPublishWarning] = useState<string | null>(null);
   const [canSplit, setCanSplit] = useState<boolean>(true);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  // true = user already has bank details configured (bank step is skipped entirely)
+  const [bankStepSkipped, setBankStepSkipped] = useState(false);
+  // Pending ticket data to save once auth completes
+  const pendingProceedData = useRef<TicketData | null>(null);
 
   // Save current ticket and add another
   const saveAndAddAnother = (updatedTicketData?: TicketData) => {
@@ -55,55 +63,95 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     setStep(1);
   };
 
-  // Move to step 4 (final review) with current ticket
-  const proceedToReview = (updatedTicketData?: TicketData) => {
-    // Use provided data or current ticketData
-    const dataToSave = updatedTicketData || ticketData;
-    console.log("===== proceedToReview CALLED =====");
-    console.log(
-      "proceedToReview - updatedTicketData received:",
-      updatedTicketData,
-    );
-    console.log("proceedToReview - current ticketData state:", ticketData);
-    console.log(
-      "proceedToReview - dataToSave (will be added to savedTickets):",
-      dataToSave,
-    );
-    console.log(
-      "proceedToReview - dataToSave.ticketDetails.row:",
-      dataToSave?.ticketDetails?.row,
-    );
-    console.log("===================================");
-    // Save current ticket to the list
-    setSavedTickets((prev) => {
-      const newSavedTickets = [...prev, dataToSave];
-      console.log("savedTickets after adding:", newSavedTickets);
-      return newSavedTickets;
-    });
-    // Move to step 4
+  // Check if user has bank details configured, then go to the right step
+  const goToNextAfterTicket = useCallback(async (dataToSave: TicketData) => {
+    setSavedTickets((prev) => [...prev, dataToSave]);
+    setIsTransitioning(true);
+    try {
+      const idToken = await getAuth().currentUser!.getIdToken();
+      const res = await fetch("/api/seller/payment-details", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasPaymentDetails) {
+          setBankStepSkipped(true);
+          setStep(5);
+          setIsTransitioning(false);
+          return;
+        }
+      }
+    } catch {
+      // On error, show the bank form
+    }
+    setBankStepSkipped(false);
     setStep(4);
+    setIsTransitioning(false);
+  }, []);
+
+  // Move to step 4/5 with current ticket — gates on auth first
+  const proceedToReview = (updatedTicketData?: TicketData) => {
+    const dataToSave = updatedTicketData || ticketData;
+    const user = getAuth().currentUser;
+
+    if (!user) {
+      // Store the pending data and show auth dialog
+      pendingProceedData.current = dataToSave;
+      setShowAuthDialog(true);
+      return;
+    }
+
+    goToNextAfterTicket(dataToSave);
+  };
+
+  // Called when auth dialog closes — if user is now logged in, continue
+  const handleAuthClose = () => {
+    setShowAuthDialog(false);
+    const user = getAuth().currentUser;
+    if (user && pendingProceedData.current) {
+      const dataToSave = pendingProceedData.current;
+      pendingProceedData.current = null;
+      goToNextAfterTicket(dataToSave);
+    } else {
+      pendingProceedData.current = null;
+    }
   };
 
   // Enhanced nextStep function
   const nextStep = async () => {
-    setStep((prev) => Math.min(prev + 1, 4));
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setStep((prev) => Math.min(prev + 1, 5));
+      setIsTransitioning(false);
+    }, 300);
   };
 
   const prevStep = () => {
-    // If going back from step 4 to step 3, remove the last ticket from savedTickets
-    // This allows the user to edit it instead of creating a duplicate
+    setIsTransitioning(true);
+    // If going back from step 4 (bank) to step 3, remove the last saved ticket
+    // so the user can edit it instead of creating a duplicate
     if (step === 4 && savedTickets.length > 0) {
       const lastTicket = savedTickets[savedTickets.length - 1];
-      // Remove last ticket from savedTickets
       setSavedTickets((prev) => prev.slice(0, -1));
-      // Restore it to ticketData for editing
       setTicketData(lastTicket);
-      // Clear any errors
+    }
+    // If going back from step 5 (review), clear publish state
+    if (step === 5) {
       setPublishError(null);
       setPublishSuccess(null);
       setPublishWarning(null);
+      // If bank step was skipped, jump back to step 3 instead of step 4
+      if (bankStepSkipped) {
+        const lastTicket = savedTickets[savedTickets.length - 1];
+        setSavedTickets((prev) => prev.slice(0, -1));
+        setTicketData(lastTicket);
+        setStep(3);
+        setIsTransitioning(false);
+        return;
+      }
     }
     setStep((prev) => Math.max(prev - 1, 1));
+    setIsTransitioning(false);
   };
 
   // Function to update ticket data
@@ -125,6 +173,9 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     setPublishError(null);
     setPublishSuccess(null);
     setCanSplit(true);
+    setShowAuthDialog(false);
+    setBankStepSkipped(false);
+    pendingProceedData.current = null;
     onClose();
   };
 
@@ -499,6 +550,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             time: ticket.ticketDetails?.time || "",
             venue: ticket.ticketDetails?.venue || "",
             section: ticket.ticketDetails?.section || "",
+            block: ticket.ticketDetails?.block || "",
             row: ticket.ticketDetails?.row || "",
             seat: ticket.ticketDetails?.seat || "",
             barcode: ticket.ticketDetails?.barcode || null, // Store barcode for verification
@@ -542,6 +594,29 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             `✅ Ticket saved with ID: ${ticketRef.id}, status: ${ticketDoc.status}, eventId: ${ticketDoc.eventId}`,
           );
           console.log("Ticket data:", ticketDoc);
+
+          // Add to mock_tickets so future uploads of the same barcode/seat are caught by venue-verify
+          if (ticketDoc.barcode) {
+            try {
+              await addDoc(collection(firestore, "mock_tickets"), {
+                barcode: ticketDoc.barcode,
+                artistName: ticketDoc.artist,
+                venueName: ticketDoc.venue,
+                eventDate: ticketDoc.date,
+                eventTime: ticketDoc.time,
+                section: ticketDoc.section,
+                row: ticketDoc.row,
+                seat: ticketDoc.seat,
+                seatType: ticketDoc.isStanding ? "standing" : "seated",
+                originalPrice: ticketDoc.originalPrice || ticketDoc.askingPrice || 0,
+                eventName: ticketDoc.artist,
+                eventId: ticketDoc.eventId || "",
+                createdAt: serverTimestamp(),
+              });
+            } catch (err) {
+              console.warn("Failed to add ticket to mock_tickets:", err);
+            }
+          }
 
           // Track verification results
           publishedCount++;
@@ -680,12 +755,24 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
       ),
     },
     {
+      heading: "פרטי תשלום",
+      description: "הזן את פרטי חשבון הבנק לקבלת תשלום",
+      height: "h-auto max-h-[92vh]",
+      width: "w-[95vw] max-w-[880px] sm:w-[880px]",
+      content: (
+        <StepFourBankDetails
+          nextStep={nextStep}
+          prevStep={prevStep}
+        />
+      ),
+    },
+    {
       heading: "סקירה סופית ופרסום",
       description: `${savedTickets.length} כרטיסים מוכנים לפרסום`,
       height: "h-auto max-h-[92vh]",
       width: "w-[95vw] max-w-[880px] sm:w-[880px]",
       content: (
-        <StepFourUploadTicket
+        <StepFiveUploadTicket
           savedTickets={savedTickets}
           publishAllTickets={publishAllTickets}
           isPublishing={isPublishing}
@@ -702,17 +789,36 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
   ];
 
   return (
-    <AdjustableDialog
-      isOpen={isOpen}
-      onClose={onClose}
-      height={steps[step - 1].height}
-      width={steps[step - 1].width}
-      heading={steps[step - 1].heading} // Dynamically change heading
-      description={steps[step - 1].description} // Dynamically change description
-      topChildren={<ProgressBar step={step} />}
-    >
-      {steps[step - 1].content}
-    </AdjustableDialog>
+    <>
+      <AdjustableDialog
+        isOpen={isOpen}
+        onClose={onClose}
+        height={steps[step - 1].height}
+        width={steps[step - 1].width}
+        heading={steps[step - 1].heading}
+        description={steps[step - 1].description}
+        topChildren={
+          <ProgressBar
+            step={bankStepSkipped && step === 5 ? 4 : step}
+            totalSteps={bankStepSkipped ? 4 : 5}
+          />
+        }
+      >
+        {isTransitioning ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="loading loading-spinner loading-lg text-primary"></div>
+          </div>
+        ) : (
+          steps[step - 1].content
+        )}
+      </AdjustableDialog>
+
+      <AuthDialog
+        isOpen={showAuthDialog}
+        onClose={handleAuthClose}
+        initialMode="login"
+      />
+    </>
   );
 };
 

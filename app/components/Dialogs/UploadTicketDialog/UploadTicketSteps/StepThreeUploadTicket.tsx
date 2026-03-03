@@ -6,6 +6,7 @@ import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
 import { Calendar } from "@/components/ui/calendar";
 import DateIcon from "@/public/images/SearchResult/Date Icon.svg";
 import VenueIcon from "@/public/images/SearchResult/Venue Icon.svg";
+import { getCategoryConfig, formatSeatLocation as formatSeatUtil } from "@/app/utils/categoryConfig";
 
 interface ExtendedTicketDetails {
   artist: string;
@@ -16,6 +17,7 @@ interface ExtendedTicketDetails {
   seat: string;
   row: string;
   section: string;
+  block: string;
   barcode: string;
   isStanding: boolean;
 }
@@ -33,17 +35,21 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   const CATEGORIES = ["מוזיקה", "תיאטרון", "סטנדאפ", "ילדים", "ספורט"];
 
   const [editableDetails, setEditableDetails] = useState<ExtendedTicketDetails>(
-    {
-      artist: "",
-      category: "מוזיקה",
-      date: "",
-      time: "",
-      venue: "",
-      seat: "",
-      row: "",
-      section: "",
-      barcode: "",
-      isStanding: false,
+    () => {
+      const details = ticketData?.ticketDetails;
+      return {
+        artist: details?.artist || details?.title || "",
+        category: details?.category || "מוזיקה",
+        date: details?.date || "",
+        time: details?.time || "",
+        venue: details?.venue || "",
+        seat: details?.seat || "",
+        row: details?.row || "",
+        section: details?.section || "",
+        block: details?.block || "",
+        barcode: details?.barcode ? details.barcode.replace(/<NUL>/gi, "").trim() : "",
+        isStanding: details?.isStanding || false,
+      };
     }
   );
 
@@ -91,6 +97,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         seat: details.seat || "",
         row: details.row || "",
         section: details.section || "",
+        block: details.block || "",
         barcode: details.barcode ? details.barcode.replace(/<NUL>/gi, "").trim() : "",
         isStanding: details.isStanding || false,
       };
@@ -260,10 +267,16 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
   };
 
   const handleDetailChange = (field: string, value: string) => {
-    setEditableDetails((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setEditableDetails((prev) => {
+      const updated = { ...prev, [field]: value };
+      if (field === "category") {
+        const newConfig = getCategoryConfig(value);
+        if (!newConfig.allowStanding) updated.isStanding = false;
+        if (!newConfig.showSection) updated.section = "";
+        if (!newConfig.showBlock) updated.block = "";
+      }
+      return updated;
+    });
 
     // Check if date field was changed and validate it
     if (field === "date") {
@@ -280,10 +293,18 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
     // Update ticket data
     if (updateTicketData) {
+      const extraClears: Record<string, unknown> = {};
+      if (field === "category") {
+        const newConfig = getCategoryConfig(value);
+        if (!newConfig.allowStanding) extraClears.isStanding = false;
+        if (!newConfig.showSection) extraClears.section = "";
+        if (!newConfig.showBlock) extraClears.block = "";
+      }
       updateTicketData({
         ticketDetails: {
           ...ticketData?.ticketDetails,
           [field]: value,
+          ...extraClears,
         },
       });
     }
@@ -294,7 +315,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
       ...prev,
       isStanding: checked,
       // Clear seat info when standing is checked
-      ...(checked && { seat: "", row: "", section: "" }),
+      ...(checked && { seat: "", row: "", section: "", block: "" }),
     }));
 
     // Update ticket data
@@ -304,39 +325,21 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
           ...ticketData?.ticketDetails,
           isStanding: checked,
           // Clear seat info when standing is checked
-          ...(checked && { seat: "", row: "", section: "" }),
+          ...(checked && { seat: "", row: "", section: "", block: "" }),
         },
       });
     }
   };
 
-  const formatSeatLocation = () => {
-    const parts = [];
-
-    // If it's a standing ticket, show "עמידה" and skip seat details
-    if (editableDetails.isStanding) {
-      parts.push("עמידה");
-      return parts.join(" • ");
-    }
-
-    // Only add section label if there's a value
-    if (editableDetails.section && editableDetails.section.trim()) {
-      parts.push(`אזור ${editableDetails.section}`);
-    }
-
-    // Only add row label if there's a value
-    if (editableDetails.row && editableDetails.row.trim()) {
-      parts.push(`שורה ${editableDetails.row}`);
-    }
-
-    // Only add seat label if there's a value
-    if (editableDetails.seat && editableDetails.seat.trim()) {
-      parts.push(`מקום ${editableDetails.seat}`);
-    }
-
-    // If no location info at all, show placeholder
-    return parts.length > 0 ? parts.join(" • ") : "מיקום לא צוין";
-  };
+  const formatSeatLocation = () =>
+    formatSeatUtil({
+      category: editableDetails.category,
+      section: editableDetails.section,
+      block: editableDetails.block,
+      row: editableDetails.row,
+      seat: editableDetails.seat,
+      isStanding: editableDetails.isStanding,
+    });
 
   const canProceed =
     editableDetails.artist &&
@@ -478,7 +481,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             <button
               type="button"
               onClick={() => setCategoryOpen((o) => !o)}
-              className="w-full py-3 pr-4 pl-4 text-xs sm:text-text-medium border border-gray-300 rounded-lg bg-white flex items-center justify-between"
+              className="w-full py-3 pr-4 pl-4 text-sm sm:text-base border border-gray-300 rounded-lg bg-white flex items-center justify-between"
               dir="rtl"
             >
               <span>{editableDetails.category}</span>
@@ -492,7 +495,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
                   <li
                     key={cat}
                     onClick={() => { handleDetailChange("category", cat); setCategoryOpen(false); }}
-                    className={`px-4 py-2.5 text-xs sm:text-text-medium cursor-pointer transition-colors ${
+                    className={`px-4 py-2.5 text-sm sm:text-base cursor-pointer transition-colors ${
                       editableDetails.category === cat
                         ? "bg-primary text-white font-medium"
                         : "text-strongText hover:bg-secondary/40"
@@ -516,7 +519,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             <button
               type="button"
               onClick={() => setCalendarOpen((o) => !o)}
-              className={`w-full px-4 py-3 text-sm border rounded-lg bg-white text-right focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between gap-2 ${
+              className={`w-full px-4 py-3 text-sm sm:text-base border rounded-lg bg-white text-right focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between gap-2 ${
                 dateError ? "border-red-400" : "border-gray-300"
               }`}
             >
@@ -609,70 +612,98 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
           </div>
         </div>
 
-        {/* Standing Ticket Checkbox */}
-        <div className="mb-1.5 sm:mb-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-primary checkbox-sm sm:checkbox-md"
-              checked={editableDetails.isStanding}
-              onChange={(e) => handleStandingChange(e.target.checked)}
-            />
-            <span className="text-xs sm:text-sm font-medium text-gray-700">
-              כרטיס עמידה (ללא מקומות ישיבה)
-            </span>
-          </label>
-        </div>
-
-        {/* Seat Information - Hidden when standing ticket */}
-        {!editableDetails.isStanding && (
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-                אזור{" "}
-                <span className="text-gray-400 font-normal">(אופציונלי)</span>
-              </label>
-              <CustomInput
-                id="section"
-                name="section"
-                width="w-full"
-                placeholder={editableDetails.section || "ריק"}
-                value={editableDetails.section}
-                onChange={(e) => handleDetailChange("section", e.target.value)}
+        {/* Standing Ticket Checkbox — only for מוזיקה and ספורט */}
+        {getCategoryConfig(editableDetails.category).allowStanding && (
+          <div className="mb-1.5 sm:mb-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary checkbox-sm sm:checkbox-md"
+                checked={editableDetails.isStanding}
+                onChange={(e) => handleStandingChange(e.target.checked)}
               />
-            </div>
-
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-                שורה{" "}
-                <span className="text-gray-400 font-normal">(אופציונלי)</span>
-              </label>
-              <CustomInput
-                id="row"
-                name="row"
-                width="w-full"
-                placeholder={editableDetails.row || "ריק"}
-                value={editableDetails.row}
-                onChange={(e) => handleDetailChange("row", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-                מקום{" "}
-                <span className="text-gray-400 font-normal">(אופציונלי)</span>
-              </label>
-              <CustomInput
-                id="seat"
-                name="seat"
-                width="w-full"
-                placeholder={editableDetails.seat || "ריק"}
-                value={editableDetails.seat}
-                onChange={(e) => handleDetailChange("seat", e.target.value)}
-              />
-            </div>
+              <span className="text-xs sm:text-sm font-medium text-gray-700">
+                כרטיס עמידה (ללא מקומות ישיבה)
+              </span>
+            </label>
           </div>
         )}
+
+        {/* Seat Information - Dynamic based on category */}
+        {!editableDetails.isStanding && (() => {
+          const config = getCategoryConfig(editableDetails.category);
+          const colCount = [config.showSection, config.showBlock, config.showRow, true].filter(Boolean).length;
+          const gridClass = colCount === 4 ? "grid-cols-4" : colCount === 3 ? "grid-cols-3" : "grid-cols-2";
+          return (
+            <div className={`grid ${gridClass} gap-1.5 sm:gap-2 mb-1.5 sm:mb-2`}>
+              {config.showSection && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                    {config.sectionLabel}{" "}
+                    <span className="text-gray-400 font-normal">(אופציונלי)</span>
+                  </label>
+                  <CustomInput
+                    id="section"
+                    name="section"
+                    width="w-full"
+                    placeholder={editableDetails.section || config.sectionPlaceholder || "ריק"}
+                    value={editableDetails.section}
+                    onChange={(e) => handleDetailChange("section", e.target.value)}
+                  />
+                </div>
+              )}
+
+              {config.showBlock && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                    גוש{" "}
+                    <span className="text-gray-400 font-normal">(אופציונלי)</span>
+                  </label>
+                  <CustomInput
+                    id="block"
+                    name="block"
+                    width="w-full"
+                    placeholder={editableDetails.block || "21"}
+                    value={editableDetails.block}
+                    onChange={(e) => handleDetailChange("block", e.target.value)}
+                  />
+                </div>
+              )}
+
+              {config.showRow && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                    שורה{" "}
+                    <span className="text-gray-400 font-normal">(אופציונלי)</span>
+                  </label>
+                  <CustomInput
+                    id="row"
+                    name="row"
+                    width="w-full"
+                    placeholder={editableDetails.row || "ריק"}
+                    value={editableDetails.row}
+                    onChange={(e) => handleDetailChange("row", e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                  מקום{" "}
+                  <span className="text-gray-400 font-normal">(אופציונלי)</span>
+                </label>
+                <CustomInput
+                  id="seat"
+                  name="seat"
+                  width="w-full"
+                  placeholder={editableDetails.seat || "ריק"}
+                  value={editableDetails.seat}
+                  onChange={(e) => handleDetailChange("seat", e.target.value)}
+                />
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Pricing Summary */}
         {ticketData?.pricing && (

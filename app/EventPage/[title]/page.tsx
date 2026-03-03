@@ -34,7 +34,9 @@ interface Ticket {
   date: string;
   venue: string;
   time: string;
+  category?: string;
   section: string;
+  block?: string | null;
   row: number | null;
   seat: number | null;
   isStanding: boolean;
@@ -130,7 +132,9 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
           date: d.date ?? "",
           venue: d.venue ?? "",
           time: d.time ?? "",
+          category: d.category ?? undefined,
           section: d.section ?? "",
+          block: d.block ?? null,
           row: d.row ?? null,
           seat: d.seat ?? null,
           isStanding: d.isStanding ?? false,

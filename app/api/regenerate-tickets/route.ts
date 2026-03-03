@@ -5,33 +5,95 @@ import { randomUUID } from 'crypto';
 
 const ADMIN_SELLER_ID = 'XzttD4gMV6TRxUUZGBTXxYiZtP02';
 
+// Category-specific seat layout configurations
+const CATEGORY_LAYOUTS: Record<string, {
+  sections: Array<{ name: string; base: number; variance: number }>;
+  rows: number;
+  seatsPerRow: number;
+  hasStanding: boolean;
+  standingSection: string;
+  hasBlocks: boolean;
+  blocksPerSection: number;
+}> = {
+  'ספורט': {
+    sections: [
+      { name: 'יציע מזרח', base: 350, variance: 100 },
+      { name: 'יציע מערב', base: 350, variance: 100 },
+      { name: 'יציע צפון', base: 250, variance: 80 },
+      { name: 'יציע דרום', base: 250, variance: 80 },
+      { name: 'טריבונה VIP', base: 700, variance: 200 },
+    ],
+    rows: 25,
+    seatsPerRow: 30,
+    hasStanding: true,
+    standingSection: 'גזרה עומדים',
+    hasBlocks: true,
+    blocksPerSection: 30,
+  },
+  'מוזיקה': {
+    sections: [
+      { name: 'VIP', base: 800, variance: 200 },
+      { name: 'אזור A', base: 450, variance: 100 },
+      { name: 'אזור B', base: 320, variance: 80 },
+      { name: 'אזור C', base: 220, variance: 60 },
+      { name: 'Floor', base: 380, variance: 100 },
+    ],
+    rows: 30,
+    seatsPerRow: 25,
+    hasStanding: true,
+    standingSection: 'Floor',
+    hasBlocks: false,
+    blocksPerSection: 0,
+  },
+  'תיאטרון': {
+    sections: [
+      { name: 'קומה ראשונה', base: 350, variance: 80 },
+      { name: 'גלריה', base: 200, variance: 60 },
+      { name: 'VIP', base: 550, variance: 100 },
+      { name: 'אולם ראשי', base: 280, variance: 70 },
+    ],
+    rows: 20,
+    seatsPerRow: 20,
+    hasStanding: false,
+    standingSection: '',
+    hasBlocks: false,
+    blocksPerSection: 0,
+  },
+  'סטנדאפ': {
+    // No section for stand-up — empty string means no section field
+    sections: [
+      { name: '', base: 180, variance: 50 },
+    ],
+    rows: 15,
+    seatsPerRow: 15,
+    hasStanding: false,
+    standingSection: '',
+    hasBlocks: false,
+    blocksPerSection: 0,
+  },
+  'ילדים': {
+    sections: [
+      { name: 'קומה ראשונה', base: 160, variance: 40 },
+      { name: 'אולם ראשי', base: 130, variance: 30 },
+    ],
+    rows: 15,
+    seatsPerRow: 20,
+    hasStanding: false,
+    standingSection: '',
+    hasBlocks: false,
+    blocksPerSection: 0,
+  },
+};
+
 function generateTicketsForEvent(event: any, count: number) {
-  const sections = ['A', 'B', 'C', 'D', 'VIP', 'Gold', 'Silver'];
-  const venues: any = {
-    'פארק הירקון': { rows: 50, seatsPerRow: 30, hasStanding: true },
-    'היכל מנורה': { rows: 40, seatsPerRow: 40, hasStanding: false },
-    'אולם התאומים': { rows: 30, seatsPerRow: 35, hasStanding: false },
-    'בלומפילד': { rows: 60, seatsPerRow: 50, hasStanding: true },
-    'גני יהושע': { rows: 80, seatsPerRow: 40, hasStanding: true },
-    'קיסריה אמפיתאטרון': { rows: 35, seatsPerRow: 30, hasStanding: false },
-  };
-
-  const venueInfo = venues[event.venue] || { rows: 40, seatsPerRow: 30, hasStanding: true };
-
-  const priceTiers: any = {
-    'VIP': { base: 800, variance: 200 },
-    'Gold': { base: 600, variance: 150 },
-    'A': { base: 400, variance: 100 },
-    'B': { base: 300, variance: 80 },
-    'C': { base: 250, variance: 60 },
-    'Silver': { base: 200, variance: 50 },
-    'D': { base: 150, variance: 40 },
-  };
+  const category: string = event.category || 'מוזיקה';
+  const layout = CATEGORY_LAYOUTS[category] || CATEGORY_LAYOUTS['מוזיקה'];
 
   // Build individual ticket specs (seat assignments)
   interface TicketSpec {
     isStanding: boolean;
     section: string;
+    block: number | null;
     row: number | null;
     seat: number | null;
     originalPrice: number;
@@ -39,29 +101,44 @@ function generateTicketsForEvent(event: any, count: number) {
   }
 
   const specs: TicketSpec[] = [];
-  const standingCount = venueInfo.hasStanding ? Math.floor(count * 0.2) : 0;
+  const standingCount = layout.hasStanding ? Math.floor(count * 0.2) : 0;
   const seatedCount = count - standingCount;
 
   for (let i = 0; i < standingCount; i++) {
-    const section = Math.random() > 0.5 ? 'A' : 'B';
-    const tier = priceTiers[section];
-    const originalPrice = tier.base + Math.floor(Math.random() * tier.variance);
-    specs.push({ isStanding: true, section, row: null, seat: null, originalPrice, askingPrice: Math.floor(originalPrice * (1 - Math.random() * 0.3)) });
+    const sectionEntry = layout.sections[Math.floor(Math.random() * layout.sections.length)];
+    const originalPrice = sectionEntry.base + Math.floor(Math.random() * sectionEntry.variance);
+    specs.push({
+      isStanding: true,
+      section: layout.standingSection,
+      block: null,
+      row: null,
+      seat: null,
+      originalPrice,
+      askingPrice: Math.floor(originalPrice * (1 - Math.random() * 0.3)),
+    });
   }
 
   const usedSeats = new Set<string>();
   for (let i = 0; i < seatedCount; i++) {
-    const section = sections[Math.floor(Math.random() * sections.length)];
-    const tier = priceTiers[section] || priceTiers['C'];
+    const sectionEntry = layout.sections[Math.floor(Math.random() * layout.sections.length)];
+    const block = layout.hasBlocks ? Math.floor(Math.random() * layout.blocksPerSection) + 1 : null;
     let row: number, seat: number, seatKey: string;
     do {
-      row = Math.floor(Math.random() * venueInfo.rows) + 1;
-      seat = Math.floor(Math.random() * venueInfo.seatsPerRow) + 1;
-      seatKey = `${section}-${row}-${seat}`;
+      row = Math.floor(Math.random() * layout.rows) + 1;
+      seat = Math.floor(Math.random() * layout.seatsPerRow) + 1;
+      seatKey = `${sectionEntry.name}-${block}-${row}-${seat}`;
     } while (usedSeats.has(seatKey));
     usedSeats.add(seatKey);
-    const originalPrice = tier.base + Math.floor(Math.random() * tier.variance);
-    specs.push({ isStanding: false, section, row, seat, originalPrice, askingPrice: Math.floor(originalPrice * (1 - Math.random() * 0.35)) });
+    const originalPrice = sectionEntry.base + Math.floor(Math.random() * sectionEntry.variance);
+    specs.push({
+      isStanding: false,
+      section: sectionEntry.name,
+      block,
+      row,
+      seat,
+      originalPrice,
+      askingPrice: Math.floor(originalPrice * (1 - Math.random() * 0.35)),
+    });
   }
 
   // Assign some specs to bundles (~30% of tickets become part of bundles of 2-4)
@@ -99,6 +176,7 @@ function generateTicketsForEvent(event: any, count: number) {
     time: event.time || '20:00',
     isStanding: spec.isStanding,
     section: spec.section,
+    block: spec.block,
     row: spec.row,
     seat: spec.seat,
     barcode: null,

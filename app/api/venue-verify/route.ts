@@ -172,16 +172,49 @@ async function callRealProvider(
 // ─── Demo / mock verification ────────────────────────────────────────────────
 
 async function fetchMockVenueData(): Promise<OfficialTicket[]> {
+  // Load Firestore-stored mock tickets (added when real tickets are published)
+  const firestoreMockTickets: OfficialTicket[] = [];
+  if (adminDb) {
+    try {
+      const snap = await adminDb.collection("mock_tickets").get();
+      snap.forEach((doc) => {
+        const d = doc.data();
+        firestoreMockTickets.push({
+          ticketId: doc.id,
+          barcode: d.barcode || "",
+          eventId: d.eventId || "",
+          eventName: d.eventName || "",
+          artistName: d.artistName || "",
+          venueName: d.venueName || "",
+          eventDate: d.eventDate || "",
+          eventTime: d.eventTime || "",
+          section: d.section || "",
+          row: d.row || "",
+          seat: d.seat || "",
+          seatType: d.seatType || "seated",
+          ticketStatus: "active",
+          originalPrice: d.originalPrice || 0,
+          ticketingSystem: "Tiket",
+        });
+      });
+    } catch {
+      // ignore, fall through to static data
+    }
+  }
+
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const response = await fetch(`${baseUrl}/venue-api-mock.json`, { cache: "no-store" });
     if (response.ok) {
       const data = await response.json();
-      return data.official_tickets || [];
+      const staticTickets: OfficialTicket[] = data.official_tickets || [];
+      return [...firestoreMockTickets, ...staticTickets];
     }
   } catch {
     // fall through to hardcoded
   }
+
+  if (firestoreMockTickets.length > 0) return firestoreMockTickets;
 
   return [
     {

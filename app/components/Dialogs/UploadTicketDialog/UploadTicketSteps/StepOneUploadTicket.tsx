@@ -15,6 +15,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [barcode, setBarcode] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [notATicketError, setNotATicketError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Cleanup preview URL when component unmounts
@@ -62,6 +63,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     }
 
     // Clear any previous errors
+    setNotATicketError(false);
     updateTicketData({ extractionError: undefined });
 
     // Create preview URL for the uploaded image
@@ -85,6 +87,14 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         const errorMessage =
           errorData.error || `OCR failed: ${response.status}`;
 
+        // Not a ticket — show dedicated error, keep preview visible
+        if (response.status === 422) {
+          setNotATicketError(true);
+          setUploadStatus(errorMessage);
+          updateTicketData({ isProcessing: false, extractionError: errorMessage, uploadedFile: null });
+          return;
+        }
+
         // Show user-friendly error for Gemini API issues
         if (
           errorMessage.includes("temporarily unavailable") ||
@@ -106,12 +116,14 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         uploadedFile: file,
         ticketDetails: {
           artist: data.artist || "",
+          category: data.category || "מוזיקה",
           venue: data.venue || "",
           date: data.date || "",
           time: data.time || "",
           seat: data.seatInfo?.seat || "",
           row: data.seatInfo?.row || "",
           section: data.seatInfo?.section || "",
+          block: data.seatInfo?.block || "",
           price: data.price || null,
           barcode: data.barcode ? data.barcode.replace(/<NUL>/gi, "").trim() || null : null,
         },
@@ -236,7 +248,12 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         </button>
 
         {/* Status */}
-        {ticketData?.extractionError ? (
+        {notATicketError ? (
+          <div className="bg-orange-50 border border-orange-300 rounded-lg p-3 text-right" dir="rtl">
+            <p className="text-sm font-bold text-orange-800">התמונה אינה כרטיס אירוע</p>
+            <p className="text-xs text-orange-700 mt-1">אנא העלה תמונה ברורה של כרטיס לאירוע (הופעה, ספורט, תיאטרון וכד׳).</p>
+          </div>
+        ) : ticketData?.extractionError ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
             <p className="text-xs font-semibold text-red-700">⚠️ שגיאה</p>
             <p className="text-[11px] text-red-600 mt-0.5">{uploadStatus}</p>
@@ -314,7 +331,12 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 
           {/* Status Message */}
           <div className="text-center min-h-[40px] sm:min-h-[50px]">
-            {ticketData?.extractionError && (
+            {notATicketError ? (
+              <div className="bg-orange-50 border border-orange-300 rounded-lg p-2.5 sm:p-3 text-right" dir="rtl">
+                <p className="text-xs sm:text-sm font-bold text-orange-800">התמונה אינה כרטיס אירוע</p>
+                <p className="text-[10px] sm:text-xs text-orange-700 mt-1">אנא העלה תמונה ברורה של כרטיס לאירוע (הופעה, ספורט, תיאטרון וכד׳).</p>
+              </div>
+            ) : ticketData?.extractionError ? (
               <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-2.5 mb-2">
                 <p className="text-xs sm:text-sm font-semibold text-red-700">
                   ⚠️ שגיאה
@@ -323,29 +345,28 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
                   {uploadStatus}
                 </p>
               </div>
-            )}
-
-            {!ticketData?.extractionError && (
-              <p
-                className={`text-xs sm:text-sm font-bold ${
-                  ticketData?.isProcessing
-                    ? "text-blue-600"
-                    : ticketData?.uploadedFile
-                    ? "text-primary"
-                    : "text-gray-500"
-                }`}
-              >
-                {uploadStatus}
-              </p>
-            )}
-
-            {ticketData?.isProcessing && (
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <div className="loading loading-spinner loading-sm"></div>
-                <span className="text-xs sm:text-sm text-blue-600">
-                  מעבד את התמונה...
-                </span>
-              </div>
+            ) : (
+              <>
+                <p
+                  className={`text-xs sm:text-sm font-bold ${
+                    ticketData?.isProcessing
+                      ? "text-blue-600"
+                      : ticketData?.uploadedFile
+                      ? "text-primary"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {uploadStatus}
+                </p>
+                {ticketData?.isProcessing && (
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <div className="loading loading-spinner loading-sm"></div>
+                    <span className="text-xs sm:text-sm text-blue-600">
+                      מעבד את התמונה...
+                    </span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

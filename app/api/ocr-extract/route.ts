@@ -9,17 +9,19 @@ import sharp from "sharp";
 const visionClient = new vision.ImageAnnotatorClient();
 
 interface TicketData {
+  isTicket: boolean;
   artist: string | null;
   category: string | null;
   price: number | null;
   venue: string | null;
   date: string | null;
   time: string | null;
-  barcode: string | null; // Add barcode field
+  barcode: string | null;
   seatInfo: {
     seat: string | null;
     row: string | null;
     section: string | null;
+    block: string | null;
   };
 }
 
@@ -80,11 +82,11 @@ function normalizeName(name: string | null): string | null {
   return name;
 }
 
-async function analyzeWithGemini(text: string): Promise<TicketData> {
+async function analyzeWithGemini(text: string, imageBuffer: Buffer, mimeType: string): Promise<TicketData> {
   // Try each model; if one hits quota limits, try the next
   for (const model of GEMINI_MODELS) {
     try {
-      return await analyzeWithModel(text, model);
+      return await analyzeWithModel(text, imageBuffer, mimeType, model);
     } catch (error: any) {
       const isQuotaError = error.message?.includes("429") || error.message?.includes("RESOURCE_EXHAUSTED");
       if (isQuotaError && model !== GEMINI_MODELS[GEMINI_MODELS.length - 1]) {
@@ -97,7 +99,7 @@ async function analyzeWithGemini(text: string): Promise<TicketData> {
   throw new Error("All Gemini models failed");
 }
 
-async function analyzeWithModel(text: string, model: string): Promise<TicketData> {
+async function analyzeWithModel(text: string, imageBuffer: Buffer, mimeType: string, model: string): Promise<TicketData> {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   
   return retryWithBackoff(async () => {
@@ -109,27 +111,49 @@ async function analyzeWithModel(text: string, model: string): Promise<TicketData
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{
-            text: `
-              Extract ticket information from this Israeli event ticket text (may be in Hebrew, English, or mixed).
+          parts: [
+            {
+              inline_data: {
+                mime_type: mimeType,
+                data: imageBuffer.toString('base64'),
+              }
+            },
+            {
+              text: `
+              You are given a ticket image AND its OCR-extracted text below.
+              The OCR text may have errors (especially for Hebrew characters). Use the IMAGE as the primary source of truth for seat information and event category. Use the OCR text to help with other fields.
               Return ONLY a raw JSON object (no markdown, no backticks, no explanation) with exactly these fields:
+
+              - isTicket: true if this text looks like it came from an event ticket (concert, sports, theater, show, etc.) — it should contain at least one of: an event/artist name, a date, a venue, a seat, or a barcode. Set to false if the image is clearly something else (a receipt, ID card, photo, screenshot of a chat, blank page, etc.).
 
               - artist: the main event or performer name (string or null).
                 Prefer the largest/most prominent text. For sports, use "Team A vs Team B" format.
-                If the name is in ALL CAPS (e.g. "OMER ADAM"), convert it to title case (e.g. "Omer Adam").
+                If the name is Hebrew, return it exactly as it appears in Hebrew — do NOT transliterate or translate it to English.
+                If the name is in ALL CAPS English (e.g. "OMER ADAM"), convert it to title case (e.g. "Omer Adam").
                 Do not include the venue or date in this field.
 
-              - category: classify the event. Must be exactly one of:
+              - category: classify the event. Use the IMAGE as the primary source — look at logos, team crests, stadium photos, jersey colors, and overall ticket design.
+                Must be exactly one of:
                 "מוזיקה" (concerts, music events),
                 "תיאטרון" (theater, opera, dance, musicals),
                 "סטנדאפ" (stand-up comedy, improv),
                 "ילדים" (children's shows),
-                "ספורט" (sports: football, basketball, tennis, etc.).
-                Default to "מוזיקה" if unclear.
+                "ספורט" (sports events).
+
+                Use "ספורט" if the IMAGE or text shows ANY of:
+                - A sports team crest, logo, or jersey
+                - Two team names with "-" or "vs" between them (e.g. "מכבי ת\"א - הפועל ב\"ש")
+                - The word אצטדיון, היכל, מגרש, stadium, arena, or any sports venue
+                - Section / Block / Row / Seat / Gate layout (stadium format)
+                - FC, BC, SC, MTAFC, HAPOEL, MACCABI, or similar club branding
+                - מנוי, Season Ticket, ליגה, גביע, מחזור
+
+                When in doubt and a stadium/team clue exists anywhere, use "ספורט".
 
               - price: the face value / original ticket price as a number only (number or null).
-                Look for labels like: מחיר, מחיר כרטיס, סכום, ₪, NIS.
-                Ignore service fees or totals if multiple prices appear — take the base ticket price.
+                ONLY extract a price if there is an explicit price label directly next to the number: מחיר, מחיר כרטיס, סכום, ₪, NIS.
+                Do NOT infer a price from standalone numbers, seat numbers, gate numbers, block numbers, barcodes, or any number without a clear price label.
+                If no explicit price label is found, return null.
 
               - venue: the venue/arena/stadium name only (string or null).
                 Look for labels like: מיקום, אולם, אצטדיון, היכל.
@@ -147,16 +171,19 @@ async function analyzeWithModel(text: string, model: string): Promise<TicketData
 
               - barcode: always return null.
 
-              - seatInfo: object with these three fields (all string or null):
-                - seat: seat/chair number. Hebrew labels: כיסא, מושב, מקום. Return the value only (e.g. "12").
-                - row: row number or letter. Hebrew labels: שורה, טור. Return the value only (e.g. "5" or "C").
-                - section: section, zone, or stand. Hebrew labels: אזור, יציע, טריבונה, גזרה, מרפסת, קומה. English: "Floor", "VIP", "A", "B". Return the value only (e.g. "יציע מזרח" or "VIP").
-                If the ticket says עמידה or standing, set all three to null.
+              - seatInfo: object with these four fields (all string or null):
+                Look at the image directly for seat info — OCR errors are common here.
+                - seat: seat/chair number. Hebrew labels: כיסא, מושב, מקום. Return the number only (e.g. "10").
+                - row: row number or letter. Hebrew labels: שורה, טור. Return the value only (e.g. "2").
+                - section: section, zone, hall, or stand. Hebrew labels: אזור, יציע, טריבונה, גזרה, מרפסת, קומה, אולם, גלריה, ביתן. English: "Floor", "VIP", "Hall". Return the label + value together (e.g. "אולם 3", "יציע מזרח", "VIP").
+                - block: block number (sports tickets only). Hebrew label: גוש. English label: Block. Return the number only (e.g. "21"). For non-sports tickets, return null.
+                If the ticket says עמידה or standing, set all four to null.
 
-              Input text:
+              OCR-extracted text (may contain errors):
               ${text}
             `
-          }]
+            }
+          ]
         }],
         generationConfig: {
           temperature: 0.1,
@@ -183,6 +210,7 @@ async function analyzeWithModel(text: string, model: string): Promise<TicketData
     try {
       const parsed = JSON.parse(jsonString);
       return {
+        isTicket: parsed.isTicket !== false, // default true if missing
         artist: normalizeName(parsed.artist || null),
         category: parsed.category || "מוזיקה",
         price: typeof parsed.price === "number" ? parsed.price : null,
@@ -194,12 +222,14 @@ async function analyzeWithModel(text: string, model: string): Promise<TicketData
           seat: parsed.seatInfo?.seat || null,
           row: parsed.seatInfo?.row || null,
           section: parsed.seatInfo?.section || null,
+          block: parsed.seatInfo?.block || null,
         },
       };
     } catch (error) {
       console.error("Failed to parse Gemini response:", error);
       console.error("Raw response:", jsonString);
       return {
+        isTicket: true, // default true on parse failure — don't block on ambiguity
         artist: null,
         category: null,
         price: null,
@@ -207,7 +237,7 @@ async function analyzeWithModel(text: string, model: string): Promise<TicketData
         date: null,
         time: null,
         barcode: null,
-        seatInfo: { seat: null, row: null, section: null },
+        seatInfo: { seat: null, row: null, section: null, block: null },
       };
     }
   });
@@ -223,6 +253,7 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    const mimeType = (file.type || "image/jpeg") as string;
 
     // Step 1: Extract text using Vision API
     const [textResult] = await visionClient.textDetection(buffer);
@@ -266,7 +297,7 @@ export async function POST(req: Request) {
     }
 
     // Step 3: Analyze with Gemini (with retry logic)
-    const ticketData = await analyzeWithGemini(fullText);
+    const ticketData = await analyzeWithGemini(fullText, buffer, mimeType);
 
     // Step 4: Override with detected barcode if found
     if (detectedBarcode && !ticketData.barcode) {
@@ -275,8 +306,17 @@ export async function POST(req: Request) {
 
     // Add debug logging
     console.log('Vision API extracted text length:', fullText.length);
+    console.log('Vision API raw text:\n---\n' + fullText + '\n---');
     console.log('Detected barcode:', detectedBarcode);
     console.log('Gemini Analysis Result:', JSON.stringify(ticketData, null, 2));
+
+    // Step 5: Reject if Gemini determined this is not a ticket
+    if (!ticketData.isTicket) {
+      return NextResponse.json(
+        { error: "התמונה שהועלתה אינה נראית ככרטיס אירוע. אנא העלה תמונה ברורה של כרטיס." },
+        { status: 422 }
+      );
+    }
 
     return NextResponse.json(ticketData);
   } catch (error: any) {

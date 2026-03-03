@@ -25,14 +25,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Normalize strings for consistent matching
-    const normalizeString = (str: string | null | undefined): string => {
-      if (!str) return "";
-      return str.trim().toLowerCase().replace(/\s+/g, " ");
+    const normalizeString = (str: unknown): string => {
+      if (str === null || str === undefined || str === "") return "";
+      const s = typeof str === "string" ? str : String(str);
+      return s.trim().toLowerCase().replace(/\s+/g, " ");
     };
 
     const normalizedArtist = normalizeString(artist);
     const normalizedVenue = normalizeString(venue);
-    const normalizedDate = date?.trim() || "";
+    const normalizedDate = typeof date === "string" ? date.trim() : "";
 
     // Build array of queries to check
     const queries: any[] = [];
@@ -102,8 +103,8 @@ export async function POST(request: NextRequest) {
         const data = doc.data() as any;
         const ticketArtist = normalizeString(data.artist);
         const ticketVenue = normalizeString(data.venue);
-        const ticketDate = data.date?.trim() || "";
-        const ticketTime = data.time?.trim() || "";
+        const ticketDate = typeof data.date === "string" ? data.date.trim() : "";
+        const ticketTime = typeof data.time === "string" ? data.time.trim() : "";
         const ticketSeat = normalizeString(data.seat || "");
         const ticketRow = normalizeString(data.row || "");
         const ticketSection = normalizeString(data.section || "");
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
           ticketArtist === normalizedArtist &&
           ticketVenue === normalizedVenue &&
           ticketDate === normalizedDate &&
-          ticketTime === (time?.trim() || "");
+          ticketTime === (typeof time === "string" ? time.trim() : "");
 
         const seatMatches = 
           ticketSeat === requestSeat &&

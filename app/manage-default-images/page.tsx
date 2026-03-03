@@ -6,10 +6,8 @@ import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
 import {
   getDefaultCategoryImage,
-  updateDefaultCategoryImage,
   FALLBACK_IMAGE_SVG,
 } from "../theme/defaultCategoryImages";
-import { db, collection, getDocs, query, where } from "../../firebase";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -101,8 +99,16 @@ export default function ManageDefaultImagesPage() {
 
       const { imageUrl } = await res.json();
 
-      // Save Storage URL to Firestore
-      await updateDefaultCategoryImage(category, imageUrl);
+      // Save Storage URL to Firestore via Admin SDK (bypasses client rules)
+      const updateRes = await fetch("/api/update-default-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, imageUrl }),
+      });
+      if (!updateRes.ok) {
+        const err = await updateRes.json();
+        throw new Error(err.error || "Firestore update failed");
+      }
 
       // Update local state with the URL
       setCategories((prev) =>
@@ -110,6 +116,10 @@ export default function ManageDefaultImagesPage() {
           cat.category === category ? { ...cat, imageData: imageUrl } : cat
         )
       );
+
+      // Reset file input so the same file can be re-selected
+      const input = document.getElementById(`upload-${category}`) as HTMLInputElement;
+      if (input) input.value = "";
 
       setMessage({
         type: "success",

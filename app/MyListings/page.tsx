@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { formatSeatLocation } from "../utils/categoryConfig";
 import { db, auth } from "../../firebase";
 import { collection, getDocs, query, where, doc, deleteDoc } from "firebase/firestore";
 import NavBar from "../components/NavBar/NavBar";
@@ -19,7 +20,9 @@ interface Ticket {
   date: string;
   venue: string;
   time?: string;
+  category?: string;
   section: string;
+  block?: string;
   row: string;
   seat: string;
   isStanding: boolean;
@@ -39,10 +42,14 @@ interface Ticket {
 }
 
 const seatLabel = (ticket: Ticket) =>
-  ticket.time ||
-  (ticket.isStanding
-    ? "עמידה"
-    : `${ticket.section ? `אזור ${ticket.section}` : ""} ${ticket.row ? `שורה ${ticket.row}` : ""} ${ticket.seat ? `מושב ${ticket.seat}` : ""}`.trim() || "מיקום לא צוין");
+  formatSeatLocation({
+    category: ticket.category,
+    section: ticket.section,
+    block: ticket.block,
+    row: ticket.row,
+    seat: ticket.seat,
+    isStanding: ticket.isStanding,
+  });
 
 const MyListings = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);

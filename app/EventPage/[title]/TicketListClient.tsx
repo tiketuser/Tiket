@@ -6,6 +6,7 @@ import BundleCard from "../../components/BundleCard/BundleCard";
 import type { BundleTicket } from "../../components/BundleCard/BundleCard";
 import CheckoutDialog from "../../components/Dialogs/CheckoutDialog/CheckoutDialog";
 import type { TicketInfo } from "../../components/Dialogs/CheckoutDialog/CheckoutDialog";
+import { formatSeatLocation } from "../../utils/categoryConfig";
 
 interface Ticket {
   id: string;
@@ -14,7 +15,9 @@ interface Ticket {
   date: string;
   venue: string;
   time: string;
+  category?: string;
   section: string;
+  block?: string | null;
   row: number | null;
   seat: number | null;
   isStanding: boolean;
@@ -43,15 +46,15 @@ interface TicketListClientProps {
   event: Event;
 }
 
-function formatSeatLocation(ticket: Ticket): string {
-  if (ticket.isStanding) {
-    return `עמידה${ticket.section ? ` | ${ticket.section}` : ""}`;
-  }
-  const parts: string[] = [];
-  if (ticket.section) parts.push(`אזור ${ticket.section}`);
-  if (ticket.row) parts.push(`שורה ${ticket.row}`);
-  if (ticket.seat) parts.push(`מושב ${ticket.seat}`);
-  return parts.join(" | ");
+function ticketSeatLocation(ticket: Ticket): string {
+  return formatSeatLocation({
+    category: ticket.category,
+    section: ticket.section,
+    block: ticket.block,
+    row: ticket.row,
+    seat: ticket.seat,
+    isStanding: ticket.isStanding,
+  });
 }
 
 function ticketToBundleTicket(ticket: Ticket): BundleTicket {
@@ -59,7 +62,9 @@ function ticketToBundleTicket(ticket: Ticket): BundleTicket {
     id: ticket.id,
     date: ticket.date,
     venue: ticket.venue,
+    category: ticket.category,
     section: ticket.section,
+    block: ticket.block,
     row: ticket.row,
     seat: ticket.seat,
     isStanding: ticket.isStanding,
@@ -85,7 +90,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
       title: event.artist,
       date: ticket.date,
       venue: ticket.venue,
-      seatLocation: formatSeatLocation(ticket),
+      seatLocation: ticketSeatLocation(ticket),
       price: ticket.askingPrice,
       originalPrice: ticket.originalPrice,
       sellerId: ticket.sellerId,
@@ -146,7 +151,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         title: event.artist,
         date: t.date,
         venue: t.venue,
-        seatLocation: formatSeatLocation(t as unknown as Ticket),
+        seatLocation: formatSeatLocation({ category: t.category, section: t.section, block: t.block, row: t.row, seat: t.seat, isStanding: t.isStanding }),
         price: t.askingPrice,
         originalPrice: t.originalPrice,
         sellerId: t.sellerId,
@@ -189,7 +194,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
                   imageSrc={event.imageUrl || "/images/Artist/default.png"}
                   date={ticket.date}
                   location={ticket.venue}
-                  seatLocation={formatSeatLocation(ticket)}
+                  seatLocation={ticketSeatLocation(ticket)}
                   price={ticket.askingPrice}
                   soldOut={false}
                   ticketsLeft={soloTickets.length + 1}
@@ -233,7 +238,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
               imageSrc={event.imageUrl || "/images/Artist/default.png"}
               date={ticket.date}
               location={ticket.venue}
-              seatLocation={formatSeatLocation(ticket)}
+              seatLocation={ticketSeatLocation(ticket)}
               price={ticket.askingPrice}
               soldOut={false}
               ticketsLeft={soloTickets.length}

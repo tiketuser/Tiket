@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { formatSeatLocation } from "../utils/categoryConfig";
 import { db, auth } from "../../firebase";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import NavBar from "../components/NavBar/NavBar";
@@ -20,7 +21,9 @@ interface PurchasedTicket {
   date: string;
   venue: string;
   time?: string;
+  category?: string;
   section?: string;
+  block?: string;
   row?: string;
   seat?: string;
   isStanding?: boolean;
@@ -83,7 +86,9 @@ export default function MyTicketsPage() {
             date: ticket.date || "",
             venue: ticket.venue || "",
             time: ticket.time,
+            category: ticket.category,
             section: ticket.section,
+            block: ticket.block,
             row: ticket.row,
             seat: ticket.seat,
             isStanding: ticket.isStanding,
@@ -115,12 +120,14 @@ export default function MyTicketsPage() {
   });
 
   const seatLabel = (t: PurchasedTicket) =>
-    t.time ||
-    (t.isStanding
-      ? "עמידה"
-      : `${t.section ? `אזור ${t.section}` : ""} ${t.row ? `שורה ${t.row}` : ""} ${
-          t.seat ? `מושב ${t.seat}` : ""
-        }`.trim() || "מיקום לא צוין");
+    formatSeatLocation({
+      category: t.category,
+      section: t.section,
+      block: t.block,
+      row: t.row,
+      seat: t.seat,
+      isStanding: t.isStanding,
+    });
 
   if (loading) {
     return (

@@ -29,6 +29,7 @@ export interface TicketData {
         time?: string;
         seatLocation?: string;
         section?: string;
+        block?: string;
         row?: string;
         seat?: string;
         barcode?: string;

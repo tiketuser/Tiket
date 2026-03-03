@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
+import { formatSeatLocation } from "../../utils/categoryConfig";
 
 export interface BundleTicket {
   id: string;
   date: string;
   venue: string;
+  category?: string;
   section: string;
+  block?: string | null;
   row: number | null;
   seat: number | null;
   isStanding: boolean;
@@ -26,14 +29,14 @@ interface BundleCardProps {
 }
 
 function formatSeat(ticket: BundleTicket): string {
-  if (ticket.isStanding) {
-    return `עמידה${ticket.section ? ` | ${ticket.section}` : ""}`;
-  }
-  const parts: string[] = [];
-  if (ticket.section) parts.push(`אזור ${ticket.section}`);
-  if (ticket.row) parts.push(`שורה ${ticket.row}`);
-  if (ticket.seat) parts.push(`מושב ${ticket.seat}`);
-  return parts.join(" | ") || "מיקום לא צוין";
+  return formatSeatLocation({
+    category: ticket.category,
+    section: ticket.section,
+    block: ticket.block,
+    row: ticket.row,
+    seat: ticket.seat,
+    isStanding: ticket.isStanding,
+  });
 }
 
 const BundleCard: React.FC<BundleCardProps> = ({
@@ -84,9 +87,7 @@ const BundleCard: React.FC<BundleCardProps> = ({
               <div className="flex flex-wrap gap-1">
                 {tickets.map((t) => (
                   <span key={t.id} className="text-[11px] font-medium text-strongText bg-gray-100 px-1.5 py-0.5 rounded">
-                    {t.isStanding
-                      ? `עמידה${t.section ? ` ${t.section}` : ""}`
-                      : [t.section, t.row && `ש׳${t.row}`, t.seat && `מ׳${t.seat}`].filter(Boolean).join(" · ") || "מיקום לא צוין"}
+                    {formatSeat(t)}
                   </span>
                 ))}
               </div>
@@ -196,9 +197,7 @@ const BundleCard: React.FC<BundleCardProps> = ({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                   <path d="M2 9V5a2 2 0 012-2h16a2 2 0 012 2v4"/><path d="M2 15v4a2 2 0 002 2h16a2 2 0 002-2v-4"/><path d="M6 9h12M6 15h12"/>
                 </svg>
-                {t.isStanding
-                  ? `עמידה${t.section ? ` ${t.section}` : ""}`
-                  : [t.section, t.row && `שורה ${t.row}`, t.seat && `מושב ${t.seat}`].filter(Boolean).join(" · ") || "מיקום לא צוין"}
+                {formatSeat(t)}
               </span>
             ))}
             {canSplit !== false && (

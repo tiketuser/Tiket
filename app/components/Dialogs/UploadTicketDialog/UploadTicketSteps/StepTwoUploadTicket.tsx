@@ -13,26 +13,12 @@ const StepTwoUploadTicket: React.FC<UploadTicketInterface> = ({
   // State management
   const [askingPrice, setAskingPrice] = useState<string>("");
 
-  // Initialize values from ticketData
+  // Sync with ticketData: restore saved price or clear when starting a new ticket
   useEffect(() => {
-    console.log("StepTwo - ticketData received:", ticketData);
-
-    // Try to get price from extracted ticket details first
-    if (ticketData?.ticketDetails?.price && !askingPrice) {
-      console.log(
-        "StepTwo - Setting extracted price:",
-        ticketData.ticketDetails.price
-      );
-      setAskingPrice(ticketData.ticketDetails.price.toString());
-      updatePricingData(ticketData.ticketDetails.price.toString());
-    }
-    // Otherwise check if there's already a saved pricing value
-    else if (ticketData?.pricing?.askingPrice) {
-      console.log(
-        "StepTwo - Setting saved price:",
-        ticketData.pricing.askingPrice
-      );
+    if (ticketData?.pricing?.askingPrice) {
       setAskingPrice(ticketData.pricing.askingPrice.toString());
+    } else {
+      setAskingPrice("");
     }
   }, [ticketData]);
 
