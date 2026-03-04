@@ -25,7 +25,6 @@ export const metadata: Metadata = {
   description: "פלטפורמת מסחר בכרטיסים לאירועים",
   manifest: "/manifest.json",
   appleWebApp: {
-    capable: true,
     statusBarStyle: "default",
     title: "Tiket",
   },

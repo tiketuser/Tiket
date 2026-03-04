@@ -4,6 +4,7 @@ import { limit } from "firebase/firestore";
 import { db } from "../../../firebase";
 import GalleryClient from "./GalleryClient";
 import { calculateTimeLeft } from "../../../utils/timeCalculator";
+import { resolveEventImage } from "../../../utils/defaultImages";
 
 interface CardData {
   id: string;
@@ -67,7 +68,7 @@ async function getGalleryData(): Promise<{ cards: CardData[]; lastDocId: string 
     ]);
 
     // Serialize events - only plain objects
-    const events: Event[] = eventsSnapshot.docs
+    const rawEvents = eventsSnapshot.docs
       .map((doc) => {
         const data = doc.data();
         return {
@@ -83,10 +84,15 @@ async function getGalleryData(): Promise<{ cards: CardData[]; lastDocId: string 
           views: data.views || 0,
         };
       })
-      .filter(
-        (event) =>
-          event && event.status === "active" && event.artist && event.imageUrl,
-      );
+      .filter((event) => event && event.status === "active" && event.artist);
+
+    // Resolve default images for events missing one
+    const events: Event[] = await Promise.all(
+      rawEvents.map(async (event) => ({
+        ...event,
+        imageUrl: await resolveEventImage(event.imageUrl, event.category),
+      }))
+    );
 
     // Serialize tickets - only plain objects
     const allTickets: Ticket[] = ticketsSnapshot.docs.map((doc) => {

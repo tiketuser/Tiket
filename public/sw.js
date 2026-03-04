@@ -2,15 +2,15 @@ const CACHE_NAME = 'tiket-v1';
 const urlsToCache = [
   '/',
   '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
 ];
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
+      .then((cache) =>
+        Promise.allSettled(urlsToCache.map((url) => cache.add(url).catch(() => {})))
+      )
       .then(() => self.skipWaiting())
   );
 });

@@ -44,7 +44,6 @@ const Card: React.FC<CardProps> = ({
   openLoginDialog,
   userFavorites,
 }) => {
-  const [showPopup, setShowPopup] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
 
@@ -89,8 +88,6 @@ const Card: React.FC<CardProps> = ({
       } else {
         await setDoc(userRef, { favorites: arrayUnion(id) }, { merge: true });
         setIsFavorited(true);
-        setShowPopup(true);
-        setTimeout(() => setShowPopup(false), 2000);
       }
     } finally {
       setLoadingFavorite(false);
@@ -175,16 +172,6 @@ const Card: React.FC<CardProps> = ({
         className="block"
       >
         <div className="select-none transition-transform relative w-full h-full border-b-[4px] border-highlight p-3 sm:p-[32px] shadow-xlarge hover:duration-500 hover:scale-105 cursor-pointer">
-          {/* Popup */}
-          {showPopup && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white/95 backdrop-blur-sm border border-red-100 text-strongText px-3 py-2 rounded-full shadow-lg text-xs font-semibold animate-fade-in-down whitespace-nowrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#dc2626" className="flex-shrink-0">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-              נוסף למועדפים
-            </div>
-          )}
-
           {/* Last Chance */}
           {soldOut && (
             <div className="absolute top-0 left-0 bg-red-600 text-white text-[10px] sm:text-xs p-1 rounded-tr-lg rounded-bl-lg">

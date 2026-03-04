@@ -10,6 +10,7 @@ import {
 import { limit, startAfter } from "firebase/firestore";
 import { db } from "@/firebase";
 import { calculateTimeLeft } from "@/utils/timeCalculator";
+import { resolveEventImage } from "@/utils/defaultImages";
 
 const PAGE_SIZE = 12;
 
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       query(collection(db as any, "events"), ...constraints),
     );
 
-    const events = eventsSnapshot.docs
+    const rawEvents = eventsSnapshot.docs
       .map((d) => {
         const data = d.data();
         return {
@@ -95,7 +96,15 @@ export async function GET(request: NextRequest) {
           status: data.status as string,
         };
       })
-      .filter((e) => e.status === "active" && e.artist && e.imageUrl);
+      .filter((e) => e.status === "active" && e.artist);
+
+    // Resolve default images for events missing one
+    const events = await Promise.all(
+      rawEvents.map(async (event) => ({
+        ...event,
+        imageUrl: await resolveEventImage(event.imageUrl, event.category),
+      }))
+    );
 
     const eventCards: CardData[] = events
       .map((event) => {

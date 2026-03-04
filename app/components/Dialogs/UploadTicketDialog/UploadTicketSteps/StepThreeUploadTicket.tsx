@@ -331,6 +331,41 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
     }
   };
 
+  const getCategoryIcon = () => {
+    switch (editableDetails.category) {
+      case "ספורט":
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case "תיאטרון":
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+          </svg>
+        );
+      case "סטנדאפ":
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+        );
+      case "ילדים":
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      default: // מוזיקה
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+        );
+    }
+  };
+
   const formatSeatLocation = () =>
     formatSeatUtil({
       category: editableDetails.category,
@@ -454,7 +489,8 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
       {/* Simple Form */}
       <div className="mt-1.5 sm:mt-2 max-w-[500px] mx-auto px-2 sm:px-4">
-        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+        {/* Row 1: sport gets name+time side by side; others get name+category */}
+        <div className={`grid gap-3 sm:gap-4 mb-3 sm:mb-4 ${editableDetails.category === "ספורט" ? "grid-cols-[1fr_110px]" : "grid-cols-2"}`}>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
               שם האירוע *
@@ -466,47 +502,109 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               placeholder="עומר אדם, מכבי תל אביב נגד הפועל"
               value={editableDetails.artist}
               onChange={(e) => handleDetailChange("artist", e.target.value)}
-              image={
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-              }
+              image={getCategoryIcon()}
             />
           </div>
 
-          <div className="relative">
-            <label className="block text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 text-gray-700">
-              קטגוריה *
-            </label>
-            <button
-              type="button"
-              onClick={() => setCategoryOpen((o) => !o)}
-              className="w-full py-3 pr-4 pl-4 text-sm sm:text-base border border-gray-300 rounded-lg bg-white flex items-center justify-between"
-              dir="rtl"
-            >
-              <span>{editableDetails.category}</span>
-              <svg className={`w-4 h-4 text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {categoryOpen && (
-              <ul className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-medium overflow-hidden" dir="rtl">
-                {CATEGORIES.map((cat) => (
-                  <li
-                    key={cat}
-                    onClick={() => { handleDetailChange("category", cat); setCategoryOpen(false); }}
-                    className={`px-4 py-2.5 text-sm sm:text-base cursor-pointer transition-colors ${
-                      editableDetails.category === cat
-                        ? "bg-primary text-white font-medium"
-                        : "text-strongText hover:bg-secondary/40"
-                    }`}
-                  >
-                    {cat}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {editableDetails.category === "ספורט" ? (
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                שעת האירוע *
+              </label>
+              <CustomInput
+                id="time"
+                name="time"
+                width="w-full"
+                placeholder="20:00"
+                value={editableDetails.time}
+                onChange={(e) => handleDetailChange("time", e.target.value)}
+                error={!!timeError}
+                image={
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                }
+              />
+              {timeError && (
+                <div className="text-[10px] sm:text-xs text-red-600 font-medium">
+                  ⚠️ {timeError}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="relative">
+              <label className="block text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 text-gray-700">
+                קטגוריה *
+              </label>
+              <button
+                type="button"
+                onClick={() => setCategoryOpen((o) => !o)}
+                className="w-full py-3 pr-4 pl-4 text-sm sm:text-base border border-gray-300 rounded-lg bg-white flex items-center justify-between"
+                dir="rtl"
+              >
+                <span>{editableDetails.category}</span>
+                <svg className={`w-4 h-4 text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {categoryOpen && (
+                <ul className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-medium overflow-hidden" dir="rtl">
+                  {CATEGORIES.map((cat) => (
+                    <li
+                      key={cat}
+                      onClick={() => { handleDetailChange("category", cat); setCategoryOpen(false); }}
+                      className={`px-4 py-2.5 text-sm sm:text-base cursor-pointer transition-colors ${
+                        editableDetails.category === cat
+                          ? "bg-primary text-white font-medium"
+                          : "text-strongText hover:bg-secondary/40"
+                      }`}
+                    >
+                      {cat}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Row 2: sport gets category+date; others get date+time */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+          {editableDetails.category === "ספורט" && (
+            <div className="relative">
+              <label className="block text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 text-gray-700">
+                קטגוריה *
+              </label>
+              <button
+                type="button"
+                onClick={() => setCategoryOpen((o) => !o)}
+                className="w-full py-3 pr-4 pl-4 text-sm sm:text-base border border-gray-300 rounded-lg bg-white flex items-center justify-between"
+                dir="rtl"
+              >
+                <span>{editableDetails.category}</span>
+                <svg className={`w-4 h-4 text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {categoryOpen && (
+                <ul className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-medium overflow-hidden" dir="rtl">
+                  {CATEGORIES.map((cat) => (
+                    <li
+                      key={cat}
+                      onClick={() => { handleDetailChange("category", cat); setCategoryOpen(false); }}
+                      className={`px-4 py-2.5 text-sm sm:text-base cursor-pointer transition-colors ${
+                        editableDetails.category === cat
+                          ? "bg-primary text-white font-medium"
+                          : "text-strongText hover:bg-secondary/40"
+                      }`}
+                    >
+                      {cat}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           <div className="relative">
             <label
@@ -526,7 +624,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               <span className={editableDetails.date ? "text-gray-900" : "text-gray-400"}>
                 {editableDetails.date || "בחר תאריך"}
               </span>
-              <Image src={DateIcon} alt="date" width={16} height={16} className="flex-shrink-0" />
+              <Image src={DateIcon} alt="date" width={16} height={16} style={{ width: 16, height: 16 }} className="flex-shrink-0" />
             </button>
             {calendarOpen && (
               <div className="absolute top-full mt-1 right-0 z-30 bg-white border border-gray-200 rounded-lg shadow-lg">
@@ -551,33 +649,35 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
             )}
           </div>
 
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-              שעת האירוע *
-            </label>
-            <CustomInput
-              id="time"
-              name="time"
-              width="w-full"
-              placeholder="20:00"
-              value={editableDetails.time}
-              onChange={(e) => handleDetailChange("time", e.target.value)}
-              error={!!timeError}
-              image={
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
-            />
-            {timeError && (
-              <div className="right-0 text-[10px] sm:text-xs text-red-600 font-medium">
-                ⚠️ {timeError}
-              </div>
-            )}
-          </div>
+          {editableDetails.category !== "ספורט" && (
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                שעת האירוע *
+              </label>
+              <CustomInput
+                id="time"
+                name="time"
+                width="w-full"
+                placeholder="20:00"
+                value={editableDetails.time}
+                onChange={(e) => handleDetailChange("time", e.target.value)}
+                error={!!timeError}
+                image={
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                }
+              />
+              {timeError && (
+                <div className="right-0 text-[10px] sm:text-xs text-red-600 font-medium">
+                  ⚠️ {timeError}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
               מקום האירוע *
@@ -589,7 +689,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
               placeholder="היכל מנורה מבטחים"
               value={editableDetails.venue}
               onChange={(e) => handleDetailChange("venue", e.target.value)}
-              image={<Image src={VenueIcon} alt="venue" width={16} height={16} />}
+              image={<Image src={VenueIcon} alt="venue" width={16} height={16} style={{ width: 16, height: 16 }} />}
             />
           </div>
 
@@ -614,7 +714,7 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
 
         {/* Standing Ticket Checkbox — only for מוזיקה and ספורט */}
         {getCategoryConfig(editableDetails.category).allowStanding && (
-          <div className="mb-1.5 sm:mb-2">
+          <div className="mb-3 sm:mb-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -633,9 +733,9 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
         {!editableDetails.isStanding && (() => {
           const config = getCategoryConfig(editableDetails.category);
           const colCount = [config.showSection, config.showBlock, config.showRow, true].filter(Boolean).length;
-          const gridClass = colCount === 4 ? "grid-cols-4" : colCount === 3 ? "grid-cols-3" : "grid-cols-2";
+          const gridClass = colCount === 4 ? "grid-cols-2 sm:grid-cols-4" : colCount === 3 ? "grid-cols-3" : "grid-cols-2";
           return (
-            <div className={`grid ${gridClass} gap-1.5 sm:gap-2 mb-1.5 sm:mb-2`}>
+            <div className={`grid ${gridClass} gap-3 sm:gap-4 mb-3 sm:mb-4 items-end`}>
               {config.showSection && (
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">

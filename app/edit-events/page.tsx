@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
-import { db, storage } from "../../firebase";
+import { db } from "../../firebase";
 import {
   collection,
   getDocs,
@@ -14,7 +14,6 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Image from "next/image";
 
 // Force dynamic rendering for admin pages
@@ -27,7 +26,7 @@ interface Concert {
   date: string;
   time: string;
   venue: string;
-  imageData: string | null;
+  imageUrl: string | null;
   status: string;
   views?: number;
 }
@@ -108,12 +107,12 @@ export default function EditConcertsPage() {
       const eventRef = doc(db, "events", selectedConcert.id);
       await updateDoc(eventRef, {
         artist: editForm.artist,
-        title: editForm.artist, // Set title same as artist for backwards compatibility
+        title: editForm.artist,
         date: normalizedDate,
         time: editForm.time,
         venue: editForm.venue,
         status: editForm.status,
-        imageData: editForm.imageData,
+        imageUrl: editForm.imageUrl,
       });
 
       // Update local state with normalized date
@@ -174,23 +173,18 @@ export default function EditConcertsPage() {
     try {
       setUploadingImage(true);
 
-      if (storage) {
-        const ext = file.name.split(".").pop() || "jpg";
-        const imageRef = ref(storage, `event-images/${editForm.id}.${ext}`);
-        const snapshot = await uploadBytes(imageRef, file, {
-          contentType: file.type,
-        });
-        const downloadUrl = await getDownloadURL(snapshot.ref);
-        setEditForm({ ...editForm, imageData: downloadUrl });
-      } else {
-        // Fallback to base64 if storage is not available
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64String = reader.result as string;
-          setEditForm({ ...editForm, imageData: base64String });
-        };
-        reader.readAsDataURL(file);
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+      const res = await fetch("/api/upload-event-image", {
+        method: "POST",
+        body: uploadFormData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Upload failed");
       }
+      const { imageUrl } = await res.json();
+      setEditForm({ ...editForm, imageUrl });
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("שגיאה בהעלאת התמונה");
@@ -202,7 +196,7 @@ export default function EditConcertsPage() {
   const handleRemoveImage = () => {
     if (!editForm) return;
     if (confirm("האם אתה בטוח שברצונך להסיר את התמונה?")) {
-      setEditForm({ ...editForm, imageData: null });
+      setEditForm({ ...editForm, imageUrl: null });
     }
   };
 
@@ -283,9 +277,9 @@ export default function EditConcertsPage() {
                     >
                       {/* Concert Image */}
                       <div className="relative h-48 bg-secondary">
-                        {event.imageData ? (
+                        {event.imageUrl ? (
                           <Image
-                            src={event.imageData}
+                            src={event.imageUrl}
                             alt={event.artist}
                             fill
                             className="object-cover"
@@ -393,11 +387,11 @@ export default function EditConcertsPage() {
                             תמונה
                           </label>
                           <div className="border-2 border-dashed border-secondary rounded-lg p-6">
-                            {editForm.imageData ? (
+                            {editForm.imageUrl ? (
                               <div className="space-y-4">
                                 <div className="relative h-64 rounded-lg overflow-hidden">
                                   <Image
-                                    src={editForm.imageData}
+                                    src={editForm.imageUrl}
                                     alt={editForm.artist}
                                     fill
                                     className="object-cover"

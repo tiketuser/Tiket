@@ -72,9 +72,10 @@ const NavBar = () => {
   const [seenFavorites, setSeenFavorites] = useState(() =>
     typeof window !== "undefined" ? parseInt(localStorage.getItem("tiket_seen_favorites") || "0") : 0
   );
+  const [hasNewFavorite, setHasNewFavorite] = useState(false);
   const hasUnseenTickets = myTicketsCount > seenTickets;
   const hasUnseenListings = myListingsCount > seenListings;
-  const hasUnseenFavorites = favoritesCount > seenFavorites;
+  const hasUnseenFavorites = hasNewFavorite;
 
   let closeTimeout: NodeJS.Timeout;
   let adminCloseTimeout: NodeJS.Timeout;
@@ -163,6 +164,7 @@ const NavBar = () => {
     if (pathname === "/Favorites") {
       localStorage.setItem(`tiket_seen_favorites_${uid}`, favoritesCount.toString());
       setSeenFavorites(favoritesCount);
+      setHasNewFavorite(false);
     } else if (pathname === "/MyTickets") {
       localStorage.setItem(`tiket_seen_mytickets_${uid}`, myTicketsCount.toString());
       setSeenTickets(myTicketsCount);
@@ -219,8 +221,20 @@ const NavBar = () => {
         if (userFirst) {
           userFirst = false;
           const stored = localStorage.getItem(keyFav);
-          if (stored === null) { localStorage.setItem(keyFav, count.toString()); setSeenFavorites(count); }
-          else { setSeenFavorites(parseInt(stored)); }
+          if (stored === null) {
+            // No baseline yet — treat current count as seen
+            localStorage.setItem(keyFav, count.toString());
+            setSeenFavorites(count);
+          } else {
+            const seen = parseInt(stored);
+            setSeenFavorites(seen);
+            // If count is already above the stored seen (e.g. added while logged out), show dot
+            if (count > seen) { setHasNewFavorite(true); }
+          }
+        } else {
+          // Subsequent updates: compare against stored value directly (avoids stale state)
+          const seen = parseInt(localStorage.getItem(keyFav) || "0");
+          if (count > seen) { setHasNewFavorite(true); }
         }
       },
       () => {},
@@ -264,7 +278,7 @@ const NavBar = () => {
     setUser(null);
     // Reset all badge counts and seen states so no dots bleed to the next user
     setMyTicketsCount(0); setMyListingsCount(0); setFavoritesCount(0);
-    setSeenTickets(0); setSeenListings(0); setSeenFavorites(0);
+    setSeenTickets(0); setSeenListings(0); setSeenFavorites(0); setHasNewFavorite(false);
     router.refresh();
   };
 
@@ -753,7 +767,7 @@ const NavBar = () => {
               onClick={(e) => {
                 setMyTicketsPopoverOpen(false);
                 if (!user) { e.preventDefault(); setPendingFavoritesRedirect(true); openLogin(); }
-                else { localStorage.setItem(`tiket_seen_favorites_${user.uid}`, favoritesCount.toString()); setSeenFavorites(favoritesCount); }
+                else { localStorage.setItem(`tiket_seen_favorites_${user.uid}`, favoritesCount.toString()); setSeenFavorites(favoritesCount); setHasNewFavorite(false); }
               }}
             >
               <div className="relative">
