@@ -13,6 +13,8 @@ import {
   deleteDoc,
   query,
   orderBy,
+  writeBatch,
+  Timestamp,
 } from "firebase/firestore";
 import Image from "next/image";
 
@@ -40,6 +42,13 @@ export default function EditConcertsPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteAllProgress, setDeleteAllProgress] = useState("");
+  const [showRecoverModal, setShowRecoverModal] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [recoverProgress, setRecoverProgress] = useState("");
+  const [hasBackup, setHasBackup] = useState(false);
 
   useEffect(() => {
     loadConcerts();
@@ -63,6 +72,10 @@ export default function EditConcertsPage() {
         ...doc.data(),
       })) as Concert[];
       setConcerts(eventsData);
+
+      // Check if backup exists
+      const backupSnapshot = await getDocs(collection(db, "events_backup"));
+      setHasBackup(!backupSnapshot.empty);
     } catch (error) {
       console.error("Error loading events:", error);
       alert("שגיאה בטעינת אירועים");
@@ -200,6 +213,97 @@ export default function EditConcertsPage() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (!db) {
+      alert("מסד הנתונים לא מחובר");
+      return;
+    }
+
+    try {
+      setDeletingAll(true);
+
+      // Step 1: Back up all events to events_backup collection
+      setDeleteAllProgress("מגבה אירועים...");
+      const snapshot = await getDocs(collection(db, "events"));
+
+      // Clear previous backup first
+      const existingBackup = await getDocs(collection(db, "events_backup"));
+      if (!existingBackup.empty) {
+        const clearBatch = writeBatch(db);
+        existingBackup.docs.forEach((d) => clearBatch.delete(d.ref));
+        await clearBatch.commit();
+      }
+
+      // Write current events to backup
+      const backupBatch = writeBatch(db);
+      snapshot.docs.forEach((d) => {
+        const backupRef = doc(db!, "events_backup", d.id);
+        backupBatch.set(backupRef, {
+          ...d.data(),
+          backedUpAt: Timestamp.now(),
+        });
+      });
+      await backupBatch.commit();
+
+      // Step 2: Delete all events
+      setDeleteAllProgress("מוחק אירועים...");
+      const deleteBatch = writeBatch(db);
+      snapshot.docs.forEach((d) => deleteBatch.delete(d.ref));
+      await deleteBatch.commit();
+
+      setConcerts([]);
+      setHasBackup(true);
+      setShowDeleteAllModal(false);
+      alert(`נמחקו ${snapshot.size} אירועים בהצלחה. גיבוי נשמר ב-events_backup.`);
+    } catch (error) {
+      console.error("Error deleting all events:", error);
+      alert("שגיאה במחיקת האירועים");
+    } finally {
+      setDeletingAll(false);
+      setDeleteAllProgress("");
+    }
+  };
+
+  const handleRecover = async () => {
+    if (!db) {
+      alert("מסד הנתונים לא מחובר");
+      return;
+    }
+
+    try {
+      setRecovering(true);
+      setRecoverProgress("טוען גיבוי...");
+
+      const backupSnapshot = await getDocs(collection(db, "events_backup"));
+      if (backupSnapshot.empty) {
+        alert("לא נמצא גיבוי לשחזור");
+        return;
+      }
+
+      setRecoverProgress(`משחזר ${backupSnapshot.size} אירועים...`);
+      const restoreBatch = writeBatch(db);
+      backupSnapshot.docs.forEach((d) => {
+        const eventRef = doc(db!, "events", d.id);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { backedUpAt, ...eventData } = d.data();
+        restoreBatch.set(eventRef, eventData);
+      });
+      await restoreBatch.commit();
+
+      setRecoverProgress("מרענן נתונים...");
+      await loadConcerts();
+
+      setShowRecoverModal(false);
+      alert(`שוחזרו ${backupSnapshot.size} אירועים בהצלחה!`);
+    } catch (error) {
+      console.error("Error recovering events:", error);
+      alert("שגיאה בשחזור האירועים");
+    } finally {
+      setRecovering(false);
+      setRecoverProgress("");
+    }
+  };
+
   const filteredConcerts = events.filter((event) => {
     const matchesSearch =
       event.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -222,7 +326,108 @@ export default function EditConcertsPage() {
             <p className="text-text-large text-mutedText">
               עדכון פרטי אירועים, תמונות וסטטוס
             </p>
+            <div className="flex justify-center gap-3 mt-4">
+              <button
+                onClick={() => setShowDeleteAllModal(true)}
+                className="bg-primary text-white py-2 px-5 rounded-lg hover:bg-highlight transition-colors font-bold text-text-medium border border-primary"
+              >
+                מחק את כל האירועים
+              </button>
+              <button
+                onClick={() => setShowRecoverModal(true)}
+                disabled={!hasBackup}
+                title={!hasBackup ? "אין גיבוי זמין" : "שחזר מגיבוי אחרון"}
+                className="bg-secondary text-primary py-2 px-5 rounded-lg hover:bg-primary hover:text-white transition-colors font-bold text-text-medium border border-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                שחזר גיבוי
+              </button>
+            </div>
           </div>
+
+          {/* Delete All Warning Modal */}
+          {showDeleteAllModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-8 text-right">
+                <div className="flex items-center gap-3 mb-4 justify-end">
+                  <h2 className="text-heading-3-desktop font-bold text-primary">
+                    מחיקת כל האירועים
+                  </h2>
+                  <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                </div>
+                <p className="text-text-medium text-strongText mb-2">
+                  פעולה זו תמחק את <strong>כל האירועים</strong> ממסד הנתונים.
+                </p>
+                <p className="text-text-medium text-strongText mb-6">
+                  גיבוי אוטומטי יישמר ב-<code className="bg-secondary px-1 rounded">events_backup</code> ובאחסון <code className="bg-secondary px-1 rounded">event_images_backup</code> לצורך שחזור עתידי.
+                </p>
+                {deletingAll && (
+                  <div className="mb-4 p-3 bg-secondary border border-primary rounded-lg text-center">
+                    <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-primary mb-2"></div>
+                    <p className="text-primary font-bold">{deleteAllProgress}</p>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => !deletingAll && setShowDeleteAllModal(false)}
+                    disabled={deletingAll}
+                    className="flex-1 py-3 border border-secondary rounded-lg text-strongText hover:bg-secondary transition-colors font-bold disabled:opacity-50"
+                  >
+                    ביטול
+                  </button>
+                  <button
+                    onClick={handleDeleteAll}
+                    disabled={deletingAll}
+                    className="flex-1 py-3 bg-primary text-white rounded-lg hover:bg-highlight transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deletingAll ? "מוחק..." : "כן, מחק הכל"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Recover Modal */}
+          {showRecoverModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-8 text-right">
+                <div className="flex items-center gap-3 mb-4 justify-end">
+                  <h2 className="text-heading-3-desktop font-bold text-highlight">
+                    שחזור גיבוי
+                  </h2>
+                  <svg className="w-8 h-8 text-highlight" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <p className="text-text-medium text-strongText mb-6">
+                  פעולה זו תשחזר את כל האירועים מהגיבוי האחרון שנשמר ב-<code className="bg-secondary px-1 rounded">events_backup</code>. אירועים קיימים בעלי אותו מזהה יידרסו.
+                </p>
+                {recovering && (
+                  <div className="mb-4 p-3 bg-secondary border border-highlight rounded-lg text-center">
+                    <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-highlight mb-2"></div>
+                    <p className="text-highlight font-bold">{recoverProgress}</p>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => !recovering && setShowRecoverModal(false)}
+                    disabled={recovering}
+                    className="flex-1 py-3 border border-secondary rounded-lg text-strongText hover:bg-secondary transition-colors font-bold disabled:opacity-50"
+                  >
+                    ביטול
+                  </button>
+                  <button
+                    onClick={handleRecover}
+                    disabled={recovering}
+                    className="flex-1 py-3 bg-highlight text-white rounded-lg hover:bg-primary transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {recovering ? "משחזר..." : "שחזר עכשיו"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-20">

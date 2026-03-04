@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(xargs grep -l \"profile\\\\|seller\\\\|payment\")",
-      "Bash(npm audit --json)"
+      "Bash(npm audit --json)",
+      "Bash(xargs grep -l \"edit.*event\\\\|update.*event\\\\|Edit.*Event\")",
+      "Bash(npm run build)",
+      "Bash(npx tsc --noEmit --project tsconfig.json)"
     ]
   }
 }
