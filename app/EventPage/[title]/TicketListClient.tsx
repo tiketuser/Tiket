@@ -204,7 +204,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         className="flex flex-col items-stretch sm:items-center pt-6 px-4 pb-8 gap-3 sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 shadow-small-inner w-full"
       >
         {/* Sort bar */}
-        <div dir="rtl" className="flex gap-2 justify-start w-full">
+        <div className="flex gap-2 w-full">
           {(['asc', 'desc'] as const).map((order) => (
             <button
               key={order}
