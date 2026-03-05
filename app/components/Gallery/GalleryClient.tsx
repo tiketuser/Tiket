@@ -146,10 +146,18 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
     }
   }, [hasMore, lastDocId, selectedCategory]);
 
-  // Extract unique artist names for search suggestions (memoized)
+  // Fetch all event titles once for autocomplete suggestions
+  const [allEventTitles, setAllEventTitles] = useState<string[]>([]);
+  useEffect(() => {
+    fetch('/api/events?titles=true')
+      .then((r) => r.json())
+      .then((data) => setAllEventTitles(data.titles ?? []))
+      .catch(() => {});
+  }, []);
+
   const artistNames = useMemo(
-    () => [...new Set(displayedCards.map((card) => card.title))],
-    [displayedCards],
+    () => [...new Set(allEventTitles)],
+    [allEventTitles],
   );
 
   const handleSearch = useCallback(

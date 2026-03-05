@@ -40,6 +40,24 @@ export async function GET(request: NextRequest) {
     const lastDocId = searchParams.get("lastDocId");
     const category = searchParams.get("category");
     const pageSize = parseInt(searchParams.get("pageSize") ?? String(PAGE_SIZE));
+    const titlesOnly = searchParams.get("titles") === "true";
+
+    // Lightweight endpoint: return all event artist names for autocomplete
+    if (titlesOnly) {
+      const allEventsSnapshot = await getDocs(
+        query(
+          collection(db as any, "events"),
+          where("status", "==", "active"),
+        ),
+      );
+      const titles = allEventsSnapshot.docs
+        .map((d) => d.data().artist as string)
+        .filter(Boolean);
+      return NextResponse.json(
+        { titles },
+        { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=120" } },
+      );
+    }
 
     // Fetch tickets and cursor doc in parallel
     const [ticketsSnapshot, cursorDoc] = await Promise.all([

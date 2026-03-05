@@ -54,9 +54,10 @@ const CustomSearchInput: React.FC<CustomSearchInputProps> = ({
     }
 
     // סינון הצעות שמתאימות למה שהמשתמש מקליד
+    const query = value.trim().toLowerCase();
     const filtered = suggestions
       .filter((s): s is string => typeof s === "string" && !!s)
-      .filter((s) => s.includes(value.trim()));
+      .filter((s) => s.toLowerCase().includes(query));
 
     setFilteredSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);

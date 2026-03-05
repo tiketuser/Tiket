@@ -20,6 +20,11 @@
       "source": "ibelick/ui-skills",
       "sourceType": "github",
       "computedHash": "c1aca76fe18e8594f401cf78e5e76be24f182ce63167a398bdd4458f2a07639f"
+    },
+    "stripe-integration": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "997f806687334ec6f6d90fd9e6cc7159eb9a827b735e070aded56544efa8e857"
     }
   }
 }
