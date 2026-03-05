@@ -76,6 +76,10 @@ function ticketToBundleTicket(ticket: Ticket): BundleTicket {
   };
 }
 
+type SortableItem =
+  | { type: 'bundle'; sortPrice: number; data: Ticket[] }
+  | { type: 'solo'; sortPrice: number; data: Ticket };
+
 const TicketListClient: React.FC<TicketListClientProps> = ({
   tickets,
   event,
@@ -83,6 +87,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [checkoutTickets, setCheckoutTickets] = useState<TicketInfo[]>([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const toTicketInfo = useCallback(
     (ticket: Ticket): TicketInfo => ({
@@ -117,6 +122,24 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
       soloTickets: solo,
     };
   }, [tickets]);
+
+  const sortedItems = useMemo((): SortableItem[] => {
+    const items: SortableItem[] = [
+      ...bundledGroups.map((group) => ({
+        type: 'bundle' as const,
+        sortPrice: Math.min(...group.map((t) => t.askingPrice)),
+        data: group,
+      })),
+      ...soloTickets.map((ticket) => ({
+        type: 'solo' as const,
+        sortPrice: ticket.askingPrice,
+        data: ticket,
+      })),
+    ];
+    return items.sort((a, b) =>
+      sortOrder === 'asc' ? a.sortPrice - b.sortPrice : b.sortPrice - a.sortPrice,
+    );
+  }, [bundledGroups, soloTickets, sortOrder]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
