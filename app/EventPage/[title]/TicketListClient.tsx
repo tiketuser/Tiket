@@ -202,80 +202,71 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         dir="rtl"
         className="flex flex-col items-stretch sm:items-center pt-6 px-4 pb-8 gap-3 sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 shadow-small-inner w-full"
       >
-        {/* Render bundle groups first */}
-        {bundledGroups.map((group) => {
-          // If only 1 ticket remains in a bundle (partial sell), fall back to SingleCard
-          if (group.length === 1) {
-            const ticket = group[0];
+        {sortedItems.map((item) => {
+          if (item.type === 'bundle') {
+            const group = item.data;
+            if (group.length === 1) {
+              const ticket = group[0];
+              return (
+                <div key={ticket.id} className="w-full sm:flex sm:items-center sm:justify-center">
+                  <SingleCard
+                    title={event.artist}
+                    imageSrc={event.imageUrl || "/images/Artist/default.png"}
+                    date={ticket.date}
+                    location={ticket.venue}
+                    seatLocation={ticketSeatLocation(ticket)}
+                    price={ticket.askingPrice}
+                    soldOut={false}
+                    ticketsLeft={soloTickets.length + 1}
+                    timeLeft=""
+                    buttonAction="קנה"
+                    ticketId={ticket.id}
+                    sellerId={ticket.sellerId}
+                    isSelectable={true}
+                    isSelected={selectedIds.has(ticket.id)}
+                    onToggleSelect={() => toggleSelect(ticket.id)}
+                    onInstantBuy={() => openInstantBuy(ticket)}
+                  />
+                </div>
+              );
+            }
             return (
-              <div
-                key={ticket.id}
-                className="w-full sm:flex sm:items-center sm:justify-center"
-              >
-                <SingleCard
-                  title={event.artist}
-                  imageSrc={event.imageUrl || "/images/Artist/default.png"}
-                  date={ticket.date}
-                  location={ticket.venue}
-                  seatLocation={ticketSeatLocation(ticket)}
-                  price={ticket.askingPrice}
-                  soldOut={false}
-                  ticketsLeft={soloTickets.length + 1}
-                  timeLeft=""
-                  buttonAction="קנה"
-                  ticketId={ticket.id}
-                  sellerId={ticket.sellerId}
-                  isSelectable={true}
-                  isSelected={selectedIds.has(ticket.id)}
-                  onToggleSelect={() => toggleSelect(ticket.id)}
-                  onInstantBuy={() => openInstantBuy(ticket)}
+              <div key={group[0].bundleId!} className="w-full sm:flex sm:items-center sm:justify-center">
+                <BundleCard
+                  tickets={group.map(ticketToBundleTicket)}
+                  eventTitle={event.artist}
+                  canSplit={group[0].canSplit}
+                  onBuyAll={openBundleBuy}
+                  onBuySelected={openBundleBuy}
                 />
               </div>
             );
           }
-
+          // solo
+          const ticket = item.data;
           return (
-            <div
-              key={group[0].bundleId}
-              className="w-full sm:flex sm:items-center sm:justify-center"
-            >
-              <BundleCard
-                tickets={group.map(ticketToBundleTicket)}
-                eventTitle={event.artist}
-                canSplit={group[0].canSplit}
-                onBuyAll={openBundleBuy}
-                onBuySelected={openBundleBuy}
+            <div key={ticket.id} className="w-full sm:flex sm:items-center sm:justify-center">
+              <SingleCard
+                title={event.artist}
+                imageSrc={event.imageUrl || "/images/Artist/default.png"}
+                date={ticket.date}
+                location={ticket.venue}
+                seatLocation={ticketSeatLocation(ticket)}
+                price={ticket.askingPrice}
+                soldOut={false}
+                ticketsLeft={soloTickets.length}
+                timeLeft=""
+                buttonAction="קנה"
+                ticketId={ticket.id}
+                sellerId={ticket.sellerId}
+                isSelectable={true}
+                isSelected={selectedIds.has(ticket.id)}
+                onToggleSelect={() => toggleSelect(ticket.id)}
+                onInstantBuy={() => openInstantBuy(ticket)}
               />
             </div>
           );
         })}
-
-        {/* Render solo tickets */}
-        {soloTickets.map((ticket) => (
-          <div
-            key={ticket.id}
-            className="w-full sm:flex sm:items-center sm:justify-center"
-          >
-            <SingleCard
-              title={event.artist}
-              imageSrc={event.imageUrl || "/images/Artist/default.png"}
-              date={ticket.date}
-              location={ticket.venue}
-              seatLocation={ticketSeatLocation(ticket)}
-              price={ticket.askingPrice}
-              soldOut={false}
-              ticketsLeft={soloTickets.length}
-              timeLeft=""
-              buttonAction="קנה"
-              ticketId={ticket.id}
-              sellerId={ticket.sellerId}
-              isSelectable={true}
-              isSelected={selectedIds.has(ticket.id)}
-              onToggleSelect={() => toggleSelect(ticket.id)}
-              onInstantBuy={() => openInstantBuy(ticket)}
-            />
-          </div>
-        ))}
       </div>
 
       {/* Sticky multi-buy bar — only for solo ticket selections */}
