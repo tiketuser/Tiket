@@ -202,6 +202,24 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         dir="rtl"
         className="flex flex-col items-stretch sm:items-center pt-6 px-4 pb-8 gap-3 sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 shadow-small-inner w-full"
       >
+        {/* Sort bar */}
+        <div className="flex gap-2 justify-start w-full">
+          {(['asc', 'desc'] as const).map((order) => (
+            <button
+              key={order}
+              onClick={() => setSortOrder(order)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 border ${
+                sortOrder === order
+                  ? 'bg-primary text-white border-primary shadow-sm'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
+              }`}
+            >
+              {order === 'asc' ? 'מהזול ליקר ↑' : 'מהיקר לזול ↓'}
+            </button>
+          ))}
+        </div>
+
+
         {sortedItems.map((item) => {
           if (item.type === 'bundle') {
             const group = item.data;
