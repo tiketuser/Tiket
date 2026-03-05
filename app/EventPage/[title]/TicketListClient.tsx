@@ -248,8 +248,10 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
                 </div>
               );
             }
+            const bundleId = group[0].bundleId;
+            if (!bundleId) return null;
             return (
-              <div key={group[0].bundleId!} className="w-full sm:flex sm:items-center sm:justify-center">
+              <div key={bundleId} className="w-full sm:flex sm:items-center sm:justify-center">
                 <BundleCard
                   tickets={group.map(ticketToBundleTicket)}
                   eventTitle={event.artist}
