@@ -102,7 +102,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
             date: d.date ?? "",
             time: d.time ?? "",
             venue: d.venue ?? "",
-            imageUrl: d.imageUrl ?? undefined,
+            imageUrl: d.imageUrl && !d.imageUrl.startsWith('data:') ? d.imageUrl : undefined,
             status: d.status ?? "",
           } satisfies Event;
         })()

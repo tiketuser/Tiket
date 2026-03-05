@@ -188,7 +188,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
   const artistNames = [...new Set(allCards.map((card) => card.title))];
 
   const handleSearch = (query: string) => {
-    router.push(`/SearchResults?query=${encodeURIComponent(query)}`);
+    router.push(`/SearchResults/${encodeURIComponent(query)}`);
   };
 
   return (

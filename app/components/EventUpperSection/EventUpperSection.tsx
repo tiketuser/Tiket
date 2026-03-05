@@ -114,13 +114,13 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
         </div>
       </div>
       {/* Desktop: Image on right */}
-      <div className="hidden sm:flex w-full justify-end">
+      <div className="hidden sm:flex w-full justify-end items-center">
         <Image
           src={imageSrc}
           alt="Event image"
           width={310}
           height={264}
-          className="md:w-[270px] md:h-[224px] sm:w-[210px] sm:h-[164px] mt-16"
+          className="lg:w-[310px] lg:h-[264px] md:w-[280px] md:h-[240px] sm:w-[230px] sm:h-[196px] object-cover rounded-xl shadow-md"
           priority
         />
       </div>

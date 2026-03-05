@@ -21,8 +21,10 @@ interface CardData {
   location: string;
   ticketsLeft: number;
   price: number;
+  maxPrice?: number;
   soldOut: boolean;
   timeLeft: string;
+  time?: string;
 }
 
 interface ResponsiveGalleryProps {

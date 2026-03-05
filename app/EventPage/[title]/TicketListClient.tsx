@@ -77,8 +77,8 @@ function ticketToBundleTicket(ticket: Ticket): BundleTicket {
 }
 
 type SortableItem =
-  | { type: 'bundle'; sortPrice: number; data: Ticket[] }
-  | { type: 'solo'; sortPrice: number; data: Ticket };
+  | { type: "bundle"; sortPrice: number; data: Ticket[] }
+  | { type: "solo"; sortPrice: number; data: Ticket };
 
 const TicketListClient: React.FC<TicketListClientProps> = ({
   tickets,
@@ -87,7 +87,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [checkoutTickets, setCheckoutTickets] = useState<TicketInfo[]>([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
 
   const toTicketInfo = useCallback(
     (ticket: Ticket): TicketInfo => ({
@@ -126,19 +126,21 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
   const sortedItems = useMemo((): SortableItem[] => {
     const items: SortableItem[] = [
       ...bundledGroups.map((group) => ({
-        type: 'bundle' as const,
+        type: "bundle" as const,
         sortPrice: Math.min(...group.map((t) => t.askingPrice)),
         data: group,
       })),
       ...soloTickets.map((ticket) => ({
-        type: 'solo' as const,
+        type: "solo" as const,
         sortPrice: ticket.askingPrice,
         data: ticket,
       })),
     ];
     if (!sortOrder) return items;
     return items.sort((a, b) =>
-      sortOrder === 'asc' ? a.sortPrice - b.sortPrice : b.sortPrice - a.sortPrice,
+      sortOrder === "asc"
+        ? a.sortPrice - b.sortPrice
+        : b.sortPrice - a.sortPrice,
     );
   }, [bundledGroups, soloTickets, sortOrder]);
 
@@ -175,7 +177,14 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         title: event.artist,
         date: t.date,
         venue: t.venue,
-        seatLocation: formatSeatLocation({ category: t.category, section: t.section, block: t.block, row: t.row, seat: t.seat, isStanding: t.isStanding }),
+        seatLocation: formatSeatLocation({
+          category: t.category,
+          section: t.section,
+          block: t.block,
+          row: t.row,
+          seat: t.seat,
+          isStanding: t.isStanding,
+        }),
         price: t.askingPrice,
         originalPrice: t.originalPrice,
         sellerId: t.sellerId,
@@ -205,29 +214,33 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
       >
         {/* Sort bar */}
         <div className="flex gap-2 w-full">
-          {(['asc', 'desc'] as const).map((order) => (
+          {(["asc", "desc"] as const).map((order) => (
             <button
               key={order}
-              onClick={() => setSortOrder(prev => prev === order ? null : order)}
+              onClick={() =>
+                setSortOrder((prev) => (prev === order ? null : order))
+              }
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 border ${
                 sortOrder === order
-                  ? 'bg-primary text-white border-primary shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
+                  ? "bg-primary text-white border-primary shadow-sm"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary"
               }`}
             >
-              {order === 'asc' ? 'מהזול ליקר ↓' : 'מהיקר לזול ↑'}
+              {order === "asc" ? "מהיקר לזול " : "מהזול ליקר "}
             </button>
           ))}
         </div>
 
-
         {sortedItems.map((item) => {
-          if (item.type === 'bundle') {
+          if (item.type === "bundle") {
             const group = item.data;
             if (group.length === 1) {
               const ticket = group[0];
               return (
-                <div key={ticket.id} className="w-full sm:flex sm:items-center sm:justify-center">
+                <div
+                  key={ticket.id}
+                  className="w-full sm:flex sm:items-center sm:justify-center"
+                >
                   <SingleCard
                     title={event.artist}
                     imageSrc={event.imageUrl || "/images/Artist/default.png"}
@@ -252,7 +265,10 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
             const bundleId = group[0].bundleId;
             if (!bundleId) return null;
             return (
-              <div key={bundleId} className="w-full sm:flex sm:items-center sm:justify-center">
+              <div
+                key={bundleId}
+                className="w-full sm:flex sm:items-center sm:justify-center"
+              >
                 <BundleCard
                   tickets={group.map(ticketToBundleTicket)}
                   eventTitle={event.artist}
@@ -266,7 +282,10 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
           // solo
           const ticket = item.data;
           return (
-            <div key={ticket.id} className="w-full sm:flex sm:items-center sm:justify-center">
+            <div
+              key={ticket.id}
+              className="w-full sm:flex sm:items-center sm:justify-center"
+            >
               <SingleCard
                 title={event.artist}
                 imageSrc={event.imageUrl || "/images/Artist/default.png"}

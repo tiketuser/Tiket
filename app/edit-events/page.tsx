@@ -14,6 +14,7 @@ import {
   query,
   orderBy,
   writeBatch,
+  where,
   Timestamp,
 } from "firebase/firestore";
 import Image from "next/image";
@@ -128,13 +129,35 @@ export default function EditConcertsPage() {
         imageUrl: editForm.imageUrl,
       });
 
+      // Cascade event details to all related tickets
+      const ticketsSnapshot = await getDocs(
+        query(collection(db, "tickets"), where("eventId", "==", selectedConcert.id))
+      );
+      if (!ticketsSnapshot.empty) {
+        const BATCH_LIMIT = 500;
+        const ticketDocs = ticketsSnapshot.docs;
+        for (let i = 0; i < ticketDocs.length; i += BATCH_LIMIT) {
+          const batch = writeBatch(db);
+          ticketDocs.slice(i, i + BATCH_LIMIT).forEach((ticketDoc) => {
+            batch.update(ticketDoc.ref, {
+              artist: editForm.artist,
+              date: normalizedDate,
+              time: editForm.time,
+              venue: editForm.venue,
+            });
+          });
+          await batch.commit();
+        }
+      }
+
       // Update local state with normalized date
       const updatedForm = { ...editForm, date: normalizedDate };
       setConcerts(
         events.map((c) => (c.id === selectedConcert.id ? updatedForm : c)),
       );
 
-      alert("האירוע עודכן בהצלחה!");
+      const ticketCount = ticketsSnapshot.size;
+      alert(ticketCount > 0 ? `האירוע ו-${ticketCount} כרטיסים עודכנו בהצלחה!` : "האירוע עודכן בהצלחה!");
       handleCancel();
     } catch (error) {
       console.error("Error updating event:", error);

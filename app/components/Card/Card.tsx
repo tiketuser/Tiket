@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import TicketIcon from "../../../public/images/Home Page/Web/Ticket Icon.svg";
 import PriceIcon from "../../../public/images/Home Page/Web/Price Icon.svg";
 import TimeLeftIcon from "../../../public/images/Home Page/Web/TimeLeft.svg";
+import ClockIcon from "../../../public/images/Event Page/Web/Clock.svg";
 import Image from "next/image";
 import Link from "next/link";
 import { getAuth } from "firebase/auth";
@@ -24,9 +25,11 @@ interface CardProps {
   date: string;
   location: string;
   price: number;
+  maxPrice?: number;
   soldOut: boolean;
   ticketsLeft: number;
   timeLeft: string;
+  time?: string;
   openLoginDialog: () => void;
   userFavorites?: (string | number)[]; // Pre-fetched favorites to avoid N+1 queries
 }
@@ -39,8 +42,10 @@ const Card: React.FC<CardProps> = ({
   location,
   ticketsLeft,
   price,
+  maxPrice,
   soldOut,
   timeLeft,
+  time,
   openLoginDialog,
   userFavorites,
 }) => {
@@ -190,7 +195,7 @@ const Card: React.FC<CardProps> = ({
           {/* Title and show details section */}
           <div className="grid pt-2 sm:pt-6 pb-1 sm:pb-2 gap-1 sm:gap-3">
             <div className="flex items-center gap-2 sm:gap-12">
-              <span className="text-sm sm:text-heading-3-mobile font-extrabold text-strongText whitespace-nowrap truncate max-w-[120px] sm:max-w-[280px]">
+              <span className="text-sm sm:text-heading-3-mobile font-extrabold text-strongText sm:whitespace-nowrap sm:truncate sm:max-w-[280px] leading-tight">
                 {title}
               </span>
               <span className="relative bg-strongText flex-grow h-[2px] sm:h-[3px] rounded-lg"></span>
@@ -199,6 +204,12 @@ const Card: React.FC<CardProps> = ({
               <p className="text-[10px] sm:text-heading-6-desktop font-bold text-mutedText truncate">
                 {formatDateHebrew(date)}
               </p>
+              {time && (
+                <p className="text-[10px] sm:text-heading-6-desktop font-bold text-mutedText flex items-center gap-1">
+                  <Image src={ClockIcon} alt="clock icon" className="h-3 w-3 sm:h-4 sm:w-4" />
+                  {time}
+                </p>
+              )}
               <p className="text-[10px] sm:text-heading-6-desktop font-bold text-mutedText truncate">
                 {location}
               </p>
@@ -224,7 +235,7 @@ const Card: React.FC<CardProps> = ({
                 className="h-6 w-3 sm:h-[42px] sm:w-[21px]"
               />
               <span className="text-base sm:text-heading-4-desktop font-semibold text-strongText text-center">
-                {price} ₪
+                {maxPrice && maxPrice > price ? `₪${price} - ₪${maxPrice}` : `₪${price}`}
               </span>
             </div>
             <div

@@ -33,7 +33,7 @@ interface Event {
   date: string;
   time: string;
   venue: string;
-  imageData: string;
+  imageUrl: string;
   status: string;
   views: number;
   categories?: string[];
@@ -79,7 +79,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
     (event) =>
       event &&
       event.artist &&
-      event.imageData &&
+      
       event.artist.toLowerCase().includes(query.toLowerCase()),
   );
 
@@ -139,7 +139,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
       return {
         id: event.id,
         title: event.artist,
-        imageSrc: event.imageData,
+        imageSrc: event.imageUrl,
         date: event.date,
         location: event.venue,
         price: minPrice === maxPrice ? minPrice : minPrice,

@@ -22,9 +22,11 @@ interface CardData {
   date: string;
   location: string;
   price: number;
+  maxPrice?: number;
   soldOut: boolean;
   ticketsLeft: number;
   timeLeft: string;
+  time?: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -133,6 +135,7 @@ export async function GET(request: NextRequest) {
           .map((t) => t.askingPrice)
           .filter((p) => p && !isNaN(p));
         const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
         return {
           id: event.id,
@@ -142,9 +145,11 @@ export async function GET(request: NextRequest) {
           date: event.date,
           location: event.venue || "מיקום לא ידוע",
           price: minPrice,
+          maxPrice,
           soldOut: eventTickets.length === 0,
           ticketsLeft: eventTickets.length,
           timeLeft: calculateTimeLeft(event.date, event.time),
+          time: event.time,
         };
       })
       .filter((c) => !c.soldOut);

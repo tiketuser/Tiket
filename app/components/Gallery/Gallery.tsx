@@ -14,9 +14,11 @@ interface CardData {
   date: string;
   location: string;
   price: number;
+  maxPrice?: number;
   soldOut: boolean;
   ticketsLeft: number;
   timeLeft: string;
+  time?: string;
 }
 
 interface Event {
@@ -142,9 +144,11 @@ async function getGalleryData(): Promise<{ cards: CardData[]; lastDocId: string 
           date: event.date || "",
           location: event.venue || "מיקום לא ידוע",
           price: minPrice || 0,
+          maxPrice: maxPrice || 0,
           soldOut: eventTickets.length === 0,
           ticketsLeft: eventTickets.length,
           timeLeft: calculateTimeLeft(event.date || "", event.time || ""),
+          time: event.time || "",
         };
       })
       .filter((event) => !event.soldOut);
