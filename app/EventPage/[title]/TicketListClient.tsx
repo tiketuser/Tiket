@@ -87,7 +87,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [checkoutTickets, setCheckoutTickets] = useState<TicketInfo[]>([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
 
   const toTicketInfo = useCallback(
     (ticket: Ticket): TicketInfo => ({
@@ -136,6 +136,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         data: ticket,
       })),
     ];
+    if (!sortOrder) return items;
     return items.sort((a, b) =>
       sortOrder === 'asc' ? a.sortPrice - b.sortPrice : b.sortPrice - a.sortPrice,
     );
@@ -203,11 +204,11 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
         className="flex flex-col items-stretch sm:items-center pt-6 px-4 pb-8 gap-3 sm:pt-14 sm:pr-32 sm:pb-14 sm:pl-32 sm:gap-8 shadow-small-inner w-full"
       >
         {/* Sort bar */}
-        <div dir="ltr" className="flex gap-2 justify-start w-full">
+        <div dir="rtl" className="flex gap-2 justify-start w-full">
           {(['asc', 'desc'] as const).map((order) => (
             <button
               key={order}
-              onClick={() => setSortOrder(order)}
+              onClick={() => setSortOrder(prev => prev === order ? null : order)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 border ${
                 sortOrder === order
                   ? 'bg-primary text-white border-primary shadow-sm'
