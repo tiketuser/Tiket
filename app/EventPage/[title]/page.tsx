@@ -13,8 +13,7 @@ const ViewTracker = dynamicImport(
   { ssr: false },
 );
 
-// Use ISR - revalidate every 30 seconds for faster cache
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 interface Event {
   id: string;

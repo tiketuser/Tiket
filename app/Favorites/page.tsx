@@ -5,8 +5,7 @@ import NavBar from "../components/NavBar/NavBar";
 import FavoritesClient from "./FavoritesClient";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
 
-// Use ISR - revalidate every 30 seconds
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 interface Event {
   id: string;

@@ -10,8 +10,7 @@ import {
 } from "firebase/firestore";
 import { calculateTimeLeft } from "../../../utils/timeCalculator";
 
-// Use ISR - revalidate every 30 seconds for fresh search results with caching
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 // Define CardData type here or import it
 interface CardData {

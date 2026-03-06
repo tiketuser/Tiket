@@ -6,8 +6,7 @@ import { calculateTimeLeft } from "../../utils/timeCalculator";
 
 const INITIAL_PAGE_SIZE = 12;
 
-// Use ISR - revalidate every 30 seconds
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 interface CardData {
   id: string;
