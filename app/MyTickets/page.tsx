@@ -174,6 +174,7 @@ export default function MyTicketsPage() {
                   <MyTicketCard
                     artist={ticket.artist}
                     date={ticket.date}
+                    time={ticket.time}
                     venue={ticket.venue}
                     price={ticket.amount}
                     seatLabel={seatLabel(ticket)}
@@ -212,6 +213,7 @@ export default function MyTicketsPage() {
                   <MyTicketCard
                     artist={ticket.artist}
                     date={ticket.date}
+                    time={ticket.time}
                     venue={ticket.venue}
                     price={ticket.amount}
                     seatLabel={seatLabel(ticket)}

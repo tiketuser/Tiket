@@ -199,9 +199,10 @@ export async function POST(request: NextRequest) {
       amount: totalAgorot,
       currency: "ils",
       metadata,
+      automatic_payment_methods: { enabled: true },
       ...(stripeCustomerId && {
         customer: stripeCustomerId,
-        setup_future_usage: "off_session",
+        setup_future_usage: "on_session",
       }),
     });
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { stripe, getPlatformFeePercent } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebaseAdmin";
 import Stripe from "stripe";
 
@@ -135,7 +135,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     return;
   }
 
-  const feePercent = parseFloat(platformFeePercent) || 0;
+  const feePercent = parseFloat(platformFeePercent) || getPlatformFeePercent();
 
   // Fetch all ticket documents to get per-ticket sellerId, askingPrice, date
   const ticketSnaps = await Promise.all(

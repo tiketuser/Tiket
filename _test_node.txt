@@ -1,0 +1,27 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import { getAuth, deleteUser } from "firebase/auth";
+import {
+  doc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+} from "firebase/firestore";
+import { db } from "../../../firebase";
+
+const ISRAELI_BANKS = [
+  { code: "12", name: "הפועלים" },
+  { code: "10", name: "לאומי" },
+  { code: "11", name: "דיסקונט" },
+  { code: "20", name: "מזרחי טפחות" },
+  { code: "31", name: "הבינלאומי" },
+  { code: "14", name: "אוצר החייל" },
+  { code: "17", name: "מרכנתיל" },
+  { code: "09", name: "הדואר" },
+  { code: "46", name: "מסד" },
+  { code: "54", name: "ירושלים" },
+];

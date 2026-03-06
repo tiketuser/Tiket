@@ -60,6 +60,7 @@ const MyListings = () => {
   const [showRejected, setShowRejected] = useState(true);
   const [cancelTicketId, setCancelTicketId] = useState<string | null>(null);
   const [canceling, setCanceling] = useState(false);
+  const [removeTicketId, setRemoveTicketId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMyListings();
@@ -195,6 +196,7 @@ const MyListings = () => {
                   <MyTicketCard
                     artist={ticket.artist}
                     date={ticket.date || ""}
+                    time={ticket.time}
                     venue={ticket.venue}
                     price={ticket.askingPrice}
                     seatLabel={seatLabel(ticket)}
@@ -233,6 +235,7 @@ const MyListings = () => {
                   <MyTicketCard
                     artist={ticket.artist}
                     date={ticket.date || ""}
+                    time={ticket.time}
                     venue={ticket.venue}
                     price={ticket.askingPrice}
                     seatLabel={seatLabel(ticket)}
@@ -240,17 +243,11 @@ const MyListings = () => {
                     buttonLabel="מחק"
                     onButtonClick={() => setCancelTicketId(ticket.id)}
                   />
-                  <div className="w-full max-w-[320px] sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] mt-3 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="text-xl">⏳</div>
-                      <div className="flex-1">
-                        <p className="font-bold text-yellow-800 text-sm mb-1">
-                          הכרטיס בבדיקה
-                        </p>
-                        <p className="text-yellow-700 text-sm">
-                          הכרטיס שהעלית נמצא כעת בבדיקת המנהל. תקבל עדכון בהקדם.
-                        </p>
-                      </div>
+                  <div className="w-full max-w-[320px] sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] mt-2 px-5 py-3 bg-secondary/30 border-r-4 border-primary rounded-md flex items-center gap-3">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary flex-shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <div className="flex-1" dir="rtl">
+                      <p className="font-bold text-strongText text-sm">הכרטיס בבדיקה</p>
+                      <p className="text-weakTextBluish text-sm">הכרטיס שהעלית נמצא כעת בבדיקת המנהל. תקבל עדכון בהקדם.</p>
                     </div>
                   </div>
                 </div>
@@ -288,6 +285,7 @@ const MyListings = () => {
                   <MyTicketCard
                     artist={ticket.artist}
                     date={ticket.date || ""}
+                    time={ticket.time}
                     venue={ticket.venue}
                     price={ticket.askingPrice}
                     seatLabel={seatLabel(ticket)}
@@ -297,17 +295,11 @@ const MyListings = () => {
 
                   {/* Display admin comment if available */}
                   {ticket.adminComment && (
-                    <div className="w-full max-w-[320px] sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] mt-3 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <div className="text-xl">💬</div>
-                        <div className="flex-1">
-                          <p className="font-bold text-red-800 text-sm mb-1">
-                            הערת מנהל:
-                          </p>
-                          <p className="text-red-700 text-sm">
-                            {ticket.adminComment}
-                          </p>
-                        </div>
+                    <div className="w-full max-w-[320px] sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] mt-2 px-5 py-3 bg-secondary/20 border-r-4 border-highlight rounded-md flex items-center gap-3">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-highlight flex-shrink-0"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                      <div className="flex-1" dir="rtl">
+                        <p className="font-bold text-strongText text-sm">הערת מנהל:</p>
+                        <p className="text-weakTextBluish text-sm">{ticket.adminComment}</p>
                       </div>
                     </div>
                   )}
@@ -315,17 +307,11 @@ const MyListings = () => {
                   {/* Display verification reason if no admin comment */}
                   {!ticket.adminComment &&
                     ticket.verificationDetails?.reason && (
-                      <div className="w-full max-w-[320px] sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] mt-3 p-4 bg-gray-50 border-2 border-gray-200 rounded-lg">
-                        <div className="flex items-start gap-3">
-                          <div className="text-xl">ℹ️</div>
-                          <div className="flex-1">
-                            <p className="font-bold text-gray-800 text-sm mb-1">
-                              סיבת דחייה:
-                            </p>
-                            <p className="text-gray-700 text-sm">
-                              {ticket.verificationDetails.reason}
-                            </p>
-                          </div>
+                      <div className="w-full max-w-[320px] sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] mt-2 px-5 py-3 bg-secondary/20 border-r-4 border-highlight rounded-md flex items-center gap-3">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-highlight flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <div className="flex-1" dir="rtl">
+                          <p className="font-bold text-strongText text-sm">סיבת דחייה:</p>
+                          <p className="text-weakTextBluish text-sm">{ticket.verificationDetails.reason}</p>
                         </div>
                       </div>
                     )}
@@ -361,12 +347,13 @@ const MyListings = () => {
                   <MyTicketCard
                     artist={ticket.artist}
                     date={ticket.date || ""}
+                    time={ticket.time}
                     venue={ticket.venue}
                     price={ticket.askingPrice}
                     seatLabel={seatLabel(ticket)}
                     tag="נמכר"
                     buttonLabel="הסר"
-                    onButtonClick={() => setTickets((prev) => prev.filter((t) => t.id !== ticket.id))}
+                    onButtonClick={() => setRemoveTicketId(ticket.id)}
                   />
                 </div>
               ))
@@ -397,6 +384,35 @@ const MyListings = () => {
                 className="btn btn-primary rounded-md min-h-0 h-10 px-5 text-white text-sm font-medium flex-1"
               >
                 {canceling ? <span className="loading loading-spinner loading-sm" /> : "כן, בטל מכירה"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove sold ticket confirmation dialog */}
+      {removeTicketId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" dir="rtl">
+          <div className="bg-white rounded-xl shadow-large p-6 mx-4 w-full max-w-sm flex flex-col gap-4">
+            <h2 className="text-lg font-bold text-strongText text-center">הסרת כרטיס</h2>
+            <p className="text-sm text-mutedText text-center">
+              האם אתה בטוח שברצונך להסיר את הכרטיס מההיסטוריה?
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setRemoveTicketId(null)}
+                className="btn btn-outline rounded-md min-h-0 h-10 px-5 text-sm font-medium flex-1"
+              >
+                חזרה
+              </button>
+              <button
+                onClick={() => {
+                  setTickets((prev) => prev.filter((t) => t.id !== removeTicketId));
+                  setRemoveTicketId(null);
+                }}
+                className="btn btn-primary rounded-md min-h-0 h-10 px-5 text-white text-sm font-medium flex-1"
+              >
+                כן, הסר
               </button>
             </div>
           </div>

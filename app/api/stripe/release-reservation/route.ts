@@ -8,18 +8,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
     }
 
-    const { ticketIds } = await request.json();
+    const body = await request.json();
+    const { ticketIds, guestEmail: bodyGuestEmail } = body;
     if (!Array.isArray(ticketIds) || ticketIds.length === 0) {
       return NextResponse.json({ error: "ticketIds required" }, { status: 400 });
     }
 
-    // Verify the caller owns the reservation (or is a guest — we trust the client here
-    // since releasing a reservation is a non-destructive, buyer-side operation)
+    // Verify the caller owns the reservation
     let buyerIdentity: string | null = null;
+    let guestIdentity: string | null = null;
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ") && adminAuth) {
       const decoded = await adminAuth.verifyIdToken(authHeader.substring(7));
       buyerIdentity = decoded.uid;
+    } else if (bodyGuestEmail) {
+      guestIdentity = `guest:${bodyGuestEmail}`;
+    } else {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const batch = adminDb.batch();
@@ -33,8 +38,9 @@ export async function POST(request: NextRequest) {
       // Only release if still reserved (don't undo a completed purchase)
       if (data.status !== "reserved") continue;
 
-      // Only release if reserved by this buyer (or guest flow where no uid)
+      // Only release if the caller owns this reservation
       if (buyerIdentity && data.reservedBy !== buyerIdentity) continue;
+      if (guestIdentity && data.reservedBy !== guestIdentity) continue;
 
       if (!artist) artist = data.artist as string ?? null;
       batch.update(ref, { status: "available", reservedBy: null, reservedAt: null });

@@ -76,7 +76,10 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       await fetch("/api/stripe/release-reservation", {
         method: "POST",
         headers,
-        body: JSON.stringify({ ticketIds: tickets.map((t) => t.ticketId) }),
+        body: JSON.stringify({
+          ticketIds: tickets.map((t) => t.ticketId),
+          ...(guestInfo && { guestEmail: guestInfo.email }),
+        }),
       });
     } catch (err) {
       console.error("Failed to release reservation:", err);

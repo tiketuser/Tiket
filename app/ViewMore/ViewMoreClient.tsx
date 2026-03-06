@@ -228,7 +228,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
 
       {/* Section tabs */}
       {allCards.length > 0 && tabs.length > 1 && (
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm">
+        <div className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-10 flex gap-1 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => (
               <button
