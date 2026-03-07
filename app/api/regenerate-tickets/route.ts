@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
+import { requireAdmin } from '@/lib/authMiddleware';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
 
-const ADMIN_SELLER_ID = 'XzttD4gMV6TRxUUZGBTXxYiZtP02';
+// Admin seller ID for generated demo tickets — loaded from env, not hardcoded
+const ADMIN_SELLER_ID = process.env.ADMIN_SELLER_ID || '';
 
 // Category-specific seat layout configurations
 const CATEGORY_LAYOUTS: Record<string, {
@@ -204,7 +206,11 @@ function generateTicketsForEvent(event: any, count: number) {
   }));
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  // Require admin auth — this endpoint deletes and recreates the entire ticket collection
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     if (!adminDb) {
       return NextResponse.json({ success: false, error: 'Firebase Admin not initialized' }, { status: 500 });

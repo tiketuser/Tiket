@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
+import { verifyGuestToken } from "@/lib/guestToken";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { ticketIds, guestEmail: bodyGuestEmail } = body;
+    const { ticketIds, guestToken } = body;
     if (!Array.isArray(ticketIds) || ticketIds.length === 0) {
       return NextResponse.json({ error: "ticketIds required" }, { status: 400 });
     }
@@ -21,8 +22,15 @@ export async function POST(request: NextRequest) {
     if (authHeader?.startsWith("Bearer ") && adminAuth) {
       const decoded = await adminAuth.verifyIdToken(authHeader.substring(7));
       buyerIdentity = decoded.uid;
-    } else if (bodyGuestEmail) {
-      guestIdentity = `guest:${bodyGuestEmail}`;
+    } else if (guestToken) {
+      // Verify the HMAC-signed guest token — prevents anyone from releasing
+      // another guest's reservation by guessing their email
+      try {
+        const guestPayload = verifyGuestToken(guestToken);
+        guestIdentity = `guest:${guestPayload.email}`;
+      } catch {
+        return NextResponse.json({ error: "Invalid or expired guest session" }, { status: 401 });
+      }
     } else {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

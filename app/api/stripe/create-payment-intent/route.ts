@@ -7,6 +7,7 @@ import {
   getPlatformFeePercent,
 } from "@/lib/stripe";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
+import { verifyGuestToken } from "@/lib/guestToken";
 
 export async function POST(request: NextRequest) {
   const reservedIds: string[] = [];
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { ticketIds, guestEmail, guestPhone } = body;
+    const { ticketIds, guestToken } = body;
 
     if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0) {
       return NextResponse.json(
@@ -38,9 +39,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine buyer identity: authenticated user or guest
+    // Determine buyer identity: authenticated user or HMAC-verified guest
     let buyerUid: string | null = null;
     let isGuest = false;
+    let guestEmail: string | null = null;
+    let guestPhone: string | null = null;
     let buyerEmail: string | null = null;
     let buyerName: string | null = null;
 
@@ -51,52 +54,41 @@ export async function POST(request: NextRequest) {
       buyerUid = decoded.uid;
       buyerEmail = decoded.email || null;
       buyerName = decoded.name || null;
-    } else if (guestEmail && guestPhone) {
-      isGuest = true;
+    } else if (guestToken) {
+      // Verify the HMAC-signed token issued by /api/guest-token
+      try {
+        const guestPayload = verifyGuestToken(guestToken);
+        isGuest = true;
+        guestEmail = guestPayload.email;
+        guestPhone = guestPayload.phone;
+      } catch {
+        return NextResponse.json({ error: "Invalid or expired guest session" }, { status: 401 });
+      }
     } else {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch all ticket documents
-    const ticketDocs = await Promise.all(
-      ticketIds.map((id: string) =>
-        adminDb!.collection("tickets").doc(id).get()
-      )
+    // Pre-flight checks (outside transaction): bundle integrity + seller payment setup
+    // These don't need to be atomic since they're read-only validations before we reserve.
+    const ticketRefs = ticketIds.map((id: string) =>
+      adminDb!.collection("tickets").doc(id)
     );
 
-    // Validate all tickets
-    for (const ticketDoc of ticketDocs) {
+    // Verify bundle completeness before reserving
+    const preFetchDocs = await Promise.all(ticketRefs.map((r) => r.get()));
+    for (const ticketDoc of preFetchDocs) {
       if (!ticketDoc.exists) {
-        return NextResponse.json(
-          { error: "אחד הכרטיסים לא נמצא" },
-          { status: 404 }
-        );
-      }
-      const data = ticketDoc.data()!;
-      if (data.status !== "available") {
-        return NextResponse.json(
-          { error: "אחד הכרטיסים אינו זמין יותר" },
-          { status: 409 }
-        );
-      }
-      if (buyerUid && data.sellerId === buyerUid) {
-        return NextResponse.json(
-          { error: "לא ניתן לרכוש כרטיס שהעלית בעצמך" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "אחד הכרטיסים לא נמצא" }, { status: 404 });
       }
     }
 
-    // Verify bundle completeness — if any ticket belongs to a non-splittable bundle,
-    // all siblings must be present in the request
     const nonSplitBundleIds = new Set<string>();
-    for (const ticketDoc of ticketDocs) {
+    for (const ticketDoc of preFetchDocs) {
       const data = ticketDoc.data()!;
       if (data.bundleId && data.canSplit === false) {
         nonSplitBundleIds.add(data.bundleId as string);
       }
     }
-
     if (nonSplitBundleIds.size > 0) {
       const ticketIdsInRequest = new Set<string>(ticketIds);
       for (const bundleId of nonSplitBundleIds) {
@@ -105,8 +97,7 @@ export async function POST(request: NextRequest) {
           .where("bundleId", "==", bundleId)
           .where("status", "in", ["available", "reserved"])
           .get();
-        const allBundleIds = bundleSnap.docs.map((d) => d.id);
-        if (allBundleIds.some((id) => !ticketIdsInRequest.has(id))) {
+        if (bundleSnap.docs.some((d) => !ticketIdsInRequest.has(d.id))) {
           return NextResponse.json(
             { error: "יש לרכוש את כל הכרטיסים בחבילה יחד" },
             { status: 400 }
@@ -117,41 +108,67 @@ export async function POST(request: NextRequest) {
 
     // Verify all unique sellers have payment details configured
     const sellerIds = [
-      ...new Set(ticketDocs.map((d) => d.data()!.sellerId as string)),
+      ...new Set(preFetchDocs.map((d) => d.data()!.sellerId as string)),
     ];
     for (const sellerId of sellerIds) {
       const sellerDoc = await adminDb.collection("users").doc(sellerId).get();
       const sellerData = sellerDoc.data();
       if (!sellerData?.paymentDetailsConfigured && !sellerData?.paymentDetails) {
         return NextResponse.json(
-          {
-            error:
-              "המוכר טרם הגדיר אמצעי תשלום. לא ניתן לרכוש כרטיס זה כרגע.",
-          },
+          { error: "המוכר טרם הגדיר אמצעי תשלום. לא ניתן לרכוש כרטיס זה כרגע." },
           { status: 400 }
         );
       }
     }
 
-    // Calculate total amount
-    const totalTicketPriceILS = ticketDocs.reduce(
-      (sum, d) => sum + (d.data()!.askingPrice as number),
-      0
-    );
+    // Atomic reservation via Firestore transaction — eliminates TOCTOU race condition.
+    // The transaction re-reads each ticket inside a serialized context, so two concurrent
+    // buyers cannot both reserve the same ticket.
+    const reservedBy = buyerUid || `guest:${guestEmail}`;
+    let totalTicketPriceILS = 0;
+
+    try {
+      await adminDb.runTransaction(async (tx) => {
+        const snapshots = await Promise.all(ticketRefs.map((r) => tx.get(r)));
+
+        for (const snap of snapshots) {
+          if (!snap.exists) throw Object.assign(new Error("NOT_FOUND"), { code: 404 });
+          const data = snap.data()!;
+          if (data.status !== "available") {
+            throw Object.assign(new Error("UNAVAILABLE"), { code: 409 });
+          }
+          if (buyerUid && data.sellerId === buyerUid) {
+            throw Object.assign(new Error("OWN_TICKET"), { code: 400 });
+          }
+          totalTicketPriceILS += data.askingPrice as number;
+          reservedIds.push(snap.id);
+        }
+
+        // All checks passed — reserve every ticket inside the same transaction
+        const reservedAt = new Date();
+        for (const snap of snapshots) {
+          tx.update(snap.ref, { status: "reserved", reservedBy, reservedAt });
+        }
+      });
+    } catch (txErr: unknown) {
+      const err = txErr as Error & { code?: number };
+      if (err.message === "NOT_FOUND") {
+        return NextResponse.json({ error: "אחד הכרטיסים לא נמצא" }, { status: 404 });
+      }
+      if (err.message === "UNAVAILABLE") {
+        return NextResponse.json({ error: "אחד הכרטיסים אינו זמין יותר" }, { status: 409 });
+      }
+      if (err.message === "OWN_TICKET") {
+        return NextResponse.json({ error: "לא ניתן לרכוש כרטיס שהעלית בעצמך" }, { status: 400 });
+      }
+      throw txErr; // unexpected — let outer catch handle it
+    }
+
     const platformFeeAgorot = calculatePlatformFee(totalTicketPriceILS);
     const totalAgorot = ilsToAgorot(totalTicketPriceILS) + platformFeeAgorot;
 
-    // Batch-reserve all tickets
-    const reserveBatch = adminDb.batch();
-    for (const ticketDoc of ticketDocs) {
-      reserveBatch.update(ticketDoc.ref, {
-        status: "reserved",
-        reservedBy: buyerUid || `guest:${guestEmail}`,
-        reservedAt: new Date(),
-      });
-      reservedIds.push(ticketDoc.id);
-    }
-    await reserveBatch.commit();
+    // Use preFetchDocs for metadata (amounts already validated inside transaction)
+    const ticketDocs = preFetchDocs;
 
     // Revalidate the event page so other viewers see the ticket is gone
     const artist = ticketDocs[0].data()!.artist as string | undefined;
@@ -190,7 +207,7 @@ export async function POST(request: NextRequest) {
       isGuest: isGuest.toString(),
     };
 
-    if (isGuest) {
+    if (isGuest && guestEmail && guestPhone) {
       metadata.guestEmail = guestEmail;
       metadata.guestPhone = guestPhone;
     }

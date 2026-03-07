@@ -1,54 +1,53 @@
 import { cookies, headers } from "next/headers";
+import { adminAuth } from "@/lib/firebaseAdmin";
 
 /**
- * Get user ID from Firebase Auth session cookie
- * This is a simplified version - in production, you'd verify the token with Firebase Admin SDK
+ * Get the verified Firebase UID from the __session cookie.
+ *
+ * The cookie must contain a valid Firebase ID token (set by the client after
+ * Firebase Auth sign-in). We verify it cryptographically with the Admin SDK
+ * instead of trusting the raw value.
+ *
+ * Returns null if the cookie is absent, expired, or tampered with.
  */
 export async function getUserIdFromSession(): Promise<string | null> {
   try {
-    const cookieStore = await cookies();
-    
-    // Check for Firebase Auth session cookie
-    // Firebase Auth stores the user session in localStorage on client, 
-    // but we can check for a custom session cookie if implemented
-    const sessionCookie = cookieStore.get("__session");
-    
-    if (sessionCookie?.value) {
-      // In production, you'd verify this token with Firebase Admin SDK
-      // and extract the user ID
-      return sessionCookie.value;
-    }
+    if (!adminAuth) return null;
 
-    // Alternative: Check for custom user ID cookie set by client
-    const userIdCookie = cookieStore.get("userId");
-    if (userIdCookie?.value) {
-      return userIdCookie.value;
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("__session");
+
+    if (sessionCookie?.value) {
+      const decoded = await adminAuth.verifyIdToken(sessionCookie.value);
+      return decoded.uid;
     }
 
     return null;
-  } catch (error) {
-    console.error("Error getting user session:", error);
+  } catch {
+    // Token invalid, expired, or missing — treat as unauthenticated
     return null;
   }
 }
 
 /**
- * Get user ID from request headers (useful for API routes)
+ * Get the verified Firebase UID from the Authorization: Bearer header.
+ * Suitable for use in Server Components that receive a request context.
  */
 export async function getUserIdFromHeaders(): Promise<string | null> {
   try {
+    if (!adminAuth) return null;
+
     const headersList = await headers();
     const authHeader = headersList.get("authorization");
-    
+
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
-      // In production, verify this token with Firebase Admin SDK
-      return token;
+      const decoded = await adminAuth.verifyIdToken(token);
+      return decoded.uid;
     }
 
     return null;
-  } catch (error) {
-    console.error("Error getting user from headers:", error);
+  } catch {
     return null;
   }
 }

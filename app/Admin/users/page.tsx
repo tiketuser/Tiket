@@ -70,7 +70,7 @@ export default function UsersAdminPage() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action, email: user.email }),
+        body: JSON.stringify({ action, uid: user.uid }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update");

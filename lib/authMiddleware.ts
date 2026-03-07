@@ -66,28 +66,14 @@ export async function verifyAuth(request: NextRequest): Promise<{
 }
 
 /**
- * Check if a user has admin privileges
- * For now, we check custom claims, but this could also check a users collection
+ * Check if a user has admin privileges via Firebase custom claims.
+ * Custom claims are set server-side only and cannot be forged by clients.
  */
 async function checkIsAdmin(uid: string): Promise<boolean> {
   try {
     if (!adminAuth) return false;
-    
-    // Get user record to check custom claims
     const userRecord = await adminAuth.getUser(uid);
-    
-    // Check if user has admin custom claim
-    if (userRecord.customClaims?.admin === true) {
-      return true;
-    }
-
-    // Alternatively, check if email matches admin email pattern
-    // This is a fallback for development
-    if (userRecord.email && userRecord.email.startsWith('admin@')) {
-      return true;
-    }
-
-    return false;
+    return userRecord.customClaims?.admin === true;
   } catch (error) {
     console.error('Error checking admin status:', error);
     return false;

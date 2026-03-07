@@ -1,5 +1,5 @@
 // app/api/ocr-extract/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import vision from "@google-cloud/vision";
 import { readBarcodes } from "zxing-wasm/reader";
 import sharp from "sharp";
@@ -243,7 +243,7 @@ async function analyzeWithModel(text: string, imageBuffer: Buffer, mimeType: str
   });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
     const file = form.get("file") as File;

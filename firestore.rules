@@ -3,75 +3,136 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Artist aliases - read by all, write only via admin SDK
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Fields that ONLY the server (Admin SDK) is allowed to set on tickets.
+    // Clients must never be able to forge verification or payment state.
+    function serverOnlyTicketKeys() {
+      return ['status', 'soldTo', 'soldAt', 'reservedBy', 'reservedAt',
+              'verificationStatus', 'verificationConfidence', 'verificationDetails',
+              'verificationTimestamp'];
+    }
+
+    function notTouchingServerFields() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(serverOnlyTicketKeys());
+    }
+
+    // ── Artist aliases ────────────────────────────────────────────────────────
     match /artist_aliases/{aliasId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if false; // Admin SDK only
     }
 
-    // Users - authenticated users can read/write their own doc
+    // ── Users ─────────────────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      // Users may update their own doc but cannot touch privileged fields
+      allow update: if isSignedIn()
+        && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['isAdmin', 'stripeCustomerId', 'paymentDetailsConfigured']);
+      allow delete: if false; // Admin SDK only
     }
 
-    // Events - public read, write only via admin SDK
+    // ── Events ────────────────────────────────────────────────────────────────
     match /events/{eventId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin(); // Was open to any authenticated user — now admin-only
     }
 
-    // Events backup - authenticated admin only
+    // Events backup — admin only
     match /events_backup/{eventId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAdmin();
     }
 
-    // Tickets - public read for available, authenticated create, owner update/delete
+    // ── Tickets ───────────────────────────────────────────────────────────────
     match /tickets/{ticketId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && (
-        request.auth.uid == resource.data.sellerId ||
-        request.auth.token.admin == true
-      );
-      allow delete: if request.auth != null && (
-        request.auth.uid == resource.data.sellerId ||
-        request.auth.token.admin == true
+
+      // Clients create tickets after client-side OCR/verification.
+      // Must own the sellerId; status and verificationStatus are set by the client
+      // based on the verification result (verified/needs_review/rejected).
+      allow create: if isSignedIn()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.status in ['available', 'pending_approval', 'rejected', 'pending']
+        && request.resource.data.verificationStatus in ['verified', 'needs_review', 'rejected', 'pending'];
+
+      // Sellers may only edit safe metadata fields on their own pre-listing tickets.
+      // Status, verification, reservation, and sale fields are server-side only.
+      allow update: if isSignedIn()
+        && request.auth.uid == resource.data.sellerId
+        && resource.data.status == 'pending'
+        && notTouchingServerFields();
+
+      // Admins may update any field via admin token
+      allow update: if isAdmin();
+
+      // Sellers can delete their own unsold/unlisted tickets; admins can delete any
+      allow delete: if isSignedIn() && (
+        (request.auth.uid == resource.data.sellerId
+          && resource.data.status in ['pending', 'pending_approval', 'rejected'])
+        || isAdmin()
       );
     }
 
-    // Transactions - read only by buyer or seller, write only via admin SDK
+    // ── Transactions ──────────────────────────────────────────────────────────
+    // Created exclusively by Admin SDK after payment confirmation.
     match /transactions/{transactionId} {
-      allow read: if request.auth != null && (
+      allow read: if isSignedIn() && (
         request.auth.uid == resource.data.buyerId ||
         request.auth.uid == resource.data.sellerId
       );
-      allow write: if false;
+      allow write: if false; // Admin SDK only
     }
 
-    // Platform config - public read, write only via admin SDK
+    // ── Platform config ───────────────────────────────────────────────────────
     match /config/{docId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if false; // Admin SDK only
     }
 
-    // Default category images - public read, write only by authenticated users
+    // ── Default category images ───────────────────────────────────────────────
     match /defaultCategoryImages/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin(); // Was open to all authenticated users
     }
 
-    // Settings (category themes, etc.) - public read, write only via admin SDK
+    // ── Settings ──────────────────────────────────────────────────────────────
     match /settings/{docId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if false; // Admin SDK only
     }
 
-    // Mock tickets - authenticated users can create (read via admin SDK only)
+    // ── Mock tickets ──────────────────────────────────────────────────────────
     match /mock_tickets/{docId} {
       allow read: if false;
-      allow create: if request.auth != null;
+      allow create: if isAdmin();
       allow update, delete: if false;
+    }
+
+    // ── Admin config ──────────────────────────────────────────────────────────
+    // The grant/revoke email list — never readable by clients
+    match /admin_config/{docId} {
+      allow read, write: if false; // Admin SDK only
+    }
+
+    // ── Venue API providers & secrets ─────────────────────────────────────────
+    match /venue_api_providers/{docId} {
+      allow read, write: if false; // Admin SDK only
+    }
+
+    match /venue_api_secrets/{docId} {
+      allow read, write: if false; // Admin SDK only — contains third-party API keys
     }
   }
 }

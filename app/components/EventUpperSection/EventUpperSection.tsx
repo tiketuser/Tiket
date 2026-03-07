@@ -89,7 +89,7 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
       {/* Event Details */}
       <div className="flex flex-col gap-2 sm:pt-8 px-5 sm:px-0 lg:w-[600px] sm:w-[382px] sm:h-[264px] w-full">
         {/* Event Title */}
-        <span className="whitespace-nowrap truncate lg:max-w-[600px] sm:max-w-[382px] max-w-full sm:text-heading-1-desktop text-heading-2-mobile font-bold text-subtext sm:leading-[67px] leading-[45px] text-center sm:text-right">
+        <span className="lg:max-w-[600px] sm:max-w-[382px] max-w-full sm:text-heading-1-desktop text-[clamp(1.25rem,7vw,2rem)] font-bold text-subtext sm:leading-[67px] leading-tight text-center sm:text-right">
           {title}
         </span>
         <div className="sm:w-[382px] w-full h-[3px] bg-mutedText mx-auto sm:mx-0"></div>

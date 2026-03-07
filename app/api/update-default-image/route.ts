@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import admin from "@/lib/firebaseAdmin";
+import { requireAdmin } from "@/lib/authMiddleware";
 
 export async function POST(request: NextRequest) {
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     if (!adminDb) {
       return NextResponse.json(

@@ -1,7 +1,7 @@
 // app/api/check-duplicate/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../firebase";
-import { collection, query, where, getDocs, or } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getAuth } from "firebase/auth";
 
 interface ClientSideOCRProps {
   imageFile: File;
@@ -21,6 +22,7 @@ export default function ClientSideOCR({
       setIsProcessing(true);
       setProgress(20);
 
+      const token = await getAuth().currentUser?.getIdToken();
       const formData = new FormData();
       formData.append("file", imageFile);
 
@@ -28,6 +30,7 @@ export default function ClientSideOCR({
 
       const response = await fetch("/api/ocr-extract", {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
 

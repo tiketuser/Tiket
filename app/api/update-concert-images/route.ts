@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '../../../firebase';
+import { requireAdmin } from '@/lib/authMiddleware';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import fs from 'fs';
 import path from 'path';
@@ -42,7 +43,10 @@ function matchesArtist(eventArtist: string, possibleNames: string[]): boolean {
   });
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     if (!db) {
       return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });

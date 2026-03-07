@@ -365,6 +365,17 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           tickets.length > 1 ? crypto.randomUUID() : null;
         const bundleSize = tickets.length;
 
+        // Get auth token once for all API calls in this publish flow
+        // Await getIdToken() to ensure auth state is resolved before reading uid
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) {
+          setPublishError("יש להתחבר לחשבון כדי לפרסם כרטיסים");
+          setIsPublishing(false);
+          return false;
+        }
+        const authToken = await currentUser.getIdToken();
+        const sellerUid = currentUser.uid;
+
         // Now publish all tickets for this event
         for (let i = 0; i < tickets.length; i++) {
           const ticket = tickets[i];
@@ -466,11 +477,14 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
 
             console.log("✅ No duplicate found, proceeding with upload");
           } catch (error) {
+            // Fail-closed: if the duplicate check cannot be confirmed clean, block the upload.
+            // Allowing uploads on check failure would enable double-selling by timing errors.
             console.error("❌ Duplicate check error:", error);
-            // Continue with upload even if duplicate check fails (don't block user)
-            console.warn(
-              "⚠️ Continuing with upload despite duplicate check error",
+            setPublishError(
+              "לא ניתן לאמת שהכרטיס אינו כפול. אנא נסה שוב.",
             );
+            setIsPublishing(false);
+            return false;
           }
 
           // 🔍 STEP 1: Verify ticket with venue API
@@ -493,6 +507,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
                 isStanding: ticket.ticketDetails?.isStanding || false,
               }),
             });
+            if (!verifyResponse.ok) throw new Error(`venue-verify: ${verifyResponse.status}`);
             verificationResult = await verifyResponse.json();
             console.log("✅ Verification result:", verificationResult);
           } catch (error) {
@@ -518,6 +533,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
               uploadFormData.append("file", ticket.uploadedFile);
               const uploadRes = await fetch("/api/upload-ticket-image", {
                 method: "POST",
+                headers: { Authorization: `Bearer ${authToken}` },
                 body: uploadFormData,
               });
               if (uploadRes.ok) {
@@ -580,7 +596,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             },
             verificationTimestamp: serverTimestamp(),
             createdAt: serverTimestamp(),
-            sellerId: getAuth().currentUser?.uid || "anonymous",
+            sellerId: sellerUid,
             bundleId: bundleId,
             canSplit: bundleId !== null ? canSplit : null,
             bundleSize: bundleId !== null ? bundleSize : null,

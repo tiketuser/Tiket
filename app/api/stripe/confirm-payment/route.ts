@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { getPlatformFeePercent } from "@/lib/stripe";
+import { verifyGuestToken } from "@/lib/guestToken";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { paymentIntentId } = body;
+    const { paymentIntentId, guestToken } = body;
 
     if (!paymentIntentId) {
       return NextResponse.json(
@@ -39,13 +40,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify the caller is the authenticated buyer
+    // Identify the caller: authenticated user or HMAC-verified guest
     let callerUid: string | null = null;
+    let callerGuestEmail: string | null = null;
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ") && adminAuth) {
       const token = authHeader.substring(7);
       const decoded = await adminAuth.verifyIdToken(token);
       callerUid = decoded.uid;
+    } else if (guestToken) {
+      try {
+        const guestPayload = verifyGuestToken(guestToken);
+        callerGuestEmail = guestPayload.email;
+      } catch {
+        return NextResponse.json({ error: "Invalid or expired guest session" }, { status: 401 });
+      }
+    } else {
+      // Require some form of identity — no anonymous confirms
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Fetch the PaymentIntent from Stripe to verify it actually succeeded
@@ -74,9 +86,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Security: ensure the caller is the buyer
-    if (callerUid && buyerId && callerUid !== buyerId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // Unconditional ownership check — always enforce who can confirm
+    if (callerUid) {
+      // Authenticated user must match the buyerId stored in the PaymentIntent
+      if (buyerId && callerUid !== buyerId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else if (callerGuestEmail) {
+      // Guest must present a token whose email matches the one on the PaymentIntent
+      if (guestEmail && callerGuestEmail !== guestEmail) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     // Check if transactions already exist for this paymentIntentId (webhook may have already run)

@@ -127,7 +127,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   const [savingDetails, setSavingDetails] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [showRemovePaymentConfirm, setShowRemovePaymentConfirm] = useState(false);
+  const [showRemovePaymentConfirm, setShowRemovePaymentConfirm] =
+    useState(false);
   const [removingPayment, setRemovingPayment] = useState(false);
 
   const fetchPaymentDetails = useCallback(async () => {
@@ -186,18 +187,26 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       const txList = Array.from(txMap.values());
 
       // Fetch artist name from linked ticket docs
-      const uniqueTicketIds = [...new Set(txList.map((tx) => tx.ticketId).filter(Boolean))];
+      const uniqueTicketIds = [
+        ...new Set(txList.map((tx) => tx.ticketId).filter(Boolean)),
+      ];
       const ticketInfoMap = new Map<string, { artist?: string }>();
       if (uniqueTicketIds.length > 0 && db) {
-        const snaps = await Promise.all(uniqueTicketIds.map((id) => getDoc(doc(db!, "tickets", id))));
+        const snaps = await Promise.all(
+          uniqueTicketIds.map((id) => getDoc(doc(db!, "tickets", id))),
+        );
         snaps.forEach((snap) => {
-          if (snap.exists()) ticketInfoMap.set(snap.id, { artist: snap.data().artist });
+          if (snap.exists())
+            ticketInfoMap.set(snap.id, { artist: snap.data().artist });
         });
       }
 
       const txItems: ActivityItem[] = txList.map((tx) => ({
         kind: "transaction",
-        data: { ...tx, ticketTitle: ticketInfoMap.get(tx.ticketId)?.artist || tx.ticketTitle },
+        data: {
+          ...tx,
+          ticketTitle: ticketInfoMap.get(tx.ticketId)?.artist || tx.ticketTitle,
+        },
       }));
 
       const uploadItems: ActivityItem[] = uploadsSnap.docs.map((d) => ({
@@ -206,8 +215,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       }));
 
       const all = [...txItems, ...uploadItems].sort((a, b) => {
-        const aTs = a.kind === "transaction" ? a.data.createdAt?.seconds : (a.data as UploadedTicket).createdAt?.seconds;
-        const bTs = b.kind === "transaction" ? b.data.createdAt?.seconds : (b.data as UploadedTicket).createdAt?.seconds;
+        const aTs =
+          a.kind === "transaction"
+            ? a.data.createdAt?.seconds
+            : (a.data as UploadedTicket).createdAt?.seconds;
+        const bTs =
+          b.kind === "transaction"
+            ? b.data.createdAt?.seconds
+            : (b.data as UploadedTicket).createdAt?.seconds;
         return (bTs || 0) - (aTs || 0);
       });
 
@@ -303,7 +318,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 <InfoCard label="טלפון" value={userData.phone} />
                 <InfoCard label="אימייל" value={userData.email} />
               </div>
-
             </>
           )}
         </>
@@ -522,12 +536,18 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 const tx = item.data;
                 const isBuyer = tx.buyerId === currentUid;
                 const date = tx.createdAt
-                  ? new Date(tx.createdAt.seconds * 1000).toLocaleDateString("he-IL")
+                  ? new Date(tx.createdAt.seconds * 1000).toLocaleDateString(
+                      "he-IL",
+                    )
                   : "";
                 const statusLabel =
-                  tx.status === "completed" ? "הושלם" :
-                  tx.status === "pending" ? "ממתין" :
-                  tx.status === "escrow" ? "בנאמנות" : tx.status;
+                  tx.status === "completed"
+                    ? "הושלם"
+                    : tx.status === "pending"
+                      ? "ממתין"
+                      : tx.status === "escrow"
+                        ? "בנאמנות"
+                        : tx.status;
 
                 return (
                   <div
@@ -544,12 +564,33 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                         }`}
                       >
                         {isBuyer ? (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
                           </svg>
                         ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <line x1="12" y1="1" x2="12" y2="23" />
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                           </svg>
                         )}
                       </div>
@@ -558,19 +599,25 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                           {tx.ticketTitle || "כרטיס"}
                         </p>
                         <p className="text-text-extra-small text-mutedText mt-0.5">
-                          {isBuyer ? "רכישה" : "מכירה"}{date && ` · ${date}`}
+                          {isBuyer ? "רכישה" : "מכירה"}
+                          {date && ` · ${date}`}
                         </p>
                       </div>
                     </div>
                     <div className="text-left shrink-0 flex flex-col items-end gap-1">
-                      <p className={`text-text-small font-extrabold ${isBuyer ? "text-primary" : "text-green-600"}`}>
-                        {isBuyer ? "−" : "+"}{isBuyer ? tx.amount : tx.sellerPayout} ₪
+                      <p
+                        className={`text-text-small font-extrabold ${isBuyer ? "text-primary" : "text-green-600"}`}
+                      >
+                        ₪ {isBuyer ? tx.amount : tx.sellerPayout}
+                        {isBuyer ? "−" : "+"}
                       </p>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                        tx.status === "completed"
-                          ? "bg-green-50 text-green-700"
-                          : "bg-secondary/30 text-highlight"
-                      }`}>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                          tx.status === "completed"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-secondary/30 text-highlight"
+                        }`}
+                      >
                         {statusLabel}
                       </span>
                     </div>
@@ -581,18 +628,29 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               // Upload item
               const up = item.data as UploadedTicket;
               const date = up.createdAt
-                ? new Date(up.createdAt.seconds * 1000).toLocaleDateString("he-IL")
+                ? new Date(up.createdAt.seconds * 1000).toLocaleDateString(
+                    "he-IL",
+                  )
                 : "";
               const statusLabel =
-                up.status === "available" ? "זמין למכירה" :
-                up.status === "pending_approval" || up.status === "needs_review" ? "ממתין לאישור" :
-                up.status === "sold" ? "נמכר" :
-                up.status === "rejected" ? "נדחה" : up.status;
+                up.status === "available"
+                  ? "זמין למכירה"
+                  : up.status === "pending_approval" ||
+                      up.status === "needs_review"
+                    ? "ממתין לאישור"
+                    : up.status === "sold"
+                      ? "נמכר"
+                      : up.status === "rejected"
+                        ? "נדחה"
+                        : up.status;
               const statusStyle =
-                up.status === "available" ? "bg-green-50 text-green-700" :
-                up.status === "sold" ? "bg-primary/10 text-primary" :
-                up.status === "rejected" ? "bg-red-50 text-red-600" :
-                "bg-secondary/30 text-highlight";
+                up.status === "available"
+                  ? "bg-green-50 text-green-700"
+                  : up.status === "sold"
+                    ? "bg-primary/10 text-primary"
+                    : up.status === "rejected"
+                      ? "bg-red-50 text-red-600"
+                      : "bg-secondary/30 text-highlight";
 
               return (
                 <div
@@ -602,8 +660,19 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-secondary/30 text-highlight shrink-0">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
                     </div>
                     <div>
@@ -617,9 +686,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                   </div>
                   <div className="text-left shrink-0 flex flex-col items-end gap-1">
                     <p className="text-text-small font-extrabold text-strongText">
-                      {up.askingPrice} ₪
+                     ₪ {up.askingPrice} 
                     </p>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyle}`}>
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyle}`}
+                    >
                       {statusLabel}
                     </span>
                   </div>
@@ -661,11 +732,17 @@ const UserDetails: React.FC<UserDetailsProps> = ({
         </div>
       )}
       {showRemovePaymentConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" dir="rtl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          dir="rtl"
+        >
           <div className="bg-white rounded-xl shadow-large p-6 mx-4 w-full max-w-sm flex flex-col gap-4">
-            <h2 className="text-lg font-bold text-strongText text-center">הסרת פרטי חשבון</h2>
+            <h2 className="text-lg font-bold text-strongText text-center">
+              הסרת פרטי חשבון
+            </h2>
             <p className="text-sm text-mutedText text-center">
-              האם אתה בטוח שברצונך להסיר את פרטי חשבון הבנק? לא ניתן יהיה לקבל תשלומים עבור כרטיסים שנמכרו עד להוספתם מחדש.
+              האם אתה בטוח שברצונך להסיר את פרטי חשבון הבנק? לא ניתן יהיה לקבל
+              תשלומים עבור כרטיסים שנמכרו עד להוספתם מחדש.
             </p>
             <div className="flex gap-3 justify-center">
               <button
@@ -700,7 +777,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                   setShowRemovePaymentConfirm(false);
                 }}
               >
-                {removingPayment ? <span className="loading loading-spinner loading-sm" /> : "כן, הסר"}
+                {removingPayment ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  "כן, הסר"
+                )}
               </button>
             </div>
           </div>

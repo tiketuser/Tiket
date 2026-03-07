@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "../../../firebase";
+import { requireAdmin } from "@/lib/authMiddleware";
 import {
   collection,
   getDocs,
@@ -17,6 +18,10 @@ import {
  */
 
 export async function POST(request: NextRequest) {
+  // Require admin auth — this endpoint mutates the entire database
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   try {
     if (!db) {
       return NextResponse.json(
