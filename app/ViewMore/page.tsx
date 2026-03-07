@@ -16,6 +16,7 @@ interface CardData {
   date: string;
   location: string;
   price: number;
+  maxPrice?: number;
   soldOut: boolean;
   ticketsLeft: number;
   timeLeft: string;
@@ -143,7 +144,8 @@ async function getViewMoreData() {
           imageSrc: event.imageUrl,
           date: event.date,
           location: event.venue,
-          price: minPrice === maxPrice ? minPrice : minPrice,
+          price: minPrice,
+          maxPrice: maxPrice > minPrice ? maxPrice : undefined,
           soldOut: eventTickets.length === 0,
           ticketsLeft: eventTickets.length,
           timeLeft: timeLeft,

@@ -111,3 +111,30 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// DELETE - remove seller payment details
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!adminAuth || !adminDb) {
+      return NextResponse.json({ error: "Server services not available" }, { status: 500 });
+    }
+
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = await adminAuth.verifyIdToken(token);
+
+    await adminDb.collection("users").doc(decoded.uid).update({
+      paymentDetails: null,
+      paymentDetailsConfigured: false,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete payment details error:", error);
+    return NextResponse.json({ error: "Failed to delete payment details" }, { status: 500 });
+  }
+}

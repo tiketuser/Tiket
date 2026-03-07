@@ -4,11 +4,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import { getAuth, deleteUser } from "firebase/auth";
 import {
   doc,
+  getDoc,
   deleteDoc,
   collection,
   query,
   where,
-  orderBy,
   getDocs,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
@@ -62,6 +62,20 @@ interface Transaction {
   createdAt: { seconds: number };
 }
 
+interface UploadedTicket {
+  id: string;
+  artist: string;
+  venue: string;
+  date: string;
+  askingPrice: number;
+  status: string;
+  createdAt: { seconds: number };
+}
+
+type ActivityItem =
+  | { kind: "transaction"; data: Transaction }
+  | { kind: "upload"; data: UploadedTicket };
+
 function InfoCard({
   label,
   value,
@@ -93,7 +107,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   userData,
   loading,
 }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
 
   // Payment details form state
@@ -113,6 +127,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   const [savingDetails, setSavingDetails] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [showRemovePaymentConfirm, setShowRemovePaymentConfirm] = useState(false);
+  const [removingPayment, setRemovingPayment] = useState(false);
 
   const fetchPaymentDetails = useCallback(async () => {
     const auth = getAuth();
@@ -151,22 +167,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     try {
       const uid = user.uid;
       const txRef = collection(db, "transactions");
+      const ticketsRef = collection(db, "tickets");
 
-      const [buyerSnap, sellerSnap] = await Promise.all([
-        getDocs(
-          query(
-            txRef,
-            where("buyerId", "==", uid),
-            orderBy("createdAt", "desc"),
-          ),
-        ),
-        getDocs(
-          query(
-            txRef,
-            where("sellerId", "==", uid),
-            orderBy("createdAt", "desc"),
-          ),
-        ),
+      const [buyerSnap, sellerSnap, uploadsSnap] = await Promise.all([
+        getDocs(query(txRef, where("buyerId", "==", uid))),
+        getDocs(query(txRef, where("sellerId", "==", uid))),
+        getDocs(query(ticketsRef, where("sellerId", "==", uid))),
       ]);
 
       const txMap = new Map<string, Transaction>();
@@ -177,12 +183,37 @@ const UserDetails: React.FC<UserDetailsProps> = ({
         txMap.set(d.id, { id: d.id, ...d.data() } as Transaction),
       );
 
-      const all = Array.from(txMap.values()).sort(
-        (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0),
-      );
-      setTransactions(all);
+      const txList = Array.from(txMap.values());
+
+      // Fetch artist name from linked ticket docs
+      const uniqueTicketIds = [...new Set(txList.map((tx) => tx.ticketId).filter(Boolean))];
+      const ticketInfoMap = new Map<string, { artist?: string }>();
+      if (uniqueTicketIds.length > 0 && db) {
+        const snaps = await Promise.all(uniqueTicketIds.map((id) => getDoc(doc(db!, "tickets", id))));
+        snaps.forEach((snap) => {
+          if (snap.exists()) ticketInfoMap.set(snap.id, { artist: snap.data().artist });
+        });
+      }
+
+      const txItems: ActivityItem[] = txList.map((tx) => ({
+        kind: "transaction",
+        data: { ...tx, ticketTitle: ticketInfoMap.get(tx.ticketId)?.artist || tx.ticketTitle },
+      }));
+
+      const uploadItems: ActivityItem[] = uploadsSnap.docs.map((d) => ({
+        kind: "upload",
+        data: { id: d.id, ...d.data() } as UploadedTicket,
+      }));
+
+      const all = [...txItems, ...uploadItems].sort((a, b) => {
+        const aTs = a.kind === "transaction" ? a.data.createdAt?.seconds : (a.data as UploadedTicket).createdAt?.seconds;
+        const bTs = b.kind === "transaction" ? b.data.createdAt?.seconds : (b.data as UploadedTicket).createdAt?.seconds;
+        return (bTs || 0) - (aTs || 0);
+      });
+
+      setActivityItems(all);
     } catch (err) {
-      console.error("Error fetching transactions:", err);
+      console.error("Error fetching activity:", err);
     }
     setTransactionsLoading(false);
   }, []);
@@ -336,6 +367,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               >
                 עדכן פרטי חשבון
               </button>
+              <button
+                className="w-full py-3 rounded-xl text-sm font-semibold text-gray-500 hover:text-red-500 hover:bg-red-50 border border-gray-200 transition-colors"
+                onClick={() => setShowRemovePaymentConfirm(true)}
+              >
+                הסר פרטי חשבון
+              </button>
             </>
           ) : (
             <>
@@ -475,52 +512,116 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 <div key={i} className="bg-gray-100 rounded-xl h-20" />
               ))}
             </div>
-          ) : transactions.length === 0 ? (
+          ) : activityItems.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-400 text-sm">אין פעולות עדיין</p>
             </div>
           ) : (
-            transactions.map((tx) => {
-              const isBuyer = tx.buyerId === currentUid;
-              const date = tx.createdAt
-                ? new Date(tx.createdAt.seconds * 1000).toLocaleDateString(
-                    "he-IL",
-                  )
+            activityItems.map((item) => {
+              if (item.kind === "transaction") {
+                const tx = item.data;
+                const isBuyer = tx.buyerId === currentUid;
+                const date = tx.createdAt
+                  ? new Date(tx.createdAt.seconds * 1000).toLocaleDateString("he-IL")
+                  : "";
+                const statusLabel =
+                  tx.status === "completed" ? "הושלם" :
+                  tx.status === "pending" ? "ממתין" :
+                  tx.status === "escrow" ? "בנאמנות" : tx.status;
+
+                return (
+                  <div
+                    key={`tx-${tx.id}`}
+                    className="flex items-center justify-between px-4 py-3.5 rounded-2xl border border-secondary/40 bg-white shadow-xxsmall"
+                    dir="rtl"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                          isBuyer
+                            ? "bg-primary/10 text-primary"
+                            : "bg-green-50 text-green-700"
+                        }`}
+                      >
+                        {isBuyer ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                          </svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-text-small font-bold text-strongText leading-tight">
+                          {tx.ticketTitle || "כרטיס"}
+                        </p>
+                        <p className="text-text-extra-small text-mutedText mt-0.5">
+                          {isBuyer ? "רכישה" : "מכירה"}{date && ` · ${date}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-left shrink-0 flex flex-col items-end gap-1">
+                      <p className={`text-text-small font-extrabold ${isBuyer ? "text-primary" : "text-green-600"}`}>
+                        {isBuyer ? "−" : "+"}{isBuyer ? tx.amount : tx.sellerPayout} ₪
+                      </p>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        tx.status === "completed"
+                          ? "bg-green-50 text-green-700"
+                          : "bg-secondary/30 text-highlight"
+                      }`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Upload item
+              const up = item.data as UploadedTicket;
+              const date = up.createdAt
+                ? new Date(up.createdAt.seconds * 1000).toLocaleDateString("he-IL")
                 : "";
+              const statusLabel =
+                up.status === "available" ? "זמין למכירה" :
+                up.status === "pending_approval" || up.status === "needs_review" ? "ממתין לאישור" :
+                up.status === "sold" ? "נמכר" :
+                up.status === "rejected" ? "נדחה" : up.status;
+              const statusStyle =
+                up.status === "available" ? "bg-green-50 text-green-700" :
+                up.status === "sold" ? "bg-primary/10 text-primary" :
+                up.status === "rejected" ? "bg-red-50 text-red-600" :
+                "bg-secondary/30 text-highlight";
+
               return (
                 <div
-                  key={tx.id}
-                  className="bg-gray-50 rounded-xl p-4 flex items-center justify-between"
+                  key={`up-${up.id}`}
+                  className="flex items-center justify-between px-4 py-3.5 rounded-2xl border border-secondary/40 bg-white shadow-xxsmall"
+                  dir="rtl"
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                        isBuyer ? "bg-blue-500" : "bg-green-500"
-                      }`}
-                    >
-                      {isBuyer ? "ק" : "מ"}
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-secondary/30 text-highlight shrink-0">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                      </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {tx.ticketTitle || "כרטיס"}
+                      <p className="text-text-small font-bold text-strongText leading-tight">
+                        {up.artist || "כרטיס"}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        {isBuyer ? "קניה" : "מכירה"} {date && `- ${date}`}
+                      <p className="text-text-extra-small text-mutedText mt-0.5">
+                        העלאת כרטיס{date && ` · ${date}`}
                       </p>
                     </div>
                   </div>
-                  <div className="text-left">
-                    <p
-                      className={`text-sm font-bold ${
-                        isBuyer ? "text-red-600" : "text-green-600"
-                      }`}
-                    >
-                      {isBuyer ? "-" : "+"}
-                      {isBuyer ? tx.amount : tx.sellerPayout} ILS
+                  <div className="text-left shrink-0 flex flex-col items-end gap-1">
+                    <p className="text-text-small font-extrabold text-strongText">
+                      {up.askingPrice} ₪
                     </p>
-                    <p className="text-xs text-gray-400 capitalize">
-                      {tx.status}
-                    </p>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyle}`}>
+                      {statusLabel}
+                    </span>
                   </div>
                 </div>
               );
@@ -556,6 +657,52 @@ const UserDetails: React.FC<UserDetailsProps> = ({
             >
               מחיקת חשבון
             </button>
+          </div>
+        </div>
+      )}
+      {showRemovePaymentConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" dir="rtl">
+          <div className="bg-white rounded-xl shadow-large p-6 mx-4 w-full max-w-sm flex flex-col gap-4">
+            <h2 className="text-lg font-bold text-strongText text-center">הסרת פרטי חשבון</h2>
+            <p className="text-sm text-mutedText text-center">
+              האם אתה בטוח שברצונך להסיר את פרטי חשבון הבנק? לא ניתן יהיה לקבל תשלומים עבור כרטיסים שנמכרו עד להוספתם מחדש.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowRemovePaymentConfirm(false)}
+                disabled={removingPayment}
+                className="btn btn-outline rounded-md min-h-0 h-10 px-5 text-sm font-medium flex-1"
+              >
+                חזרה
+              </button>
+              <button
+                disabled={removingPayment}
+                className="btn btn-primary rounded-md min-h-0 h-10 px-5 text-white text-sm font-medium flex-1"
+                onClick={async () => {
+                  setRemovingPayment(true);
+                  const user = getAuth().currentUser;
+                  if (user) {
+                    const token = await user.getIdToken();
+                    const res = await fetch("/api/seller/payment-details", {
+                      method: "DELETE",
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (res.ok) {
+                      setHasPaymentDetails(false);
+                      setSavedDetails(null);
+                      setBankName("");
+                      setBranchNumber("");
+                      setAccountNumber("");
+                      setAccountHolderName("");
+                    }
+                  }
+                  setRemovingPayment(false);
+                  setShowRemovePaymentConfirm(false);
+                }}
+              >
+                {removingPayment ? <span className="loading loading-spinner loading-sm" /> : "כן, הסר"}
+              </button>
+            </div>
           </div>
         </div>
       )}

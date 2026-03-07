@@ -24,6 +24,7 @@ interface CardData {
   date: string;
   location: string;
   price: number;
+  maxPrice?: number;
   soldOut: boolean;
   ticketsLeft: number;
   timeLeft: string;
@@ -254,7 +255,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
       )}
 
       {/* Content */}
-      <main className="flex-1 px-4 sm:px-10 pb-16 max-w-[80%] mx-auto w-full">
+      <main className="flex-1 px-4 sm:px-10 pb-16 max-w-7xl mx-auto w-full">
 
         {allCards.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
