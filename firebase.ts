@@ -14,7 +14,7 @@ import {
   deleteDoc,
   onSnapshot
 } from "firebase/firestore";
-import { getAuth, Auth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth, Auth, setPersistence, indexedDBLocalPersistence } from "firebase/auth";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -42,7 +42,7 @@ if (hasValidConfig) {
   db = getFirestore(app);
   auth = getAuth(app);
   storage = getStorage(app);
-  setPersistence(auth, browserLocalPersistence);
+  setPersistence(auth, indexedDBLocalPersistence);
 } else {
   // Use mock implementations for development
   console.warn("Firebase not configured - using mock implementations for development");

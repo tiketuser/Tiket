@@ -1,3 +1,9 @@
+// Service worker is a no-op inside Capacitor's webview — let the native shell handle caching.
+if (self.location && self.location.protocol === 'capacitor:') {
+  // Stop installing handlers; this script will be evaluated but inactive.
+  self.addEventListener('install', () => self.skipWaiting());
+  self.addEventListener('activate', () => self.clients && self.clients.claim && self.clients.claim());
+} else {
 const CACHE_NAME = 'tiket-v1';
 const urlsToCache = [
   '/',
@@ -42,26 +48,27 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        
+
         // Clone the request
         const fetchRequest = event.request.clone();
-        
+
         return fetch(fetchRequest).then((response) => {
           // Check if valid response
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
-          
+
           // Clone the response
           const responseToCache = response.clone();
-          
+
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
             });
-          
+
           return response;
         });
       })
   );
 });
+}
