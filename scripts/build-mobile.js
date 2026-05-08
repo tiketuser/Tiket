@@ -43,11 +43,12 @@ const STASH_TARGETS = [
   path.join(ROOT, "app", "approve-tickets"),
   // API — runs on Cloud Run, not in mobile bundle
   path.join(ROOT, "app", "api"),
-  // Pending refactor (server-side Firestore → client + API)
+  // Dynamic-segment pages — `output: "export"` requires generateStaticParams
+  // and we don't have a build-time list of event titles or queries.
+  // Mobile navigation will use query-param routing
+  // (/EventPage?t=… and /SearchResults?q=…) — refactor pending.
   path.join(ROOT, "app", "EventPage", "[title]"),
   path.join(ROOT, "app", "SearchResults", "[query]"),
-  path.join(ROOT, "app", "Favorites"),
-  path.join(ROOT, "app", "ViewMore"),
 ];
 
 // Pages where `export const dynamic = "force-dynamic"` is defensive but blocks

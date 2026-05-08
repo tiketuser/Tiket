@@ -1,11 +1,10 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
 import NavBar from "../components/NavBar/NavBar";
 import FavoritesClient from "./FavoritesClient";
-import { calculateTimeLeft } from "../../utils/timeCalculator";
-
-export const dynamic = "force-dynamic";
 
 interface Event {
   id: string;
@@ -26,84 +25,77 @@ interface Ticket {
   status: string;
 }
 
-interface ServerData {
-  events: Event[];
-  tickets: Ticket[];
-}
+const Favorites = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
 
-async function getServerData(): Promise<ServerData> {
-  try {
-    if (!db) {
-      return { events: [], tickets: [] };
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      if (!db) return;
+      try {
+        const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
+          getDocs(
+            query(collection(db, "events"), where("status", "==", "active")),
+          ),
+          getDocs(
+            query(
+              collection(db, "tickets"),
+              where("status", "==", "available"),
+            ),
+          ),
+        ]);
+
+        if (cancelled) return;
+
+        const nextEvents: Event[] = eventsSnapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              artist: data.artist,
+              title: data.title,
+              date: data.date,
+              time: data.time,
+              venue: data.venue,
+              imageUrl: data.imageUrl,
+              status: data.status,
+            };
+          })
+          .filter(
+            (event): event is Event =>
+              event.status === "active" && Boolean(event.artist),
+          );
+
+        const nextTickets: Ticket[] = ticketsSnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            eventId: data.eventId,
+            askingPrice: data.askingPrice,
+            originalPrice: data.originalPrice,
+            status: data.status,
+          };
+        });
+
+        setEvents(nextEvents);
+        setTickets(nextTickets);
+      } catch (error) {
+        console.error("Error fetching favorites data:", error);
+      }
     }
 
-    // Fetch only active events and available tickets in parallel on the server
-    const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
-      getDocs(
-        query(
-          collection(db as any, "events"),
-          where("status", "==", "active"),
-        ),
-      ),
-      getDocs(
-        query(
-          collection(db as any, "tickets"),
-          where("status", "==", "available"),
-        ),
-      ),
-    ]);
-
-    // Serialize events - convert Firestore data to plain objects
-    const events: Event[] = eventsSnapshot.docs
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          artist: data.artist,
-          title: data.title,
-          date: data.date,
-          time: data.time,
-          venue: data.venue,
-          imageUrl: data.imageUrl,
-          status: data.status,
-        };
-      })
-      .filter(
-        (event: any) =>
-          event.status === "active" && event.artist,
-      ) as Event[];
-
-    // Serialize tickets - convert Firestore timestamps to plain values
-    const tickets: Ticket[] = ticketsSnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        eventId: data.eventId,
-        askingPrice: data.askingPrice,
-        originalPrice: data.originalPrice,
-        status: data.status,
-      };
-    }) as Ticket[];
-
-    return { events, tickets };
-  } catch (error) {
-    console.error("Error fetching server data:", error);
-    return { events: [], tickets: [] };
-  }
-}
-
-const Favorites = async () => {
-  // Fetch all events and tickets on the server
-  // This is faster than client-side fetching and can be cached
-  const serverData = await getServerData();
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div>
       <NavBar />
-      <FavoritesClient
-        events={serverData.events}
-        tickets={serverData.tickets}
-      />
+      <FavoritesClient events={events} tickets={tickets} />
     </div>
   );
 };
