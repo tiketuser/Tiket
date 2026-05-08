@@ -15,7 +15,7 @@ import { applyTheme, loadThemesFromFirebase } from "../theme/categoryThemes";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import { apiFetch } from "@/lib/platform";
+import { apiFetch, searchHref } from "@/lib/platform";
 
 interface CardData {
   id: string;
@@ -190,7 +190,7 @@ const ViewMoreClient: React.FC<ViewMoreClientProps> = ({
   const artistNames = [...new Set(allCards.map((card) => card.title))];
 
   const handleSearch = (query: string) => {
-    router.push(`/SearchResults/${encodeURIComponent(query)}`);
+    router.push(searchHref(query));
   };
 
   return (

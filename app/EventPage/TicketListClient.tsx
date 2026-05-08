@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import SingleCard from "../../components/SingleCard/SingleCard";
-import BundleCard from "../../components/BundleCard/BundleCard";
-import type { BundleTicket } from "../../components/BundleCard/BundleCard";
-import CheckoutDialog from "../../components/Dialogs/CheckoutDialog/CheckoutDialog";
-import type { TicketInfo } from "../../components/Dialogs/CheckoutDialog/CheckoutDialog";
-import { formatSeatLocation } from "../../utils/categoryConfig";
+import SingleCard from "../components/SingleCard/SingleCard";
+import BundleCard from "../components/BundleCard/BundleCard";
+import type { BundleTicket } from "../components/BundleCard/BundleCard";
+import CheckoutDialog from "../components/Dialogs/CheckoutDialog/CheckoutDialog";
+import type { TicketInfo } from "../components/Dialogs/CheckoutDialog/CheckoutDialog";
+import { formatSeatLocation } from "../utils/categoryConfig";
 
 interface Ticket {
   id: string;

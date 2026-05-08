@@ -1,5 +1,5 @@
 "use client";
-import RegularGallery from "../../components/TicketGallery/RegularGallery";
+import RegularGallery from "../components/TicketGallery/RegularGallery";
 
 interface CardData {
   id: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ResultSection from "../../components/ResultSection/ResultSection";
+import ResultSection from "../components/ResultSection/ResultSection";
 import SearchResultsClient from "./SearchResultsClient";
 import { DateRange } from "react-day-picker";
 

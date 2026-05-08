@@ -1,6 +1,6 @@
 import React from "react";
 import NavBar from "../../components/NavBar/NavBar";
-import SearchResultsWrapper from "./SearchResultsWrapper";
+import SearchResultsWrapper from "../SearchResultsWrapper";
 import { db } from "../../../firebase";
 import {
   collection,

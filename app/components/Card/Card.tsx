@@ -17,6 +17,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
+import { eventHref } from "@/lib/platform";
 
 interface CardProps {
   id: string | number;
@@ -172,7 +173,7 @@ const Card: React.FC<CardProps> = ({
   return (
     <div className="group/card relative block w-full h-auto">
       <Link
-        href={`/EventPage/${encodeURIComponent(title)}`}
+        href={eventHref(title)}
         prefetch={true}
         className="block"
       >

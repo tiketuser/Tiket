@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { doc, updateDoc, increment, setDoc, arrayRemove, arrayUnion, getDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { db } from "../../../firebase";
+import { db } from "../../firebase";
 
 const MAX_RECENTLY_VIEWED = 20;
 

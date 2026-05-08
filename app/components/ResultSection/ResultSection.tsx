@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import TiketFilters from "../TiketFilters/TiketFilters";
 import { DateRange } from "react-day-picker";
+import { searchHref } from "@/lib/platform";
 
 interface FilterState {
   cities: string[];
@@ -39,7 +40,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({
 
   const handleSearch = (query: string) => {
     setIsSearching(true);
-    router.push(`/SearchResults/${encodeURIComponent(query)}`);
+    router.push(searchHref(query));
   };
 
   return (

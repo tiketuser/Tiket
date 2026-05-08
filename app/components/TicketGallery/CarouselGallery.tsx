@@ -4,6 +4,7 @@ import Card from "../Card/Card";
 import Arrow from "../../../public/images/Home Page/Web/Arrow-1.svg";
 import Image from "next/image";
 import Link from "next/link";
+import { eventHref } from "@/lib/platform";
 
 import {
   Carousel,
@@ -47,7 +48,7 @@ const CardCarousel: React.FC<RegularGalleryProps> = ({
           <CarouselContent className="flex flex-nowrap gap-6 h-[600px]">
             {cardsData.map((card) => (
               <CarouselItem key={card.id} dir="rtl">
-                <Link href={`/EventPage/${encodeURIComponent(card.title)}`}>
+                <Link href={eventHref(card.title)}>
                   <Card
                     {...card}
                     openLoginDialog={openLoginDialog}

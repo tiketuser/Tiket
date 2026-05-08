@@ -2,14 +2,14 @@ import NavBar from "../../components/NavBar/NavBar";
 import Footer from "../../components/Footer/Footer";
 import EventUpperSection from "../../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../../components/SeatingMap/SeatingMap";
-import TicketListClient from "./TicketListClient";
+import TicketListClient from "../TicketListClient";
 import dynamicImport from "next/dynamic";
 import { db } from "../../../firebase";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
 
 // Dynamically import ViewTracker to avoid SSR issues
 const ViewTracker = dynamicImport(
-  () => import("./ViewTracker").then((mod) => mod.ViewTracker),
+  () => import("../ViewTracker").then((mod) => mod.ViewTracker),
   { ssr: false },
 );
 

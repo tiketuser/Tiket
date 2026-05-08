@@ -17,7 +17,7 @@ const AuthDialog = dynamic(
   { ssr: false },
 );
 import CategoryFilter from "../CategoryFilter/CategoryFilter";
-import { apiFetch } from "@/lib/platform";
+import { apiFetch, searchHref } from "@/lib/platform";
 
 interface CardData {
   id: string;
@@ -165,7 +165,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
 
   const handleSearch = useCallback(
     (query: string) => {
-      router.replace(`/SearchResults/${encodeURIComponent(query)}`);
+      router.replace(searchHref(query));
     },
     [router],
   );

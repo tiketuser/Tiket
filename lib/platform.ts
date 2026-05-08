@@ -39,3 +39,18 @@ export function apiFetch(
 ): Promise<Response> {
   return fetch(buildApiUrl(path), init);
 }
+
+// Mobile (static export) can't ship dynamic-segment routes — generateStaticParams
+// has no build-time list of titles. Branch to query-param routes on native;
+// keep the dynamic-segment URL on web for SEO + RSC prefetch.
+export function eventHref(title: string): string {
+  const encoded = encodeURIComponent(title);
+  return isNative() ? `/EventPage?t=${encoded}` : `/EventPage/${encoded}`;
+}
+
+export function searchHref(query: string): string {
+  const encoded = encodeURIComponent(query);
+  return isNative()
+    ? `/SearchResults?q=${encoded}`
+    : `/SearchResults/${encoded}`;
+}
