@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tiket</string>
+    <string name="title_activity_main">Tiket</string>
+    <string name="package_name">co.il.tiket.app</string>
+    <string name="custom_url_scheme">co.il.tiket.app</string>
+</resources>

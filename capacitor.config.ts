@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: "co.il.tiket.app",
   appName: "Tiket",
   webDir: "out",
-  bundledWebRuntime: false,
   server: {
     androidScheme: "https",
   },
