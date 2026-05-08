@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getAuth } from "firebase/auth";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
+import { apiFetch } from "@/lib/platform";
 
 const ISRAELI_BANKS = [
   { code: "12", name: "הפועלים" },
@@ -41,7 +42,7 @@ const StepFourBankDetails: React.FC<UploadTicketInterface> = ({
 
     try {
       const idToken = await user.getIdToken();
-      const res = await fetch("/api/seller/payment-details", {
+      const res = await apiFetch("/api/seller/payment-details", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -15,6 +15,7 @@ import type { GuestInfo } from "./CheckoutSteps/CheckoutStepAuth";
 import CheckoutStepSummary from "./CheckoutSteps/CheckoutStepSummary";
 import CheckoutStepPayment from "./CheckoutSteps/CheckoutStepPayment";
 import CheckoutStepConfirmation from "./CheckoutSteps/CheckoutStepConfirmation";
+import { apiFetch } from "@/lib/platform";
 
 export interface TicketInfo {
   ticketId: string;
@@ -73,7 +74,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         const idToken = await user.getIdToken();
         headers["Authorization"] = `Bearer ${idToken}`;
       }
-      await fetch("/api/stripe/release-reservation", {
+      await apiFetch("/api/stripe/release-reservation", {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -181,7 +182,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         body.guestPhone = guestInfo.phone;
       }
 
-      const response = await fetch("/api/stripe/create-payment-intent", {
+      const response = await apiFetch("/api/stripe/create-payment-intent", {
         method: "POST",
         headers,
         body: JSON.stringify(body),
@@ -220,7 +221,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         const idToken = await user.getIdToken();
         headers["Authorization"] = `Bearer ${idToken}`;
       }
-      await fetch("/api/stripe/confirm-payment", {
+      await apiFetch("/api/stripe/confirm-payment", {
         method: "POST",
         headers,
         body: JSON.stringify({ paymentIntentId }),

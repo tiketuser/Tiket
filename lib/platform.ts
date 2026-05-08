@@ -32,3 +32,10 @@ export function buildApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${base}${normalized}`;
 }
+
+export function apiFetch(
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
+  return fetch(buildApiUrl(path), init);
+}

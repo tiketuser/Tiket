@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiFetch } from "@/lib/platform";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export default function MigratePage() {
     setResult(null);
 
     try {
-      const response = await fetch("/api/migrate-to-concerts", {
+      const response = await apiFetch("/api/migrate-to-concerts", {
         method: "POST",
       });
 

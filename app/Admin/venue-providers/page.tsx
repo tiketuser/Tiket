@@ -5,6 +5,7 @@ import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import NavBar from "../../components/NavBar/NavBar";
 import Footer from "../../components/Footer/Footer";
 import AdminProtection from "../../components/AdminProtection/AdminProtection";
+import { apiFetch } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
 
@@ -97,7 +98,7 @@ export default function VenueProvidersPage() {
     try {
       const token = await getIdToken();
       if (!token) { setMessage({ type: "error", text: "לא מחובר" }); setLoading(false); return; }
-      const res = await fetch("/api/admin/venue-providers", {
+      const res = await apiFetch("/api/admin/venue-providers", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to load");
@@ -121,7 +122,7 @@ export default function VenueProvidersPage() {
 
   const handleToggleEnabled = async (provider: VenueProvider) => {
     const token = await getIdToken();
-    const res = await fetch("/api/admin/venue-providers", {
+    const res = await apiFetch("/api/admin/venue-providers", {
       method: "PUT",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ id: provider.id, enabled: !provider.enabled }),
@@ -158,7 +159,7 @@ export default function VenueProvidersPage() {
 
   const handleDelete = async (id: string) => {
     const token = await getIdToken();
-    const res = await fetch(`/api/admin/venue-providers?id=${id}`, {
+    const res = await apiFetch(`/api/admin/venue-providers?id=${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -176,7 +177,7 @@ export default function VenueProvidersPage() {
     setTestingId(provider.id);
     try {
       const token = await getIdToken();
-      const res = await fetch("/api/venue-verify", {
+      const res = await apiFetch("/api/venue-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -202,7 +203,7 @@ export default function VenueProvidersPage() {
       const token = await getIdToken();
       const method = editingId ? "PUT" : "POST";
       const payload = editingId ? { id: editingId, ...form } : form;
-      const res = await fetch("/api/admin/venue-providers", {
+      const res = await apiFetch("/api/admin/venue-providers", {
         method,
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify(payload),

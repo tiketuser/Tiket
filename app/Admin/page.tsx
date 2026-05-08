@@ -17,6 +17,7 @@ import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
 import { getDefaultCategoryImage } from "../theme/defaultCategoryImages";
+import { apiFetch } from "@/lib/platform";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -167,7 +168,7 @@ export default function AdminPage() {
   const uploadImageToStorage = async (file: File): Promise<string> => {
     const uploadFormData = new FormData();
     uploadFormData.append("file", file);
-    const res = await fetch("/api/upload-event-image", {
+    const res = await apiFetch("/api/upload-event-image", {
       method: "POST",
       body: uploadFormData,
     });

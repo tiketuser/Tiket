@@ -17,6 +17,7 @@ const AuthDialog = dynamic(
   { ssr: false },
 );
 import CategoryFilter from "../CategoryFilter/CategoryFilter";
+import { apiFetch } from "@/lib/platform";
 
 interface CardData {
   id: string;
@@ -103,7 +104,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
         const url = selectedCategory
           ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
           : `/api/events`;
-        const res = await fetch(url);
+        const res = await apiFetch(url);
         if (!res.ok) throw new Error("Failed to fetch events for category");
         const data = await res.json();
         setAllCards(data.cards);
@@ -131,7 +132,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
     try {
       const params = new URLSearchParams({ lastDocId });
       if (selectedCategory) params.set("category", selectedCategory);
-      const res = await fetch(`/api/events?${params}`);
+      const res = await apiFetch(`/api/events?${params}`);
       if (!res.ok) throw new Error("Failed to fetch more events");
       const data = await res.json();
       setAllCards((prev) => {
@@ -151,7 +152,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
   // Fetch all event titles once for autocomplete suggestions
   const [allEventTitles, setAllEventTitles] = useState<string[]>([]);
   useEffect(() => {
-    fetch('/api/events?titles=true')
+    apiFetch('/api/events?titles=true')
       .then((r) => r.json())
       .then((data) => setAllEventTitles(data.titles ?? []))
       .catch(() => {});
