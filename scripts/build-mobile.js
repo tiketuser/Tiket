@@ -49,6 +49,9 @@ const STASH_TARGETS = [
   // (/EventPage?t=… and /SearchResults?q=…) — refactor pending.
   path.join(ROOT, "app", "EventPage", "[title]"),
   path.join(ROOT, "app", "SearchResults", "[query]"),
+  // Middleware not supported in `output: "export"` — only used by Cloud Run
+  // for /api CORS preflight.
+  path.join(ROOT, "middleware.ts"),
 ];
 
 // Pages where `export const dynamic = "force-dynamic"` is defensive but blocks

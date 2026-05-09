@@ -2,7 +2,6 @@
 import { initializeApp, FirebaseApp } from "firebase/app";
 import {
   getFirestore,
-  initializeFirestore,
   Firestore,
   collection,
   getDocs,
@@ -17,7 +16,6 @@ import {
 } from "firebase/firestore";
 import { getAuth, Auth, setPersistence, indexedDBLocalPersistence } from "firebase/auth";
 import { getStorage, FirebaseStorage } from "firebase/storage";
-import { isNative } from "./lib/platform";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -39,15 +37,8 @@ let auth: Auth | null;
 let storage: FirebaseStorage | null;
 
 if (hasValidConfig) {
-  // Initialize Firebase with real config
   app = initializeApp(firebaseConfig);
-  // Native (Capacitor) needs long-polling; CapacitorHttp can't proxy
-  // Firestore's WebChannel streaming XHR.
-  db = isNative()
-    ? initializeFirestore(app, {
-        experimentalForceLongPolling: true,
-      })
-    : getFirestore(app);
+  db = getFirestore(app);
   auth = getAuth(app);
   storage = getStorage(app);
   setPersistence(auth, indexedDBLocalPersistence);
