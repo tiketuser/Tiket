@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { formatSeatLocation } from "../utils/categoryConfig";
 import { db, auth } from "../../firebase";
-import { collection, getDocs, query, where, doc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, getDoc, query, where, doc, deleteDoc } from "firebase/firestore";
 import NavBar from "../components/NavBar/NavBar";
 import MyTicketCard from "../components/MyTicketCard/MyTicketCard";
 import Footer from "../components/Footer/Footer";
 import TitleSubtitle from "../components/TitleSubtitle/TitleSubtitle";
+import MobileMyListings, {
+  type MobileListing,
+} from "../components/mobile/MobileMyListings";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
@@ -16,6 +19,7 @@ export const dynamic = "force-dynamic";
 
 interface Ticket {
   id: string;
+  eventId?: string;
   artist: string;
   date: string;
   venue: string;
@@ -39,6 +43,7 @@ interface Ticket {
   adminComment?: string; // Admin's comment for rejected tickets
   rejectedAt?: string;
   createdAt: any;
+  eventImageUrl?: string;
 }
 
 const seatLabel = (ticket: Ticket) =>
@@ -54,6 +59,7 @@ const seatLabel = (ticket: Ticket) =>
 const MyListings = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [showLivePosts, setShowLivePosts] = useState(true);
   const [showPending, setShowPending] = useState(true);
   const [showSold, setShowSold] = useState(true);
@@ -63,7 +69,16 @@ const MyListings = () => {
   const [removeTicketId, setRemoveTicketId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchMyListings();
+    const unsub = auth?.onAuthStateChanged((u) => {
+      if (u) {
+        setSignedIn(true);
+        fetchMyListings();
+      } else {
+        setSignedIn(false);
+        setLoading(false);
+      }
+    });
+    return () => unsub?.();
   }, []);
 
   const fetchMyListings = async () => {
@@ -91,6 +106,25 @@ const MyListings = () => {
         ...doc.data(),
       })) as Ticket[];
 
+      // Enrich with event image
+      await Promise.all(
+        ticketsData.map(async (t) => {
+          if (!t.eventId || !db) return;
+          try {
+            const eventSnap = await getDoc(doc(db as any, "events", t.eventId));
+            if (eventSnap.exists()) {
+              const ev = eventSnap.data();
+              const img = ev?.imageUrl;
+              if (typeof img === "string" && !img.startsWith("data:")) {
+                t.eventImageUrl = img;
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }),
+      );
+
       // Sort by creation date (newest first)
       ticketsData.sort((a, b) => {
         const aTime = a.createdAt?.seconds || 0;
@@ -103,6 +137,41 @@ const MyListings = () => {
       console.error("Error fetching listings:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const mobileListings: MobileListing[] = useMemo(() => {
+    return tickets.map((t) => {
+      let status: MobileListing["status"] = "active";
+      if (t.status === "sold") status = "sold";
+      else if (t.verificationStatus === "needs_review") status = "pending";
+      else if (t.verificationStatus === "rejected") status = "rejected";
+      return {
+        id: t.id,
+        artist: t.artist,
+        date: t.date,
+        time: t.time,
+        venue: t.venue,
+        section: t.section,
+        row: t.row,
+        seat: t.seat,
+        isStanding: t.isStanding,
+        askingPrice: t.askingPrice,
+        status,
+        rejectionReason:
+          t.adminComment || t.verificationDetails?.reason || undefined,
+        eventImageUrl: t.eventImageUrl,
+      };
+    });
+  }, [tickets]);
+
+  const handleMobileCancel = async (id: string) => {
+    if (!db) return;
+    try {
+      await deleteDoc(doc(db as any, "tickets", id));
+      setTickets((prev) => prev.filter((t) => t.id !== id));
+    } catch (err) {
+      console.error("Error canceling listing:", err);
     }
   };
 
@@ -153,21 +222,31 @@ const MyListings = () => {
 
   if (loading) {
     return (
-      <div>
-        <NavBar />
-        <div className="min-h-screen bg-white py-12 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="loading loading-spinner loading-lg"></div>
-            <p className="mt-4 text-gray-600">טוען מודעות...</p>
+      <>
+        <MobileMyListings listings={[]} loading={true} />
+        <div className="hidden md:block">
+          <NavBar />
+          <div className="min-h-screen bg-white py-12 px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="loading loading-spinner loading-lg"></div>
+              <p className="mt-4 text-gray-600">טוען מודעות...</p>
+            </div>
           </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+      </>
     );
   }
 
   return (
-    <div>
+    <>
+      <MobileMyListings
+        listings={mobileListings}
+        loading={false}
+        notSignedIn={signedIn === false}
+        onCancel={handleMobileCancel}
+      />
+      <div className="hidden md:block">
       <NavBar />
       <TitleSubtitle title="המודעות שלי" subtitle="מודעות שבאוויר" />
 
@@ -361,10 +440,11 @@ const MyListings = () => {
         </div>
       </div>
       <Footer />
+      </div>
 
-      {/* Cancel confirmation dialog */}
+      {/* Cancel confirmation dialog (desktop only) */}
       {cancelTicketId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" dir="rtl">
+        <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/50" dir="rtl">
           <div className="bg-white rounded-xl shadow-large p-6 mx-4 w-full max-w-sm flex flex-col gap-4">
             <h2 className="text-lg font-bold text-strongText text-center">ביטול מכירה</h2>
             <p className="text-sm text-mutedText text-center">
@@ -392,7 +472,7 @@ const MyListings = () => {
 
       {/* Remove sold ticket confirmation dialog */}
       {removeTicketId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" dir="rtl">
+        <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/50" dir="rtl">
           <div className="bg-white rounded-xl shadow-large p-6 mx-4 w-full max-w-sm flex flex-col gap-4">
             <h2 className="text-lg font-bold text-strongText text-center">הסרת כרטיס</h2>
             <p className="text-sm text-mutedText text-center">
@@ -418,7 +498,7 @@ const MyListings = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

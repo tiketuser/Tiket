@@ -133,7 +133,11 @@ try {
   const result = spawnSync("npx", ["next", "build"], {
     cwd: ROOT,
     stdio: "inherit",
-    env: { ...process.env, MOBILE_BUILD: "1" },
+    env: {
+      ...process.env,
+      MOBILE_BUILD: "1",
+      NEXT_PUBLIC_MOBILE_BUILD: "1",
+    },
   });
   exitCode = result.status ?? 1;
 } catch (err) {

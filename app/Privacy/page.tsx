@@ -1,5 +1,6 @@
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
+import MobileLegal from "../components/mobile/MobileLegal";
 import {
   UserRound,
   Database,
@@ -69,7 +70,15 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <div dir="rtl">
+    <>
+      <MobileLegal
+        kind="privacy"
+        updated="מרץ 2025"
+        intro="אנו לוקחים את הפרטיות שלך ברצינות. הנה כל מה שאנחנו עושים עם המידע שלך."
+        sections={sections.map((s) => ({ title: s.title, body: s.body }))}
+        contactEmail="tiketbizzz@gmail.com"
+      />
+    <div className="hidden md:block" dir="rtl">
       <NavBar />
 
       {/* Hero */}
@@ -118,5 +127,6 @@ export default function PrivacyPage() {
 
       <Footer />
     </div>
+    </>
   );
 }

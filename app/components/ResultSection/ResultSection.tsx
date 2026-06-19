@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CustomSearchInput from "../CustomSearchInput/CustomSearchInput";
 import SearchIcon from "../../../public/images/SearchBar/SearchIconBold.svg";
 import Image from "next/image";
@@ -37,6 +37,13 @@ const ResultSection: React.FC<ResultSectionProps> = ({
 }) => {
   const router = useRouter();
   const [isSearching, setIsSearching] = useState(false);
+
+  // On native, navigating between searches stays on the same /SearchResults
+  // route (query-param routing) so the component doesn't unmount — reset the
+  // spinner when the URL-driven title changes.
+  useEffect(() => {
+    setIsSearching(false);
+  }, [title]);
 
   const handleSearch = (query: string) => {
     setIsSearching(true);

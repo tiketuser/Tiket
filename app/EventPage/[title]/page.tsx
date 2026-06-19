@@ -3,6 +3,8 @@ import Footer from "../../components/Footer/Footer";
 import EventUpperSection from "../../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../../components/SeatingMap/SeatingMap";
 import TicketListClient from "../TicketListClient";
+import MobileEventDetail from "../../components/mobile/MobileEventDetail";
+import MobileTicketList from "../../components/mobile/MobileTicketList";
 import dynamicImport from "next/dynamic";
 import { db } from "../../../firebase";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
@@ -151,7 +153,45 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     // If no tickets found
     if (tickets.length === 0) {
       return (
-        <div>
+        <>
+          <MobileEventDetail event={event} availableTickets={0}>
+            <div
+              style={{
+                padding: "30px 8px",
+                textAlign: "center",
+                color: "var(--tk-muted)",
+                fontSize: 13,
+              }}
+            >
+              לא נמצאו כרטיסים זמינים לאירוע הזה
+            </div>
+          </MobileEventDetail>
+          <div className="hidden md:block">
+            <NavBar />
+            <EventUpperSection
+              imageSrc={event.imageUrl || "/images/Artist/default.png"}
+              title={event.artist}
+              date={event.date}
+              location={event.venue}
+              time={event.time}
+              availableTickets={0}
+            />
+            <div className="text-center text-red-500 text-xl mt-20 mb-20">
+              לא נמצאו כרטיסים זמינים לאירוע הזה 😢
+            </div>
+            <Footer />
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <ViewTracker eventId={event.id} />
+        <MobileEventDetail event={event} availableTickets={tickets.length}>
+          <MobileTicketList tickets={tickets} event={event} />
+        </MobileEventDetail>
+        <div className="hidden md:block">
           <NavBar />
           <EventUpperSection
             imageSrc={event.imageUrl || "/images/Artist/default.png"}
@@ -159,36 +199,17 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
             date={event.date}
             location={event.venue}
             time={event.time}
-            availableTickets={0}
+            availableTickets={tickets.length}
           />
-          <div className="text-center text-red-500 text-xl mt-20 mb-20">
-            לא נמצאו כרטיסים זמינים לאירוע הזה 😢
-          </div>
+          <TicketListClient tickets={tickets} event={event} />
+          <SeatingMap
+            title={"מפת ישיבה"}
+            venueName={event.venue}
+            SeatingMapsvg="/images/Event Page/Web/Seats.svg"
+          />
           <Footer />
         </div>
-      );
-    }
-
-    return (
-      <div>
-        <ViewTracker eventId={event.id} />
-        <NavBar />
-        <EventUpperSection
-          imageSrc={event.imageUrl || "/images/Artist/default.png"}
-          title={event.artist}
-          date={event.date}
-          location={event.venue}
-          time={event.time}
-          availableTickets={tickets.length}
-        />
-        <TicketListClient tickets={tickets} event={event} />
-        <SeatingMap
-          title={"מפת ישיבה"}
-          venueName={event.venue}
-          SeatingMapsvg="/images/Event Page/Web/Seats.svg"
-        />
-        <Footer />
-      </div>
+      </>
     );
   } catch (error) {
     console.error("Error fetching event:", error);

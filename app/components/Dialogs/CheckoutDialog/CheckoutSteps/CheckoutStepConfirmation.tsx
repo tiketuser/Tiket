@@ -2,8 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import MinimalCard from "../../../MinimalCard/MinimalCard";
 import { TicketInfo } from "../CheckoutDialog";
+import { nis, hebDateFull } from "../../../mobile/format";
 
 interface CheckoutStepConfirmationProps {
   tickets: TicketInfo[];
@@ -12,6 +12,30 @@ interface CheckoutStepConfirmationProps {
   onLoginRequest?: () => void;
 }
 
+const parseDateParts = (dateStr: string) => {
+  if (!dateStr) return { day: "", month: "" };
+  try {
+    let dateObj: Date;
+    if (dateStr.includes("/") || dateStr.includes(".")) {
+      const normalized = dateStr.replace(/\./g, "/");
+      const [d, m, y] = normalized.split("/");
+      dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    } else {
+      dateObj = new Date(dateStr);
+    }
+    const months = [
+      "ינו׳", "פבר׳", "מרץ", "אפר׳", "מאי", "יוני",
+      "יולי", "אוג׳", "ספט׳", "אוק׳", "נוב׳", "דצמ׳",
+    ];
+    return {
+      day: dateObj.getDate().toString(),
+      month: months[dateObj.getMonth()],
+    };
+  } catch {
+    return { day: "", month: "" };
+  }
+};
+
 const CheckoutStepConfirmation: React.FC<CheckoutStepConfirmationProps> = ({
   tickets,
   onClose,
@@ -19,58 +43,169 @@ const CheckoutStepConfirmation: React.FC<CheckoutStepConfirmationProps> = ({
   onLoginRequest,
 }) => {
   return (
-    <div className="flex flex-col items-center w-full gap-4 sm:gap-6" dir="rtl">
-      {/* Success Icon */}
-      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-green-100 flex items-center justify-center">
-        <svg
-          className="w-8 h-8 sm:w-10 sm:h-10 text-green-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+    <div className="flex flex-col w-full gap-5" dir="rtl">
+      {/* Success icon */}
+      <div className="flex justify-center">
+        <div
+          className="flex items-center justify-center"
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 999,
+            background: "var(--tk-lime)",
+            border: "1px solid var(--tk-line-strong)",
+          }}
         >
-          <path
+          <svg
+            width="34"
+            height="34"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--tk-blue-ink)"
+            strokeWidth="2.4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 13l4 4L19 7"
-          />
-        </svg>
+          >
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
       </div>
 
-      <p className="text-text-regular text-strongText text-center w-full">
+      <p
+        className="text-center"
+        style={{ fontSize: 14, color: "var(--tk-ink-2)", lineHeight: 1.5 }}
+      >
         ניתן לראות את הכרטיסים שרכשת יחד עם שאר הכרטיסים בבעלותך
       </p>
 
-      {/* Ticket Preview(s) */}
-      <div className="w-full flex flex-col gap-3">
-        {tickets.map((ticket) => (
-          <div
-            key={ticket.ticketId}
-            className="border border-gray-200 rounded-lg overflow-hidden"
-          >
-            <MinimalCard
-              title={ticket.title}
-              date={ticket.date}
-              seatLocation={ticket.seatLocation}
-              venue={ticket.venue}
-              price={ticket.price}
-            />
-          </div>
-        ))}
+      {/* Ticket cards (paper / dashed) */}
+      <div className="flex flex-col gap-2.5">
+        {tickets.map((ticket) => {
+          const { day, month } = parseDateParts(ticket.date);
+          return (
+            <div
+              key={ticket.ticketId}
+              className="flex items-stretch overflow-hidden"
+              style={{
+                background: "var(--tk-bg)",
+                border: "1px solid var(--tk-line)",
+                borderRadius: 14,
+              }}
+            >
+              {/* Date column */}
+              <div
+                className="flex flex-col items-center justify-center px-3 py-3 flex-shrink-0"
+                style={{
+                  minWidth: 62,
+                  background: "var(--tk-paper)",
+                  borderInlineEnd: "1px dashed var(--tk-line-strong)",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    color: "var(--tk-ink)",
+                    lineHeight: 1,
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {day}
+                </span>
+                <span
+                  className="tk-mono"
+                  style={{ fontSize: 9, color: "var(--tk-muted)", marginTop: 2 }}
+                >
+                  {month}
+                </span>
+              </div>
+
+              <div className="flex-1 min-w-0 px-3.5 py-3 flex flex-col justify-center gap-1">
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "var(--tk-ink)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {ticket.title}
+                </div>
+                <div
+                  className="tk-mono"
+                  style={{ fontSize: 10, color: "var(--tk-muted)" }}
+                >
+                  {hebDateFull(ticket.date)}
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--tk-muted)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {ticket.venue} · {ticket.seatLocation}
+                </div>
+              </div>
+
+              <div
+                className="flex flex-col items-end justify-center px-3.5 py-3 flex-shrink-0"
+                style={{ borderInlineStart: "1px dashed var(--tk-line-strong)" }}
+              >
+                <span
+                  className="tk-mono"
+                  style={{ fontSize: 15, fontWeight: 700, color: "var(--tk-ink)" }}
+                >
+                  {nis(ticket.price)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col w-full gap-2">
+      {/* Buttons */}
+      <div className="flex flex-col gap-2">
         {isGuest ? (
           <button
             onClick={onLoginRequest}
-            className="w-full h-[48px] bg-primary text-white rounded-lg font-bold text-text-regular hover:bg-red-700 transition-colors"
+            style={{
+              height: 50,
+              width: "100%",
+              background: "var(--tk-ink)",
+              color: "var(--tk-lime)",
+              borderRadius: 14,
+              fontSize: 15,
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              letterSpacing: "-0.01em",
+            }}
+            className="transition-transform active:scale-[0.99]"
           >
             הכרטיסים שלי
           </button>
         ) : (
           <Link href="/MyTickets" className="w-full">
-            <button className="w-full h-[48px] bg-primary text-white rounded-lg font-bold text-text-regular hover:bg-red-700 transition-colors">
+            <button
+              style={{
+                height: 50,
+                width: "100%",
+                background: "var(--tk-ink)",
+                color: "var(--tk-lime)",
+                borderRadius: 14,
+                fontSize: 15,
+                fontWeight: 700,
+                border: "none",
+                cursor: "pointer",
+                letterSpacing: "-0.01em",
+              }}
+              className="transition-transform active:scale-[0.99]"
+            >
               הכרטיסים שלי
             </button>
           </Link>
@@ -78,7 +213,18 @@ const CheckoutStepConfirmation: React.FC<CheckoutStepConfirmationProps> = ({
 
         <button
           onClick={onClose}
-          className="w-full h-[48px] text-primary hover:bg-gray-100 rounded-lg font-bold text-text-regular transition-colors"
+          style={{
+            height: 48,
+            width: "100%",
+            background: "transparent",
+            color: "var(--tk-ink-2)",
+            borderRadius: 14,
+            fontSize: 14,
+            fontWeight: 600,
+            border: "1px solid var(--tk-line)",
+            cursor: "pointer",
+          }}
+          className="transition-colors hover:bg-[var(--tk-bg)]"
         >
           לדף הבית
         </button>

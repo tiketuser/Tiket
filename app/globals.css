@@ -13,15 +13,46 @@
 :root {
   --background: rgba(255, 255, 255, 1);
   --foreground: #171717;
-  
+
   /* Default category theme colors (Music) */
   --color-primary: #B54653;
   --color-secondary: #EAC4C7;
   --color-highlight: #8C5A5F;
-  
+
+  /* Tiket mobile redesign tokens (warm "paper-cream" palette).
+     Scoped via .tk-mobile so desktop is unaffected. */
+  --tk-bg: #F5F1E8;
+  --tk-paper: #FBF8F1;
+  --tk-ink: #0A0A0A;
+  --tk-ink-2: #2A2A28;
+  --tk-muted: #6E6A60;
+  --tk-line: #E4DFD2;
+  --tk-line-strong: #CFC9B8;
+  --tk-blue: #B54653;
+  --tk-blue-ink: #8C5A5F;
+  --tk-lime: #EAC4C7;
+  --tk-ok: #0B7A3E;
+
   /* Smooth transitions for theme changes */
   transition: --color-primary 0.3s ease, --color-secondary 0.3s ease, --color-highlight 0.3s ease;
 }
+
+/* ─── Mobile redesign scope ─────────────────────────────── */
+.tk-mobile {
+  font-family: var(--font-heebo), 'Heebo', system-ui, sans-serif;
+  background: var(--tk-bg);
+  color: var(--tk-ink);
+  -webkit-font-smoothing: antialiased;
+}
+.tk-mobile .tk-mono {
+  font-family: var(--font-jet-mono), 'JetBrains Mono', 'Menlo', monospace;
+  letter-spacing: -0.01em;
+}
+.tk-mobile *::-webkit-scrollbar { display: none; }
+.tk-mobile * { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* tiket. logotype dot */
+.tk-logo-dot { color: var(--tk-blue); }
 
 @media (prefers-color-scheme: light) {
   :root {

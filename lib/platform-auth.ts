@@ -4,29 +4,39 @@ import {
   signInWithPopup,
   signInWithCredential,
   signOut,
+  browserPopupRedirectResolver,
   type UserCredential,
 } from "firebase/auth";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { auth } from "../firebase";
 import { isNative, isIOS } from "./platform";
 
-async function getNativeFirebaseAuth() {
-  const mod = await import("@capacitor-firebase/authentication");
-  return mod.FirebaseAuthentication;
-}
-
-export async function signInWithGoogleCrossPlatform(): Promise<UserCredential | null> {
+export async function signInWithGoogleCrossPlatform(
+  onStage?: (stage: string) => void,
+): Promise<UserCredential | null> {
   if (!auth) return null;
 
   if (isNative()) {
-    const FirebaseAuthentication = await getNativeFirebaseAuth();
+    onStage?.("native-plugin");
+    console.log("[platform-auth] calling FirebaseAuthentication.signInWithGoogle");
     const result = await FirebaseAuthentication.signInWithGoogle();
+    console.log("[platform-auth] native plugin returned, idToken?", !!result.credential?.idToken);
     const idToken = result.credential?.idToken;
     if (!idToken) throw new Error("Google sign-in returned no idToken");
+    onStage?.("web-credential");
     const credential = GoogleAuthProvider.credential(idToken);
-    return signInWithCredential(auth, credential);
+    const userCred = await signInWithCredential(auth, credential);
+    console.log("[platform-auth] signInWithCredential resolved, uid=", userCred.user.uid);
+    return userCred;
   }
 
-  return signInWithPopup(auth, new GoogleAuthProvider());
+  // Pass the resolver explicitly: initializeAuth in firebase.ts can't wire it
+  // up at module load (SSR-incompatible), so signInWithPopup needs it here.
+  return signInWithPopup(
+    auth,
+    new GoogleAuthProvider(),
+    browserPopupRedirectResolver,
+  );
 }
 
 export async function signInWithAppleCrossPlatform(): Promise<UserCredential | null> {
@@ -36,7 +46,6 @@ export async function signInWithAppleCrossPlatform(): Promise<UserCredential | n
     throw new Error("Apple Sign-In is only available on iOS native");
   }
 
-  const FirebaseAuthentication = await getNativeFirebaseAuth();
   const result = await FirebaseAuthentication.signInWithApple({
     scopes: ["email", "name"],
   });
@@ -49,9 +58,24 @@ export async function signInWithAppleCrossPlatform(): Promise<UserCredential | n
   return signInWithCredential(auth, credential);
 }
 
+export function isAuthCancellation(err: unknown): boolean {
+  const e = err as { code?: string | number; message?: string } | null;
+  if (!e) return false;
+  const code = String(e.code ?? "");
+  const message = String(e.message ?? "").toLowerCase();
+  return (
+    code === "auth/popup-closed-by-user" ||
+    code === "auth/cancelled-popup-request" ||
+    code === "auth/user-cancelled" ||
+    code === "12501" ||
+    message.includes("canceled") ||
+    message.includes("cancelled") ||
+    message.includes("user closed")
+  );
+}
+
 export async function signOutCrossPlatform(): Promise<void> {
   if (isNative()) {
-    const FirebaseAuthentication = await getNativeFirebaseAuth();
     await FirebaseAuthentication.signOut();
   }
   if (auth) await signOut(auth);

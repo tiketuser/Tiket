@@ -44,11 +44,12 @@ const CustomInput: React.FC<CustomInputProps> = ({
         pattern={pattern}
         value={value}
         onChange={onChange}
+        dir="rtl"
         className={`w-full py-3 pl-12 pr-4 rounded-lg border ${
           error
             ? "border-red-500 focus:border-red-500"
             : "border-gray-300 focus:border-gray-300"
-        } text-sm sm:text-base rtl focus:outline-none focus:ring-0 placeholder:text-sm placeholder:sm:text-base`}
+        } text-sm sm:text-base text-right rtl focus:outline-none focus:ring-0 placeholder:text-sm placeholder:sm:text-base`}
       />
     </div>
   );

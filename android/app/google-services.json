@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "653453593991",
+    "project_id": "tiket-9268c",
+    "storage_bucket": "tiket-9268c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:653453593991:android:35053020e7e0bab2735722",
+        "android_client_info": {
+          "package_name": "co.il.tiket.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "653453593991-f2rnmbko2vr9jgink23m0dhac8047nqi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUCTGYxCFBpXBV_wZ4L1EKCL5vtjEw0U8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "653453593991-f2rnmbko2vr9jgink23m0dhac8047nqi.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

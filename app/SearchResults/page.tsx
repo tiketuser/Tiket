@@ -11,6 +11,8 @@ import {
 import { db } from "../../firebase";
 import NavBar from "../components/NavBar/NavBar";
 import SearchResultsWrapper from "./SearchResultsWrapper";
+import SearchResultsSkeleton from "./SearchResultsSkeleton";
+import MobileSearchResults from "../components/mobile/MobileSearchResults";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
 
 interface CardData {
@@ -52,6 +54,7 @@ function SearchResultsContent() {
 
   const [tickets, setTickets] = useState<CardData[]>([]);
   const [artistNames, setArtistNames] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,8 +63,10 @@ function SearchResultsContent() {
       if (!db || !queryParam) {
         setTickets([]);
         setArtistNames([]);
+        setLoading(false);
         return;
       }
+      setLoading(true);
       try {
         const eventsSnapshot = await getDocs(
           firestoreQuery(
@@ -145,9 +150,11 @@ function SearchResultsContent() {
         if (!cancelled) {
           setTickets(eventCards);
           setArtistNames(allArtistNames);
+          setLoading(false);
         }
       } catch (error) {
         console.error("Error fetching search results:", error);
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -157,21 +164,35 @@ function SearchResultsContent() {
     };
   }, [queryParam]);
 
+  if (loading) {
+    return (
+      <>
+        <MobileSearchResults query={queryParam} />
+        <div className="hidden md:block">
+          <SearchResultsSkeleton />
+        </div>
+      </>
+    );
+  }
+
   return (
-    <div>
-      <NavBar />
-      <SearchResultsWrapper
-        query={queryParam}
-        tickets={tickets}
-        artistNames={artistNames}
-      />
-    </div>
+    <>
+      <MobileSearchResults query={queryParam} />
+      <div className="hidden md:block">
+        <NavBar />
+        <SearchResultsWrapper
+          query={queryParam}
+          tickets={tickets}
+          artistNames={artistNames}
+        />
+      </div>
+    </>
   );
 }
 
 const SearchResults = () => {
   return (
-    <Suspense fallback={<div>טוען...</div>}>
+    <Suspense fallback={<SearchResultsSkeleton />}>
       <SearchResultsContent />
     </Suspense>
   );

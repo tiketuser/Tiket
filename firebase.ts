@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, FirebaseApp } from "firebase/app";
 import {
-  getFirestore,
+  initializeFirestore,
   Firestore,
   collection,
   getDocs,
@@ -14,7 +14,13 @@ import {
   deleteDoc,
   onSnapshot
 } from "firebase/firestore";
-import { getAuth, Auth, setPersistence, indexedDBLocalPersistence } from "firebase/auth";
+import {
+  initializeAuth,
+  Auth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  inMemoryPersistence,
+} from "firebase/auth";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -38,10 +44,19 @@ let storage: FirebaseStorage | null;
 
 if (hasValidConfig) {
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
+  db = initializeFirestore(app, { experimentalForceLongPolling: true });
+  auth = initializeAuth(app, {
+    persistence: [
+      indexedDBLocalPersistence,
+      browserLocalPersistence,
+      inMemoryPersistence,
+    ],
+    // NOTE: popupRedirectResolver is NOT wired here — passing it via
+    // initializeAuth fails SSR ("Expected a class definition") because the
+    // resolver expects a browser env. Instead, signInWithPopup receives it
+    // explicitly in lib/platform-auth.ts, which only runs client-side.
+  });
   storage = getStorage(app);
-  setPersistence(auth, indexedDBLocalPersistence);
 } else {
   // Use mock implementations for development
   console.warn("Firebase not configured - using mock implementations for development");

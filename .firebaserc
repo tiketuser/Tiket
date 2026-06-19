@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "tiket-9268c"
-  }
+  },
+  "targets": {
+    "tiket-9268c": {
+      "hosting": {
+        "staging": [
+          "tiket-app-staging"
+        ],
+        "production": [
+          "tiket-9268c"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

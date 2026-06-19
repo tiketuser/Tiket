@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import Image from "next/image";
 import TicketIcon from "../../../public/images/Event Page/Web/Ticket.svg";
 import ClockIcon from "../../../public/images/Event Page/Web/Clock.svg";
+import { encodeImageUrl } from "@/utils/defaultImages";
 
 interface EventUpperSectionProps {
   imageSrc: string;

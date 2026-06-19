@@ -1,18 +1,30 @@
 {
-  "hosting": {
-    "public": "out",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  },
+  "hosting": [
+    {
+      "target": "staging",
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "tiket-app-staging",
+            "region": "me-west1"
+          }
+        }
+      ]
+    },
+    {
+      "target": "production",
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "tiket-app",
+            "region": "me-west1"
+          }
+        }
+      ]
+    }
+  ],
   "firestore": {
     "database": "(default)",
     "location": "nam5",

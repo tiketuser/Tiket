@@ -1,5 +1,6 @@
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
+import MobileLegal from "../components/mobile/MobileLegal";
 import {
   FileText,
   BookOpen,
@@ -69,7 +70,15 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <div dir="rtl">
+    <>
+      <MobileLegal
+        kind="terms"
+        updated="מרץ 2025"
+        intro="אנא קראו את התנאים הבאים בעיון לפני השימוש בשירותי טיקט."
+        sections={sections.map((s) => ({ title: s.title, body: s.body }))}
+        contactEmail="tiketbizzz@gmail.com"
+      />
+    <div className="hidden md:block" dir="rtl">
       <NavBar />
 
       {/* Hero */}
@@ -117,5 +126,6 @@ export default function TermsPage() {
 
       <Footer />
     </div>
+    </>
   );
 }
