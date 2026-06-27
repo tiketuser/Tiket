@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { isNative } from "@/lib/platform";
 
 export default function ServiceWorkerRegister() {
   useEffect(() => {
+    if (isNative()) return;
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker

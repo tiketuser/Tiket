@@ -17,6 +17,7 @@ const AuthDialog = dynamic(
   { ssr: false },
 );
 import CategoryFilter from "../CategoryFilter/CategoryFilter";
+import { apiFetch, buildApiUrl, searchHref } from "@/lib/platform";
 
 interface CardData {
   id: string;
@@ -103,14 +104,30 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
         const url = selectedCategory
           ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
           : `/api/events`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch events for category");
+        const res = await apiFetch(url);
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          throw new Error(`HTTP ${res.status} ${res.statusText} — ${body.slice(0, 200)}`);
+        }
         const data = await res.json();
         setAllCards(data.cards);
         setLastDocId(data.lastDocId);
         setHasMore(data.hasMore);
       } catch (error) {
-        console.error("Error loading category events:", error);
+        const e = error as Error;
+        console.error(
+          "[gallery v2] Error loading category events:",
+          e?.name,
+          e?.message,
+          "category=",
+          selectedCategory,
+          "url=",
+          buildApiUrl(
+            selectedCategory
+              ? `/api/events?category=${encodeURIComponent(selectedCategory)}`
+              : `/api/events`,
+          ),
+        );
       } finally {
         setIsCategoryLoading(false);
         isFetchingRef.current = false;
@@ -131,8 +148,11 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
     try {
       const params = new URLSearchParams({ lastDocId });
       if (selectedCategory) params.set("category", selectedCategory);
-      const res = await fetch(`/api/events?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch more events");
+      const res = await apiFetch(`/api/events?${params}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status} ${res.statusText} — ${body.slice(0, 200)}`);
+      }
       const data = await res.json();
       setAllCards((prev) => {
         const ids = new Set(prev.map((c) => c.id));
@@ -141,7 +161,8 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
       setLastDocId(data.lastDocId);
       setHasMore(data.hasMore);
     } catch (error) {
-      console.error("Error loading more events:", error);
+      const e = error as Error;
+      console.error("Error loading more events:", e?.name, e?.message);
     } finally {
       setIsLoadingMore(false);
       isFetchingRef.current = false;
@@ -151,7 +172,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
   // Fetch all event titles once for autocomplete suggestions
   const [allEventTitles, setAllEventTitles] = useState<string[]>([]);
   useEffect(() => {
-    fetch('/api/events?titles=true')
+    apiFetch('/api/events?titles=true')
       .then((r) => r.json())
       .then((data) => setAllEventTitles(data.titles ?? []))
       .catch(() => {});
@@ -164,7 +185,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
 
   const handleSearch = useCallback(
     (query: string) => {
-      router.replace(`/SearchResults/${encodeURIComponent(query)}`);
+      router.replace(searchHref(query));
     },
     [router],
   );

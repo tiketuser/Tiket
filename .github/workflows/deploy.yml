@@ -84,6 +84,7 @@ jobs:
             STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
             STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
             PLATFORM_FEE_PERCENT=${{ secrets.PLATFORM_FEE_PERCENT }}
+            GUEST_TOKEN_SECRET=${{ secrets.GUEST_TOKEN_SECRET }}
 
       # Remove stale env vars that must not exist (e.g. GOOGLE_APPLICATION_CREDENTIALS
       # pointing to a local creds file — Cloud Run uses ADC via attached service account)

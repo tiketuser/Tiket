@@ -6,11 +6,10 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
-  GoogleAuthProvider,
-  signInWithPopup,
 } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../../../firebase";
+import { signInWithGoogleCrossPlatform, isAuthCancellation } from "../../../../lib/platform-auth";
 import { useRouter } from "next/navigation";
 
 import AdjustableDialog from "../AdjustableDialog/AdjustableDialog";
@@ -143,31 +142,40 @@ const AuthDialog: React.FC<AuthDialogProps> = ({
       await signInWithEmailAndPassword(auth, email, password);
       onClose();
       router.refresh();
-    } catch {
-      setLoginError("פרטי ההתחברות שגויים.");
+    } catch (error) {
+      console.error("[AuthDialog] email login failed:", error);
+      const code = error && typeof error === "object" && "code" in error ? (error as { code?: string }).code : "";
+      const message = error && typeof error === "object" && "message" in error ? (error as { message?: string }).message : "";
+      setLoginError(`התחברות נכשלה (${code || message || "unknown"})`);
     }
   };
 
   const handleGoogleLogin = async () => {
     setLoginError("");
     if (!auth) { setLoginError("שגיאה פנימית - נסה לרענן את הדף"); return; }
-    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithGoogleCrossPlatform();
+      if (!result) { setLoginError("שגיאה פנימית - נסה לרענן את הדף"); return; }
       const user = result.user;
-      const [fname, ...rest] = (user.displayName || "").split(" ");
-      const lname = rest.join(" ");
-      if (db) {
-        const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
-        if (!snap.exists()) {
-          await setDoc(userRef, { email: user.email, displayName: user.displayName, fname, lname, photoURL: user.photoURL, createdAt: new Date().toISOString() });
-        }
-      }
       onClose();
       router.refresh();
-    } catch {
-      setLoginError("התחברות עם Google נכשלה.");
+      if (db) {
+        const [fname, ...rest] = (user.displayName || "").split(" ");
+        const lname = rest.join(" ");
+        const userRef = doc(db, "users", user.uid);
+        getDoc(userRef).then(snap => {
+          if (!snap.exists()) {
+            return setDoc(userRef, { email: user.email, displayName: user.displayName, fname, lname, photoURL: user.photoURL, createdAt: new Date().toISOString() });
+          }
+        }).catch(e => console.error("[AuthDialog] user profile save failed:", e));
+      }
+    } catch (error) {
+      if (isAuthCancellation(error)) {
+        setLoginError("");
+        return;
+      }
+      console.error("[AuthDialog] google login failed:", error);
+      setLoginError("ההתחברות עם Google נכשלה. נסה שוב.");
     }
   };
 
@@ -205,30 +213,38 @@ const AuthDialog: React.FC<AuthDialogProps> = ({
       alert("נרשמת בהצלחה! נא לאשר את כתובת האימייל שלך דרך ההודעה שנשלחה אליך.");
       onClose();
     } catch (error) {
+      console.error("[AuthDialog] signup failed:", error);
       const code = error && typeof error === "object" && "code" in error ? (error as { code?: string }).code : "";
-      setSignupError(firebaseErrorToHebrew(code as string));
+      const message = error && typeof error === "object" && "message" in error ? (error as { message?: string }).message : "";
+      setSignupError(`${firebaseErrorToHebrew(code as string)} (${code || message || "unknown"})`);
     }
   };
 
   const handleGoogleSignup = async () => {
     setSignupError("");
     if (!auth) { setSignupError("שגיאה פנימית - נסה לרענן את הדף"); return; }
-    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithGoogleCrossPlatform();
+      if (!result) { setSignupError("שגיאה פנימית - נסה לרענן את הדף"); return; }
       const user = result.user;
-      const [fname, ...rest] = (user.displayName || "").split(" ");
-      const lname = rest.join(" ");
-      if (db) {
-        const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
-        if (!snap.exists()) {
-          await setDoc(userRef, { email: user.email, displayName: user.displayName, fname, lname, photoURL: user.photoURL, createdAt: new Date().toISOString() });
-        }
-      }
       onClose();
-    } catch {
-      setSignupError("הרשמה עם Google נכשלה.");
+      if (db) {
+        const [fname, ...rest] = (user.displayName || "").split(" ");
+        const lname = rest.join(" ");
+        const userRef = doc(db, "users", user.uid);
+        getDoc(userRef).then(snap => {
+          if (!snap.exists()) {
+            return setDoc(userRef, { email: user.email, displayName: user.displayName, fname, lname, photoURL: user.photoURL, createdAt: new Date().toISOString() });
+          }
+        }).catch(e => console.error("[AuthDialog] user profile save failed:", e));
+      }
+    } catch (error) {
+      if (isAuthCancellation(error)) {
+        setSignupError("");
+        return;
+      }
+      console.error("[AuthDialog] google signup failed:", error);
+      setSignupError("ההרשמה עם Google נכשלה. נסה שוב.");
     }
   };
 

@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Assistant } from "next/font/google";
+import { Assistant, Heebo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import NavigationLoader from "./components/NavigationLoader/NavigationLoader";
 import ServiceWorkerRegister from "./components/ServiceWorkerRegister/ServiceWorkerRegister";
+import NativeDiagnostic from "./components/NativeDiagnostic/NativeDiagnostic";
 import { Suspense } from "react";
 
 const assistant = Assistant({
@@ -13,10 +14,25 @@ const assistant = Assistant({
   variable: "--font-assistant",
 });
 
+const heebo = Heebo({
+  weight: ["300", "400", "500", "600", "700", "800"],
+  subsets: ["hebrew", "latin"],
+  display: "swap",
+  variable: "--font-heebo",
+});
+
+const jetMono = JetBrains_Mono({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jet-mono",
+});
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",
   themeColor: "#6366f1",
 };
 
@@ -44,10 +60,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="he" dir="rtl">
       <head></head>
-      <body className={`${assistant.variable}`}>
+      <body className={`${assistant.variable} ${heebo.variable} ${jetMono.variable}`}>
         <ServiceWorkerRegister />
+        <NativeDiagnostic />
         <Suspense fallback={null}>
           <NavigationLoader />
         </Suspense>

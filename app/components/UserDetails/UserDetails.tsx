@@ -12,6 +12,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
+import { apiFetch } from "@/lib/platform";
 
 const ISRAELI_BANKS = [
   { code: "12", name: "הפועלים" },
@@ -139,7 +140,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     setPaymentDetailsLoading(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch("/api/seller/payment-details", {
+      const res = await apiFetch("/api/seller/payment-details", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -261,7 +262,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch("/api/seller/payment-details", {
+      const res = await apiFetch("/api/seller/payment-details", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -760,7 +761,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                   const user = getAuth().currentUser;
                   if (user) {
                     const token = await user.getIdToken();
-                    const res = await fetch("/api/seller/payment-details", {
+                    const res = await apiFetch("/api/seller/payment-details", {
                       method: "DELETE",
                       headers: { Authorization: `Bearer ${token}` },
                     });

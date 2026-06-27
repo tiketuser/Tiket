@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import CustomInput from "@/app/components/CustomInput/CustomInput";
 import EmptyImage from "../../../../../public/images/Dialogs/emptyimage.svg";
+import { apiFetch } from "@/lib/platform";
 
 const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
   nextStep,
@@ -77,7 +78,7 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/ocr-extract", {
+      const response = await apiFetch("/api/ocr-extract", {
         method: "POST",
         body: formData,
       });

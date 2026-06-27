@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import AdminProtection from "../../components/AdminProtection/AdminProtection";
 import NavBar from "../../components/NavBar/NavBar";
+import { apiFetch } from "@/lib/platform";
 
 interface UserRecord {
   uid: string;
@@ -41,7 +42,7 @@ export default function UsersAdminPage() {
     try {
       const token = await getIdToken();
       if (!token) throw new Error("Not authenticated");
-      const res = await fetch("/api/admin/users", {
+      const res = await apiFetch("/api/admin/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -64,7 +65,7 @@ export default function UsersAdminPage() {
     try {
       const token = await getIdToken();
       if (!token) throw new Error("Not authenticated");
-      const res = await fetch("/api/admin/users", {
+      const res = await apiFetch("/api/admin/users", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -96,7 +97,7 @@ export default function UsersAdminPage() {
     try {
       const token = await getIdToken();
       if (!token) throw new Error("Not authenticated");
-      const res = await fetch("/api/admin/users", {
+      const res = await apiFetch("/api/admin/users", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

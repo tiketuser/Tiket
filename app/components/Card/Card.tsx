@@ -17,6 +17,8 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
+import { eventHref } from "@/lib/platform";
+import { encodeImageUrl } from "@/utils/defaultImages";
 
 interface CardProps {
   id: string | number;
@@ -172,7 +174,7 @@ const Card: React.FC<CardProps> = ({
   return (
     <div className="group/card relative block w-full h-auto">
       <Link
-        href={`/EventPage/${encodeURIComponent(title)}`}
+        href={eventHref(title)}
         prefetch={true}
         className="block"
       >
@@ -187,7 +189,7 @@ const Card: React.FC<CardProps> = ({
           <Image
             width={300}
             height={300}
-            src={imageSrc}
+            src={encodeImageUrl(imageSrc)}
             alt={title}
             className="w-full h-32 sm:h-[264px] mb-2 sm:mb-4 object-cover"
             loading="lazy"

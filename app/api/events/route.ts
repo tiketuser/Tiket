@@ -8,6 +8,8 @@ import {
   doc,
 } from "firebase/firestore";
 import { limit, startAfter } from "firebase/firestore";
+
+export const dynamic = "force-dynamic";
 import { db } from "@/firebase";
 import { calculateTimeLeft } from "@/utils/timeCalculator";
 import { resolveEventImage } from "@/utils/defaultImages";

@@ -25,6 +25,7 @@ import {
 import { getAuth } from "firebase/auth";
 import { db } from "../../../../firebase";
 import { artistNamesMatch } from "../../../../utils/artistMatcher";
+import { apiFetch } from "@/lib/platform";
 
 interface UploadTicketInterface {
   isOpen: boolean;
@@ -69,7 +70,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     setIsTransitioning(true);
     try {
       const idToken = await getAuth().currentUser!.getIdToken();
-      const res = await fetch("/api/seller/payment-details", {
+      const res = await apiFetch("/api/seller/payment-details", {
         headers: { Authorization: `Bearer ${idToken}` },
       });
       if (res.ok) {
@@ -395,7 +396,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           // 🔍 STEP 0: Check for duplicate tickets
           console.log(" Checking for duplicate tickets...");
           try {
-            const duplicateCheck = await fetch("/api/check-duplicate", {
+            const duplicateCheck = await apiFetch("/api/check-duplicate", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -491,7 +492,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           console.log("🔍 Calling venue verification API...");
           let verificationResult: any = null;
           try {
-            const verifyResponse = await fetch("/api/venue-verify", {
+            const verifyResponse = await apiFetch("/api/venue-verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -531,7 +532,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             try {
               const uploadFormData = new FormData();
               uploadFormData.append("file", ticket.uploadedFile);
-              const uploadRes = await fetch("/api/upload-ticket-image", {
+              const uploadRes = await apiFetch("/api/upload-ticket-image", {
                 method: "POST",
                 headers: { Authorization: `Bearer ${authToken}` },
                 body: uploadFormData,

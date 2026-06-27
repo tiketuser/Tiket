@@ -8,7 +8,7 @@ import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 
 // Lazy-load dialogs - only needed on user interaction
 const AuthDialog = dynamic(
-  () => import("../Dialogs/AuthDialog/AuthDialog"),
+  () => import("../mobile/MobileAuthSheet"),
   { ssr: false },
 );
 const ProfileDialog = dynamic(

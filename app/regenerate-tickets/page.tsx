@@ -4,6 +4,7 @@ import { useState } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import { apiFetch } from "@/lib/platform";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export default function RegenerateTicketsPage() {
     setResult(null);
 
     try {
-      const response = await fetch("/api/regenerate-tickets", {
+      const response = await apiFetch("/api/regenerate-tickets", {
         method: "POST",
       });
 

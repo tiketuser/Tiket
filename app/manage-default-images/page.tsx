@@ -8,6 +8,7 @@ import {
   getDefaultCategoryImage,
   FALLBACK_IMAGE_SVG,
 } from "../theme/defaultCategoryImages";
+import { apiFetch } from "@/lib/platform";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -87,7 +88,7 @@ export default function ManageDefaultImagesPage() {
       // Upload to Firebase Storage via API
       const uploadFormData = new FormData();
       uploadFormData.append("file", file);
-      const res = await fetch("/api/upload-event-image", {
+      const res = await apiFetch("/api/upload-event-image", {
         method: "POST",
         body: uploadFormData,
       });
@@ -100,7 +101,7 @@ export default function ManageDefaultImagesPage() {
       const { imageUrl } = await res.json();
 
       // Save Storage URL to Firestore via Admin SDK (bypasses client rules)
-      const updateRes = await fetch("/api/update-default-image", {
+      const updateRes = await apiFetch("/api/update-default-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ category, imageUrl }),

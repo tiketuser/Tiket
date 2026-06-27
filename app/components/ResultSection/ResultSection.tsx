@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CustomSearchInput from "../CustomSearchInput/CustomSearchInput";
 import SearchIcon from "../../../public/images/SearchBar/SearchIconBold.svg";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import TiketFilters from "../TiketFilters/TiketFilters";
 import { DateRange } from "react-day-picker";
+import { searchHref } from "@/lib/platform";
 
 interface FilterState {
   cities: string[];
@@ -37,9 +38,16 @@ const ResultSection: React.FC<ResultSectionProps> = ({
   const router = useRouter();
   const [isSearching, setIsSearching] = useState(false);
 
+  // On native, navigating between searches stays on the same /SearchResults
+  // route (query-param routing) so the component doesn't unmount — reset the
+  // spinner when the URL-driven title changes.
+  useEffect(() => {
+    setIsSearching(false);
+  }, [title]);
+
   const handleSearch = (query: string) => {
     setIsSearching(true);
-    router.push(`/SearchResults/${encodeURIComponent(query)}`);
+    router.push(searchHref(query));
   };
 
   return (

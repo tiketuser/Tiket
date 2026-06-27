@@ -5,6 +5,7 @@ import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
 import { getAuth } from "firebase/auth";
+import { apiFetch } from "@/lib/platform";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -50,7 +51,7 @@ export default function ManageArtistsPage() {
         .filter((v) => v.length > 0);
 
       // Call API to add alias
-      const response = await fetch("/api/add-artist-alias", {
+      const response = await apiFetch("/api/add-artist-alias", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

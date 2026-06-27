@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
+import { apiFetch } from "@/lib/platform";
 
 const ISRAELI_BANKS = [
   { code: "12", name: "הפועלים" },
@@ -51,7 +52,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
 
       try {
         const idToken = await user.getIdToken();
-        const res = await fetch("/api/seller/payment-details", {
+        const res = await apiFetch("/api/seller/payment-details", {
           headers: { Authorization: `Bearer ${idToken}` },
         });
         if (res.ok) {
@@ -99,7 +100,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
     try {
       const idToken = await user.getIdToken();
 
-      const res = await fetch("/api/seller/payment-details", {
+      const res = await apiFetch("/api/seller/payment-details", {
         headers: { Authorization: `Bearer ${idToken}` },
       });
 
@@ -139,7 +140,7 @@ const StepFourUploadTicket: React.FC<UploadTicketInterface> = ({
 
     try {
       const idToken = await user.getIdToken();
-      const res = await fetch("/api/seller/payment-details", {
+      const res = await apiFetch("/api/seller/payment-details", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

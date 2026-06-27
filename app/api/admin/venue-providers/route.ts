@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "../../../../lib/firebaseAdmin";
 
+export const dynamic = "force-dynamic";
+
 const ADMIN_EMAILS = (
   process.env.ADMIN_EMAILS || "tiketbizzz@gmail.com,admin@tiket.com"
 ).split(",").map((e) => e.trim());

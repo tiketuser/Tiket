@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getAuth } from "firebase/auth";
+import { apiFetch } from "@/lib/platform";
 
 interface ClientSideOCRProps {
   imageFile: File;
@@ -28,7 +29,7 @@ export default function ClientSideOCR({
 
       setProgress(40);
 
-      const response = await fetch("/api/ocr-extract", {
+      const response = await apiFetch("/api/ocr-extract", {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,

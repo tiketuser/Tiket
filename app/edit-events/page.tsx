@@ -18,6 +18,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import Image from "next/image";
+import { apiFetch } from "@/lib/platform";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -157,7 +158,7 @@ export default function EditConcertsPage() {
       );
 
       const ticketCount = ticketsSnapshot.size;
-      await fetch("/api/revalidate-events", { method: "POST" });
+      await apiFetch("/api/revalidate-events", { method: "POST" });
       alert(ticketCount > 0 ? `האירוע ו-${ticketCount} כרטיסים עודכנו בהצלחה!` : "האירוע עודכן בהצלחה!");
       handleCancel();
     } catch (error) {
@@ -181,7 +182,7 @@ export default function EditConcertsPage() {
     try {
       await deleteDoc(doc(db, "events", eventId));
       setConcerts(events.filter((c) => c.id !== eventId));
-      await fetch("/api/revalidate-events", { method: "POST" });
+      await apiFetch("/api/revalidate-events", { method: "POST" });
       alert("האירוע נמחק בהצלחה!");
 
       // If the deleted event was being edited, close the edit form
@@ -213,7 +214,7 @@ export default function EditConcertsPage() {
 
       const uploadFormData = new FormData();
       uploadFormData.append("file", file);
-      const res = await fetch("/api/upload-event-image", {
+      const res = await apiFetch("/api/upload-event-image", {
         method: "POST",
         body: uploadFormData,
       });
@@ -279,7 +280,7 @@ export default function EditConcertsPage() {
       setConcerts([]);
       setHasBackup(true);
       setShowDeleteAllModal(false);
-      await fetch("/api/revalidate-events", { method: "POST" });
+      await apiFetch("/api/revalidate-events", { method: "POST" });
       alert(`נמחקו ${snapshot.size} אירועים בהצלחה. גיבוי נשמר ב-events_backup.`);
     } catch (error) {
       console.error("Error deleting all events:", error);
@@ -320,7 +321,7 @@ export default function EditConcertsPage() {
       await loadConcerts();
 
       setShowRecoverModal(false);
-      await fetch("/api/revalidate-events", { method: "POST" });
+      await apiFetch("/api/revalidate-events", { method: "POST" });
       alert(`שוחזרו ${backupSnapshot.size} אירועים בהצלחה!`);
     } catch (error) {
       console.error("Error recovering events:", error);

@@ -8,7 +8,6 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import type { StripeExpressCheckoutElementConfirmEvent } from "@stripe/stripe-js";
 import { getStripe } from "../../../../../lib/stripe-client";
 
 interface CheckoutStepPaymentProps {
@@ -26,9 +25,7 @@ const PaymentForm: React.FC<{
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleExpressConfirm = async (
-    event: StripeExpressCheckoutElementConfirmEvent
-  ) => {
+  const handleExpressConfirm = async () => {
     if (!stripe || !elements) return;
 
     const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
@@ -59,7 +56,6 @@ const PaymentForm: React.FC<{
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!stripe || !elements) return;
 
     setIsProcessing(true);
@@ -103,7 +99,7 @@ const PaymentForm: React.FC<{
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 sm:gap-6 w-full"
+      className="flex flex-col gap-5 w-full"
       dir="rtl"
     >
       <ExpressCheckoutElement
@@ -114,46 +110,87 @@ const PaymentForm: React.FC<{
             googlePay: "always",
             link: "never",
           },
-          buttonHeight: 48,
+          buttonHeight: 50,
         }}
       />
 
-      <div className="flex items-center gap-3 my-2">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-sm text-gray-400 whitespace-nowrap">או שלם בכרטיס</span>
-        <div className="flex-1 h-px bg-gray-200" />
+      <div className="flex items-center gap-3" dir="ltr">
+        <div className="flex-1" style={{ height: 1, background: "var(--tk-line)" }} />
+        <span className="tk-mono" style={{ fontSize: 10, color: "var(--tk-muted)" }}>
+          או שלם בכרטיס
+        </span>
+        <div className="flex-1" style={{ height: 1, background: "var(--tk-line)" }} />
       </div>
 
-      <div dir="rtl">
-        <PaymentElement
-          options={{
-            layout: "tabs",
+      <div
+        dir="rtl"
+        style={{
+          background: "var(--tk-bg)",
+          border: "1px solid var(--tk-line)",
+          borderRadius: 14,
+          padding: 14,
+        }}
+      >
+        <PaymentElement options={{ layout: "tabs" }} />
+      </div>
+
+      {error && (
+        <p
+          className="text-center"
+          style={{
+            fontSize: 12,
+            color: "#C4373E",
+            background: "rgba(196,55,62,0.08)",
+            border: "1px solid rgba(196,55,62,0.18)",
+            borderRadius: 10,
+            padding: "8px 12px",
           }}
-        />
-      </div>
-
-      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+        >
+          {error}
+        </p>
+      )}
 
       <button
         type="submit"
         disabled={!stripe || isProcessing}
-        className="relative w-full h-[48px] sm:h-[56px] bg-primary text-white rounded-lg font-bold text-text-regular sm:text-heading-5-desktop hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+        className="relative w-full overflow-hidden transition-transform active:scale-[0.99] disabled:cursor-not-allowed"
+        style={{
+          height: 52,
+          background: !stripe || isProcessing ? "var(--tk-line-strong)" : "var(--tk-ink)",
+          color: !stripe || isProcessing ? "var(--tk-muted)" : "var(--tk-lime)",
+          borderRadius: 14,
+          fontSize: 15,
+          fontWeight: 700,
+          border: "none",
+          letterSpacing: "-0.01em",
+        }}
       >
         {isProcessing && (
-          <span className="absolute inset-0 overflow-hidden rounded-lg">
-            <span className="absolute inset-0 -translate-x-full animate-[shimmer_1.2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <span className="absolute inset-0 overflow-hidden" style={{ borderRadius: 14 }}>
+            <span className="absolute inset-0 -translate-x-full animate-[shimmer_1.2s_infinite] bg-gradient-to-r from-transparent via-white/15 to-transparent" />
           </span>
         )}
         <span className="relative flex items-center justify-center gap-2">
           {isProcessing && (
-            <svg className="animate-spin w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
           )}
-          {isProcessing ? "מעבד תשלום..." : "שלם עכשיו"}
+          {isProcessing ? "מעבד תשלום…" : "שלם עכשיו"}
         </span>
       </button>
+
+      <div
+        className="flex items-center justify-center gap-1.5"
+        style={{ fontSize: 11, color: "var(--tk-muted)" }}
+      >
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+          <rect x="3" y="7" width="10" height="7" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+          <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.3" />
+        </svg>
+        תשלום מאובטח · Stripe
+      </div>
     </form>
   );
 };
@@ -174,9 +211,35 @@ const CheckoutStepPayment: React.FC<CheckoutStepPaymentProps> = ({
           appearance: {
             theme: "stripe",
             variables: {
-              colorPrimary: "#e63946",
-              fontFamily: "Assistant, sans-serif",
-              borderRadius: "8px",
+              colorPrimary: "#0A0A0A",
+              colorBackground: "#F5F1E8",
+              colorText: "#0A0A0A",
+              colorTextSecondary: "#6E6A60",
+              colorDanger: "#C4373E",
+              fontFamily: "Heebo, Assistant, sans-serif",
+              borderRadius: "10px",
+              spacingUnit: "4px",
+            },
+            rules: {
+              ".Input": {
+                border: "1px solid #E4DFD2",
+                backgroundColor: "#FBF8F1",
+              },
+              ".Input:focus": {
+                border: "1px solid #0A0A0A",
+                boxShadow: "0 0 0 1px #0A0A0A",
+              },
+              ".Tab": {
+                border: "1px solid #E4DFD2",
+                backgroundColor: "#FBF8F1",
+              },
+              ".Tab--selected": {
+                border: "1px solid #0A0A0A",
+                backgroundColor: "#FBF8F1",
+              },
+              ".Label": {
+                color: "#6E6A60",
+              },
             },
           },
           locale: "he",

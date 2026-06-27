@@ -11,6 +11,7 @@ import {
   artistNamesMatch,
   findBestArtistMatch,
 } from "../../utils/artistMatcher";
+import { apiFetch } from "@/lib/platform";
 
 // Force dynamic rendering for admin pages
 export const dynamic = "force-dynamic";
@@ -149,7 +150,7 @@ export default function ApproveTicketsPage() {
     const token = await auth.currentUser?.getIdToken();
     if (!token) throw new Error("Not authenticated");
 
-    const res = await fetch("/api/admin/ticket-action", {
+    const res = await apiFetch("/api/admin/ticket-action", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

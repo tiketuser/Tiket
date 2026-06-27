@@ -1,12 +1,12 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "../../firebase";
 import ViewMoreClient from "./ViewMoreClient";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
 
 const INITIAL_PAGE_SIZE = 12;
-
-export const dynamic = "force-dynamic";
 
 interface CardData {
   id: string;
@@ -20,9 +20,10 @@ interface CardData {
   soldOut: boolean;
   ticketsLeft: number;
   timeLeft: string;
+  categories?: string[];
 }
 
-interface Event {
+interface RawEvent {
   id: string;
   artist: string;
   title: string;
@@ -36,7 +37,7 @@ interface Event {
   categories?: string[];
 }
 
-interface Ticket {
+interface RawTicket {
   id: string;
   eventId: string;
   askingPrice: number;
@@ -44,166 +45,148 @@ interface Ticket {
   status: string;
 }
 
-async function getViewMoreData() {
-  try {
-    if (!db) {
-      console.error("Firebase database not initialized");
-      return {
-        allCards: [],
-        lastDocId: null,
-        recentlyViewed: [],
-        lastMinuteDeals: [],
-        recommendations: [],
-      };
-    }
+interface ViewMoreData {
+  allCards: CardData[];
+  lastDocId: string | null;
+  recentlyViewed: CardData[];
+  lastMinuteDeals: CardData[];
+  recommendations: CardData[];
+}
 
-    // Fetch only active events and available tickets in parallel
-    const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
-      getDocs(
-        query(
-          collection(db as any, "events"),
-          where("status", "==", "active"),
-          limit(INITIAL_PAGE_SIZE),
-        ),
+const EMPTY: ViewMoreData = {
+  allCards: [],
+  lastDocId: null,
+  recentlyViewed: [],
+  lastMinuteDeals: [],
+  recommendations: [],
+};
+
+async function loadViewMoreData(): Promise<ViewMoreData> {
+  if (!db) return EMPTY;
+
+  const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
+    getDocs(
+      query(
+        collection(db, "events"),
+        where("status", "==", "active"),
+        limit(INITIAL_PAGE_SIZE),
       ),
-      getDocs(
-        query(
-          collection(db as any, "tickets"),
-          where("status", "==", "available"),
-        ),
-      ),
-    ]);
+    ),
+    getDocs(
+      query(collection(db, "tickets"), where("status", "==", "available")),
+    ),
+  ]);
 
-    // Serialize events - only plain objects
-    const events: Event[] = eventsSnapshot.docs
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          artist: data.artist,
-          title: data.title,
-          category: data.category,
-          date: data.date,
-          time: data.time,
-          venue: data.venue,
-          imageUrl: data.imageUrl,
-          status: data.status,
-          views: data.views || 0,
-          categories: data.categories || [],
-        };
-      })
-      .filter(
-        (event) =>
-          event && event.status === "active" && event.artist && event.imageUrl,
-      );
-
-    // Serialize tickets - only plain objects
-    const allTickets: Ticket[] = ticketsSnapshot.docs.map((doc) => {
+  const events: RawEvent[] = eventsSnapshot.docs
+    .map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
-        eventId: data.eventId,
-        askingPrice: data.askingPrice,
-        originalPrice: data.originalPrice,
+        artist: data.artist,
+        title: data.title,
+        category: data.category,
+        date: data.date,
+        time: data.time,
+        venue: data.venue,
+        imageUrl: data.imageUrl,
         status: data.status,
+        views: data.views || 0,
+        categories: data.categories || [],
       };
-    });
-
-    // Map events to card data with ticket information
-    const eventCards: CardData[] = events
-      .map((event) => {
-        // Get available tickets for this event
-        const eventTickets = allTickets.filter(
-          (ticket) =>
-            ticket.eventId === event.id && ticket.status === "available",
-        );
-
-        // Calculate price range
-        const prices = eventTickets
-          .map((t) => t.askingPrice)
-          .filter((p) => p && !isNaN(p));
-        const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-
-        // Calculate average original price
-        const originalPrices = eventTickets
-          .map((t) => t.originalPrice || t.askingPrice)
-          .filter((p) => p && !isNaN(p));
-        const avgOriginalPrice =
-          originalPrices.length > 0
-            ? originalPrices.reduce((a, b) => a + b, 0) / originalPrices.length
-            : minPrice;
-
-        // Calculate time until event
-        const timeLeft = calculateTimeLeft(event.date, event.time);
-
-        const cardData: CardData = {
-          id: event.id,
-          title: event.artist || event.title,
-          category: event.category,
-          imageSrc: event.imageUrl,
-          date: event.date,
-          location: event.venue,
-          price: minPrice,
-          maxPrice: maxPrice > minPrice ? maxPrice : undefined,
-          soldOut: eventTickets.length === 0,
-          ticketsLeft: eventTickets.length,
-          timeLeft: timeLeft,
-        };
-
-        return { ...cardData, categories: event.categories };
-      })
-      .filter((event) => !event.soldOut);
-
-    // recentlyViewed is resolved per-user on the client
-    const recentlyViewed: CardData[] = [];
-
-    // Last minute deals: events within 2 days from now
-    const now = new Date();
-    const twoDaysFromNow = new Date(now);
-    twoDaysFromNow.setDate(now.getDate() + 2);
-    twoDaysFromNow.setHours(23, 59, 59, 999);
-
-    const lastMinuteDeals = eventCards.filter((card) => {
-      try {
-        const normalizedDate = card.date.replace(/\./g, "/");
-        const [day, month, year] = normalizedDate.split("/").map(Number);
-        const eventDate = new Date(year, month - 1, day);
-
-        return eventDate >= now && eventDate <= twoDaysFromNow;
-      } catch (error) {
-        console.error("Error parsing date for last minute deals:", card.date);
-        return false;
-      }
-    });
-
-    const recommendations = eventCards.filter((card: any) =>
-      card.categories?.includes("recommendations"),
+    })
+    .filter(
+      (event) =>
+        event && event.status === "active" && event.artist && event.imageUrl,
     );
 
-    const lastDoc = eventsSnapshot.docs[eventsSnapshot.docs.length - 1];
+  const allTickets: RawTicket[] = ticketsSnapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      eventId: data.eventId,
+      askingPrice: data.askingPrice,
+      originalPrice: data.originalPrice,
+      status: data.status,
+    };
+  });
 
-    return {
-      allCards: eventCards,
-      lastDocId: lastDoc?.id ?? null,
-      recentlyViewed,
-      lastMinuteDeals,
-      recommendations,
-    };
-  } catch (error) {
-    console.error("Error fetching view more data:", error);
-    return {
-      allCards: [],
-      lastDocId: null,
-      recentlyViewed: [],
-      lastMinuteDeals: [],
-      recommendations: [],
-    };
-  }
+  const eventCards: CardData[] = events
+    .map((event) => {
+      const eventTickets = allTickets.filter(
+        (ticket) =>
+          ticket.eventId === event.id && ticket.status === "available",
+      );
+
+      const prices = eventTickets
+        .map((t) => t.askingPrice)
+        .filter((p) => p && !isNaN(p));
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+
+      return {
+        id: event.id,
+        title: event.artist || event.title,
+        category: event.category,
+        imageSrc: event.imageUrl,
+        date: event.date,
+        location: event.venue,
+        price: minPrice,
+        maxPrice: maxPrice > minPrice ? maxPrice : undefined,
+        soldOut: eventTickets.length === 0,
+        ticketsLeft: eventTickets.length,
+        timeLeft: calculateTimeLeft(event.date, event.time),
+        categories: event.categories,
+      };
+    })
+    .filter((card) => !card.soldOut);
+
+  const now = new Date();
+  const twoDaysFromNow = new Date(now);
+  twoDaysFromNow.setDate(now.getDate() + 2);
+  twoDaysFromNow.setHours(23, 59, 59, 999);
+
+  const lastMinuteDeals = eventCards.filter((card) => {
+    try {
+      const normalizedDate = card.date.replace(/\./g, "/");
+      const [day, month, year] = normalizedDate.split("/").map(Number);
+      const eventDate = new Date(year, month - 1, day);
+      return eventDate >= now && eventDate <= twoDaysFromNow;
+    } catch {
+      return false;
+    }
+  });
+
+  const recommendations = eventCards.filter((card) =>
+    card.categories?.includes("recommendations"),
+  );
+
+  const lastDoc = eventsSnapshot.docs[eventsSnapshot.docs.length - 1];
+
+  return {
+    allCards: eventCards,
+    lastDocId: lastDoc?.id ?? null,
+    recentlyViewed: [],
+    lastMinuteDeals,
+    recommendations,
+  };
 }
 
-const ViewMore = async () => {
-  const data = await getViewMoreData();
+const ViewMore = () => {
+  const [data, setData] = useState<ViewMoreData>(EMPTY);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadViewMoreData()
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .catch((error) => {
+        console.error("Error fetching view more data:", error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <ViewMoreClient

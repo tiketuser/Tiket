@@ -161,6 +161,45 @@ Manual deploy: see [GOOGLE_CLOUD_DEPLOYMENT.md](GOOGLE_CLOUD_DEPLOYMENT.md)
 
 ---
 
+## Hosting Architecture
+
+```
+tiket.co.il (DNS A → 199.36.158.100)
+     ↓
+Firebase Hosting (SSL termination + CDN edge)
+     ↓ rewrite: "**" → Cloud Run
+Cloud Run: tiket-app (me-west1, min-instances=0)
+     ↓
+Next.js server (SSR, API routes, middleware)
+```
+
+Firebase Hosting acts purely as an SSL/CDN proxy via the `rewrites` rule in `firebase.json`. The Next.js app itself runs unchanged inside Cloud Run — all dynamic features (App Router server components, middleware, API routes, Stripe webhooks) keep working. Firebase only adds the edge/SSL layer.
+
+The previous External HTTPS Load Balancer (forwarding rule + target proxy + URL map + backend + serverless NEG + managed cert + static IP) was removed to eliminate the ~₪51/mo flat forwarding-rule charge. Idle cost is now near zero because Cloud Run scales to zero.
+
+### Pause / resume
+
+Cloud Run scales to zero on its own (no traffic = no cost). To hard-gate all traffic:
+
+```bash
+# Off
+gcloud run services update tiket-app --region=me-west1 --max-instances=0 --project=tiket-9268c
+
+# On
+gcloud run services update tiket-app --region=me-west1 --max-instances=10 --project=tiket-9268c
+```
+
+### Hosting deploys
+
+```bash
+firebase deploy --only hosting:production --project tiket-9268c    # tiket.co.il + tiket-9268c.web.app
+firebase deploy --only hosting:staging    --project tiket-9268c    # tiket-app-staging.web.app
+```
+
+Both targets are bound in `.firebaserc` and use identical Cloud Run rewrites — staging exists only as a safe URL to test changes against without DNS touching.
+
+---
+
 ## Recommended VS Code Extensions
 
 - Tailwind CSS IntelliSense

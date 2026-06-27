@@ -8,6 +8,9 @@ import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import TitleSubtitle from "../components/TitleSubtitle/TitleSubtitle";
 import MyTicketCard from "../components/MyTicketCard/MyTicketCard";
+import MobileMyTickets, {
+  type MobileTicket,
+} from "../components/mobile/MobileMyTickets";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
@@ -29,6 +32,7 @@ interface PurchasedTicket {
   isStanding?: boolean;
   amount: number;
   ticketImage?: string;
+  eventImageUrl?: string;
 }
 
 function parseTicketDate(dateStr: string): Date | null {
@@ -42,6 +46,7 @@ function parseTicketDate(dateStr: string): Date | null {
 export default function MyTicketsPage() {
   const [tickets, setTickets] = useState<PurchasedTicket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPast, setShowPast] = useState(true);
   const [viewTicket, setViewTicket] = useState<PurchasedTicket | null>(null);
@@ -49,8 +54,10 @@ export default function MyTicketsPage() {
   useEffect(() => {
     const unsubscribe = auth?.onAuthStateChanged((user) => {
       if (user) {
+        setSignedIn(true);
         fetchMyTickets(user.uid);
       } else {
+        setSignedIn(false);
         setLoading(false);
       }
     });
@@ -79,6 +86,23 @@ export default function MyTicketsPage() {
           if (!ticketSnap.exists()) return;
 
           const ticket = ticketSnap.data();
+          let eventImageUrl: string | undefined;
+          if (ticket.eventId) {
+            try {
+              const eventSnap = await getDoc(
+                doc(db as any, "events", ticket.eventId as string),
+              );
+              if (eventSnap.exists()) {
+                const ev = eventSnap.data();
+                const img = ev?.imageUrl;
+                if (typeof img === "string" && !img.startsWith("data:")) {
+                  eventImageUrl = img;
+                }
+              }
+            } catch {
+              // ignore missing event lookups
+            }
+          }
           purchased.push({
             id: txDoc.id,
             ticketId: tx.ticketId,
@@ -94,6 +118,7 @@ export default function MyTicketsPage() {
             isStanding: ticket.isStanding,
             amount: tx.ticketPrice || tx.amount,
             ticketImage: ticket.ticketImage || null,
+            eventImageUrl,
           });
         })
       );
@@ -129,23 +154,48 @@ export default function MyTicketsPage() {
       isStanding: t.isStanding,
     });
 
+  const mobileTickets: MobileTicket[] = tickets.map((t) => ({
+    id: t.id,
+    artist: t.artist,
+    date: t.date,
+    time: t.time,
+    venue: t.venue,
+    section: t.section,
+    block: t.block,
+    row: t.row,
+    seat: t.seat,
+    isStanding: t.isStanding,
+    amount: t.amount,
+    ticketImage: t.ticketImage,
+    eventImageUrl: t.eventImageUrl,
+  }));
+
   if (loading) {
     return (
-      <div>
-        <NavBar />
-        <div className="min-h-screen bg-white py-12 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="loading loading-spinner loading-lg"></div>
-            <p className="mt-4 text-gray-600">טוען כרטיסים...</p>
+      <>
+        <MobileMyTickets tickets={[]} loading={true} />
+        <div className="hidden md:block">
+          <NavBar />
+          <div className="min-h-screen bg-white py-12 px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="loading loading-spinner loading-lg"></div>
+              <p className="mt-4 text-gray-600">טוען כרטיסים...</p>
+            </div>
           </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+      </>
     );
   }
 
   return (
-    <div>
+    <>
+      <MobileMyTickets
+        tickets={mobileTickets}
+        loading={false}
+        notSignedIn={signedIn === false}
+      />
+      <div className="hidden md:block">
       <NavBar />
       <TitleSubtitle title="הכרטיסים שלי" subtitle="כרטיסים שרכשתי" />
 
@@ -227,11 +277,12 @@ export default function MyTicketsPage() {
         </div>
       </div>
       <Footer />
+      </div>
 
       {/* Ticket viewer dialog */}
       {viewTicket && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/60 p-4"
           onClick={() => setViewTicket(null)}
           dir="rtl"
         >
@@ -275,6 +326,6 @@ export default function MyTicketsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
