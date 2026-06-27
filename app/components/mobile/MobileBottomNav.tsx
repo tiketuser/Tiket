@@ -6,10 +6,7 @@ import dynamic from "next/dynamic";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { Icon } from "./Icon";
 
-const AuthDialog = dynamic(
-  () => import("../Dialogs/AuthDialog/AuthDialog"),
-  { ssr: false },
-);
+const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 const MobileSell = dynamic(() => import("./MobileSell"), { ssr: false });
 
 type TabId = "home" | "favorites" | "sell" | "tickets" | "profile";

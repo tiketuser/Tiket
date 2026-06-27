@@ -23,10 +23,7 @@ import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
 import { hebDate, nis } from "./format";
 
-const AuthDialog = dynamic(
-  () => import("../Dialogs/AuthDialog/AuthDialog"),
-  { ssr: false },
-);
+const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
 type Order = {
   id: string;

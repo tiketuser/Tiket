@@ -13,10 +13,7 @@ import MobileSearchBar from "./MobileSearchBar";
 import MobileCategoryRow from "./MobileCategoryRow";
 import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
 
-const AuthDialog = dynamic(
-  () => import("../Dialogs/AuthDialog/AuthDialog"),
-  { ssr: false },
-);
+const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
 type ApiCard = MobileEventCardData & { category?: string };
 

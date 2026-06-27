@@ -6,10 +6,7 @@ import dynamic from "next/dynamic";
 import MobileShell from "./MobileShell";
 import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
 
-const AuthDialog = dynamic(
-  () => import("../Dialogs/AuthDialog/AuthDialog"),
-  { ssr: false },
-);
+const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
 export default function MobileFavorites({
   events,
