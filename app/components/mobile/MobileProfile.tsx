@@ -22,6 +22,7 @@ import { db } from "../../../firebase";
 import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
 import { hebDate, nis } from "./format";
+import { resolveEventImage } from "@/utils/defaultImages";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
@@ -32,6 +33,7 @@ type Order = {
   amount: number;
   status: "נקנה" | "נמכר";
   when: string;
+  imageUrl: string;
 };
 
 function relativeWhen(ts: number | null): string {
@@ -98,7 +100,7 @@ export default function MobileProfile() {
         const sold = soldSnap.docs;
         setCounts({ bought: bought.length, sold: sold.length });
 
-        const orderItems: Order[] = [
+        const ranked = [
           ...bought.map((d) => ({ doc: d, status: "נקנה" as const })),
           ...sold.map((d) => ({ doc: d, status: "נמכר" as const })),
         ]
@@ -107,17 +109,62 @@ export default function MobileProfile() {
             const ts = getTime(data.createdAt || data.completedAt);
             return {
               id: d.id,
-              artist: (data.artist as string) || "",
-              date: (data.date as string) || "",
-              amount: (data.ticketPrice as number) || (data.amount as number) || 0,
+              eventId: (data.eventId as string) || "",
+              amount:
+                (data.ticketPrice as number) ||
+                (data.amount as number) ||
+                0,
               status,
               when: relativeWhen(ts),
               _ts: ts ?? 0,
             };
           })
           .sort((a, b) => b._ts - a._ts)
-          .slice(0, 4)
-          .map(({ _ts: _, ...o }) => o);
+          .slice(0, 4);
+
+        const eventCache = new Map<
+          string,
+          { artist: string; date: string; imageUrl: string; category: string }
+        >();
+        await Promise.all(
+          Array.from(new Set(ranked.map((r) => r.eventId).filter(Boolean))).map(
+            async (eid) => {
+              try {
+                const snap = await getDoc(doc(db!, "events", eid));
+                if (!snap.exists()) return;
+                const ed = snap.data() as any;
+                eventCache.set(eid, {
+                  artist: (ed.artist as string) || "",
+                  date: (ed.date as string) || "",
+                  imageUrl: (ed.imageUrl as string) || "",
+                  category: (ed.category as string) || "",
+                });
+              } catch {
+                /* skip; row falls back to placeholder */
+              }
+            },
+          ),
+        );
+
+        const orderItems: Order[] = await Promise.all(
+          ranked.map(async (r) => {
+            const ev = eventCache.get(r.eventId);
+            const imageUrl = await resolveEventImage(
+              ev?.imageUrl,
+              ev?.category,
+            );
+            return {
+              id: r.id,
+              artist: ev?.artist || "",
+              date: ev?.date || "",
+              amount: r.amount,
+              status: r.status,
+              when: r.when,
+              imageUrl,
+            };
+          }),
+        );
+        if (cancelled) return;
         setOrders(orderItems);
       } catch (err) {
         console.error("[mobile-profile] fetch orders failed", err);
@@ -371,8 +418,23 @@ export default function MobileProfile() {
                       borderRadius: 4,
                       background: "#1A1A1A",
                       flexShrink: 0,
+                      overflow: "hidden",
                     }}
-                  />
+                  >
+                    {o.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={o.imageUrl}
+                        alt={o.artist || ""}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    ) : null}
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
