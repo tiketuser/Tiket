@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "@/firebase";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     if (!db) {

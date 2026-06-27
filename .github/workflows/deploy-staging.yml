@@ -90,14 +90,23 @@ jobs:
             --quiet || true
 
       # Refresh the Firebase Hosting `staging` target so the CDN points at the
-      # new revision of `tiket-app-staging`. Reuses the same GCP SA key — the
-      # firebase-admin service account already has Hosting Admin.
+      # new revision of `tiket-app-staging`. The rewrite config never changes
+      # (always "** → tiket-app-staging") so firebase-tools usually reports
+      # "current active version" — treat that as success, not failure.
       - name: Deploy Firebase Hosting (staging target)
         run: |
-          npx --yes firebase-tools@latest deploy \
+          set +e
+          OUT=$(npx --yes firebase-tools@latest deploy \
             --only hosting:staging \
             --project ${{ env.PROJECT_ID }} \
-            --non-interactive
+            --non-interactive 2>&1)
+          CODE=$?
+          echo "$OUT"
+          if [ $CODE -ne 0 ] && echo "$OUT" | grep -q "current active version"; then
+            echo "::notice::Hosting config unchanged — release was a no-op (Cloud Run revision still rolled out)."
+            exit 0
+          fi
+          exit $CODE
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
 
