@@ -8,8 +8,8 @@ const AuthDialog = dynamic(
   () => import("../AuthDialog/AuthDialog"),
   { ssr: false }
 );
-import CheckoutStepAuth from "./CheckoutSteps/CheckoutStepAuth";
-import type { GuestInfo } from "./CheckoutSteps/CheckoutStepAuth";
+import MobileAuthSheet from "../../mobile/MobileAuthSheet";
+import type { GuestInfo } from "../../mobile/MobileAuthSheet";
 import CheckoutStepPayment from "./CheckoutSteps/CheckoutStepPayment";
 import CheckoutStepConfirmation from "./CheckoutSteps/CheckoutStepConfirmation";
 import {
@@ -343,6 +343,22 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     />
   );
 
+  // Step 1: the design's auth sheet slides up over the blurred page —
+  // no full-screen checkout chrome until the buyer is known.
+  if (step === 1) {
+    return (
+      <MobileAuthSheet
+        isOpen={isOpen}
+        onClose={handleClose}
+        onSuccess={handleAuthComplete}
+        responsive
+        contextLabel="התחבר כדי להשלים את הרכישה בבטחה"
+        onGuest={handleGuestCheckout}
+        guestError={paymentError}
+      />
+    );
+  }
+
   return (
     <>
       <div
@@ -403,28 +419,6 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               <Icon.lock size={12} color="var(--tk-blue)" /> מאובטח
             </div>
           </div>
-
-          {step === 1 && (
-            <div className="flex-1 overflow-y-auto" style={{ padding: "20px 18px 24px" }}>
-              <h2
-                className="text-center"
-                style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em" }}
-              >
-                התחבר או המשך כאורח
-              </h2>
-              <p
-                className="text-center"
-                style={{ fontSize: 13, color: "var(--tk-muted)", margin: "4px 0 18px" }}
-              >
-                כדי להשלים את הרכישה בבטחה
-              </p>
-              <CheckoutStepAuth
-                onAuthComplete={handleAuthComplete}
-                onGuestCheckout={handleGuestCheckout}
-                externalError={paymentError}
-              />
-            </div>
-          )}
 
           {step === 2 &&
             (clientSecret ? (

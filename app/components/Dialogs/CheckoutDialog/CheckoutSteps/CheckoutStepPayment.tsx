@@ -173,17 +173,6 @@ const PaymentForm: React.FC<Omit<CheckoutStepPaymentProps, "clientSecret">> = ({
         {summarySlot}
 
         <TermsRow checked={termsAccepted} onChange={onTermsChange} />
-
-        <div
-          className="flex items-center justify-center gap-1.5"
-          style={{ fontSize: 11, color: "var(--tk-muted)", marginTop: 14 }}
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <rect x="3" y="7" width="10" height="7" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
-            <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.3" />
-          </svg>
-          תשלום מאובטח · Stripe
-        </div>
       </div>
 
       <PayFooter

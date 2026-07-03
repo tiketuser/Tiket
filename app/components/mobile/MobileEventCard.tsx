@@ -24,6 +24,7 @@ export type MobileEventCardData = {
   date: string;
   location: string;
   price: number;
+  maxPrice?: number;
   ticketsLeft: number;
   category?: string;
 };
@@ -183,7 +184,9 @@ export default function MobileEventCard({
           className="tk-mono"
           style={{ fontSize: 14, fontWeight: 700, marginTop: 4 }}
         >
-          {nis(card.price)}
+          {card.maxPrice && card.maxPrice > card.price
+            ? `${nis(card.price)} – ${nis(card.maxPrice)}`
+            : nis(card.price)}
         </div>
       </div>
     </Link>

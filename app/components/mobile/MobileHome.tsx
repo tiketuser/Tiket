@@ -37,6 +37,15 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
   const [filterDraft, setFilterDraft] = useState<FilterState>(DEFAULT_FILTERS);
   const fetchedDefault = useRef(false);
 
+  // Pagination: /api/events returns 12 cards per page with a cursor.
+  const [lastDocId, setLastDocId] = useState<string | null>(
+    initialCards?.length ? String(initialCards[initialCards.length - 1].id) : null,
+  );
+  const [hasMore, setHasMore] = useState((initialCards?.length ?? 0) >= 12);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const auth = getAuth();
     return onAuthStateChanged(auth, async (user) => {
@@ -71,6 +80,8 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
       .then((data) => {
         if (cancelled) return;
         setCards(data.cards || []);
+        setLastDocId(data.lastDocId ?? null);
+        setHasMore(Boolean(data.hasMore) && Boolean(data.lastDocId));
       })
       .catch((err) => console.error("[mobile-home] fetch failed", err))
       .finally(() => !cancelled && setLoading(false));
@@ -78,6 +89,46 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
       cancelled = true;
     };
   }, [category, initialCards]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMore || !lastDocId) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({ lastDocId });
+      if (category) params.set("category", category);
+      const r = await apiFetch(`/api/events?${params.toString()}`);
+      const data = await r.json();
+      const next: ApiCard[] = data.cards || [];
+      setCards((prev) => {
+        const seen = new Set(prev.map((c) => c.id));
+        return [...prev, ...next.filter((c) => !seen.has(c.id))];
+      });
+      setLastDocId(data.lastDocId ?? null);
+      setHasMore(Boolean(data.hasMore) && Boolean(data.lastDocId));
+    } catch (err) {
+      console.error("[mobile-home] load more failed", err);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [hasMore, lastDocId, category]);
+
+  // Re-created per page (loadMore changes with the cursor); observe() fires
+  // immediately for a visible sentinel, so short pages chain until the
+  // viewport is filled.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || loading || !hasMore) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) void loadMore();
+      },
+      { rootMargin: "600px 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [loading, hasMore, loadMore]);
 
   // Split "venue, city" location strings into separate lists
   const { cities, venues } = useMemo(() => {
@@ -222,6 +273,23 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
               openLoginDialog={openLogin}
             />
           ))}
+        </div>
+      )}
+
+      {!loading && hasMore && (
+        <div
+          ref={sentinelRef}
+          style={{
+            minHeight: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 18px 20px",
+            color: "var(--tk-muted)",
+            fontSize: 12,
+          }}
+        >
+          {loadingMore ? "טוען עוד…" : ""}
         </div>
       )}
 

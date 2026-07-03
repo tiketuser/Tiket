@@ -69,6 +69,16 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Overscroll rubber-banding reveals the document background behind the page.
+   Mobile (below md) shows the paper-cream design, so keep html/body cream
+   there — otherwise every bounce past the top/bottom flashes white. */
+@media (max-width: 767px) {
+  html,
+  body {
+    background: var(--tk-bg, #F5F1E8);
+  }
+}
+
 
 @layer components {
   /* Custom button styles using dynamic theme colors */
