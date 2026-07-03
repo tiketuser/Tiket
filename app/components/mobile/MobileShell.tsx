@@ -18,7 +18,7 @@ export default function MobileShell({
         background:
           "radial-gradient(circle at 50% 30%, #EAE4D3 0%, var(--tk-bg) 70%)",
         paddingBottom: showBottomNav
-          ? "calc(96px + env(safe-area-inset-bottom, 0px))"
+          ? "calc(80px + env(safe-area-inset-bottom, 0px))"
           : "env(safe-area-inset-bottom, 0px)",
       }}
     >

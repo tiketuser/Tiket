@@ -9,7 +9,7 @@ export default function MobileTopBar({ title }: { title?: string }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "14px 18px",
+        padding: "calc(14px + env(safe-area-inset-top, 0px)) 18px 14px",
       }}
     >
       {title ? (

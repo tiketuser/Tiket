@@ -85,7 +85,7 @@ export default function MobileSearchResults({ query }: { query: string }) {
           display: "flex",
           alignItems: "center",
           gap: 8,
-          padding: "10px 18px",
+          padding: "calc(10px + env(safe-area-inset-top, 0px)) 18px 10px",
         }}
       >
         <button

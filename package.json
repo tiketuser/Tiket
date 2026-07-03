@@ -15,6 +15,8 @@
     "cap:sync:android": "npm run build:mobile && cap sync android",
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android",
+    "android:bundle": "npm run cap:sync:android && cd android && ./gradlew bundleRelease",
+    "android:apk": "npm run cap:sync:android && cd android && ./gradlew assembleRelease",
     "mobile:ios": "cap run ios -l --external",
     "mobile:android": "cap run android -l --external"
   },
