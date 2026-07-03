@@ -15,7 +15,7 @@ import { db } from "../../../firebase";
 import { eventHref } from "@/lib/platform";
 import { encodeImageUrl } from "@/utils/defaultImages";
 import { Icon } from "./Icon";
-import { hebDate, nis } from "./format";
+import { hebDate, nis, abbrevCity } from "./format";
 
 export type MobileEventCardData = {
   id: string | number;
@@ -25,6 +25,7 @@ export type MobileEventCardData = {
   location: string;
   price: number;
   ticketsLeft: number;
+  category?: string;
 };
 
 export default function MobileEventCard({
@@ -143,6 +144,11 @@ export default function MobileEventCard({
         </button>
       </div>
       <div style={{ padding: 10 }}>
+        {card.category && (
+          <div style={{ fontSize: 10, color: "var(--tk-muted)", marginBottom: 2 }}>
+            {card.category}
+          </div>
+        )}
         <div
           style={{
             fontSize: 12,
@@ -154,10 +160,10 @@ export default function MobileEventCard({
             WebkitBoxOrient: "vertical",
           }}
         >
-          {card.title}
+          {abbrevCity(card.title)}
         </div>
         <div style={{ fontSize: 9, color: "var(--tk-muted)", marginTop: 2 }}>
-          {hebDate(card.date)} · {card.location}
+          {hebDate(card.date)} · {card.location?.split(",")[1]?.trim() ?? card.location}
         </div>
         <div
           style={{

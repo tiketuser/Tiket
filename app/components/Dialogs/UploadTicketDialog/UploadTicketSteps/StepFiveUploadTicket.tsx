@@ -1,3 +1,4 @@
+import { CheckCircle2, AlertTriangle, Ban } from "lucide-react";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import MinimalCard from "@/app/components/MinimalCard/MinimalCard";
 import { formatSeatLocation } from "@/app/utils/categoryConfig";
@@ -64,7 +65,7 @@ const StepFiveUploadTicket: React.FC<UploadTicketInterface> = ({
       {publishSuccess && (
         <div className="mt-4 w-full max-w-[880px] p-4 bg-green-50 border-2 border-green-300 rounded-lg">
           <div className="flex items-start gap-3">
-            <div className="text-2xl">✅</div>
+            <CheckCircle2 className="w-6 h-6 text-green-600 shrink-0" strokeWidth={1.8} />
             <div className="flex-1">
               <p className="font-bold text-green-800 text-lg mb-2">הכרטיסים פורסמו בהצלחה!</p>
               <p className="text-green-700 text-sm whitespace-pre-line">{publishSuccess}</p>
@@ -85,7 +86,7 @@ const StepFiveUploadTicket: React.FC<UploadTicketInterface> = ({
       {publishWarning && (
         <div className="mt-4 w-full max-w-[880px] p-4 bg-orange-50 border-2 border-orange-300 rounded-lg">
           <div className="flex items-start gap-3">
-            <div className="text-2xl">⚠️</div>
+            <AlertTriangle className="w-6 h-6 text-orange-600 shrink-0" strokeWidth={1.8} />
             <div className="flex-1">
               <p className="font-bold text-orange-800 text-lg mb-2">הכרטיסים ממתינים לאישור</p>
               <p className="text-orange-700 text-sm whitespace-pre-line">{publishWarning}</p>
@@ -106,7 +107,7 @@ const StepFiveUploadTicket: React.FC<UploadTicketInterface> = ({
       {publishError && (
         <div className="mt-4 w-full max-w-[880px] p-4 bg-red-50 border-2 border-red-300 rounded-lg">
           <div className="flex items-start gap-3">
-            <div className="text-2xl">🚫</div>
+            <Ban className="w-6 h-6 text-red-600 shrink-0" strokeWidth={1.8} />
             <div className="flex-1">
               <p className="font-bold text-red-800 text-lg mb-2">שגיאה בפרסום הכרטיס</p>
               <p className="text-red-700 text-sm whitespace-pre-line">{publishError}</p>

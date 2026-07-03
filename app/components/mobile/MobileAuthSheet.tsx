@@ -20,11 +20,23 @@ import { isIOS, isNative } from "../../../lib/platform";
 
 type AuthMode = "login" | "signup";
 
+export interface GuestInfo {
+  email: string;
+  phone: string;
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: AuthMode;
   contextLabel?: string;
+  /** Called after a successful sign-in/sign-up instead of closing (checkout flow). */
+  onSuccess?: () => void;
+  /** When provided, shows a small "המשך כאורח" option — purchase flow only. */
+  onGuest?: (info: GuestInfo) => Promise<void> | void;
+  guestError?: string | null;
+  /** Render on desktop too, centered as a modal card on sm+ screens. */
+  responsive?: boolean;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -76,6 +88,10 @@ const MobileAuthSheet: React.FC<Props> = ({
   onClose,
   initialMode = "login",
   contextLabel,
+  onSuccess,
+  onGuest,
+  guestError,
+  responsive,
 }) => {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [mounted, setMounted] = useState(false);
@@ -85,6 +101,10 @@ const MobileAuthSheet: React.FC<Props> = ({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [guestOpen, setGuestOpen] = useState(false);
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestLocalError, setGuestLocalError] = useState("");
   const sheetRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -93,6 +113,8 @@ const MobileAuthSheet: React.FC<Props> = ({
     if (isOpen) {
       setMode(initialMode);
       setError("");
+      setGuestOpen(false);
+      setGuestLocalError("");
       const t = setTimeout(() => setMounted(true), 10);
       return () => clearTimeout(t);
     }
@@ -102,6 +124,36 @@ const MobileAuthSheet: React.FC<Props> = ({
   if (!isOpen) return null;
 
   const showApple = isIOS() || isNative();
+
+  // In the checkout flow the parent advances to payment; elsewhere just close.
+  const finishSuccess = () => {
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      onClose();
+      router.refresh();
+    }
+  };
+
+  const handleGuestSubmit = async () => {
+    if (submitting || !onGuest) return;
+    setGuestLocalError("");
+    if (!EMAIL_RE.test(guestEmail)) {
+      setGuestLocalError("כתובת אימייל לא תקינה");
+      return;
+    }
+    const cleanPhone = guestPhone.replace(/[-\s]/g, "");
+    if (!/^[0-9]{10}$/.test(cleanPhone)) {
+      setGuestLocalError("מספר טלפון לא תקין (10 ספרות)");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onGuest({ email: guestEmail, phone: cleanPhone });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -115,7 +115,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
         <div>
           <NavBar />
           <div className="text-center text-red-500 text-xl mt-20">
-            לא נמצא אירוע של {decodedTitle} 😢
+            לא נמצא אירוע של {decodedTitle}
           </div>
           <Footer />
         </div>
@@ -177,7 +177,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
               availableTickets={0}
             />
             <div className="text-center text-red-500 text-xl mt-20 mb-20">
-              לא נמצאו כרטיסים זמינים לאירוע הזה 😢
+              לא נמצאו כרטיסים זמינים לאירוע הזה
             </div>
             <Footer />
           </div>

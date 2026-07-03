@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
 import type { TicketInfo } from "../Dialogs/CheckoutDialog/CheckoutDialog";
 import { formatSeatLocation } from "../../utils/categoryConfig";
+import { encodeImageUrl } from "@/utils/defaultImages";
 import { nis } from "./format";
 
 interface Ticket {
@@ -81,7 +82,6 @@ export default function MobileTicketList({
   tickets: Ticket[];
   event: Event;
 }) {
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [checkoutTickets, setCheckoutTickets] = useState<TicketInfo[]>([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -111,12 +111,12 @@ export default function MobileTicketList({
         continue;
       }
       const total = group.reduce((s, t) => s + t.askingPrice, 0);
-      const per = Math.min(...group.map((t) => t.askingPrice));
       items.push({
         kind: "bundle",
         id: bundleId,
         tickets: group,
-        sortPrice: per,
+        // Sort by the same per-ticket price the card displays (the average).
+        sortPrice: total / group.length,
         qty: group.length,
         total,
       });
@@ -129,13 +129,9 @@ export default function MobileTicketList({
         sortPrice: t.askingPrice,
       });
     }
-    if (!sortOrder) return items;
-    return items.sort((a, b) =>
-      sortOrder === "asc"
-        ? a.sortPrice - b.sortPrice
-        : b.sortPrice - a.sortPrice,
-    );
-  }, [tickets, sortOrder]);
+    // Always cheapest-first — whoever wants VIP scrolls down.
+    return items.sort((a, b) => a.sortPrice - b.sortPrice);
+  }, [tickets]);
 
   const selected = useMemo(
     () => listings.find((l) => l.id === selectedId) ?? null,
@@ -152,8 +148,16 @@ export default function MobileTicketList({
       price: t.askingPrice,
       originalPrice: t.originalPrice,
       sellerId: t.sellerId,
+      imageUrl: event.imageUrl
+        ? encodeImageUrl(event.imageUrl)
+        : "/images/Artist/default.png",
+      time: t.time || event.time,
+      section: t.section,
+      row: t.row,
+      seat: t.seat,
+      isStanding: t.isStanding,
     }),
-    [event.artist],
+    [event.artist, event.imageUrl, event.time],
   );
 
   const onContinue = useCallback(() => {
@@ -173,37 +177,7 @@ export default function MobileTicketList({
   }, []);
 
   return (
-    <>
-      {/* Sort pills */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-        {(["asc", "desc"] as const).map((order) => {
-          const active = sortOrder === order;
-          return (
-            <button
-              key={order}
-              onClick={() =>
-                setSortOrder((p) => (p === order ? null : order))
-              }
-              style={{
-                padding: "6px 12px",
-                borderRadius: 999,
-                fontSize: 11,
-                fontWeight: 600,
-                fontFamily: "inherit",
-                border:
-                  "1px solid " +
-                  (active ? "var(--tk-ink)" : "var(--tk-line-strong)"),
-                background: active ? "var(--tk-ink)" : "transparent",
-                color: active ? "#fff" : "var(--tk-ink)",
-                cursor: "pointer",
-              }}
-            >
-              {order === "asc" ? "מהזול ליקר" : "מהיקר לזול"}
-            </button>
-          );
-        })}
-      </div>
-
+    <div style={{ paddingBottom: selected ? "calc(80px + env(safe-area-inset-bottom, 0px))" : 0 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {listings.map((l) => {
           const isSel = selectedId === l.id;
@@ -218,18 +192,31 @@ export default function MobileTicketList({
                 : "";
           const rowLabel = t.row != null ? ` · שורה ${t.row}` : "";
           const blockLabel = t.block ? ` · בלוק ${t.block}` : "";
-          const priceMain = isBundle ? l.total : t.askingPrice;
-          const priceSub = isBundle ? `${l.qty} כרטיסים` : "לכרטיס";
+          const priceMain = isBundle
+            ? Math.round(l.total / l.qty)
+            : t.askingPrice;
 
           return (
             <button
               key={l.id}
-              onClick={() => setSelectedId(isSel ? null : l.id)}
+              onClick={(e) => {
+                const el = e.currentTarget;
+                setSelectedId(isSel ? null : l.id);
+                // The fixed buy bar appears over the tapped card — scroll it
+                // clear once the bar (and list bottom padding) have rendered.
+                if (!isSel) {
+                  requestAnimationFrame(() =>
+                    requestAnimationFrame(() =>
+                      el.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+                    ),
+                  );
+                }
+              }}
               style={{
                 display: "block",
                 width: "100%",
                 textAlign: "inherit",
-                padding: 12,
+                padding: isBundle ? "12px 12px 0" : 12,
                 border:
                   "2px solid " +
                   (isSel ? "var(--tk-blue)" : "var(--tk-line)"),
@@ -241,43 +228,10 @@ export default function MobileTicketList({
                 overflow: "hidden",
                 fontFamily: "inherit",
                 cursor: "pointer",
+                scrollMarginBottom: 96,
+                scrollMarginTop: 12,
               }}
             >
-              {isBundle && (
-                <div
-                  className="tk-mono"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    background: "#F4E4A6",
-                    color: "#5C4A0E",
-                    padding: "3px 8px",
-                    borderRadius: 4,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    letterSpacing: "0.04em",
-                    marginBottom: 8,
-                  }}
-                >
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#5C4A0E"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                    <path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" />
-                  </svg>
-                  חבילה של {l.qty}
-                  {l.tickets[0].canSplit === false ? " · ללא הפרדה" : ""}
-                </div>
-              )}
-
               <div
                 style={{
                   display: "flex",
@@ -324,10 +278,53 @@ export default function MobileTicketList({
                       marginTop: 3,
                     }}
                   >
-                    {priceSub}
+                    לכרטיס
                   </div>
                 </div>
               </div>
+
+              {/* Bundle strip — bleeds to the card edges, clipped by overflow:hidden */}
+              {isBundle && (
+                <div
+                  className="tk-mono"
+                  style={{
+                    margin: "12px -12px 0",
+                    background: "var(--tk-ink)",
+                    color: "var(--tk-bg)",
+                    padding: "8px 12px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      fontSize: 10,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    </svg>
+                    חבילה ×{l.qty} · לקנייה יחד
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>
+                    סה״כ {nis(l.total)}
+                  </span>
+                </div>
+              )}
             </button>
           );
         })}
@@ -366,7 +363,7 @@ export default function MobileTicketList({
               }}
             >
               {selected.kind === "bundle"
-                ? `אזור ${selected.tickets[0].section} · ${selected.qty} כרטיסים`
+                ? `אזור ${selected.tickets[0].section} · מושבים ${joinSeats(selected.tickets)} · ${selected.qty} כרטיסים`
                 : `אזור ${selected.ticket.section}${
                     selected.ticket.seat != null
                       ? ` · מושב ${selected.ticket.seat}`
@@ -409,6 +406,6 @@ export default function MobileTicketList({
         onClose={onCheckoutClose}
         tickets={checkoutTickets}
       />
-    </>
+    </div>
   );
 }

@@ -14,7 +14,7 @@ export default function MobileShell({
     <div
       className="tk-mobile md:hidden"
       style={{
-        minHeight: "100vh",
+        minHeight: showBottomNav ? "100dvh" : undefined,
         background:
           "radial-gradient(circle at 50% 30%, #EAE4D3 0%, var(--tk-bg) 70%)",
         paddingBottom: showBottomNav

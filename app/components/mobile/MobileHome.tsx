@@ -12,6 +12,13 @@ import MobileTopBar from "./MobileTopBar";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileCategoryRow from "./MobileCategoryRow";
 import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
+import MobileFilterSheet, {
+  DEFAULT_FILTERS,
+  FilterState,
+  countActiveFilters,
+  PRICE_MIN,
+  PRICE_MAX,
+} from "./MobileFilterSheet";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
@@ -25,6 +32,9 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
   const [search, setSearch] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
   const [userFavorites, setUserFavorites] = useState<Set<string | number>>(new Set());
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [filterDraft, setFilterDraft] = useState<FilterState>(DEFAULT_FILTERS);
   const fetchedDefault = useRef(false);
 
   useEffect(() => {
@@ -69,14 +79,55 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
     };
   }, [category, initialCards]);
 
+  // Split "venue, city" location strings into separate lists
+  const { cities, venues } = useMemo(() => {
+    const citySet = new Set<string>();
+    const venueSet = new Set<string>();
+    for (const c of cards) {
+      if (!c.location) continue;
+      const parts = c.location.split(",").map((p) => p.trim());
+      venueSet.add(parts[0]);
+      if (parts[1]) citySet.add(parts[1]);
+    }
+    return {
+      cities: Array.from(citySet),
+      venues: Array.from(venueSet),
+    };
+  }, [cards]);
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return cards;
-    const q = search.toLowerCase();
-    return cards.filter((c) => {
-      const hay = `${c.title} ${c.location}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [cards, search]);
+    let result = cards;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((c) =>
+        `${c.title} ${c.location}`.toLowerCase().includes(q),
+      );
+    }
+    if (filters.priceMin > PRICE_MIN)
+      result = result.filter((c) => c.price >= filters.priceMin);
+    if (filters.priceMax < PRICE_MAX)
+      result = result.filter((c) => c.price <= filters.priceMax);
+    if (filters.city !== "הכל")
+      result = result.filter((c) => c.location?.includes(filters.city));
+    if (filters.venue !== "הכל")
+      result = result.filter((c) => c.location?.startsWith(filters.venue));
+    if (filters.dateFrom || filters.dateTo) {
+      const parseDMY = (s: string) => {
+        const m = s?.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        return m ? new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1])) : null;
+      };
+      const from = parseDMY(filters.dateFrom);
+      const to   = parseDMY(filters.dateTo);
+      result = result.filter((c) => {
+        const cd = parseDMY(c.date);
+        if (!cd) return true;
+        if (from && cd < from) return false;
+        if (to && cd > to) return false;
+        return true;
+      });
+    }
+    return result;
+  }, [cards, search, filters]);
 
   const onSubmitSearch = useCallback(() => {
     if (search.trim()) router.push(searchHref(search.trim()));
@@ -91,6 +142,8 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
         value={search}
         onChange={setSearch}
         onSubmit={onSubmitSearch}
+        onOpenFilter={() => { setFilterDraft(filters); setFilterOpen(true); }}
+        activeFilterCount={countActiveFilters(filters)}
       />
       <MobileCategoryRow selected={category} onSelect={setCategory} />
 
@@ -108,11 +161,13 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
         >
           {filtered.length} מופעים
         </span>
-        {(category !== null || search) && (
+        {(category !== null || search || countActiveFilters(filters) > 0) && (
           <button
             onClick={() => {
               setCategory(null);
               setSearch("");
+              setFilters(DEFAULT_FILTERS);
+              setFilterDraft(DEFAULT_FILTERS);
             }}
             style={{
               fontSize: 11,
@@ -171,6 +226,21 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
       )}
 
       <AuthDialog isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+
+      {filterOpen && (
+        <MobileFilterSheet
+          draft={filterDraft}
+          setDraft={setFilterDraft}
+          cities={cities}
+          venues={venues}
+          onClose={() => setFilterOpen(false)}
+          onApply={() => { setFilters(filterDraft); setFilterOpen(false); }}
+          onReset={() => {
+            setFilterDraft(DEFAULT_FILTERS);
+            setFilters(DEFAULT_FILTERS);
+          }}
+        />
+      )}
     </MobileShell>
   );
 }

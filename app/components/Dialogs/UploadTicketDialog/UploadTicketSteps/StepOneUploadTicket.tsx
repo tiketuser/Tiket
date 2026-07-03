@@ -7,6 +7,7 @@ import CustomInput from "@/app/components/CustomInput/CustomInput";
 import EmptyImage from "../../../../../public/images/Dialogs/emptyimage.svg";
 import { apiFetch } from "@/lib/platform";
 import { getAuth } from "firebase/auth";
+import { AlertTriangle } from "lucide-react";
 
 const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
   nextStep,
@@ -259,7 +260,9 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
           </div>
         ) : ticketData?.extractionError ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
-            <p className="text-xs font-semibold text-red-700">⚠️ שגיאה</p>
+            <p className="text-xs font-semibold text-red-700 flex items-center gap-1">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" strokeWidth={1.8} /> שגיאה
+            </p>
             <p className="text-[11px] text-red-600 mt-0.5">{uploadStatus}</p>
           </div>
         ) : ticketData?.isProcessing ? (

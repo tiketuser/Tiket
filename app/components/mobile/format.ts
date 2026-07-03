@@ -107,3 +107,45 @@ export function isPastDate(date: string): boolean {
   today.setHours(0, 0, 0, 0);
   return target < today.getTime();
 }
+
+// City names that overflow compact UI cells (boarding pass stubs, event card chips).
+// Sorted longest-first so substring replacement picks the most specific match.
+const CITY_ABBREV: [string, string][] = [
+  ['תל אביב - יפו', 'ת"א'],
+  ['תל אביב-יפו',   'ת"א'],
+  ['תל אביב',       'ת"א'],
+  ['ראשון לציון',   'ראשל"צ'],
+  ['רמת השרון',     'רמה"ש'],
+  ['הוד השרון',     'הוד"ש'],
+  ['פתח תקווה',     'פ"ת'],
+  ['פתח-תקווה',     'פ"ת'],
+  ['קריית שמונה',   'ק"ש'],
+  ['קרית שמונה',    'ק"ש'],
+  ['קריית אונו',    'ק"א'],
+  ['קרית אונו',     'ק"א'],
+  ['קריית גת',      'ק"ג'],
+  ['קרית גת',       'ק"ג'],
+  ['באר שבע',       'ב"ש'],
+  ['נס ציונה',      'נ"צ'],
+  ['רמת גן',        'ר"ג'],
+];
+
+/**
+ * Abbreviates all known city names within a string for compact UI cells.
+ * Handles exact matches, venue strings, and event titles containing multiple cities.
+ */
+export function abbrevCity(name: string): string {
+  if (!name) return name;
+  let result = name.trim();
+  // Exact match — return immediately
+  for (const [full, abbr] of CITY_ABBREV) {
+    if (result === full) return abbr;
+  }
+  // Replace every occurrence of every known city (longest-first prevents partial collisions)
+  for (const [full, abbr] of CITY_ABBREV) {
+    if (result.includes(full)) {
+      result = result.split(full).join(abbr);
+    }
+  }
+  return result;
+}
