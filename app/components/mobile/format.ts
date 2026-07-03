@@ -46,9 +46,13 @@ const HEB_DAYS = [
 
 function parseDate(iso: string): { y: number; m: number; d: number } | null {
   if (!iso) return null;
-  // Accepts "YYYY-MM-DD" or full ISO. Falls back to Date parse.
+  // "YYYY-MM-DD" or full ISO.
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (m) return { y: +m[1], m: +m[2], d: +m[3] };
+  // "DD/MM/YYYY" — the app's canonical stored format. Must be handled before
+  // the Date fallback, which would misread it as MM/DD/YYYY.
+  const heb = iso.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (heb) return { y: +heb[3], m: +heb[2], d: +heb[1] };
   const dt = new Date(iso);
   if (Number.isNaN(dt.getTime())) return null;
   return { y: dt.getFullYear(), m: dt.getMonth() + 1, d: dt.getDate() };

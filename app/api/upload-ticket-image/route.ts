@@ -2,13 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import admin, { adminAuth } from "@/lib/firebaseAdmin";
 import { randomUUID } from "crypto";
 
-const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+]);
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
-function isAllowedImageBuffer(buf: Buffer): boolean {
+function isAllowedFileBuffer(buf: Buffer): boolean {
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return true; // JPEG
   if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return true; // PNG
   if (buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") return true; // WebP
+  if (buf.toString("ascii", 0, 4) === "%PDF") return true; // PDF
   return false;
 }
 
@@ -29,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!ALLOWED_MIME_TYPES.has(file.type)) {
-      return NextResponse.json({ error: "Only JPEG, PNG and WebP images are allowed" }, { status: 400 });
+      return NextResponse.json({ error: "Only JPEG, PNG, WebP images or PDF files are allowed" }, { status: 400 });
     }
 
     if (file.size > MAX_FILE_SIZE) {
@@ -44,13 +50,20 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Validate actual content via magic bytes — prevents MIME type spoofing
-    if (!isAllowedImageBuffer(buffer)) {
-      return NextResponse.json({ error: "File content does not match an allowed image type" }, { status: 400 });
+    if (!isAllowedFileBuffer(buffer)) {
+      return NextResponse.json({ error: "File content does not match an allowed file type" }, { status: 400 });
     }
 
     const bucket = admin.storage().bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
     // Use UUID filename — never use client-supplied names (prevents path traversal)
-    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    const ext =
+      file.type === "image/png"
+        ? "png"
+        : file.type === "image/webp"
+        ? "webp"
+        : file.type === "application/pdf"
+        ? "pdf"
+        : "jpg";
     const fileName = `ticket-images/${randomUUID()}.${ext}`;
     const fileRef = bucket.file(fileName);
 

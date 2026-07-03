@@ -174,7 +174,13 @@ export function findBestArtistMatch(
 
   for (const artist of artistList) {
     if (artistNamesMatch(searchName, artist, threshold)) {
-      const score = similarityScore(normalizeString(searchName), normalizeString(artist));
+      // artistNamesMatch also succeeds via the cross-script alias table (e.g.
+      // "Omer Adam" ↔ "עומר אדם"), where the raw Levenshtein similarity is 0.
+      // Floor a confirmed match at the threshold so it still outranks "no
+      // match" — otherwise 0 > 0 is false and bestMatch stays null for exactly
+      // the alias pairs the table exists to resolve.
+      const raw = similarityScore(normalizeString(searchName), normalizeString(artist));
+      const score = Math.max(raw, threshold);
       if (score > bestScore) {
         bestScore = score;
         bestMatch = artist;

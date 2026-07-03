@@ -226,7 +226,7 @@ const TicketListClient: React.FC<TicketListClientProps> = ({
                   : "bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary"
               }`}
             >
-              {order === "asc" ? "מהיקר לזול " : "מהזול ליקר "}
+              {order === "asc" ? "מהזול ליקר " : "מהיקר לזול "}
             </button>
           ))}
         </div>

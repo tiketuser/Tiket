@@ -43,7 +43,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const lastDocId = searchParams.get("lastDocId");
     const category = searchParams.get("category");
-    const pageSize = parseInt(searchParams.get("pageSize") ?? String(PAGE_SIZE));
+    // Clamp pageSize: an unvalidated value yields limit(NaN) (500 error) or lets
+    // a caller dump the whole collection.
+    const parsedPageSize = parseInt(searchParams.get("pageSize") ?? String(PAGE_SIZE));
+    const pageSize = Number.isNaN(parsedPageSize)
+      ? PAGE_SIZE
+      : Math.min(Math.max(parsedPageSize, 1), 48);
     const titlesOnly = searchParams.get("titles") === "true";
 
     // Lightweight endpoint: return all event artist names for autocomplete

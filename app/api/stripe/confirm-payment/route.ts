@@ -111,7 +111,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, alreadyProcessed: true });
     }
 
-    const feePercent = parseFloat(platformFeePercent) || getPlatformFeePercent();
+    const parsedFee = parseFloat(platformFeePercent);
+    const feePercent = Number.isNaN(parsedFee) ? getPlatformFeePercent() : parsedFee;
+    const expectedReservedBy = buyerId || `guest:${guestEmail}`;
 
     // Fetch all ticket documents
     const ticketSnaps = await Promise.all(
@@ -125,6 +127,22 @@ export async function POST(request: NextRequest) {
       if (!ticketData) continue;
 
       const ticketId = ticketSnap.id;
+
+      // Only complete the sale if the ticket is still reserved by THIS payer,
+      // or already sold to them (idempotent re-confirm). Never overwrite a
+      // ticket that belongs to a different buyer.
+      const alreadySoldToPayer =
+        ticketData.status === "sold" && ticketData.soldTo === expectedReservedBy;
+      const reservedByPayer =
+        ticketData.status === "reserved" && ticketData.reservedBy === expectedReservedBy;
+      if (!reservedByPayer && !alreadySoldToPayer) {
+        console.error(
+          `confirm-payment ${paymentIntentId}: ticket ${ticketId} not owned by payer ` +
+            `(status=${ticketData.status}, reservedBy=${ticketData.reservedBy}). Skipping.`
+        );
+        continue;
+      }
+
       const sellerId = ticketData.sellerId as string;
       const ticketPriceILS = ticketData.askingPrice as number;
       const platformFeeILS = feePercent > 0 ? ticketPriceILS * (feePercent / 100) : 0;
@@ -165,7 +183,13 @@ export async function POST(request: NextRequest) {
         transactionData.guestPhone = guestPhone || null;
       }
 
-      batch.set(adminDb.collection("transactions").doc(), transactionData);
+      // Deterministic doc ID keyed on (paymentIntent, ticket) makes this write
+      // idempotent — if the Stripe webhook races us, both target the same doc
+      // instead of creating duplicate payout records.
+      batch.set(
+        adminDb.collection("transactions").doc(`${paymentIntentId}_${ticketId}`),
+        transactionData
+      );
     }
 
     await batch.commit();

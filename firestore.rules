@@ -59,13 +59,12 @@ service cloud.firestore {
     match /tickets/{ticketId} {
       allow read: if true;
 
-      // Clients create tickets after client-side OCR/verification.
-      // Must own the sellerId; status and verificationStatus are set by the client
-      // based on the verification result (verified/needs_review/rejected).
-      allow create: if isSignedIn()
-        && request.resource.data.sellerId == request.auth.uid
-        && request.resource.data.status in ['available', 'pending_approval', 'rejected', 'pending']
-        && request.resource.data.verificationStatus in ['verified', 'needs_review', 'rejected', 'pending'];
+      // Tickets are created ONLY server-side via /api/create-ticket (Admin SDK),
+      // which authenticates the seller, re-runs verification authoritatively, and
+      // enforces barcode uniqueness. Clients must never write tickets directly —
+      // otherwise a malicious client could forge a 'verified'/'available' listing
+      // or double-list a barcode.
+      allow create: if false;
 
       // Sellers may only edit safe metadata fields on their own pre-listing tickets.
       // Status, verification, reservation, and sale fields are server-side only.
@@ -77,10 +76,11 @@ service cloud.firestore {
       // Admins may update any field via admin token
       allow update: if isAdmin();
 
-      // Sellers can delete their own unsold/unlisted tickets; admins can delete any
+      // Sellers can delete their own unsold listings (never a 'reserved' ticket
+      // mid-purchase or a 'sold' ticket the buyer now owns); admins can delete any
       allow delete: if isSignedIn() && (
         (request.auth.uid == resource.data.sellerId
-          && resource.data.status in ['pending', 'pending_approval', 'rejected'])
+          && resource.data.status in ['pending', 'pending_approval', 'rejected', 'available'])
         || isAdmin()
       );
     }

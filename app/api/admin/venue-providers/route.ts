@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "../../../../lib/firebaseAdmin";
+import { isAdminFromToken } from "../../../../lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
-
-const ADMIN_EMAILS = (
-  process.env.ADMIN_EMAILS || "tiketbizzz@gmail.com,admin@tiket.com"
-).split(",").map((e) => e.trim());
 
 function getAdminDb() {
   return adminDb;
@@ -20,9 +17,7 @@ async function getAuthenticatedAdmin(request: NextRequest) {
   try {
     if (!adminAuth) return { error: "Auth unavailable", status: 503 };
     const decoded = await adminAuth.verifyIdToken(token);
-    console.log("[venue-providers] decoded email:", decoded.email, "| ADMIN_EMAILS:", ADMIN_EMAILS);
-    const isAdmin = decoded.email ? ADMIN_EMAILS.includes(decoded.email) : false;
-    if (!isAdmin) return { error: "Forbidden", status: 403 };
+    if (!isAdminFromToken(decoded)) return { error: "Forbidden", status: 403 };
     return { ok: true };
   } catch (err) {
     console.error("[venue-providers] token verify error:", err);

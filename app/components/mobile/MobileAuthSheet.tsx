@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../../firebase";
@@ -157,6 +158,25 @@ const MobileAuthSheet: React.FC<Props> = ({
       console.error("[MobileAuthSheet] auth failed:", err);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setError("");
+    if (!email) {
+      setError("יש להזין כתובת אימייל כדי לאפס סיסמה");
+      return;
+    }
+    if (!auth) {
+      setError("שגיאה פנימית - נסה לרענן את הדף");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("נשלח אליך אימייל לאיפוס הסיסמה. בדוק את תיבת הדואר שלך.");
+    } catch (err) {
+      const code = (err as { code?: string })?.code || "";
+      setError(firebaseErrorToHebrew(code));
     }
   };
 
@@ -429,6 +449,7 @@ const MobileAuthSheet: React.FC<Props> = ({
                 {mode === "login" && (
                   <button
                     type="button"
+                    onClick={handleForgotPassword}
                     style={{
                       fontSize: 10,
                       color: "var(--tk-blue)",

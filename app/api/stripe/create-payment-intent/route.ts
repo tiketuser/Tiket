@@ -9,8 +9,27 @@ import {
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { verifyGuestToken } from "@/lib/guestToken";
 
+// How long a reservation is honored server-side before another buyer may take
+// the ticket. Kept comfortably longer than the client checkout timer (10 min)
+// so we never reallocate a ticket out from under a buyer mid-payment.
+const RESERVATION_TTL_MS = 15 * 60 * 1000;
+
+// Firestore may hand back a Timestamp, a Date, or (legacy) a millis number.
+function toMillis(value: unknown): number | null {
+  if (!value) return null;
+  if (typeof value === "number") return value;
+  if (value instanceof Date) return value.getTime();
+  if (typeof (value as { toMillis?: () => number }).toMillis === "function") {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   const reservedIds: string[] = [];
+  // Hoisted to function scope so the error-path cleanup (outer catch) knows
+  // which identity owns the reservations it may need to release.
+  let reservedByIdentity: string | null = null;
 
   try {
     if (!adminDb) {
@@ -125,23 +144,40 @@ export async function POST(request: NextRequest) {
     // The transaction re-reads each ticket inside a serialized context, so two concurrent
     // buyers cannot both reserve the same ticket.
     const reservedBy = buyerUid || `guest:${guestEmail}`;
+    reservedByIdentity = reservedBy;
     let totalTicketPriceILS = 0;
 
     try {
-      await adminDb.runTransaction(async (tx) => {
+      // Compute the total and reserved IDs inside local vars so the automatic
+      // transaction retry (on write contention) recomputes from scratch instead
+      // of accumulating onto outer state. Only after a successful commit do we
+      // publish the results to the outer scope.
+      const { total, ids } = await adminDb.runTransaction(async (tx) => {
         const snapshots = await Promise.all(ticketRefs.map((r) => tx.get(r)));
 
+        const now = Date.now();
+        let total = 0;
+        const ids: string[] = [];
         for (const snap of snapshots) {
           if (!snap.exists) throw Object.assign(new Error("NOT_FOUND"), { code: 404 });
           const data = snap.data()!;
-          if (data.status !== "available") {
+          // A ticket is purchasable if it's available, OR if it's reserved but
+          // the reservation has gone stale (buyer abandoned checkout without the
+          // client-side release firing). This is the server-side backstop for
+          // the client checkout timer and prevents reservations leaking forever.
+          const reservedAtMs = toMillis(data.reservedAt);
+          const staleReservation =
+            data.status === "reserved" &&
+            reservedAtMs !== null &&
+            reservedAtMs < now - RESERVATION_TTL_MS;
+          if (data.status !== "available" && !staleReservation) {
             throw Object.assign(new Error("UNAVAILABLE"), { code: 409 });
           }
           if (buyerUid && data.sellerId === buyerUid) {
             throw Object.assign(new Error("OWN_TICKET"), { code: 400 });
           }
-          totalTicketPriceILS += data.askingPrice as number;
-          reservedIds.push(snap.id);
+          total += data.askingPrice as number;
+          ids.push(snap.id);
         }
 
         // All checks passed — reserve every ticket inside the same transaction
@@ -149,7 +185,11 @@ export async function POST(request: NextRequest) {
         for (const snap of snapshots) {
           tx.update(snap.ref, { status: "reserved", reservedBy, reservedAt });
         }
+        return { total, ids };
       });
+
+      totalTicketPriceILS = total;
+      reservedIds.push(...ids);
     } catch (txErr: unknown) {
       const err = txErr as Error & { code?: number };
       if (err.message === "NOT_FOUND") {
@@ -235,18 +275,29 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Payment intent creation error:", error);
 
-    // Release any tickets that were reserved before the error
+    // Release any tickets that were reserved before the error — but only the
+    // ones still reserved by THIS request, so a late error can never clobber a
+    // reservation another buyer has since taken.
     if (reservedIds.length > 0 && adminDb) {
       try {
-        const releaseBatch = adminDb.batch();
-        for (const id of reservedIds) {
-          releaseBatch.update(adminDb.collection("tickets").doc(id), {
-            status: "available",
-            reservedBy: null,
-            reservedAt: null,
+        await adminDb.runTransaction(async (tx) => {
+          const refs = reservedIds.map((id) => adminDb!.collection("tickets").doc(id));
+          const snaps = await Promise.all(refs.map((r) => tx.get(r)));
+          snaps.forEach((snap, i) => {
+            const data = snap.data();
+            if (
+              data &&
+              data.status === "reserved" &&
+              data.reservedBy === reservedByIdentity
+            ) {
+              tx.update(refs[i], {
+                status: "available",
+                reservedBy: null,
+                reservedAt: null,
+              });
+            }
           });
-        }
-        await releaseBatch.commit();
+        });
       } catch {
         // best-effort release
       }

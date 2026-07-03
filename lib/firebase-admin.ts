@@ -4,8 +4,32 @@
  */
 
 import { initializeApp, getApps, cert, App } from "firebase-admin/app";
-import { getAuth, Auth } from "firebase-admin/auth";
+import { getAuth, Auth, DecodedIdToken } from "firebase-admin/auth";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
+
+/**
+ * Decide whether a verified ID token belongs to an admin.
+ *
+ * Primary (unforgeable): the `admin` custom claim, set server-side only via
+ * `set-admin-claim.js` / `POST /api/admin/users`. Fallback: an allow-listed
+ * email that Firebase has confirmed the user actually owns (`email_verified`).
+ * The email fallback intentionally has NO hardcoded default — a missing
+ * `ADMIN_EMAILS` env var fails closed, and email/password sign-up alone can
+ * never satisfy it because unverified emails are rejected.
+ */
+export function isAdminFromToken(decodedToken: DecodedIdToken): boolean {
+  if (decodedToken.admin === true) return true;
+
+  const email = decodedToken.email;
+  if (!email || decodedToken.email_verified !== true) return false;
+
+  const allowList = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  return allowList.includes(email.toLowerCase());
+}
 
 let adminApp: App | null = null;
 let adminAuth: Auth | null = null;
@@ -103,13 +127,7 @@ export async function verifyAdminToken(
     const uid = decodedToken.uid;
     const email = decodedToken.email;
 
-    // Check if user is admin
-    // TODO: Consider moving admin list to environment variables or Firestore collection
-    const ADMIN_EMAILS = (
-      process.env.ADMIN_EMAILS || "tiketbizzz@gmail.com,admin@tiket.com"
-    ).split(",").map(e => e.trim());
-    
-    const isAdmin = email ? ADMIN_EMAILS.includes(email) : false;
+    const isAdmin = isAdminFromToken(decodedToken);
 
     return {
       isValid: true,

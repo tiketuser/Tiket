@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import vision from "@google-cloud/vision";
 import { readBarcodes } from "zxing-wasm/reader";
 import sharp from "sharp";
+import { adminAuth } from "@/lib/firebaseAdmin";
+
+// Vision + Gemini calls cost money per request, so this endpoint must be
+// restricted to authenticated users to prevent quota/budget-exhaustion abuse.
+const MAX_OCR_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
 
 // Use Application Default Credentials (ADC) — works automatically on Cloud Run
 // via the attached service account, and locally via GOOGLE_APPLICATION_CREDENTIALS
@@ -245,11 +250,26 @@ async function analyzeWithModel(text: string, imageBuffer: Buffer, mimeType: str
 
 export async function POST(req: NextRequest) {
   try {
+    // Require an authenticated user — these are billed AI calls.
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ") || !adminAuth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    try {
+      await adminAuth.verifyIdToken(authHeader.substring(7));
+    } catch {
+      return NextResponse.json({ error: "Invalid authentication token" }, { status: 401 });
+    }
+
     const form = await req.formData();
     const file = form.get("file") as File;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (file.size > MAX_OCR_FILE_SIZE) {
+      return NextResponse.json({ error: "File too large" }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());

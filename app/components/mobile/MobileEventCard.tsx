@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -38,6 +38,14 @@ export default function MobileEventCard({
 }) {
   const [fav, setFav] = useState(initialFavorited);
   const [busy, setBusy] = useState(false);
+
+  // Favorites load asynchronously after first render (auth + Firestore), so the
+  // initial snapshot can be stale. Re-sync when the resolved value arrives,
+  // otherwise a favorited event shows an empty heart and the first tap removes
+  // the favorite the user thinks they are adding.
+  useEffect(() => {
+    setFav(initialFavorited);
+  }, [initialFavorited]);
 
   const toggleFav = async (e: React.MouseEvent) => {
     e.preventDefault();

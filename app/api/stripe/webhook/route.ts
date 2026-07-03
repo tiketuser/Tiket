@@ -135,7 +135,9 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     return;
   }
 
-  const feePercent = parseFloat(platformFeePercent) || getPlatformFeePercent();
+  const parsedFee = parseFloat(platformFeePercent);
+  const feePercent = Number.isNaN(parsedFee) ? getPlatformFeePercent() : parsedFee;
+  const expectedReservedBy = buyerId || `guest:${guestEmail}`;
 
   // Fetch all ticket documents to get per-ticket sellerId, askingPrice, date
   const ticketSnaps = await Promise.all(
@@ -149,6 +151,22 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     if (!ticketData) continue;
 
     const ticketId = ticketSnap.id;
+
+    // Only complete the sale if the ticket is still reserved by THIS payer.
+    // A stale/abandoned PaymentIntent that succeeds later must not overwrite a
+    // ticket that was released, resold, or bought by someone else.
+    if (
+      ticketData.status !== "reserved" ||
+      ticketData.reservedBy !== expectedReservedBy
+    ) {
+      console.error(
+        `PaymentIntent ${paymentIntent.id}: ticket ${ticketId} not reserved by payer ` +
+          `(status=${ticketData.status}, reservedBy=${ticketData.reservedBy}). ` +
+          `Skipping sale — needs manual review/refund.`
+      );
+      continue;
+    }
+
     const sellerId = ticketData.sellerId as string;
     const ticketPriceILS = ticketData.askingPrice as number;
     const platformFeeILS = feePercent > 0 ? ticketPriceILS * (feePercent / 100) : 0;
@@ -189,7 +207,13 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       transactionData.guestPhone = guestPhone || null;
     }
 
-    batch.set(adminDb.collection("transactions").doc(), transactionData);
+    // Deterministic doc ID keyed on (paymentIntent, ticket) makes this write
+    // idempotent — if the confirm-payment route races us, both target the same
+    // doc instead of creating duplicate payout records.
+    batch.set(
+      adminDb.collection("transactions").doc(`${paymentIntent.id}_${ticketId}`),
+      transactionData
+    );
   }
 
   await batch.commit();
@@ -204,17 +228,33 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
   const ticketIds = resolveTicketIds(paymentIntent.metadata);
   if (ticketIds.length === 0) return;
 
+  const { buyerId, guestEmail } = paymentIntent.metadata;
+  const expectedReservedBy = buyerId || `guest:${guestEmail}`;
+
+  // Release only tickets still reserved by THIS payer. A late failure event for
+  // an abandoned PaymentIntent must never flip a ticket that has since been
+  // sold to — or reserved by — a different buyer.
+  const ticketSnaps = await Promise.all(
+    ticketIds.map((id) => adminDb!.collection("tickets").doc(id).get())
+  );
+
   const batch = adminDb.batch();
-  for (const ticketId of ticketIds) {
-    batch.update(adminDb.collection("tickets").doc(ticketId), {
-      status: "available",
-      reservedBy: null,
-      reservedAt: null,
-    });
+  let released = 0;
+  for (const snap of ticketSnaps) {
+    const data = snap.data();
+    if (!data) continue;
+    if (data.status === "reserved" && data.reservedBy === expectedReservedBy) {
+      batch.update(snap.ref, {
+        status: "available",
+        reservedBy: null,
+        reservedAt: null,
+      });
+      released++;
+    }
   }
   await batch.commit();
 
   console.log(
-    `Payment failed for ${ticketIds.length} ticket(s), reservations released`
+    `Payment failed for PaymentIntent ${paymentIntent.id}, released ${released}/${ticketIds.length} reservation(s)`
   );
 }

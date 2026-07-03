@@ -2,8 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getAuth } from "firebase/auth";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../../firebase";
+import { apiFetch } from "@/lib/platform";
 import { Icon } from "./Icon";
 import { nis } from "./format";
 
@@ -14,6 +13,8 @@ type FileTicket =
 
 const PRICE_MIN = 80;
 const PRICE_MAX = 500;
+// Fraction of the sale price the seller receives after the platform fee.
+const SELLER_PAYOUT_RATE = 0.93;
 
 export default function MobileSell({
   open,
@@ -77,7 +78,6 @@ export default function MobileSell({
   };
 
   const publish = useCallback(async () => {
-    if (!db) return;
     const user = getAuth().currentUser;
     if (!user) {
       setPublishError("יש להתחבר כדי לפרסם");
@@ -86,40 +86,66 @@ export default function MobileSell({
     setPublishing(true);
     setPublishError(null);
     try {
+      const token = await user.getIdToken();
       const bundleId = tickets.length > 1 ? crypto.randomUUID() : null;
       const bundleSize = tickets.length;
+      let created = 0;
+      let duplicate = false;
+
       for (let i = 0; i < tickets.length; i++) {
         const t = tickets[i];
-        const doc: Record<string, unknown> = {
-          eventId: null, // resolved during admin review
-          artist: "",
-          venue: "",
-          date: "",
-          time: "",
-          section: null,
-          row: null,
-          seat: null,
-          isStanding: false,
-          askingPrice: price,
-          originalPrice: null,
-          barcode: t.kind === "barcode" ? t.label : null,
-          status: "pending_approval",
-          verificationStatus: "needs_review",
-          verificationConfidence: 0,
-          verificationDetails: {
-            matchedFields: [],
-            unmatchedFields: [],
-            reason: "Submitted from mobile sell flow — pending verification",
+
+        // Upload the attached file so admin review has the actual ticket.
+        // Previously the file was silently discarded, leaving nothing to review.
+        let ticketImage: string | null = null;
+        if (t.kind === "pdf" && t.file) {
+          const fd = new FormData();
+          fd.append("file", t.file);
+          const up = await apiFetch("/api/upload-ticket-image", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd,
+          });
+          if (!up.ok) throw new Error(`image-upload ${up.status}`);
+          ticketImage = (await up.json()).imageUrl ?? null;
+        }
+
+        const res = await apiFetch("/api/create-ticket", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          sellerId: user.uid,
-          bundleId,
-          bundleSize: bundleId ? bundleSize : null,
-          canSplit: bundleId ? !bundleOnly : null,
-          createdAt: serverTimestamp(),
-        };
-        await addDoc(collection(db, "tickets"), doc);
+          body: JSON.stringify({
+            ticket: {
+              askingPrice: price,
+              barcode: t.kind === "barcode" ? t.label : null,
+              ticketImage,
+              bundleId,
+              canSplit: bundleId ? !bundleOnly : null,
+              bundleSize: bundleId ? bundleSize : null,
+            },
+          }),
+        });
+
+        if (res.status === 409) {
+          duplicate = true;
+          continue;
+        }
+        if (!res.ok) throw new Error(`create-ticket ${res.status}`);
+        created++;
       }
-      setPublishedCount(tickets.length);
+
+      if (created > 0) {
+        setPublishedCount(created);
+        if (duplicate) {
+          setPublishError("חלק מהכרטיסים כבר קיימים במערכת (ברקוד כפול).");
+        }
+      } else if (duplicate) {
+        setPublishError("הכרטיס כבר קיים במערכת (ברקוד כפול).");
+      } else {
+        setPublishError("פרסום נכשל. נסה שוב.");
+      }
     } catch (err) {
       console.error("[mobile-sell] publish failed", err);
       setPublishError("פרסום נכשל. נסה שוב.");
@@ -792,6 +818,11 @@ function StepPrice({
           />
         )}
         <MRow label="סה״כ" value={nis(total)} />
+        <MRow
+          label="עמלת פלטפורמה"
+          value={`-${nis(total - Math.round(total * SELLER_PAYOUT_RATE))}`}
+          muted
+        />
         <div
           style={{
             height: 1,
@@ -799,7 +830,11 @@ function StepPrice({
             margin: "8px 0",
           }}
         />
-        <MRow label="תשלום אליך" value={nis(total)} strong />
+        <MRow
+          label="תשלום אליך"
+          value={nis(Math.round(total * SELLER_PAYOUT_RATE))}
+          strong
+        />
       </div>
 
       {ticketsCount > 1 && (
@@ -942,7 +977,7 @@ function StepReview({
   }
 
   const total = price * Math.max(tickets.length, 1);
-  const payout = Math.round(total * 0.93);
+  const payout = Math.round(total * SELLER_PAYOUT_RATE);
 
   return (
     <div>
