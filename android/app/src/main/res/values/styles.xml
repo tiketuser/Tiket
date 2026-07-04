@@ -13,6 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Paper-cream system bar to match the app background -->
+        <item name="android:navigationBarColor">#F5F1E8</item>
     </style>
 
 

@@ -32,7 +32,7 @@ export default function MobileEventDetail({
     : "/images/Artist/default.png";
 
   return (
-    <MobileShell showBottomNav={false}>
+    <MobileShell showBottomNav={false} heroStatusBar>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {/* Poster */}
         <div
@@ -66,7 +66,7 @@ export default function MobileEventDetail({
             aria-label="חזרה"
             style={{
               position: "absolute",
-              top: "calc(14px + env(safe-area-inset-top, 0px))",
+              top: "calc(14px + var(--sat, env(safe-area-inset-top, 0px)))",
               insetInlineStart: 14,
               zIndex: 2,
               width: 36,

@@ -175,7 +175,7 @@ export default function MobileSell({
         style={{
           padding: "14px 18px 16px",
           borderBottom: "1px solid var(--tk-line)",
-          paddingTop: "calc(14px + env(safe-area-inset-top, 0px))",
+          paddingTop: "calc(14px + var(--sat, env(safe-area-inset-top, 0px)))",
           flexShrink: 0,
         }}
       >

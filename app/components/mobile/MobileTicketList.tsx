@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
 import type { TicketInfo } from "../Dialogs/CheckoutDialog/CheckoutDialog";
 import { formatSeatLocation } from "../../utils/categoryConfig";
 import { encodeImageUrl } from "@/utils/defaultImages";
+import { setNavBarInk } from "@/lib/native-chrome";
 import { nis } from "./format";
 
 interface Ticket {
@@ -175,6 +176,16 @@ export default function MobileTicketList({
     setCheckoutTickets([]);
     setSelectedId(null);
   }, []);
+
+  // Android: the system gesture bar sits outside the webview, so paint it
+  // ink while the black buy bar is up (checkout screen is cream again).
+  useEffect(() => {
+    const ink = selected !== null && !isCheckoutOpen;
+    void setNavBarInk(ink);
+    return () => {
+      void setNavBarInk(false);
+    };
+  }, [selected, isCheckoutOpen]);
 
   return (
     <div style={{ paddingBottom: selected ? "calc(80px + env(safe-area-inset-bottom, 0px))" : 0 }}>

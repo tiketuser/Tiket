@@ -199,7 +199,7 @@ export default function MobileProfile() {
       <MobileShell>
         <div
           style={{
-            padding: "calc(60px + env(safe-area-inset-top, 0px)) 24px 60px",
+            padding: "calc(60px + var(--sat, env(safe-area-inset-top, 0px))) 24px 60px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -264,7 +264,7 @@ export default function MobileProfile() {
       {/* Hero */}
       <div
         style={{
-          padding: "calc(20px + env(safe-area-inset-top, 0px)) 18px 22px",
+          padding: "calc(20px + var(--sat, env(safe-area-inset-top, 0px))) 18px 22px",
           borderBottom: "1px solid var(--tk-line)",
           background: "var(--tk-bg)",
         }}

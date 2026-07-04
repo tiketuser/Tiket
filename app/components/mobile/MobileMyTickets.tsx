@@ -49,7 +49,7 @@ export default function MobileMyTickets({
     <MobileShell>
       <div
         style={{
-          padding: "calc(14px + env(safe-area-inset-top, 0px)) 18px 14px",
+          padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 14px",
           borderBottom: "1px solid var(--tk-line)",
         }}
       >

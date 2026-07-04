@@ -21,6 +21,7 @@ import {
 } from "./CheckoutDesign";
 import { Icon } from "../../mobile/Icon";
 import { apiFetch } from "@/lib/platform";
+import { setHeroStatusBar } from "@/lib/native-chrome";
 
 export interface TicketInfo {
   ticketId: string;
@@ -90,6 +91,16 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     }
     return () => {
       document.body.classList.remove("no-doc-scroll");
+    };
+  }, [isOpen]);
+
+  // Checkout covers the dark event hero with cream — flip the status-bar
+  // icons to dark while open, back to light when returning to the event.
+  useEffect(() => {
+    if (!isOpen) return;
+    void setHeroStatusBar(false);
+    return () => {
+      void setHeroStatusBar(true);
     };
   }, [isOpen]);
 
@@ -383,7 +394,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               alignItems: "center",
               justifyContent: "space-between",
               padding: "14px 18px",
-              paddingTop: "calc(14px + env(safe-area-inset-top, 0px))",
+              paddingTop: "calc(14px + var(--sat, env(safe-area-inset-top, 0px)))",
               borderBottom: "1px solid var(--tk-line)",
             }}
           >
