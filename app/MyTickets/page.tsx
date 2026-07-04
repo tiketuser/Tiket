@@ -14,8 +14,6 @@ import MobileMyTickets, {
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
 
 interface PurchasedTicket {
   id: string; // transaction id

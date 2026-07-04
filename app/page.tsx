@@ -4,7 +4,6 @@ import Gallery from "./components/Gallery/Gallery";
 import Footer from "./components/Footer/Footer";
 import MobileHome from "./components/mobile/MobileHome";
 
-export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
