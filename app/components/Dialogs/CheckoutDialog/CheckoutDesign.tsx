@@ -244,7 +244,7 @@ export function PayFooter({
     <div
       style={{
         flexShrink: 0,
-        padding: "10px 14px calc(14px + env(safe-area-inset-bottom, 0px))",
+        padding: "10px 14px calc(14px + var(--sab, env(safe-area-inset-bottom, 0px)))",
         background: "rgba(245, 241, 232, 0.96)",
         backdropFilter: "blur(10px)",
         borderTop: "1px solid var(--tk-line)",

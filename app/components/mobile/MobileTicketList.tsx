@@ -188,7 +188,7 @@ export default function MobileTicketList({
   }, [selected, isCheckoutOpen]);
 
   return (
-    <div style={{ paddingBottom: selected ? "calc(80px + env(safe-area-inset-bottom, 0px))" : 0 }}>
+    <div style={{ paddingBottom: selected ? "calc(80px + var(--sab, env(safe-area-inset-bottom, 0px)))" : 0 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {listings.map((l) => {
           const isSel = selectedId === l.id;
@@ -357,7 +357,7 @@ export default function MobileTicketList({
             gap: 12,
             // Bar hugs the screen edge; the home-indicator inset becomes
             // padding so the black fills the safe area instead of floating.
-            padding: "12px 18px calc(12px + env(safe-area-inset-bottom, 0px))",
+            padding: "12px 18px calc(12px + var(--sab, env(safe-area-inset-bottom, 0px)))",
             borderRadius: "14px 14px 0 0",
             boxShadow: "0 -8px 20px rgba(0,0,0,0.18)",
             zIndex: 30,

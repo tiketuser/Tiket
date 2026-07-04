@@ -720,7 +720,7 @@ const NavBar = () => {
         </div>
 
         {/* Bar itself */}
-        <div className="relative bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="relative bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "var(--sab, env(safe-area-inset-bottom, 0px))" }}>
           {/* Sliding active indicator
                JSX order (LTR flex positions): Home=0, Favorites=1, Sell=2, MyTickets=3, Profile=4
                dir="rtl" flips visual order but CSS left still measures from physical left.

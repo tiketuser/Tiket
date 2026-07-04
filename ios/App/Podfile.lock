@@ -23,6 +23,8 @@ PODS:
     - GoogleSignIn (= 7.1.0)
   - CapacitorNativeBiometric (0.0.1):
     - Capacitor
+  - CapacitorPluginSafeArea (3.0.4):
+    - Capacitor
   - CapacitorPreferences (6.0.4):
     - Capacitor
   - CapacitorPushNotifications (6.0.5):
@@ -32,6 +34,8 @@ PODS:
   - CapacitorSplashScreen (6.0.4):
     - Capacitor
   - CapacitorStatusBar (6.0.3):
+    - Capacitor
+  - CapgoCapacitorNavigationBar (6.1.75):
     - Capacitor
   - FirebaseAppCheckInterop (11.15.0)
   - FirebaseAuth (11.15.0):
@@ -90,11 +94,13 @@ DEPENDENCIES:
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorFirebaseAuthentication (from `../../node_modules/@capacitor-firebase/authentication`)"
   - CapacitorNativeBiometric (from `../../node_modules/capacitor-native-biometric`)
+  - CapacitorPluginSafeArea (from `../../node_modules/capacitor-plugin-safe-area`)
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
   - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
   - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
   - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
+  - "CapgoCapacitorNavigationBar (from `../../node_modules/@capgo/capacitor-navigation-bar`)"
 
 SPEC REPOS:
   trunk:
@@ -124,6 +130,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor-firebase/authentication"
   CapacitorNativeBiometric:
     :path: "../../node_modules/capacitor-native-biometric"
+  CapacitorPluginSafeArea:
+    :path: "../../node_modules/capacitor-plugin-safe-area"
   CapacitorPreferences:
     :path: "../../node_modules/@capacitor/preferences"
   CapacitorPushNotifications:
@@ -134,6 +142,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/splash-screen"
   CapacitorStatusBar:
     :path: "../../node_modules/@capacitor/status-bar"
+  CapgoCapacitorNavigationBar:
+    :path: "../../node_modules/@capgo/capacitor-navigation-bar"
 
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
@@ -143,11 +153,13 @@ SPEC CHECKSUMS:
   CapacitorCordova: 8d93e14982f440181be7304aa9559ca631d77fff
   CapacitorFirebaseAuthentication: 02f35b6b120f3ac15e1b4d0c3ec0fb731d588813
   CapacitorNativeBiometric: 78cf21304251a512e4597437325b5e9b0cd9f7b3
+  CapacitorPluginSafeArea: f096bc36693251a7e55fc3571487dd337c0ddb6a
   CapacitorPreferences: 5848e0691b36b4bb4acc98e481ab56d451578d30
   CapacitorPushNotifications: 35abece14371c57172e8321c9ccc8b6fa35fabfe
   CapacitorShare: 77ff779e3b7c6ae9fb5461e52cf7ef805d429491
   CapacitorSplashScreen: ef140a8b1ea7244e0c245ce2dd4ce5251e7ab86a
   CapacitorStatusBar: 149cde8f1328ec3aa6cbdd872a55137ae3f98b16
+  CapgoCapacitorNavigationBar: 3fb4c6fbb06946a972eb41ee9d04b8da9db8d461
   FirebaseAppCheckInterop: 06fe5a3799278ae4667e6c432edd86b1030fa3df
   FirebaseAuth: a6575e5fbf46b046c58dc211a28a5fbdd8d4c83b
   FirebaseAuthInterop: 7087d7a4ee4bc4de019b2d0c240974ed5d89e2fd
@@ -160,6 +172,6 @@ SPEC CHECKSUMS:
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
 
-PODFILE CHECKSUM: 1894e3c4c793823b3b1f3852fe0a34739b3f4325
+PODFILE CHECKSUM: e5218817438940c14f9e56cb47e03d9a22da3da2
 
 COCOAPODS: 1.16.2

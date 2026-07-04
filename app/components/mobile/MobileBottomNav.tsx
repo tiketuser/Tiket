@@ -80,9 +80,9 @@ export default function MobileBottomNav() {
           gridTemplateColumns: "repeat(5, 1fr)",
           alignItems: "center",
           paddingTop: 8,
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          paddingBottom: "var(--sab, env(safe-area-inset-bottom, 0px))",
           paddingInline: 16,
-          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
+          height: "calc(64px + var(--sab, env(safe-area-inset-bottom, 0px)))",
           boxSizing: "border-box",
           overflow: "visible",
         }}

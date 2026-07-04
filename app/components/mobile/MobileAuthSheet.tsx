@@ -317,7 +317,7 @@ const MobileAuthSheet: React.FC<Props> = ({
         }
         style={{
           background: "var(--tk-bg)",
-          padding: "12px 20px calc(26px + env(safe-area-inset-bottom, 0px))",
+          padding: "12px 20px calc(26px + var(--sab, env(safe-area-inset-bottom, 0px)))",
           boxShadow: "0 -10px 30px rgba(0,0,0,0.18)",
           transform: mounted ? "translateY(0)" : "translateY(100%)",
           transition: "transform 320ms cubic-bezier(.2,.8,.2,1)",

@@ -497,7 +497,7 @@ export default function MobileFilterSheet({
           background: "var(--tk-bg)",
           width: "100%",
           borderRadius: "24px 24px 0 0",
-          padding: `14px 20px calc(32px + env(safe-area-inset-bottom, 0px))`,
+          padding: `14px 20px calc(32px + var(--sab, env(safe-area-inset-bottom, 0px)))`,
           maxHeight: "88dvh",
           overflowY: "auto",
         }}

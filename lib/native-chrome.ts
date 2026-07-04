@@ -30,7 +30,10 @@ export async function initMobileChrome(): Promise<void> {
   try {
     const { SafeArea } = await import("capacitor-plugin-safe-area");
     const { insets } = await SafeArea.getSafeAreaInsets();
+    // The overlay flips the window edge-to-edge on both edges, so publish
+    // top AND bottom (gesture bar) insets — WebView env() reports 0 for both.
     document.documentElement.style.setProperty("--sat", `${insets.top}px`);
+    document.documentElement.style.setProperty("--sab", `${insets.bottom}px`);
   } catch (err) {
     console.warn("[native-chrome] safe-area insets failed:", err);
   }
