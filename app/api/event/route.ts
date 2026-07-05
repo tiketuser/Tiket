@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing title parameter" }, { status: 400 });
     }
 
-    const decoded = decodeURIComponent(title);
+    // searchParams.get already returns the decoded value; decoding again throws
+    // URIError on any artist name containing a literal '%'.
+    const decoded = title;
 
     const [eventsSnapshot, ticketsSnapshot] = await Promise.all([
       getDocs(

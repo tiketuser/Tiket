@@ -46,9 +46,13 @@ const HEB_DAYS = [
 
 function parseDate(iso: string): { y: number; m: number; d: number } | null {
   if (!iso) return null;
-  // Accepts "YYYY-MM-DD" or full ISO. Falls back to Date parse.
+  // "YYYY-MM-DD" or full ISO.
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (m) return { y: +m[1], m: +m[2], d: +m[3] };
+  // "DD/MM/YYYY" — the app's canonical stored format. Must be handled before
+  // the Date fallback, which would misread it as MM/DD/YYYY.
+  const heb = iso.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (heb) return { y: +heb[3], m: +heb[2], d: +heb[1] };
   const dt = new Date(iso);
   if (Number.isNaN(dt.getTime())) return null;
   return { y: dt.getFullYear(), m: dt.getMonth() + 1, d: dt.getDate() };
@@ -102,4 +106,46 @@ export function isPastDate(date: string): boolean {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return target < today.getTime();
+}
+
+// City names that overflow compact UI cells (boarding pass stubs, event card chips).
+// Sorted longest-first so substring replacement picks the most specific match.
+const CITY_ABBREV: [string, string][] = [
+  ['תל אביב - יפו', 'ת"א'],
+  ['תל אביב-יפו',   'ת"א'],
+  ['תל אביב',       'ת"א'],
+  ['ראשון לציון',   'ראשל"צ'],
+  ['רמת השרון',     'רמה"ש'],
+  ['הוד השרון',     'הוד"ש'],
+  ['פתח תקווה',     'פ"ת'],
+  ['פתח-תקווה',     'פ"ת'],
+  ['קריית שמונה',   'ק"ש'],
+  ['קרית שמונה',    'ק"ש'],
+  ['קריית אונו',    'ק"א'],
+  ['קרית אונו',     'ק"א'],
+  ['קריית גת',      'ק"ג'],
+  ['קרית גת',       'ק"ג'],
+  ['באר שבע',       'ב"ש'],
+  ['נס ציונה',      'נ"צ'],
+  ['רמת גן',        'ר"ג'],
+];
+
+/**
+ * Abbreviates all known city names within a string for compact UI cells.
+ * Handles exact matches, venue strings, and event titles containing multiple cities.
+ */
+export function abbrevCity(name: string): string {
+  if (!name) return name;
+  let result = name.trim();
+  // Exact match — return immediately
+  for (const [full, abbr] of CITY_ABBREV) {
+    if (result === full) return abbr;
+  }
+  // Replace every occurrence of every known city (longest-first prevents partial collisions)
+  for (const [full, abbr] of CITY_ABBREV) {
+    if (result.includes(full)) {
+      result = result.split(full).join(abbr);
+    }
+  }
+  return result;
 }

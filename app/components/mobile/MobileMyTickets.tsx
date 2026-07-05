@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
-import { hebDate, timeUntil, isPastDate, nis } from "./format";
+import { hebDate, timeUntil, isPastDate, nis, abbrevCity } from "./format";
 import { encodeImageUrl } from "@/utils/defaultImages";
 
 export type MobileTicket = {
@@ -49,7 +49,7 @@ export default function MobileMyTickets({
     <MobileShell>
       <div
         style={{
-          padding: "14px 18px 14px",
+          padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 14px",
           borderBottom: "1px solid var(--tk-line)",
         }}
       >
@@ -426,7 +426,7 @@ function GlassTicketCard({
             style={{ fontSize: 11, opacity: 0.9, marginTop: 4 }}
           >
             {hebDate(ticket.date)}
-            {ticket.time ? ` · ${ticket.time}` : ""} · {ticket.venue}
+            {ticket.time ? ` · ${ticket.time}` : ""} · {abbrevCity(ticket.venue)}
           </div>
         </div>
 
@@ -567,7 +567,7 @@ function PastTicketCard({ ticket }: { ticket: MobileTicket }) {
             className="tk-mono"
             style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}
           >
-            {ticket.venue}
+            {abbrevCity(ticket.venue)}
           </div>
           <div
             style={{
@@ -736,7 +736,7 @@ function ScanModal({
             style={{ fontSize: 11, color: "var(--tk-muted)", marginTop: 2 }}
           >
             {hebDate(ticket.date)}
-            {ticket.time ? ` · ${ticket.time}` : ""} · {ticket.venue}
+            {ticket.time ? ` · ${ticket.time}` : ""} · {abbrevCity(ticket.venue)}
           </div>
         </div>
 

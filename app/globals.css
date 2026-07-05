@@ -49,7 +49,7 @@
   letter-spacing: -0.01em;
 }
 .tk-mobile *::-webkit-scrollbar { display: none; }
-.tk-mobile * { scrollbar-width: none; -ms-overflow-style: none; }
+.tk-mobile * { scrollbar-width: none; -ms-overflow-style: none; corner-shape: squircle; }
 
 /* tiket. logotype dot */
 .tk-logo-dot { color: var(--tk-blue); }
@@ -66,14 +66,19 @@ body {
   font-family: var(--font-assistant);
   direction: rtl;
   /* Space for fixed bottom nav on mobile */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: var(--sab, env(safe-area-inset-bottom, 0px));
 }
 
-@media (max-width: 1023px) {
+/* Overscroll rubber-banding reveals the document background behind the page.
+   Mobile (below md) shows the paper-cream design, so keep html/body cream
+   there — otherwise every bounce past the top/bottom flashes white. */
+@media (max-width: 767px) {
+  html,
   body {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    background: var(--tk-bg, #F5F1E8);
   }
 }
+
 
 @layer components {
   /* Custom button styles using dynamic theme colors */

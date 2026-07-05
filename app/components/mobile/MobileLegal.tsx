@@ -30,7 +30,7 @@ export default function MobileLegal({
     <MobileShell showBottomNav={false}>
       <div
         style={{
-          padding: "14px 18px 16px",
+          padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 16px",
           borderBottom: "1px solid var(--tk-line)",
           background: "var(--tk-paper)",
         }}

@@ -14,8 +14,6 @@ import MobileMyListings, {
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
 
 interface Ticket {
   id: string;
@@ -172,6 +170,8 @@ const MyListings = () => {
       setTickets((prev) => prev.filter((t) => t.id !== id));
     } catch (err) {
       console.error("Error canceling listing:", err);
+      // Don't fail silently — a reserved/sold ticket can't be cancelled.
+      alert("לא ניתן לבטל את המודעה. ייתכן שהכרטיס בתהליך רכישה או נמכר.");
     }
   };
 
@@ -183,6 +183,7 @@ const MyListings = () => {
       setTickets((prev) => prev.filter((t) => t.id !== cancelTicketId));
     } catch (error) {
       console.error("Error canceling listing:", error);
+      alert("לא ניתן לבטל את המודעה. ייתכן שהכרטיס בתהליך רכישה או נמכר.");
     } finally {
       setCanceling(false);
       setCancelTicketId(null);
@@ -205,9 +206,13 @@ const MyListings = () => {
     setShowRejected((prev) => !prev);
   };
 
-  // Filter tickets by status
+  // Filter tickets by status. Sold tickets belong to the buyer now — they must
+  // never appear as "live" listings (and must not get a cancel button, which
+  // would otherwise try to delete the buyer's ticket).
   const activeTickets = tickets.filter(
-    (t) => t.verificationStatus === "verified" || t.status === "available"
+    (t) =>
+      t.status !== "sold" &&
+      (t.verificationStatus === "verified" || t.status === "available")
   );
 
   const pendingTickets = tickets.filter(

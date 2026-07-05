@@ -16,10 +16,17 @@ export default function NavigationLoader() {
     const currentSearch = searchParams.toString();
 
     const handleClick = (e: MouseEvent) => {
+      // A handler that called preventDefault() cancelled the navigation —
+      // e.g. the favorite heart inside an event-card link. No route change
+      // will follow, so showing the bar would leave it spinning forever.
+      if (e.defaultPrevented) return;
+      // Modified/middle clicks open a new tab; this page never navigates.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
       const target = e.target as HTMLElement;
       const link = target.closest("a");
 
-      if (link && link.href && !link.target) {
+      if (link && link.href && !link.target && !link.hasAttribute("download")) {
         const url = new URL(link.href);
         if (url.origin !== window.location.origin) return;
 

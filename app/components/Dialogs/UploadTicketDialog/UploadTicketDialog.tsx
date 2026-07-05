@@ -15,8 +15,6 @@ import { TicketData } from "./UploadTicketSteps/UploadTicketInterface.types";
 // Firebase imports
 import {
   collection,
-  addDoc,
-  serverTimestamp,
   query,
   where,
   getDocs,
@@ -375,7 +373,6 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           return false;
         }
         const authToken = await currentUser.getIdToken();
-        const sellerUid = currentUser.uid;
 
         // Now publish all tickets for this event
         for (let i = 0; i < tickets.length; i++) {
@@ -549,90 +546,72 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             }
           }
 
-          // Determine ticket status based on verification
-          let ticketStatus = "rejected";
-          if (verificationResult.status === "verified") {
-            ticketStatus = "available"; // Auto-approved!
-          } else if (verificationResult.status === "needs_review") {
-            ticketStatus = "pending_approval"; // Manual review required
-          } else {
-            ticketStatus = "rejected"; // Failed verification
-          }
-
-          const ticketDoc = {
-            eventId: eventId || null, // null if no matching event
-            artist: ticket.ticketDetails?.artist || "",
-            category: ticket.ticketDetails?.category || "מוזיקה",
-            date: normalizedDate, // Use normalized date format
-            time: ticket.ticketDetails?.time || "",
-            venue: ticket.ticketDetails?.venue || "",
-            section: ticket.ticketDetails?.section || "",
-            block: ticket.ticketDetails?.block || "",
-            row: ticket.ticketDetails?.row || "",
-            seat: ticket.ticketDetails?.seat || "",
-            barcode: ticket.ticketDetails?.barcode || null, // Store barcode for verification
-            isStanding: ticket.ticketDetails?.isStanding || false,
-            askingPrice: ticket.pricing?.askingPrice,
-            originalPrice: ticket.ticketDetails?.originalPrice || null,
-            allowPriceSuggestions:
-              ticket.pricing?.allowPriceSuggestions || false,
-            minPrice: ticket.pricing?.minPrice || null,
-            maxPrice: ticket.pricing?.maxPrice || null,
-            extractedText: ticket.extractedText || null,
-            ticketImage: ticketImageUrl, // Storage URL for uploaded ticket image
-            status: ticketStatus, // Set based on verification result
-            // Verification details
-            verificationStatus: verificationResult.status,
-            verificationConfidence: verificationResult.confidence,
-            verificationDetails: {
-              matchedFields: verificationResult.matchedFields || [],
-              unmatchedFields: verificationResult.unmatchedFields || [],
-              officialTicketId:
-                verificationResult.details?.officialTicketId || null,
-              eventId: verificationResult.details?.eventId || null,
-              ticketingSystem:
-                verificationResult.details?.ticketingSystem || null,
-              reason: verificationResult.reason,
-              apiResponse: verificationResult,
+          // Persist via the server. The server re-runs verification
+          // authoritatively, enforces barcode uniqueness, seeds mock_tickets,
+          // and sets status/verificationStatus. The client can no longer write
+          // tickets directly (Firestore rules block it), so a malicious client
+          // can't forge a "verified"/"available" listing.
+          const createRes = await apiFetch("/api/create-ticket", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
             },
-            verificationTimestamp: serverTimestamp(),
-            createdAt: serverTimestamp(),
-            sellerId: sellerUid,
-            bundleId: bundleId,
-            canSplit: bundleId !== null ? canSplit : null,
-            bundleSize: bundleId !== null ? bundleSize : null,
-          };
+            body: JSON.stringify({
+              ticket: {
+                eventId: eventId || null,
+                artist: ticket.ticketDetails?.artist || "",
+                category: ticket.ticketDetails?.category || "מוזיקה",
+                date: normalizedDate,
+                time: ticket.ticketDetails?.time || "",
+                venue: ticket.ticketDetails?.venue || "",
+                section: ticket.ticketDetails?.section || "",
+                block: ticket.ticketDetails?.block || "",
+                row: ticket.ticketDetails?.row || "",
+                seat: ticket.ticketDetails?.seat || "",
+                barcode: ticket.ticketDetails?.barcode || null,
+                isStanding: ticket.ticketDetails?.isStanding || false,
+                askingPrice: ticket.pricing?.askingPrice,
+                originalPrice: ticket.ticketDetails?.originalPrice || null,
+                allowPriceSuggestions:
+                  ticket.pricing?.allowPriceSuggestions || false,
+                minPrice: ticket.pricing?.minPrice || null,
+                maxPrice: ticket.pricing?.maxPrice || null,
+                extractedText: ticket.extractedText || null,
+                ticketImage: ticketImageUrl,
+                eventName: ticket.ticketDetails?.artist || "",
+                bundleId: bundleId,
+                canSplit: bundleId !== null ? canSplit : null,
+                bundleSize: bundleId !== null ? bundleSize : null,
+              },
+            }),
+          });
 
-          const ticketRef = await addDoc(
-            collection(firestore, "tickets"),
-            ticketDoc,
-          );
-          console.log(
-            `✅ Ticket saved with ID: ${ticketRef.id}, status: ${ticketDoc.status}, eventId: ${ticketDoc.eventId}`,
-          );
-          console.log("Ticket data:", ticketDoc);
-
-          // Add to mock_tickets so future uploads of the same barcode/seat are caught by venue-verify
-          if (ticketDoc.barcode) {
-            try {
-              await addDoc(collection(firestore, "mock_tickets"), {
-                barcode: ticketDoc.barcode,
-                artistName: ticketDoc.artist,
-                venueName: ticketDoc.venue,
-                eventDate: ticketDoc.date,
-                eventTime: ticketDoc.time,
-                section: ticketDoc.section,
-                row: ticketDoc.row,
-                seat: ticketDoc.seat,
-                seatType: ticketDoc.isStanding ? "standing" : "seated",
-                originalPrice: ticketDoc.originalPrice || ticketDoc.askingPrice || 0,
-                eventName: ticketDoc.artist,
-                eventId: ticketDoc.eventId || "",
-                createdAt: serverTimestamp(),
-              });
-            } catch (err) {
-              console.warn("Failed to add ticket to mock_tickets:", err);
-            }
+          if (createRes.status === 409) {
+            // Duplicate barcode — server refused to list it.
+            verificationResult = {
+              ...verificationResult,
+              status: "rejected",
+              reason: "כרטיס עם ברקוד זה כבר קיים במערכת",
+            };
+          } else if (!createRes.ok) {
+            throw new Error(`create-ticket failed: ${createRes.status}`);
+          } else {
+            // The server's verification result is authoritative — use it for
+            // the success/warning tallies below.
+            const created = await createRes.json();
+            verificationResult = {
+              verified: created.verificationStatus === "verified",
+              confidence: created.confidence,
+              status: created.verificationStatus,
+              matchedFields: created.matchedFields || [],
+              unmatchedFields: created.unmatchedFields || [],
+              reason: created.reason,
+              details: created.details,
+            };
+            console.log(
+              `✅ Ticket created ${created.id}, status: ${created.status}`,
+            );
           }
 
           // Track verification results

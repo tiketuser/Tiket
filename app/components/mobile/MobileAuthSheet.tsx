@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../../firebase";
@@ -19,11 +20,23 @@ import { isIOS, isNative } from "../../../lib/platform";
 
 type AuthMode = "login" | "signup";
 
+export interface GuestInfo {
+  email: string;
+  phone: string;
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: AuthMode;
   contextLabel?: string;
+  /** Called after a successful sign-in/sign-up instead of closing (checkout flow). */
+  onSuccess?: () => void;
+  /** When provided, shows a small "המשך כאורח" option — purchase flow only. */
+  onGuest?: (info: GuestInfo) => Promise<void> | void;
+  guestError?: string | null;
+  /** Render on desktop too, centered as a modal card on sm+ screens. */
+  responsive?: boolean;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -75,6 +88,10 @@ const MobileAuthSheet: React.FC<Props> = ({
   onClose,
   initialMode = "login",
   contextLabel,
+  onSuccess,
+  onGuest,
+  guestError,
+  responsive,
 }) => {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [mounted, setMounted] = useState(false);
@@ -84,6 +101,10 @@ const MobileAuthSheet: React.FC<Props> = ({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [guestOpen, setGuestOpen] = useState(false);
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestLocalError, setGuestLocalError] = useState("");
   const sheetRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -92,6 +113,8 @@ const MobileAuthSheet: React.FC<Props> = ({
     if (isOpen) {
       setMode(initialMode);
       setError("");
+      setGuestOpen(false);
+      setGuestLocalError("");
       const t = setTimeout(() => setMounted(true), 10);
       return () => clearTimeout(t);
     }
@@ -101,6 +124,36 @@ const MobileAuthSheet: React.FC<Props> = ({
   if (!isOpen) return null;
 
   const showApple = isIOS() || isNative();
+
+  // In the checkout flow the parent advances to payment; elsewhere just close.
+  const finishSuccess = () => {
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      onClose();
+      router.refresh();
+    }
+  };
+
+  const handleGuestSubmit = async () => {
+    if (submitting || !onGuest) return;
+    setGuestLocalError("");
+    if (!EMAIL_RE.test(guestEmail)) {
+      setGuestLocalError("כתובת אימייל לא תקינה");
+      return;
+    }
+    const cleanPhone = guestPhone.replace(/[-\s]/g, "");
+    if (!/^[0-9]{10}$/.test(cleanPhone)) {
+      setGuestLocalError("מספר טלפון לא תקין (10 ספרות)");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onGuest({ email: guestEmail, phone: cleanPhone });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,8 +175,7 @@ const MobileAuthSheet: React.FC<Props> = ({
     try {
       if (mode === "login") {
         await signInWithEmailAndPassword(auth, email, password);
-        onClose();
-        router.refresh();
+        finishSuccess();
       } else {
         if (!name.trim()) {
           setError("יש להזין שם");
@@ -145,8 +197,7 @@ const MobileAuthSheet: React.FC<Props> = ({
           });
         }
         await sendEmailVerification(cred.user);
-        onClose();
-        router.refresh();
+        finishSuccess();
       }
     } catch (err) {
       const code =
@@ -157,6 +208,25 @@ const MobileAuthSheet: React.FC<Props> = ({
       console.error("[MobileAuthSheet] auth failed:", err);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setError("");
+    if (!email) {
+      setError("יש להזין כתובת אימייל כדי לאפס סיסמה");
+      return;
+    }
+    if (!auth) {
+      setError("שגיאה פנימית - נסה לרענן את הדף");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("נשלח אליך אימייל לאיפוס הסיסמה. בדוק את תיבת הדואר שלך.");
+    } catch (err) {
+      const code = (err as { code?: string })?.code || "";
+      setError(firebaseErrorToHebrew(code));
     }
   };
 
@@ -187,8 +257,7 @@ const MobileAuthSheet: React.FC<Props> = ({
           });
         }
       }
-      onClose();
-      router.refresh();
+      finishSuccess();
     } catch (err) {
       if (isAuthCancellation(err)) return;
       console.error("[MobileAuthSheet] google failed:", err);
@@ -208,8 +277,7 @@ const MobileAuthSheet: React.FC<Props> = ({
         setError("שגיאה פנימית - נסה לרענן את הדף");
         return;
       }
-      onClose();
-      router.refresh();
+      finishSuccess();
     } catch (err) {
       if (isAuthCancellation(err)) return;
       console.error("[MobileAuthSheet] apple failed:", err);
@@ -221,15 +289,16 @@ const MobileAuthSheet: React.FC<Props> = ({
 
   return (
     <div
-      className="tk-mobile md:hidden"
+      className={
+        responsive
+          ? "tk-mobile flex flex-col justify-end sm:justify-center sm:items-center"
+          : "tk-mobile md:hidden flex flex-col justify-end"
+      }
       onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 70,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-end",
         background: mounted ? "rgba(10,10,10,0.45)" : "rgba(10,10,10,0)",
         backdropFilter: mounted ? "blur(10px)" : "blur(0px)",
         WebkitBackdropFilter: mounted ? "blur(10px)" : "blur(0px)",
@@ -241,11 +310,14 @@ const MobileAuthSheet: React.FC<Props> = ({
         ref={sheetRef}
         dir="rtl"
         onClick={(e) => e.stopPropagation()}
+        className={
+          responsive
+            ? "w-full rounded-t-[24px] sm:w-[440px] sm:max-w-[92vw] sm:rounded-[20px]"
+            : "w-full rounded-t-[24px]"
+        }
         style={{
           background: "var(--tk-bg)",
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          padding: "12px 20px calc(26px + env(safe-area-inset-bottom, 0px))",
+          padding: "12px 20px calc(26px + var(--sab, env(safe-area-inset-bottom, 0px)))",
           boxShadow: "0 -10px 30px rgba(0,0,0,0.18)",
           transform: mounted ? "translateY(0)" : "translateY(100%)",
           transition: "transform 320ms cubic-bezier(.2,.8,.2,1)",
@@ -327,16 +399,25 @@ const MobileAuthSheet: React.FC<Props> = ({
               fontWeight: 600,
             }}
           >
-            {mode === "login" ? "שמחים שחזרת" : "הצטרף לקהילה"}
+            {guestOpen
+              ? "המשך כאורח"
+              : mode === "login"
+                ? "שמחים שחזרת"
+                : "הצטרף לקהילה"}
           </div>
           <div style={{ fontSize: 11, color: "var(--tk-muted)", marginTop: 2 }}>
-            {contextLabel ||
-              (mode === "login"
-                ? "התחבר כדי להמשיך"
-                : "פתח חשבון בכמה שניות")}
+            {guestOpen
+              ? "בלי חשבון — הכרטיסים יישלחו אליך למייל אחרי הרכישה"
+              : contextLabel ||
+                (mode === "login"
+                  ? "התחבר כדי להמשיך"
+                  : "פתח חשבון בכמה שניות")}
           </div>
         </div>
 
+        {/* Guest view replaces the login/signup content entirely */}
+        {!guestOpen && (
+          <>
         {/* mode toggle pill */}
         <div
           style={{
@@ -429,6 +510,7 @@ const MobileAuthSheet: React.FC<Props> = ({
                 {mode === "login" && (
                   <button
                     type="button"
+                    onClick={handleForgotPassword}
                     style={{
                       fontSize: 10,
                       color: "var(--tk-blue)",
@@ -597,6 +679,119 @@ const MobileAuthSheet: React.FC<Props> = ({
             המשך עם Google
           </button>
         </div>
+          </>
+        )}
+
+        {/* Guest checkout — small by design, shown only in the purchase flow */}
+        {onGuest &&
+          (guestOpen ? (
+            <div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div>
+                  <div style={labelStyle}>אימייל</div>
+                  <input
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    type="email"
+                    autoComplete="email"
+                    dir="ltr"
+                    style={{ ...inputStyle, textAlign: "right" }}
+                  />
+                </div>
+                <div>
+                  <div style={labelStyle}>טלפון</div>
+                  <input
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
+                    placeholder="050-0000000"
+                    type="tel"
+                    autoComplete="tel"
+                    dir="ltr"
+                    style={{ ...inputStyle, textAlign: "right" }}
+                  />
+                </div>
+              </div>
+              {(guestLocalError || guestError) && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    fontSize: 12,
+                    color: "#B00020",
+                    textAlign: "center",
+                    fontWeight: 600,
+                  }}
+                >
+                  {guestLocalError || guestError}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={handleGuestSubmit}
+                disabled={submitting}
+                style={{
+                  width: "100%",
+                  padding: 14,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  marginTop: 14,
+                  borderRadius: 12,
+                  background: "var(--tk-ink)",
+                  color: "#fff",
+                  border: "none",
+                  cursor: submitting ? "default" : "pointer",
+                  opacity: submitting ? 0.6 : 1,
+                  fontFamily: "inherit",
+                }}
+              >
+                {submitting ? "..." : "המשך כאורח"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setGuestOpen(false);
+                  setGuestLocalError("");
+                }}
+                style={{
+                  display: "block",
+                  margin: "14px auto 0",
+                  background: "transparent",
+                  border: "none",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--tk-muted)",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  padding: 4,
+                }}
+              >
+                חזרה להתחברות
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setGuestOpen(true)}
+              style={{
+                display: "block",
+                margin: "14px auto 0",
+                background: "transparent",
+                border: "none",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--tk-muted)",
+                textDecoration: "underline",
+                textUnderlineOffset: 3,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                padding: 4,
+              }}
+            >
+              או המשך כאורח בלי חשבון
+            </button>
+          ))}
 
         <div
           style={{

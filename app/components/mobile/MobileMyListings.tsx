@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import MobileShell from "./MobileShell";
-import { hebDate, nis } from "./format";
+import { hebDate, nis, abbrevCity } from "./format";
 import { encodeImageUrl } from "@/utils/defaultImages";
 
 export type MobileListing = {
@@ -63,7 +63,7 @@ export default function MobileMyListings({
     <MobileShell>
       <div
         style={{
-          padding: "14px 18px 14px",
+          padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 14px",
           borderBottom: "1px solid var(--tk-line)",
         }}
       >
@@ -309,7 +309,7 @@ function ListingCard({
             style={{ fontSize: 11, opacity: 0.9, marginTop: 4 }}
           >
             {hebDate(l.date)}
-            {l.time ? ` · ${l.time}` : ""} · {l.venue}
+            {l.time ? ` · ${l.time}` : ""} · {abbrevCity(l.venue)}
           </div>
         </div>
 

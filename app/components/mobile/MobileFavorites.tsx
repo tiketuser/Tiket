@@ -27,7 +27,7 @@ export default function MobileFavorites({
     <MobileShell>
       <div
         style={{
-          padding: "14px 18px 14px",
+          padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 14px",
           borderBottom: "1px solid var(--tk-line)",
         }}
       >

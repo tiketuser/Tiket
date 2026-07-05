@@ -79,10 +79,10 @@ export default function MobileBottomNav() {
           display: "grid",
           gridTemplateColumns: "repeat(5, 1fr)",
           alignItems: "center",
-          paddingTop: 10,
-          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
+          paddingTop: 8,
+          paddingBottom: "var(--sab, env(safe-area-inset-bottom, 0px))",
           paddingInline: 16,
-          height: "calc(80px + env(safe-area-inset-bottom, 0px))",
+          height: "calc(64px + var(--sab, env(safe-area-inset-bottom, 0px)))",
           boxSizing: "border-box",
           overflow: "visible",
         }}

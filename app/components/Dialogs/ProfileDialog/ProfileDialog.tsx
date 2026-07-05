@@ -96,7 +96,7 @@ const ProfileDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
 
         {/* Profile header */}
         <div className="flex flex-col items-center pt-6 sm:pt-8 pb-4 px-6 border-b border-gray-100">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-primary/20 to-highlight/20 flex items-center justify-center overflow-hidden ring-4 ring-white shadow-medium mb-3">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-secondary flex items-center justify-center overflow-hidden ring-4 ring-white shadow-medium mb-3">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -154,7 +154,7 @@ const ProfileDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className="h-1.5 bg-gradient-to-r from-primary via-highlight to-primary" />
+        <div className="h-1.5 bg-highlight" />
       </div>
     </div>
   );

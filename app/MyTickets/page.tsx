@@ -14,8 +14,6 @@ import MobileMyTickets, {
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic";
 
 interface PurchasedTicket {
   id: string; // transaction id
@@ -55,10 +53,15 @@ export default function MyTicketsPage() {
     const unsubscribe = auth?.onAuthStateChanged((user) => {
       if (user) {
         setSignedIn(true);
+        // Reset when switching accounts so the incoming user never briefly sees
+        // the previous user's tickets.
+        setLoading(true);
+        setTickets([]);
         fetchMyTickets(user.uid);
       } else {
         setSignedIn(false);
         setLoading(false);
+        setTickets([]);
       }
     });
     return () => unsubscribe?.();

@@ -8,11 +8,13 @@ const config: CapacitorConfig = {
     androidScheme: "https",
   },
   ios: {
-    contentInset: "always",
-    backgroundColor: "#ffffff",
+    // Web content extends under the status bar; pages pad with
+    // env(safe-area-inset-top) so the event hero blends with the notch.
+    contentInset: "never",
+    backgroundColor: "#F5F1E8",
   },
   android: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#F5F1E8",
   },
   plugins: {
     SplashScreen: {
@@ -26,8 +28,10 @@ const config: CapacitorConfig = {
       splashImmersive: true,
     },
     StatusBar: {
-      style: "DEFAULT",
-      backgroundColor: "#ffffff",
+      // Dark icons over the cream app; hero screens flip to light at runtime.
+      style: "LIGHT",
+      backgroundColor: "#F5F1E8",
+      overlaysWebView: true,
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],

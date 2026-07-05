@@ -75,6 +75,10 @@ export default function MobileProfile() {
   }, []);
 
   useEffect(() => {
+    // Clear the previous account's data on any auth change so a shared device
+    // never shows one user's orders/counts to the next signed-in user.
+    setOrders([]);
+    setCounts({ bought: 0, sold: 0 });
     if (!user || !db) return;
     let cancelled = false;
     (async () => {
@@ -195,7 +199,7 @@ export default function MobileProfile() {
       <MobileShell>
         <div
           style={{
-            padding: "60px 24px",
+            padding: "calc(60px + var(--sat, env(safe-area-inset-top, 0px))) 24px 60px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -260,7 +264,7 @@ export default function MobileProfile() {
       {/* Hero */}
       <div
         style={{
-          padding: "20px 18px 22px",
+          padding: "calc(20px + var(--sat, env(safe-area-inset-top, 0px))) 18px 22px",
           borderBottom: "1px solid var(--tk-line)",
           background: "var(--tk-bg)",
         }}

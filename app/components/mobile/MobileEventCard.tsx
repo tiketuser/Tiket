@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -15,7 +15,7 @@ import { db } from "../../../firebase";
 import { eventHref } from "@/lib/platform";
 import { encodeImageUrl } from "@/utils/defaultImages";
 import { Icon } from "./Icon";
-import { hebDate, nis } from "./format";
+import { hebDate, nis, abbrevCity } from "./format";
 
 export type MobileEventCardData = {
   id: string | number;
@@ -24,7 +24,9 @@ export type MobileEventCardData = {
   date: string;
   location: string;
   price: number;
+  maxPrice?: number;
   ticketsLeft: number;
+  category?: string;
 };
 
 export default function MobileEventCard({
@@ -38,6 +40,14 @@ export default function MobileEventCard({
 }) {
   const [fav, setFav] = useState(initialFavorited);
   const [busy, setBusy] = useState(false);
+
+  // Favorites load asynchronously after first render (auth + Firestore), so the
+  // initial snapshot can be stale. Re-sync when the resolved value arrives,
+  // otherwise a favorited event shows an empty heart and the first tap removes
+  // the favorite the user thinks they are adding.
+  useEffect(() => {
+    setFav(initialFavorited);
+  }, [initialFavorited]);
 
   const toggleFav = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -135,6 +145,11 @@ export default function MobileEventCard({
         </button>
       </div>
       <div style={{ padding: 10 }}>
+        {card.category && (
+          <div style={{ fontSize: 10, color: "var(--tk-muted)", marginBottom: 2 }}>
+            {card.category}
+          </div>
+        )}
         <div
           style={{
             fontSize: 12,
@@ -146,10 +161,10 @@ export default function MobileEventCard({
             WebkitBoxOrient: "vertical",
           }}
         >
-          {card.title}
+          {abbrevCity(card.title)}
         </div>
         <div style={{ fontSize: 9, color: "var(--tk-muted)", marginTop: 2 }}>
-          {hebDate(card.date)} · {card.location}
+          {hebDate(card.date)} · {card.location?.split(",")[1]?.trim() ?? card.location}
         </div>
         <div
           style={{
@@ -169,7 +184,9 @@ export default function MobileEventCard({
           className="tk-mono"
           style={{ fontSize: 14, fontWeight: 700, marginTop: 4 }}
         >
-          {nis(card.price)}
+          {card.maxPrice && card.maxPrice > card.price
+            ? `${nis(card.price)} – ${nis(card.maxPrice)}`
+            : nis(card.price)}
         </div>
       </div>
     </Link>

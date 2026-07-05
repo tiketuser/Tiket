@@ -4,7 +4,7 @@ if (self.location && self.location.protocol === 'capacitor:') {
   self.addEventListener('install', () => self.skipWaiting());
   self.addEventListener('activate', () => self.clients && self.clients.claim && self.clients.claim());
 } else {
-const CACHE_NAME = 'tiket-v1';
+const CACHE_NAME = 'tiket-v2';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -36,39 +36,24 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - network first, cache as offline fallback.
+// Cache-first froze users on stale HTML/CSS/JS after every deploy.
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // Cache hit - return response
-        if (response) {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
-
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
         });
+        return response;
       })
+      .catch(() => caches.match(event.request))
   );
 });
 }

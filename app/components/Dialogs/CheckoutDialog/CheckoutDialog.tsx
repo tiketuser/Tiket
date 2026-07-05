@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -8,12 +8,20 @@ const AuthDialog = dynamic(
   () => import("../AuthDialog/AuthDialog"),
   { ssr: false }
 );
-import CheckoutStepAuth from "./CheckoutSteps/CheckoutStepAuth";
-import type { GuestInfo } from "./CheckoutSteps/CheckoutStepAuth";
-import CheckoutStepSummary from "./CheckoutSteps/CheckoutStepSummary";
+import MobileAuthSheet from "../../mobile/MobileAuthSheet";
+import type { GuestInfo } from "../../mobile/MobileAuthSheet";
 import CheckoutStepPayment from "./CheckoutSteps/CheckoutStepPayment";
 import CheckoutStepConfirmation from "./CheckoutSteps/CheckoutStepConfirmation";
+import {
+  CountdownBar,
+  TicketStub,
+  PaySummary,
+  TermsRow,
+  PayFooter,
+} from "./CheckoutDesign";
+import { Icon } from "../../mobile/Icon";
 import { apiFetch } from "@/lib/platform";
+import { setHeroStatusBar } from "@/lib/native-chrome";
 
 export interface TicketInfo {
   ticketId: string;
@@ -24,6 +32,13 @@ export interface TicketInfo {
   price: number;
   originalPrice?: number;
   sellerId: string;
+  /* Optional metadata for the design ticket stub */
+  imageUrl?: string;
+  time?: string;
+  section?: string;
+  row?: number | null;
+  seat?: number | null;
+  isStanding?: boolean;
 }
 
 interface CheckoutDialogProps {
@@ -34,13 +49,7 @@ interface CheckoutDialogProps {
 
 const RESERVATION_SECONDS = 10 * 60;
 
-const STEP_HEADINGS = [
-  { heading: "התחבר או המשך כאורח", description: "התחבר, הירשם, או המשך כאורח לרכישה" },
-  { heading: "סיכום הזמנה", description: "בדוק את פרטי הכרטיס לפני התשלום" },
-  { heading: "תשלום", description: "הזן את פרטי התשלום" },
-  { heading: "הרכישה הושלמה", description: "הכרטיס שלך מוכן" },
-];
-
+// Steps: 1 = auth, 2 = payment ("תשלום" design screen), 3 = confirmation
 const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   isOpen,
   onClose,
@@ -57,11 +66,13 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     ticketPrice: number;
   } | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [transactionComplete, setTransactionComplete] = useState(false);
   const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
   const [pendingMyTicketsRedirect, setPendingMyTicketsRedirect] = useState(false);
   const [reservationSecondsLeft, setReservationSecondsLeft] = useState<number | null>(null);
-  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intentRequested = useRef(false);
 
   // Animation state for the sheet/modal
   const [rendered, setRendered] = useState(false);
@@ -80,6 +91,16 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     }
     return () => {
       document.body.classList.remove("no-doc-scroll");
+    };
+  }, [isOpen]);
+
+  // Checkout covers the dark event hero with cream — flip the status-bar
+  // icons to dark while open, back to light when returning to the event.
+  useEffect(() => {
+    if (!isOpen) return;
+    void setHeroStatusBar(false);
+    return () => {
+      void setHeroStatusBar(true);
     };
   }, [isOpen]);
 
@@ -144,33 +165,10 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setPaymentError(null);
       setTransactionComplete(false);
       setGuestToken(null);
+      setTermsAccepted(false);
+      intentRequested.current = false;
     }
   }, [isOpen, user, stopTimer]);
-
-  useEffect(() => {
-    if (step === 3 && !transactionComplete) {
-      setReservationSecondsLeft(RESERVATION_SECONDS);
-      timerRef.current = setInterval(() => {
-        setReservationSecondsLeft((prev) => {
-          if (prev === null || prev <= 1) return 0;
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      stopTimer();
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
-
-  useEffect(() => {
-    if (reservationSecondsLeft === 0) {
-      stopTimer();
-      releaseReservation().then(() => onClose());
-    }
-  }, [reservationSecondsLeft, releaseReservation, stopTimer, onClose]);
 
   const handleAuthComplete = useCallback(() => {
     setPaymentError(null);
@@ -202,7 +200,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     }
   }, []);
 
-  const handleProceedToPayment = useCallback(async () => {
+  const createPaymentIntent = useCallback(async () => {
     if (!tickets.length) return;
     if (!user && !guestToken) return;
 
@@ -242,17 +240,57 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         platformFee: data.platformFee,
         ticketPrice: data.ticketPrice,
       });
-      setStep(3);
     } catch (error) {
       console.error("Payment intent error:", error);
       setPaymentError("שגיאה בהתחברות לשרת התשלומים");
     }
   }, [tickets, user, guestToken]);
 
+  // The design shows "הכרטיס שמור לך" from the moment checkout opens —
+  // reserve (create the intent) as soon as we know who's buying.
+  useEffect(() => {
+    if (
+      isOpen &&
+      step === 2 &&
+      !clientSecret &&
+      (user || guestToken) &&
+      !intentRequested.current
+    ) {
+      intentRequested.current = true;
+      void createPaymentIntent();
+    }
+  }, [isOpen, step, clientSecret, user, guestToken, createPaymentIntent]);
+
+  // Reservation countdown runs while a live payment intent exists
+  useEffect(() => {
+    if (isOpen && step === 2 && clientSecret && !transactionComplete) {
+      setReservationSecondsLeft(RESERVATION_SECONDS);
+      timerRef.current = setInterval(() => {
+        setReservationSecondsLeft((prev) => {
+          if (prev === null || prev <= 1) return 0;
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      stopTimer();
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, step, clientSecret, transactionComplete]);
+
+  useEffect(() => {
+    if (reservationSecondsLeft === 0) {
+      stopTimer();
+      releaseReservation().then(() => onClose());
+    }
+  }, [reservationSecondsLeft, releaseReservation, stopTimer, onClose]);
+
   const handlePaymentSuccess = useCallback(async (paymentIntentId: string) => {
     stopTimer();
     setTransactionComplete(true);
-    setStep(4);
+    setStep(3);
 
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -277,17 +315,20 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     setPaymentError(message);
   }, []);
 
+  const handleRetryIntent = useCallback(() => {
+    setPaymentError(null);
+    void createPaymentIntent();
+  }, [createPaymentIntent]);
+
   const handleClose = useCallback(async () => {
     stopTimer();
-    if (step >= 3 && !transactionComplete) {
+    if (clientSecret && !transactionComplete) {
       await releaseReservation();
     }
     onClose();
-  }, [onClose, step, transactionComplete, releaseReservation, stopTimer]);
+  }, [onClose, clientSecret, transactionComplete, releaseReservation, stopTimer]);
 
   if (!tickets.length || !rendered) return null;
-
-  const currentStep = STEP_HEADINGS[step - 1];
 
   const timerDisplay = reservationSecondsLeft !== null
     ? `${String(Math.floor(reservationSecondsLeft / 60)).padStart(2, "0")}:${String(reservationSecondsLeft % 60).padStart(2, "0")}`
@@ -295,168 +336,174 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   const isTimerUrgent = reservationSecondsLeft !== null && reservationSecondsLeft <= 60;
 
+  const subtotal = tickets.reduce((s, t) => s + t.price, 0);
+  const payTotal = paymentDetails?.total ?? subtotal;
+
+  const payTop = (
+    <>
+      {timerDisplay && <CountdownBar display={timerDisplay} urgent={isTimerUrgent} />}
+      <TicketStub tickets={tickets} />
+    </>
+  );
+
+  const paySummary = (
+    <PaySummary
+      tickets={tickets}
+      platformFee={paymentDetails?.platformFee ?? 0}
+      total={payTotal}
+    />
+  );
+
+  // Step 1: the design's auth sheet slides up over the blurred page —
+  // no full-screen checkout chrome until the buyer is known.
+  if (step === 1) {
+    return (
+      <MobileAuthSheet
+        isOpen={isOpen}
+        onClose={handleClose}
+        onSuccess={handleAuthComplete}
+        responsive
+        contextLabel="התחבר כדי להשלים את הרכישה בבטחה"
+        onGuest={handleGuestCheckout}
+        guestError={paymentError}
+      />
+    );
+  }
+
   return (
     <>
       <div
-        className={`tk-mobile fixed inset-0 z-50 flex items-end sm:items-center justify-center transition-all duration-300 ${
+        className={`tk-mobile fixed inset-0 z-50 flex items-stretch sm:items-center justify-center transition-all duration-300 ${
           visible ? "bg-black/55 backdrop-blur-sm" : "bg-black/0"
         }`}
       >
         <div
-          className={`relative w-full sm:w-[560px] sm:max-w-[92vw] max-h-[92vh] sm:max-h-[88vh] flex flex-col rounded-t-[24px] sm:rounded-[20px] shadow-2xl overflow-hidden transition-all duration-300 ease-out ${
+          className={`relative w-full h-full sm:h-auto sm:w-[560px] sm:max-w-[92vw] sm:max-h-[88vh] flex flex-col sm:rounded-[20px] shadow-2xl overflow-hidden transition-all duration-300 ease-out ${
             visible
               ? "translate-y-0 sm:scale-100 opacity-100"
               : "translate-y-12 sm:translate-y-0 sm:scale-95 opacity-0"
           }`}
-          style={{ background: "var(--tk-paper)", color: "var(--tk-ink)" }}
+          style={{ background: "var(--tk-bg)", color: "var(--tk-ink)" }}
+          dir="rtl"
         >
-          {/* Mobile grab handle */}
-          <div className="sm:hidden flex justify-center pt-2.5 pb-1">
-            <div
-              className="w-10 h-1 rounded-full"
-              style={{ background: "var(--tk-line-strong)" }}
-            />
-          </div>
-
-          {/* Header */}
+          {/* Header — back · תשלום · מאובטח */}
           <div
-            className="relative px-5 sm:px-8 pt-2 sm:pt-7 pb-4"
-            style={{ borderBottom: "1px solid var(--tk-line)" }}
+            style={{
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "14px 18px",
+              paddingTop: "calc(14px + var(--sat, env(safe-area-inset-top, 0px)))",
+              borderBottom: "1px solid var(--tk-line)",
+            }}
           >
             <button
               onClick={handleClose}
-              aria-label="סגור"
-              className="absolute top-2 sm:top-5 left-3 sm:left-5 w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-95"
+              aria-label="חזרה"
+              className="transition-transform active:scale-95"
               style={{
-                background: "var(--tk-bg)",
+                width: 34,
+                height: 34,
+                borderRadius: 999,
+                background: "var(--tk-paper)",
                 border: "1px solid var(--tk-line)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M4 4l8 8M12 4l-8 8"
-                  stroke="var(--tk-ink)"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <Icon.chev size={16} />
             </button>
-
-            {/* Stepper bars */}
+            <div style={{ fontSize: 15, fontWeight: 700 }}>תשלום</div>
             <div
-              className="flex items-center gap-1.5 mb-4 mx-auto"
-              dir="ltr"
-              style={{ maxWidth: 240 }}
-            >
-              {[1, 2, 3, 4].map((s) => (
-                <div
-                  key={s}
-                  className="flex-1 rounded-full transition-colors duration-300"
-                  style={{
-                    height: 3,
-                    background: s <= step ? "var(--tk-ink)" : "var(--tk-line)",
-                  }}
-                />
-              ))}
-            </div>
-
-            <div
-              className="tk-mono text-center"
               style={{
-                fontSize: 10,
-                letterSpacing: "0.1em",
-                color: "var(--tk-muted)",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                fontSize: 11,
+                color: "var(--tk-blue)",
+                fontWeight: 600,
               }}
             >
-              שלב {step} / 4
+              <Icon.lock size={12} color="var(--tk-blue)" /> מאובטח
             </div>
-            <h2
-              className="text-center mt-1"
-              style={{
-                fontSize: 22,
-                fontWeight: 800,
-                letterSpacing: "-0.02em",
-                color: "var(--tk-ink)",
-                lineHeight: 1.2,
-              }}
-            >
-              {currentStep.heading}
-            </h2>
-            <p
-              className="text-center mt-1"
-              style={{ fontSize: 13, color: "var(--tk-muted)" }}
-            >
-              {currentStep.description}
-            </p>
-
-            {timerDisplay && (
-              <div
-                className="flex items-center justify-center gap-1.5 mt-3"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: isTimerUrgent ? "#C4373E" : "var(--tk-blue-ink)",
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  className={isTimerUrgent ? "animate-pulse" : ""}
-                >
-                  <circle
-                    cx="8"
-                    cy="8"
-                    r="6"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                  />
-                  <path
-                    d="M8 4.5V8l2.5 1.5"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="tk-mono">{timerDisplay}</span>
-                <span>הכרטיס שמור עבורך</span>
-              </div>
-            )}
           </div>
 
-          {/* Scrollable content */}
-          <div
-            className="overflow-y-auto flex-1 px-5 sm:px-8 py-5 sm:py-6"
-            dir="rtl"
-          >
-            {step === 1 && (
-              <CheckoutStepAuth
-                onAuthComplete={handleAuthComplete}
-                onGuestCheckout={handleGuestCheckout}
-                externalError={paymentError}
-              />
-            )}
-
-            {step === 2 && (
-              <CheckoutStepSummary
-                tickets={tickets}
-                platformFee={paymentDetails?.platformFee ?? 0}
-                total={paymentDetails?.total ?? tickets.reduce((s, t) => s + t.price, 0)}
-                onProceed={handleProceedToPayment}
-                error={paymentError}
-              />
-            )}
-
-            {step === 3 && clientSecret && (
+          {step === 2 &&
+            (clientSecret ? (
               <CheckoutStepPayment
+                key={clientSecret}
                 clientSecret={clientSecret}
+                total={payTotal}
+                termsAccepted={termsAccepted}
+                onTermsChange={setTermsAccepted}
+                topSlot={payTop}
+                summarySlot={paySummary}
                 onSuccess={handlePaymentSuccess}
                 onError={handlePaymentError}
               />
-            )}
+            ) : (
+              <div className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto" style={{ padding: "16px 18px" }}>
+                  {payTop}
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+                    אופן תשלום
+                  </div>
+                  {paymentError ? (
+                    <div
+                      style={{
+                        border: "1px solid rgba(196,55,62,0.18)",
+                        background: "rgba(196,55,62,0.08)",
+                        borderRadius: 12,
+                        padding: "16px 14px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div style={{ fontSize: 12, color: "#C4373E", marginBottom: 10 }}>
+                        {paymentError}
+                      </div>
+                      <button
+                        onClick={handleRetryIntent}
+                        style={{
+                          padding: "8px 18px",
+                          borderRadius: 999,
+                          border: "none",
+                          background: "var(--tk-ink)",
+                          color: "var(--tk-bg)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          fontFamily: "inherit",
+                          cursor: "pointer",
+                        }}
+                      >
+                        נסה שוב
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        border: "1px dashed var(--tk-line-strong)",
+                        borderRadius: 12,
+                        padding: "22px 16px",
+                        textAlign: "center",
+                        fontSize: 12,
+                        color: "var(--tk-muted)",
+                      }}
+                    >
+                      מכין תשלום מאובטח…
+                    </div>
+                  )}
+                  {paySummary}
+                  <TermsRow checked={termsAccepted} onChange={setTermsAccepted} />
+                </div>
+                <PayFooter total={payTotal} disabled />
+              </div>
+            ))}
 
-            {step === 4 && (
+          {step === 3 && (
+            <div className="flex-1 overflow-y-auto" style={{ padding: "20px 18px 24px" }}>
               <CheckoutStepConfirmation
                 tickets={tickets}
                 onClose={handleClose}
@@ -467,8 +514,8 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                   setTimeout(() => setAuthDialogOpen(true), 300);
                 }}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
