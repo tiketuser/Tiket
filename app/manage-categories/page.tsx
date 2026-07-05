@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { db } from "../../firebase";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 
@@ -84,8 +85,11 @@ export default function ManageCategoriesPage() {
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-background pt-24 pb-12">
+      <MobileAdminChrome title="ניהול קטגוריות" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-background pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="bg-white rounded-xl shadow-large p-8 mb-8">
             <h1 className="text-heading-1-desktop font-bold text-strongText mb-2">
@@ -187,7 +191,9 @@ export default function ManageCategoriesPage() {
           )}
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }

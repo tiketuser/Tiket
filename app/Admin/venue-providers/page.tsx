@@ -5,6 +5,7 @@ import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import NavBar from "../../components/NavBar/NavBar";
 import Footer from "../../components/Footer/Footer";
 import AdminProtection from "../../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../../components/mobile/MobileAdminChrome";
 import { apiFetch } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
@@ -237,8 +238,11 @@ export default function VenueProvidersPage() {
 
   return (
     <AdminProtection>
-      <div className="min-h-screen bg-white" dir="rtl">
-        <NavBar />
+      <MobileAdminChrome title="ניהול ספקים" />
+      <div className="tk-admin min-h-screen bg-white" dir="rtl">
+        <div className="hidden md:block">
+          <NavBar />
+        </div>
 
         <main className="max-w-4xl mx-auto px-4 py-10">
           {/* Header */}
@@ -615,7 +619,9 @@ export default function VenueProvidersPage() {
           </div>
         </main>
 
-        <Footer />
+        <div className="hidden md:block">
+          <Footer />
+        </div>
       </div>
     </AdminProtection>
   );

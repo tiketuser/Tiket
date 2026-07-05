@@ -29,10 +29,24 @@ function tabIcon(id: TabId, color: string) {
   return null;
 }
 
+const ADMIN_PREFIXES = [
+  "/Admin",
+  "/edit-events",
+  "/approve-tickets",
+  "/regenerate-tickets",
+  "/manage-categories",
+  "/manage-themes",
+  "/manage-artists",
+  "/manage-default-images",
+  "/diagnostic",
+];
+
 function activeTab(pathname: string): TabId {
   if (pathname.startsWith("/Favorites")) return "favorites";
   if (pathname.startsWith("/MyTickets")) return "tickets";
   if (pathname.startsWith("/Profile")) return "profile";
+  // Admin pages are reached from the profile tab
+  if (ADMIN_PREFIXES.some((p) => pathname.startsWith(p))) return "profile";
   return "home";
 }
 

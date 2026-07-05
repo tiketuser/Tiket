@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { db } from "../../firebase";
 import {
   collection,
@@ -343,8 +344,11 @@ export default function EditConcertsPage() {
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-white py-12 px-4">
+      <MobileAdminChrome title="עריכת אירועים" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-white py-12 px-4">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
@@ -803,7 +807,9 @@ export default function EditConcertsPage() {
           )}
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }

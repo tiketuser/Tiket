@@ -195,3 +195,69 @@ input:-webkit-autofill:active {
   100% { transform: translateX(200%); }
 }
 
+/* ─── Admin pages: mobile reskin (paper-cream theme) ─────────────────
+   Admin screens keep their desktop DOM + logic; below md we restyle
+   them into the tk-mobile design language. Scoped via .tk-admin so
+   desktop rendering is untouched. */
+@media (max-width: 767px) {
+  .tk-admin {
+    font-family: var(--font-heebo), 'Heebo', system-ui, sans-serif;
+    background: radial-gradient(circle at 50% 30%, #EAE4D3 0%, var(--tk-bg, #F5F1E8) 70%) !important;
+    color: var(--tk-ink, #0A0A0A);
+    -webkit-font-smoothing: antialiased;
+    padding-top: 18px !important;
+    padding-bottom: calc(96px + var(--sab, env(safe-area-inset-bottom, 0px))) !important;
+    min-height: 100dvh;
+  }
+  /* Cards / modals: white surfaces become paper */
+  .tk-admin .bg-white { background-color: var(--tk-paper, #FBF8F1) !important; }
+  .tk-admin .bg-gray-50 { background-color: var(--tk-bg, #F5F1E8) !important; }
+  /* Hairlines in the cream palette */
+  .tk-admin .border-secondary,
+  .tk-admin .border-gray-100,
+  .tk-admin .border-gray-200,
+  .tk-admin .border-gray-300 { border-color: var(--tk-line-strong, #CFC9B8) !important; }
+  /* Soft paper shadows instead of heavy elevation */
+  .tk-admin .shadow-md,
+  .tk-admin .shadow-lg,
+  .tk-admin .shadow-large,
+  .tk-admin .shadow-xlarge,
+  .tk-admin .shadow-xxlarge,
+  .tk-admin .shadow-2xl { box-shadow: 0 1px 2px rgba(60, 50, 30, 0.08) !important; }
+  .tk-admin .rounded-2xl,
+  .tk-admin .rounded-xl { border-radius: 14px !important; }
+  /* Inputs: paper surface, calmer border, 16px font so iOS doesn't zoom.
+     Checkbox/radio/range/color keep their native/DaisyUI look. */
+  .tk-admin input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  .tk-admin select,
+  .tk-admin textarea {
+    background-color: var(--tk-paper, #FBF8F1);
+    border-color: var(--tk-line-strong, #CFC9B8) !important;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  /* Desktop heading scale is far too large on a phone */
+  .tk-admin .text-heading-1-desktop { font-size: 26px !important; line-height: 1.25 !important; }
+  .tk-admin .text-heading-2-desktop { font-size: 22px !important; line-height: 1.25 !important; }
+  .tk-admin .text-heading-3-desktop { font-size: 19px !important; line-height: 1.3 !important; }
+  .tk-admin .text-heading-4-desktop { font-size: 16px !important; line-height: 1.35 !important; }
+  /* Wide data tables scroll sideways instead of breaking the layout */
+  .tk-admin table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Fixed-navbar offset is meaningless once NavBar is hidden on mobile */
+  .tk-admin.pt-24 { padding-top: 18px !important; }
+}
+
+/* Admin auth gate (loading / access denied) in the cream palette on mobile */
+@media (max-width: 767px) {
+  .tk-admin-gate {
+    background: var(--tk-bg, #F5F1E8) !important;
+    font-family: var(--font-heebo), 'Heebo', system-ui, sans-serif;
+  }
+  .tk-admin-gate .text-heading-1-desktop,
+  .tk-admin-gate .text-heading-2-desktop { font-size: 22px !important; line-height: 1.3 !important; }
+}
+

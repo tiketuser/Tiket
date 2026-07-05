@@ -38,7 +38,7 @@ export default function AdminProtection({ children }: AdminProtectionProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="tk-admin-gate min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-heading-2-desktop font-bold text-primary mb-4">
              מאמת הרשאות...
@@ -51,7 +51,7 @@ export default function AdminProtection({ children }: AdminProtectionProps) {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="tk-admin-gate min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-heading-1-desktop font-bold text-red-600 mb-4">
              גישה נדחתה

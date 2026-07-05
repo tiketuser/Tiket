@@ -4,6 +4,7 @@ import { useState } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { apiFetch } from "@/lib/platform";
 
 // Force dynamic rendering for admin pages
@@ -50,8 +51,11 @@ export default function RegenerateTicketsPage() {
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-white py-12 px-4">
+      <MobileAdminChrome title="יצירת כרטיסים" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-white py-12 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -280,7 +284,9 @@ export default function RegenerateTicketsPage() {
           )}
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }

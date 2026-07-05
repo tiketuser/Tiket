@@ -36,6 +36,24 @@ type Order = {
   imageUrl: string;
 };
 
+// Must stay in sync with AdminProtection / NavBar admin email lists
+const ADMIN_EMAILS = ["tiketbizzz@gmail.com", "admin@tiket.com"];
+
+const ADMIN_LINKS: { href: string; label: string }[] = [
+  { href: "/Admin", label: "יצירת אירועים" },
+  { href: "/edit-events", label: "עריכת אירועים" },
+  { href: "/approve-tickets", label: "אישור כרטיסים" },
+  { href: "/regenerate-tickets", label: "יצירת כרטיסים" },
+  { href: "/manage-categories", label: "ניהול קטגוריות" },
+  { href: "/manage-themes", label: "צבע קטגוריות" },
+  { href: "/manage-artists", label: "ניהול אמנים" },
+  { href: "/manage-default-images", label: "תמונות ברירת מחדל" },
+  { href: "/Admin/users", label: "ניהול משתמשים" },
+  { href: "/Admin/venue-providers", label: "ניהול ספקים" },
+  { href: "/Admin/pnl-calculator", label: "מחשבון P&L" },
+  { href: "/diagnostic", label: "אבחון מערכת" },
+];
+
 function relativeWhen(ts: number | null): string {
   if (!ts) return "";
   const diff = Date.now() - ts;
@@ -489,6 +507,70 @@ export default function MobileProfile() {
             )}
           </div>
         </section>
+
+        {/* Admin panel — only for admin accounts */}
+        {user?.email && ADMIN_EMAILS.includes(user.email) && (
+          <section>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                marginBottom: 10,
+              }}
+            >
+              <Icon.shield size={14} color="var(--tk-blue)" />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--tk-ink)" }}>
+                ניהול מערכת
+              </span>
+              <span
+                className="tk-mono"
+                style={{
+                  fontSize: 9,
+                  color: "var(--tk-muted)",
+                  letterSpacing: "0.12em",
+                }}
+                dir="ltr"
+              >
+                ADMIN
+              </span>
+            </div>
+            <div
+              style={{
+                background: "var(--tk-paper)",
+                border: "1px solid var(--tk-line-strong)",
+                borderRadius: 14,
+                overflow: "hidden",
+              }}
+            >
+              {ADMIN_LINKS.map((link, i) => (
+                <button
+                  key={link.href}
+                  onClick={() => router.push(link.href)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    width: "100%",
+                    padding: "13px 14px",
+                    background: "transparent",
+                    border: "none",
+                    borderTop: i === 0 ? "none" : "1px solid var(--tk-line)",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    color: "var(--tk-ink)",
+                    textAlign: "start",
+                  }}
+                >
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>
+                    {link.label}
+                  </span>
+                  <Icon.chev size={14} color="var(--tk-muted)" />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         <button
           onClick={handleSignOut}

@@ -7,6 +7,7 @@ import { getAuth } from "firebase/auth";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import {
   artistNamesMatch,
   findBestArtistMatch,
@@ -257,22 +258,30 @@ export default function ApproveTicketsPage() {
   if (loading) {
     return (
       <AdminProtection>
-        <NavBar />
-        <div className="min-h-screen bg-white py-12 px-4">
+        <MobileAdminChrome title="אישור כרטיסים" />
+        <div className="hidden md:block">
+          <NavBar />
+        </div>
+        <div className="tk-admin min-h-screen bg-white py-12 px-4">
           <div className="max-w-6xl mx-auto text-center">
             <div className="loading loading-spinner loading-lg"></div>
             <p className="mt-4">טוען כרטיסים...</p>
           </div>
         </div>
-        <Footer />
+        <div className="hidden md:block">
+          <Footer />
+        </div>
       </AdminProtection>
     );
   }
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-white py-12 px-4">
+      <MobileAdminChrome title="אישור כרטיסים" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-white py-12 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -647,7 +656,9 @@ export default function ApproveTicketsPage() {
           )}
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }
