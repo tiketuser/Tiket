@@ -6,6 +6,7 @@ import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
 import { hebDate, timeUntil, isPastDate, nis, abbrevCity } from "./format";
 import { encodeImageUrl } from "@/utils/defaultImages";
+import TicketBarcode from "../TicketBarcode/TicketBarcode";
 
 export type MobileTicket = {
   id: string;
@@ -21,6 +22,9 @@ export type MobileTicket = {
   amount: number;
   ticketImage?: string;
   eventImageUrl?: string;
+  /** Re-issued entry barcode from the provider (the original was voided). */
+  newBarcode?: string;
+  newBarcodeFormat?: string;
 };
 
 type Tab = "upcoming" | "selling";
@@ -741,7 +745,49 @@ function ScanModal({
         </div>
 
         <div style={{ padding: "0 20px 20px" }}>
-          {ticket.ticketImage ? (
+          {ticket.newBarcode ? (
+            <>
+              <div
+                style={{
+                  width: "100%",
+                  borderRadius: 12,
+                  border: "1px solid #eee",
+                  background: "#f7f7f7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 8,
+                }}
+              >
+                <TicketBarcode
+                  value={ticket.newBarcode}
+                  format={ticket.newBarcodeFormat}
+                />
+              </div>
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  fontSize: 11,
+                  color: "var(--tk-ok, #0B7A3E)",
+                }}
+              >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 999,
+                    background: "currentColor",
+                    flexShrink: 0,
+                  }}
+                />
+                הכרטיס הונפק מחדש על שמך — הברקוד המקורי בוטל
+              </div>
+            </>
+          ) : ticket.ticketImage ? (
             <div
               style={{
                 width: "100%",
@@ -783,7 +829,7 @@ function ScanModal({
             </div>
           )}
 
-          {ticket.ticketImage && (
+          {!ticket.newBarcode && ticket.ticketImage && (
             <a
               href={ticket.ticketImage}
               download
