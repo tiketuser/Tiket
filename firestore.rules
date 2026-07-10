@@ -134,5 +134,18 @@ service cloud.firestore {
     match /venue_api_secrets/{docId} {
       allow read, write: if false; // Admin SDK only — contains third-party API keys
     }
+
+    // ── Tiket Connect Agent relay ─────────────────────────────────────────────
+    match /agent_enroll_tokens/{docId} {
+      allow read, write: if false; // Admin SDK only — pairing token hashes
+    }
+
+    match /venue_agents/{docId} {
+      allow read, write: if false; // Admin SDK only — agent credentials (hashed)
+    }
+
+    match /agent_requests/{docId} {
+      allow read, write: if false; // Admin SDK only — relayed signed envelopes
+    }
   }
 }

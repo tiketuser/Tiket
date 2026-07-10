@@ -54,3 +54,10 @@ next-env.d.ts
 creds.json
 cors.json
 nul
+
+# tiket-agent build artifacts
+partner-kit/agent/tiket-agent
+partner-kit/agent/tiket-agent.exe
+partner-kit/agent/bin/
+partner-kit/agent/dist/
+__pycache__/

@@ -1,0 +1,325 @@
+openapi: 3.1.0
+info:
+  title: Tiket Connect — Partner Verification API
+  version: "1.1"
+  description: |
+    The standard interface a ticketing provider exposes so TIKET (tiket.co.il)
+    can verify resale listings against the provider's official records.
+
+    **Privacy model:** TIKET sends the *claimed* ticket details; the provider
+    compares them against its own record and answers only with
+    match / mismatch / not_found plus field names. No customer PII is returned.
+    The one exception runs in the opposite direction: on /tiket/transfer TIKET
+    sends the *buyer's* contact details to the provider — the minimum needed to
+    issue the ticket to its new holder.
+
+    **Authentication:** every request to /tiket/verify is signed with a shared
+    secret (HMAC-SHA256, Stripe-webhook style):
+
+        signature = hex( HMAC_SHA256( secret, "<timestamp>.<raw body>" ) )
+
+    sent as `X-Tiket-Signature`, with the Unix-seconds timestamp in
+    `X-Tiket-Timestamp`. Receivers MUST reject requests whose timestamp is more
+    than 300 seconds from now (replay protection) and MUST use a
+    constant-time comparison.
+
+    **Key rotation (v1.1):** requests MAY carry `X-Tiket-Key-Id` naming the
+    signing key. Receivers configured with multiple secrets SHOULD select by
+    key id and MAY try all non-revoked secrets when the header is absent or
+    unknown. Single-secret receivers simply ignore the header — rotation is
+    fully backward compatible.
+
+    A reference implementation (single-file Node.js adapter, zero
+    dependencies) ships in `partner-kit/node/` — providers only implement a
+    `lookupTicket(barcode)` function. Any stack can implement this spec
+    directly; it is ~50 lines of code.
+  contact:
+    name: TIKET partnerships
+    url: https://tiket.co.il
+servers:
+  - url: https://{partner-host}
+    description: The provider chooses and hosts the base URL.
+
+paths:
+  /tiket/health:
+    get:
+      operationId: health
+      summary: Liveness probe (unauthenticated)
+      description: Used by TIKET's admin panel "test connection" button.
+      responses:
+        "200":
+          description: The adapter is running.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, kit_version, api_version]
+                properties:
+                  ok: { type: boolean, const: true }
+                  kit_version: { type: string, examples: ["1.2.0"] }
+                  api_version: { type: string, const: "1" }
+                  transfer_supported:
+                    type: boolean
+                    description: Whether this deployment implements /tiket/transfer.
+
+  /tiket/verify:
+    post:
+      operationId: verifyTicket
+      summary: Verify a claimed ticket against the provider's records
+      parameters:
+        - name: X-Tiket-Timestamp
+          in: header
+          required: true
+          schema: { type: string, examples: ["1783776000"] }
+          description: Unix seconds at signing time.
+        - name: X-Tiket-Signature
+          in: header
+          required: true
+          schema: { type: string }
+          description: hex(HMAC_SHA256(secret, timestamp + "." + rawBody))
+        - name: X-Tiket-Version
+          in: header
+          required: false
+          schema: { type: string, const: "1" }
+        - name: X-Tiket-Key-Id
+          in: header
+          required: false
+          schema: { type: string, examples: ["k_ab12cd34"] }
+          description: Names the signing key (rotation support, v1.1). Ignore if single-secret.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VerifyRequest" }
+      responses:
+        "200":
+          description: >
+            Verification completed. Business outcome is in `result` — an HTTP
+            200 with result=not_found is a successful call.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VerifyResponse" }
+        "400":
+          description: Malformed payload (missing ticket.barcode, invalid JSON).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401":
+          description: Missing/invalid signature or timestamp outside the replay window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500":
+          description: Provider-side lookup failure.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /tiket/transfer:
+    post:
+      operationId: transferTicket
+      summary: Transfer ownership of a resold ticket to its buyer
+      description: |
+        Called when a verified ticket is **sold** on TIKET. The provider should
+        invalidate the seller's barcode and issue the ticket to the new holder
+        — this is the strongest anti-fraud guarantee in the protocol (the PDF
+        copy the seller kept stops working at the gate).
+
+        **Idempotency:** `transfer_ref` is unique per (payment, ticket) and
+        stable across retries. A repeated `transfer_ref` MUST return the
+        original outcome without transferring again.
+
+        Implementations that don't support transfer yet answer
+        `result: "not_supported"` (HTTP 200) — TIKET then falls back to manual
+        ticket handover.
+      parameters:
+        - name: X-Tiket-Timestamp
+          in: header
+          required: true
+          schema: { type: string }
+        - name: X-Tiket-Signature
+          in: header
+          required: true
+          schema: { type: string }
+          description: Same HMAC scheme as /tiket/verify.
+        - name: X-Tiket-Version
+          in: header
+          required: false
+          schema: { type: string, const: "1" }
+        - name: X-Tiket-Key-Id
+          in: header
+          required: false
+          schema: { type: string }
+          description: Names the signing key (rotation support, v1.1). Ignore if single-secret.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TransferRequest" }
+      responses:
+        "200":
+          description: Transfer processed — business outcome in `result`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransferResponse" }
+        "400":
+          description: Malformed payload (missing barcode/transfer_ref/new_holder contact).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401":
+          description: Missing/invalid signature or timestamp outside the replay window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500":
+          description: Provider-side failure.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+components:
+  schemas:
+    VerifyRequest:
+      type: object
+      required: [api_version, request_id, ticket]
+      properties:
+        api_version: { type: string, const: "1" }
+        request_id:
+          type: string
+          description: Unique per request; echo it back for correlation.
+        ticket:
+          type: object
+          required: [barcode]
+          properties:
+            barcode: { type: string, description: "As printed/encoded on the ticket." }
+            event_name: { type: string, description: "Event name as the seller claims it." }
+            artist: { type: string }
+            venue: { type: string }
+            date: { type: string, format: date, examples: ["2026-08-15"] }
+            time: { type: string, examples: ["21:00"] }
+            section: { type: string }
+            row: { type: string }
+            seat: { type: string }
+            is_standing: { type: boolean }
+
+    VerifyResponse:
+      type: object
+      required: [api_version, result, confidence, matched_fields, unmatched_fields]
+      properties:
+        api_version: { type: string, const: "1" }
+        request_id: { type: string, description: "Echoed from the request." }
+        result:
+          type: string
+          enum: [match, mismatch, not_found]
+          description: |
+            match     — barcode found and the critical fields (barcode, artist/
+                        event, date, venue) agree.
+            mismatch  — barcode found but details disagree, or the ticket is
+                        not active. Treated by TIKET as hard evidence against
+                        the listing.
+            not_found — barcode is not in the provider's system (it may belong
+                        to a different provider — not treated as fraud).
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Share of comparable field weight that matched.
+        matched_fields:
+          type: array
+          items: { type: string }
+          description: e.g. ["barcode","artist","date","venue","seat"]
+        unmatched_fields:
+          type: array
+          items: { type: string }
+        ticket_status:
+          type: string
+          enum: [active, used, cancelled, refunded, transferred]
+          default: active
+          description: Present when the barcode was found.
+        ticket_ref:
+          type: string
+          description: Provider's internal ticket id — aids joint debugging.
+        event_ref:
+          type: string
+          description: Provider's internal event id.
+        original_price:
+          type: number
+          description: Face value. Optional but recommended — lets TIKET flag scalping above face value.
+        currency:
+          type: string
+          default: ILS
+
+    TransferRequest:
+      type: object
+      required: [api_version, request_id, transfer]
+      properties:
+        api_version: { type: string, const: "1" }
+        request_id: { type: string }
+        transfer:
+          type: object
+          required: [barcode, transfer_ref, new_holder]
+          properties:
+            barcode:
+              type: string
+              description: The seller's current barcode (the one that was verified).
+            ticket_ref:
+              type: string
+              description: Provider's internal id, echoed from the verify response when known.
+            transfer_ref:
+              type: string
+              description: Idempotency key, unique per (payment, ticket), stable across retries.
+              examples: ["TIKET-pi_3NqXyz-aB3dE9"]
+            new_holder:
+              type: object
+              description: The buyer. At least one of email/phone is always present.
+              properties:
+                first_name: { type: string }
+                last_name: { type: string }
+                email: { type: string }
+                phone: { type: string }
+
+    TransferResponse:
+      type: object
+      required: [api_version, result]
+      properties:
+        api_version: { type: string, const: "1" }
+        request_id: { type: string }
+        transfer_ref: { type: string, description: Echoed from the request. }
+        result:
+          type: string
+          enum: [transferred, rejected, not_found, not_supported]
+          description: |
+            transferred   — old barcode invalidated, ticket now belongs to the buyer.
+            rejected      — transfer refused (e.g. ticket not active); see reason.
+            not_found     — barcode unknown to this provider.
+            not_supported — this deployment doesn't implement transfers.
+        old_barcode_invalidated:
+          type: boolean
+          description: True on result=transferred.
+        new_barcode:
+          type: string
+          description: The re-issued barcode, when delivered back through TIKET.
+        barcode_format:
+          type: string
+          enum: [qr, code128, pdf417, aztec, ean13]
+          description: |
+            Symbology of new_barcode — REQUIRED for TIKET to render a barcode
+            your gate scanners can actually read (v1.1; strongly recommended
+            whenever new_barcode is present).
+        new_ticket_ref: { type: string }
+        delivery:
+          type: string
+          description: How the buyer receives the ticket.
+          enum: [new_barcode, email, app, provider]
+        reason:
+          type: string
+          examples: ["ticket_not_active:cancelled"]
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          examples: [invalid_signature, timestamp_out_of_range, missing_ticket_barcode, missing_transfer_fields, lookup_failed, transfer_failed]

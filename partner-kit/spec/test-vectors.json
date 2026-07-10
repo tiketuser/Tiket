@@ -1,0 +1,843 @@
+{
+  "spec": "tiket-connect",
+  "api_version": "1",
+  "generated_by": "partner-kit/spec/generate-vectors.js (Node reference implementation)",
+  "match_threshold": 90,
+  "critical_fields": [
+    "barcode",
+    "artist",
+    "date",
+    "venue"
+  ],
+  "signature": [
+    {
+      "key_id": "k_11aa22bb",
+      "secret": "spec-secret-A-0123456789abcdef0123456789",
+      "timestamp": "1783776000",
+      "body": "{\"api_version\":\"1\",\"request_id\":\"00000000-0000-4000-8000-000000000000\",\"ticket\":{\"barcode\":\"LN1234567890\",\"event_name\":\"עומר אדם — הופעה חיה\",\"artist\":\"עומר אדם\",\"venue\":\"היכל מנורה מבטחים\",\"date\":\"2030-08-15\",\"time\":\"21:00\",\"section\":\"5\",\"row\":\"12\",\"seat\":\"7\",\"is_standing\":false}}",
+      "expected_signature": "d4c322c2c2b8a756aef11623e2a5ec77d02e88c5fed22d7248eb9015f6e30191"
+    },
+    {
+      "key_id": "k_33cc44dd",
+      "secret": "spec-secret-B-fedcba9876543210fedcba9876",
+      "timestamp": "1783776000",
+      "body": "{\"api_version\":\"1\",\"request_id\":\"00000000-0000-4000-8000-000000000000\",\"ticket\":{\"barcode\":\"LN1234567890\",\"event_name\":\"עומר אדם — הופעה חיה\",\"artist\":\"עומר אדם\",\"venue\":\"היכל מנורה מבטחים\",\"date\":\"2030-08-15\",\"time\":\"21:00\",\"section\":\"5\",\"row\":\"12\",\"seat\":\"7\",\"is_standing\":false}}",
+      "expected_signature": "3b07c638921b9e8d794e50640a5f3f02eeb95a01efd51ff1dca59e0933e46c89"
+    },
+    {
+      "name": "signature must cover timestamp: same body, different ts, different sig",
+      "key_id": "k_11aa22bb",
+      "secret": "spec-secret-A-0123456789abcdef0123456789",
+      "timestamp": "1783776001",
+      "body": "{\"api_version\":\"1\",\"request_id\":\"00000000-0000-4000-8000-000000000000\",\"ticket\":{\"barcode\":\"LN1234567890\",\"event_name\":\"עומר אדם — הופעה חיה\",\"artist\":\"עומר אדם\",\"venue\":\"היכל מנורה מבטחים\",\"date\":\"2030-08-15\",\"time\":\"21:00\",\"section\":\"5\",\"row\":\"12\",\"seat\":\"7\",\"is_standing\":false}}",
+      "expected_signature": "7d54b09cbc70eef06f2f7ff3fb89ce9142635b17b9d17708d8467df193696425"
+    }
+  ],
+  "normalization": [
+    {
+      "fn": "date",
+      "input": "2030-08-15",
+      "expected": "2030-08-15"
+    },
+    {
+      "fn": "date",
+      "input": "15/08/2030",
+      "expected": "2030-08-15"
+    },
+    {
+      "fn": "date",
+      "input": "15.08.2030",
+      "expected": "2030-08-15"
+    },
+    {
+      "fn": "date",
+      "input": "2030-08-15T21:00:00Z",
+      "expected": "2030-08-15"
+    },
+    {
+      "fn": "date",
+      "input": "1/2/2030",
+      "expected": "2030-02-01"
+    },
+    {
+      "fn": "date",
+      "input": "not a date",
+      "expected": "not a date"
+    },
+    {
+      "fn": "time",
+      "input": "21:00",
+      "expected": "21:00"
+    },
+    {
+      "fn": "time",
+      "input": "21:00:00",
+      "expected": "21:00"
+    },
+    {
+      "fn": "time",
+      "input": " 21:00 ",
+      "expected": "21:00"
+    },
+    {
+      "fn": "time",
+      "input": "9:05",
+      "expected": "09:05"
+    },
+    {
+      "fn": "time",
+      "input": "",
+      "expected": ""
+    },
+    {
+      "fn": "text",
+      "input": "  Foo   Bar ",
+      "expected": "foo bar"
+    },
+    {
+      "fn": "text",
+      "input": "ABC",
+      "expected": "abc"
+    },
+    {
+      "fn": "text",
+      "input": "עומר   אדם",
+      "expected": "עומר אדם"
+    },
+    {
+      "fn": "text",
+      "input": "",
+      "expected": ""
+    },
+    {
+      "fn": "seat",
+      "input": "07",
+      "expected": "7"
+    },
+    {
+      "fn": "seat",
+      "input": "007",
+      "expected": "7"
+    },
+    {
+      "fn": "seat",
+      "input": "7",
+      "expected": "7"
+    },
+    {
+      "fn": "seat",
+      "input": "A12",
+      "expected": "a12"
+    },
+    {
+      "fn": "seat",
+      "input": "0",
+      "expected": "0"
+    }
+  ],
+  "comparison": [
+    {
+      "name": "exact match, fully seated",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "seat parts with leading zeros normalize ('07' == '7')",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "05",
+        "row": "012",
+        "seat": "07",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "wrong date is a critical failure even when everything else matches",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-16",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 82,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [
+          "date"
+        ],
+        "critical_failed": true,
+        "result": "mismatch"
+      }
+    },
+    {
+      "name": "date format equivalence: DD/MM/YYYY claim vs ISO record",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "15/08/2030",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "venue containment (claim shorter than record)",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "artist matches via record event_name only",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "artist mismatch is critical",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "",
+        "artist": "נועה קירל",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 82,
+        "matched_fields": [
+          "barcode",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [
+          "artist"
+        ],
+        "critical_failed": true,
+        "result": "mismatch"
+      }
+    },
+    {
+      "name": "barcode mismatch (lookup bug guard) is critical",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN9999999999",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 64,
+        "matched_fields": [
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [
+          "barcode"
+        ],
+        "critical_failed": true,
+        "result": "mismatch"
+      }
+    },
+    {
+      "name": "standing ticket both sides",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "",
+        "row": "",
+        "seat": "",
+        "is_standing": true
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "",
+        "row": "",
+        "seat": "",
+        "is_standing": true,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "seat_type"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "claim standing but record seated",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "",
+        "row": "",
+        "seat": "",
+        "is_standing": true
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 91,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time"
+        ],
+        "unmatched_fields": [
+          "seat_type"
+        ],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "time mismatch alone stays a match (non-critical)",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "20:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 95,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [
+          "time"
+        ],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "record without time — field not comparable, no penalty",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "seconds tolerated in time ('21:00:00' == '21:00')",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "single seat-part mismatch (wrong row) is non-critical",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "13",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 97,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time",
+          "section",
+          "seat"
+        ],
+        "unmatched_fields": [
+          "row"
+        ],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "neither side has seat details — seat fields neutral",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "",
+        "row": "",
+        "seat": "",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "",
+        "row": "",
+        "seat": "",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 100,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "venue",
+          "time"
+        ],
+        "unmatched_fields": [],
+        "critical_failed": false,
+        "result": "match"
+      }
+    },
+    {
+      "name": "wrong venue is critical",
+      "claim": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "פארק הירקון",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false
+      },
+      "record": {
+        "barcode": "LN1234567890",
+        "event_name": "עומר אדם — הופעה חיה",
+        "artist": "עומר אדם",
+        "venue": "היכל מנורה מבטחים",
+        "date": "2030-08-15",
+        "time": "21:00",
+        "section": "5",
+        "row": "12",
+        "seat": "7",
+        "is_standing": false,
+        "status": "active"
+      },
+      "expected": {
+        "confidence": 86,
+        "matched_fields": [
+          "barcode",
+          "artist",
+          "date",
+          "time",
+          "section",
+          "row",
+          "seat"
+        ],
+        "unmatched_fields": [
+          "venue"
+        ],
+        "critical_failed": true,
+        "result": "mismatch"
+      }
+    }
+  ]
+}
