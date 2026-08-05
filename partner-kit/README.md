@@ -25,6 +25,8 @@ kept PDF copy worthless.
 | Item | What it is |
 | --- | --- |
 | [`INTEGRATION_GUIDE.md`](INTEGRATION_GUIDE.md) | **Start here** — path chooser + full guide for the partner's engineering team (Hebrew TL;DR inside). |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | The whole system at a glance — flowcharts for every path and flow (verify, transfer, enrollment, rotation). |
+| [`HOW_IT_WORKS_HE.md`](HOW_IT_WORKS_HE.md) | הסבר לא-טכני בעברית — how it all works, in plain Hebrew, for non-technical readers. |
 | [`SECURITY.md`](SECURITY.md) | Threat model & security analysis, written for the partner's security team. |
 | [`agent/`](agent/) | The Tiket Connect Agent — static Go binary, outbound-only, `http` or zero-code `sql` lookup. |
 | [`examples/lookup-endpoint/`](examples/lookup-endpoint/) | The partner's ~20 lines, ready to copy: Node / PHP / Python / .NET / Java. |
