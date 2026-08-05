@@ -38,11 +38,20 @@ kept PDF copy worthless.
 
 Partner side:
 
+```bash
+# 1. download + verify the agent (stable URL — see agent/README.md for macOS/Windows/arm64)
+BASE=https://github.com/tiketuser/Tiket/releases/latest/download
+curl -fsSLO $BASE/tiket-agent_linux_amd64.tar.gz && curl -fsSLO $BASE/SHA256SUMS
+sha256sum -c SHA256SUMS --ignore-missing && tar xzf tiket-agent_linux_amd64.tar.gz
+
+# 2. connect your data: implement examples/lookup-endpoint/<your-language>
+#    (or configure one read-only SQL query — zero code)
+# 3. enroll once + run
+./tiket-agent enroll --token <pairing token from TIKET>
+./tiket-agent run                 # logs "…polling relay… connected"
 ```
-# 1. implement examples/lookup-endpoint/<your-language>  (or configure one read-only SQL query)
-# 2. tiket-agent enroll --token <pairing token from TIKET>
-# 3. tiket-agent run
-```
+
+Full step-by-step: **[`agent/README.md` → Deploy in 5 minutes](agent/README.md#deploy-in-5-minutes)**.
 
 TIKET side: the provider card in `/Admin/venue-providers` shows the agent
 online, "בדוק חיבור" runs a synthetic verification through the relay — done:

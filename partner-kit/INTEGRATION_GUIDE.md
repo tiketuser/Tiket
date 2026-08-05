@@ -53,9 +53,20 @@ connections to TIKET (the SAP Cloud Connector / Cloudflare Tunnel pattern).
 Nothing on your side is reachable from the internet; your firewall team does
 nothing beyond (maybe) allowing egress to `tiket.co.il:443`.
 
-Full agent docs: [`agent/README.md`](agent/README.md). The short version:
+Canonical runbook: [`agent/README.md` → **Deploy in 5 minutes**](agent/README.md#deploy-in-5-minutes).
+The short version:
 
-**1. Get your ticket data connected — two options:**
+**1. Download the agent and verify it** against `SHA256SUMS` — one stable URL,
+no build step (macOS/Windows/arm64 variants on the releases page):
+
+```bash
+BASE=https://github.com/tiketuser/Tiket/releases/latest/download
+curl -fsSLO $BASE/tiket-agent_linux_amd64.tar.gz && curl -fsSLO $BASE/SHA256SUMS
+sha256sum -c SHA256SUMS --ignore-missing && tar xzf tiket-agent_linux_amd64.tar.gz
+./tiket-agent selftest        # offline: proves the build matches the protocol vectors
+```
+
+**2. Get your ticket data connected — two options:**
 
 - **~20 lines of code** (any language): an *internal-only* HTTP route,
   barcode in → ticket JSON out. Copy-paste starters for Node/PHP/Python/.NET/
@@ -64,22 +75,25 @@ Full agent docs: [`agent/README.md`](agent/README.md). The short version:
   SQL Server) with a **read-only DB user**. Column aliases map to the
   protocol fields — no mapping configuration.
 
-**2. Configure** (`tiket-agent.conf`): the shared secret TIKET generated for
-you + your lookup source. See [`agent/config.example.conf`](agent/config.example.conf).
+**3. Configure** (`tiket-agent.conf`): the shared secret + key id TIKET
+generated for you, `relay_url = https://tiket.co.il`, and your lookup source.
+See [`agent/config.example.conf`](agent/config.example.conf).
 
-**3. Enroll once** with the one-time pairing token TIKET sends you:
+**4. Enroll once** with the one-time pairing token TIKET sends you, then run:
 
 ```
 tiket-agent enroll --token <pairing token>
-tiket-agent run
+tiket-agent run                # logs "…polling relay… connected" — your success signal
 ```
 
-TIKET's panel shows the agent online within seconds, and a "test connection"
-runs a synthetic verification end to end. Run `tiket-agent selftest` anytime
-to validate a build with no TIKET involvement.
+The "connected" log line confirms the outbound long-poll is live *from your
+side*. On TIKET's side the panel flips the agent to online within seconds and
+"test connection" runs a synthetic verification end to end — and if the demo
+lookup is still serving barcode `1000000000001`, that round-trip returns a
+real `match` as a dry run before you point it at production data.
 
 Run it as a systemd unit, Windows service, or container — recipes in the
-agent README. Verify the binary against `SHA256SUMS` from the release.
+agent README.
 
 ---
 
