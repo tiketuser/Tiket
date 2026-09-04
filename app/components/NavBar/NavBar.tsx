@@ -6,6 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { LogIn, UserPlus, Mail, LogOut, ShieldCheck, HelpCircle, FileText, Lock } from "lucide-react";
 import { cn } from "../../../lib/utils";
+import { isAdminUser } from "@/lib/isAdminClient";
 import {
   getAuth,
   onAuthStateChanged,
@@ -44,6 +45,7 @@ const UploadTicketDialog = dynamic(
 
 const NavBar = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [navIsAdmin, setNavIsAdmin] = useState(false);
   const [isAuthDialogOpen, setAuthDialogOpen] = useState(false);
   const [authDialogMode, setAuthDialogMode] = useState<"login" | "signup">("login");
   const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
@@ -104,9 +106,10 @@ const NavBar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Check if user is admin
-  const isAdmin =
-    user?.email === "tiketbizzz@gmail.com" || user?.email === "admin@tiket.com";
+  // Admin nav visibility follows the unforgeable `admin` custom claim (same
+  // signal the server gates on), resolved from the token in the auth effect
+  // below — never a hardcoded email list.
+  const isAdmin = navIsAdmin;
 
   useEffect(() => {
     if (!hasValidConfig) {
@@ -118,6 +121,7 @@ const NavBar = () => {
     setPersistence(auth, browserLocalPersistence);
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
+      isAdminUser(firebaseUser).then(setNavIsAdmin);
     });
     return () => unsubscribe();
   }, []);

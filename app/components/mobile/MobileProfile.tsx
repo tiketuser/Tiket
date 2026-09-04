@@ -23,6 +23,7 @@ import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
 import { hebDate, nis } from "./format";
 import { resolveEventImage } from "@/utils/defaultImages";
+import { isAdminUser } from "@/lib/isAdminClient";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
@@ -36,8 +37,6 @@ type Order = {
   imageUrl: string;
 };
 
-// Must stay in sync with AdminProtection / NavBar admin email lists
-const ADMIN_EMAILS = ["tiketbizzz@gmail.com", "admin@tiket.com"];
 
 const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/Admin", label: "יצירת אירועים" },
@@ -80,6 +79,7 @@ function getTime(t: unknown): number | null {
 export default function MobileProfile() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -89,6 +89,7 @@ export default function MobileProfile() {
     return onAuthStateChanged(getAuth(), (u) => {
       setUser(u);
       setAuthReady(true);
+      isAdminUser(u).then(setIsAdmin);
     });
   }, []);
 
@@ -508,8 +509,8 @@ export default function MobileProfile() {
           </div>
         </section>
 
-        {/* Admin panel — only for admin accounts */}
-        {user?.email && ADMIN_EMAILS.includes(user.email) && (
+        {/* Admin panel — only for accounts with the `admin` custom claim */}
+        {isAdmin && (
           <section>
             <div
               style={{

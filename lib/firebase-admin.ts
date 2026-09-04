@@ -10,25 +10,15 @@ import { getFirestore, Firestore } from "firebase-admin/firestore";
 /**
  * Decide whether a verified ID token belongs to an admin.
  *
- * Primary (unforgeable): the `admin` custom claim, set server-side only via
- * `set-admin-claim.js` / `POST /api/admin/users`. Fallback: an allow-listed
- * email that Firebase has confirmed the user actually owns (`email_verified`).
- * The email fallback intentionally has NO hardcoded default — a missing
- * `ADMIN_EMAILS` env var fails closed, and email/password sign-up alone can
- * never satisfy it because unverified emails are rejected.
+ * Single source of truth: the `admin` custom claim, set server-side only via
+ * `set-admin-claim.js` / `POST /api/admin/users` and unforgeable by clients.
+ * This matches `checkIsAdmin` in authMiddleware and every client gate
+ * (`isAdminUser`), so UI and API can never disagree. Bootstrap a first admin
+ * with `node set-admin-claim.js <email>` (the documented break-glass); there is
+ * intentionally no email-allowlist fallback to drift out of sync.
  */
 export function isAdminFromToken(decodedToken: DecodedIdToken): boolean {
-  if (decodedToken.admin === true) return true;
-
-  const email = decodedToken.email;
-  if (!email || decodedToken.email_verified !== true) return false;
-
-  const allowList = (process.env.ADMIN_EMAILS || "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
-  return allowList.includes(email.toLowerCase());
+  return decodedToken.admin === true;
 }
 
 let adminApp: App | null = null;
