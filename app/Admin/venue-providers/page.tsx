@@ -478,20 +478,21 @@ export default function VenueProvidersPage() {
           <NavBar />
         </div>
 
-        <main className="max-w-4xl mx-auto px-4 py-10">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-heading-4-desktop font-bold text-primary mb-2">
+        <main className="max-w-6xl mx-auto px-4 md:px-8 py-10 md:py-14">
+          {/* Header — compact on mobile (the sticky bar already shows the title),
+              full desktop scale from md up to match the other admin pages. */}
+          <div className="text-center md:text-right mb-8 md:mb-10">
+            <h1 className="text-heading-4-desktop md:text-heading-2-desktop font-bold text-primary mb-2">
               ניהול ספקי API לאימות כרטיסים
             </h1>
-            <p className="text-text-small text-mutedText max-w-xl mx-auto leading-relaxed">
+            <p className="text-text-small md:text-text-regular text-mutedText max-w-xl md:max-w-2xl mx-auto md:mx-0 leading-relaxed">
               הגדר את מערכות הכרטוס של האולמות שאתה עובד איתם.
               כשמשתמש מעלה כרטיס, המערכת תשלח את פרטיו לספק המתאים ותקבל אישור אם הכרטיס אמיתי.
             </p>
           </div>
 
           {/* Status banner */}
-          <div className="bg-secondary/20 border border-secondary rounded-2xl p-4 mb-6 flex flex-wrap gap-5 text-sm justify-center">
+          <div className="bg-secondary/20 border border-secondary rounded-2xl p-4 mb-6 flex flex-wrap gap-5 text-sm justify-center md:justify-start">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
               <span className="text-strongText">

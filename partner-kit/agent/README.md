@@ -139,7 +139,68 @@ nssm install TiketAgent C:\tiket\tiket-agent.exe run --config C:\tiket\tiket-age
 nssm start TiketAgent
 ```
 
-**Docker**: see the `Dockerfile` header. The container exposes no ports.
+### Docker
+
+The included `Dockerfile` builds a minimal distroless image that makes
+**outbound HTTPS only — no ports are exposed**. Enrollment writes credentials
+into a named volume once; the long-lived `run` container reuses them.
+
+**1. Build** (from this directory — needs outbound internet for `go mod download`):
+
+```
+docker build -t tiket-agent .
+```
+
+**2. Enroll once** — stores `credentials.json` in the `tiket-agent-data` volume
+(the pairing token is single-use, valid 24h):
+
+```
+docker run --rm \
+  -v "$(pwd)/tiket-agent.conf:/etc/tiket/tiket-agent.conf:ro" \
+  -v tiket-agent-data:/var/lib/tiket \
+  tiket-agent enroll --token <pairing token> --config /etc/tiket/tiket-agent.conf
+```
+
+**3. Run** (auto-restart, no ports; the default command is
+`run --config /etc/tiket/tiket-agent.conf`):
+
+```
+docker run -d --name tiket-agent --restart unless-stopped \
+  -v "$(pwd)/tiket-agent.conf:/etc/tiket/tiket-agent.conf:ro" \
+  -v tiket-agent-data:/var/lib/tiket \
+  tiket-agent
+```
+
+**4. Verify:** `docker logs -f tiket-agent` → `…polling relay… connected`, and
+the TIKET panel shows the agent online.
+
+Or with **docker-compose**:
+
+```yaml
+services:
+  tiket-agent:
+    build: .            # or image: tiket-agent
+    restart: unless-stopped
+    volumes:
+      - ./tiket-agent.conf:/etc/tiket/tiket-agent.conf:ro
+      - tiket-agent-data:/var/lib/tiket
+volumes:
+  tiket-agent-data:
+```
+
+```
+docker compose run --rm tiket-agent enroll --token <pairing token> --config /etc/tiket/tiket-agent.conf
+docker compose up -d
+```
+
+Two gotchas:
+
+- **Reaching your data:** inside the container `127.0.0.1` is the container, not
+  the host. Point `sql_dsn` / `lookup_url` at a hostname the container can reach
+  — the real DB host, a shared Docker network, or add
+  `--add-host=host.docker.internal:host-gateway` and use `host.docker.internal`.
+- **Upgrades:** rebuild the image and recreate the container, but keep the same
+  `tiket-agent-data` volume so the agent stays enrolled (no re-pairing).
 
 ## Configuration
 
