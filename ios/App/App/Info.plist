@@ -54,5 +54,9 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>האפליקציה משתמשת במצלמה כדי לצלם את הכרטיס שברצונך למכור, לצורך אימות מול מערכות הכרטוס.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>האפליקציה ניגשת לתמונות כדי שתוכל להעלות צילום של הכרטיס לצורך אימות.</string>
 </dict>
 </plist>
