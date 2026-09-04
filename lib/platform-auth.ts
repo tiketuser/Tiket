@@ -46,8 +46,14 @@ export async function signInWithAppleCrossPlatform(): Promise<UserCredential | n
     throw new Error("Apple Sign-In is only available on iOS native");
   }
 
+  // skipNativeAuth: true so the plugin does NOT sign into the native Firebase
+  // SDK itself — it just returns the Apple idToken + the RAW (unhashed) nonce so
+  // we can complete sign-in through the Firebase JS SDK below. With the default
+  // (false) the native layer consumes the nonce and the JS signInWithCredential
+  // fails on nonce mismatch right after the Apple sheet closes.
   const result = await FirebaseAuthentication.signInWithApple({
     scopes: ["email", "name"],
+    skipNativeAuth: true,
   });
   const idToken = result.credential?.idToken;
   const rawNonce = result.credential?.nonce;

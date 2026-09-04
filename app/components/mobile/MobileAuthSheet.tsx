@@ -284,7 +284,11 @@ const MobileAuthSheet: React.FC<Props> = ({
     } catch (err) {
       if (isAuthCancellation(err)) return;
       console.error("[MobileAuthSheet] apple failed:", err);
-      setError("ההתחברות עם Apple נכשלה. נסה שוב");
+      const code =
+        (err as { code?: string; message?: string })?.code ||
+        (err as { message?: string })?.message ||
+        "";
+      setError(code ? `ההתחברות עם Apple נכשלה: ${code}` : "ההתחברות עם Apple נכשלה. נסה שוב");
     } finally {
       setSubmitting(false);
     }
