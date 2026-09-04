@@ -16,7 +16,7 @@ import {
   signInWithAppleCrossPlatform,
   isAuthCancellation,
 } from "../../../lib/platform-auth";
-import { isIOS, isNative } from "../../../lib/platform";
+import { isIOS } from "../../../lib/platform";
 
 type AuthMode = "login" | "signup";
 
@@ -123,7 +123,10 @@ const MobileAuthSheet: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
-  const showApple = isIOS() || isNative();
+  // Apple sign-in is offered only on iOS (getPlatform() === "ios"). isNative()
+  // is also true on Android, so it must NOT be part of this check or the button
+  // leaks onto Android where Sign in with Apple isn't available.
+  const showApple = isIOS();
 
   // In the checkout flow the parent advances to payment; elsewhere just close.
   const finishSuccess = () => {
