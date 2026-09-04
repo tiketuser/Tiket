@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { getAuth } from "firebase/auth";
 import { apiFetch } from "@/lib/platform";
 
@@ -98,8 +99,11 @@ export default function ManageArtistsPage() {
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-background pt-24 pb-12">
+      <MobileAdminChrome title="ניהול אמנים" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-background pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-large p-8 mb-8">
@@ -256,7 +260,9 @@ export default function ManageArtistsPage() {
           </div>
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }

@@ -35,7 +35,10 @@ const StepFourBankDetails: React.FC<UploadTicketInterface> = ({
     }
 
     const user = getAuth().currentUser;
-    if (!user) return;
+    if (!user) {
+      setError("יש להתחבר לחשבון כדי לשמור פרטי תשלום");
+      return;
+    }
 
     setSaving(true);
     setError(null);

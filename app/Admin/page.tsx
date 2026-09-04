@@ -16,6 +16,7 @@ import {
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { getDefaultCategoryImage } from "../theme/defaultCategoryImages";
 import { apiFetch } from "@/lib/platform";
 
@@ -424,8 +425,11 @@ export default function AdminPage() {
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-white py-12 px-4">
+      <MobileAdminChrome title="יצירת אירועים" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-white py-12 px-4">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
@@ -936,7 +940,9 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }

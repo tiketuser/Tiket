@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { db, collection, getDocs } from "../../firebase";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 
@@ -55,8 +56,11 @@ export default function DiagnosticPage() {
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="p-8 max-w-7xl mx-auto" dir="rtl">
+      <MobileAdminChrome title="אבחון מערכת" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin p-8 max-w-7xl mx-auto" dir="rtl">
         <h1 className="text-3xl font-bold mb-8">אבחון מסד נתונים</h1>
 
         {/* Summary */}
@@ -371,7 +375,9 @@ export default function DiagnosticPage() {
           )}
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }

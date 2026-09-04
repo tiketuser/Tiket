@@ -143,7 +143,9 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
       console.error("Upload error:", error);
       const errorMessage = error.message || "שגיאה בעיבוד";
       setUploadStatus(`${errorMessage} - נסה שוב או מלא ידנית`);
-      updateTicketData({ isProcessing: false });
+      // Keep the file so the user can still proceed and fill in the ticket
+      // details manually in step 3 — only extraction failed, not the upload.
+      updateTicketData({ isProcessing: false, uploadedFile: file });
     }
   };
 

@@ -1,14 +1,12 @@
 /**
  * Artist name matching utilities (CLIENT-SAFE)
  * Handles Hebrew/English variations and fuzzy matching
- * 
+ *
  * This file contains NO server-only imports and is safe to use in client components.
- * For server-side Firestore alias loading, use artistMatcherServer.ts instead.
  */
 
 // Common artist name mappings (Hebrew ↔ English)
-// These are default aliases used as fallback when Firestore is unavailable
-export const DEFAULT_ARTIST_ALIASES: { [key: string]: string[] } = {
+const ARTIST_ALIASES: { [key: string]: string[] } = {
   // Key is normalized name, values are all variations
   "omer adam": ["עומר אדם", "omer adam", "umeradam"],
   "static and ben el tavori": ["סטטיק ובן אל תבורי", "static and ben el", "static & ben el tavori", "סטטיק בן אל"],
@@ -32,24 +30,6 @@ export const DEFAULT_ARTIST_ALIASES: { [key: string]: string[] } = {
   "hadag nahash": ["הדג נחש", "hadag nahash", "the fish snake"],
   "dennis lloyd": ["דניס לויד","Dennis Lloyd"],
 };
-
-// Runtime alias storage (combines default + Firestore aliases)
-export let ARTIST_ALIASES: { [key: string]: string[] } = { ...DEFAULT_ARTIST_ALIASES };
-
-/**
- * Merge Firestore-loaded aliases into the runtime alias store.
- * Called from artistMatcherServer.ts after loading from Firestore.
- */
-export function setFirestoreAliases(firestoreAliases: { [key: string]: string[] }): void {
-  ARTIST_ALIASES = { ...DEFAULT_ARTIST_ALIASES, ...firestoreAliases };
-}
-
-/**
- * Get current aliases (includes both default and Firestore)
- */
-export function getArtistAliases(): { [key: string]: string[] } {
-  return ARTIST_ALIASES;
-}
 
 /**
  * Normalize string for comparison
@@ -147,21 +127,6 @@ export function artistNamesMatch(name1: string, name2: string, threshold: number
 }
 
 /**
- * Get canonical artist name if exists in aliases
- */
-export function getCanonicalArtistName(artistName: string): string {
-  const normalized = normalizeString(artistName);
-  
-  for (const [canonical, aliases] of Object.entries(ARTIST_ALIASES)) {
-    if (aliases.map(normalizeString).includes(normalized)) {
-      return canonical;
-    }
-  }
-  
-  return normalized; // Return normalized version if no alias found
-}
-
-/**
  * Suggest matching artist from a list
  */
 export function findBestArtistMatch(
@@ -189,21 +154,4 @@ export function findBestArtistMatch(
   }
 
   return { match: bestMatch, score: bestScore };
-}
-
-/**
- * Add artist alias dynamically (for runtime customization)
- * Note: This only affects the in-memory cache, not Firestore
- * For persistent storage, use the API endpoint
- */
-export function addArtistAlias(canonical: string, alias: string): void {
-  const canonicalNorm = normalizeString(canonical);
-  
-  if (!ARTIST_ALIASES[canonicalNorm]) {
-    ARTIST_ALIASES[canonicalNorm] = [canonical];
-  }
-  
-  if (!ARTIST_ALIASES[canonicalNorm].includes(alias)) {
-    ARTIST_ALIASES[canonicalNorm].push(alias);
-  }
 }

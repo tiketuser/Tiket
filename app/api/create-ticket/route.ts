@@ -90,11 +90,13 @@ export async function POST(request: NextRequest) {
         ? "pending_approval"
         : "rejected";
 
+    // Every field must be defined — the Admin SDK rejects documents containing
+    // `undefined` (the mobile quick-sell flow omits date/artist/venue entirely).
     const ticketDoc: Record<string, unknown> = {
       eventId: t.eventId || null,
       artist: t.artist || "",
       category: t.category || "מוזיקה",
-      date: t.date,
+      date: t.date || "",
       time: t.time || "",
       venue: t.venue || "",
       section: t.section || "",
@@ -120,6 +122,10 @@ export async function POST(request: NextRequest) {
         officialTicketId: verification.details?.officialTicketId || null,
         eventId: verification.details?.eventId || null,
         ticketingSystem: verification.details?.ticketingSystem || null,
+        // Which provider vouched — needed to route the ownership transfer after sale.
+        providerId: verification.details?.providerId || null,
+        // Provider-reported face value — lets admins spot price gouging at review.
+        originalPrice: verification.details?.originalPrice ?? null,
         reason: verification.reason,
       },
       verificationTimestamp: new Date(),
@@ -161,8 +167,10 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Seed mock_tickets for future duplicate detection (server-side; the
-    // client cannot write this collection). Best-effort. ──
-    if (barcode) {
+    // client cannot write this collection). Best-effort. Skipped for minimal
+    // quick-sell listings — an entry with no artist/venue is useless noise in
+    // the demo verification data. ──
+    if (barcode && ticketDoc.artist) {
       try {
         await adminDb.collection("mock_tickets").add({
           barcode,

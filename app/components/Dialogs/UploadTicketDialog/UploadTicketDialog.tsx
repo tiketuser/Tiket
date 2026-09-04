@@ -13,13 +13,7 @@ import StepFiveUploadTicket from "./UploadTicketSteps/StepFiveUploadTicket";
 import { TicketData } from "./UploadTicketSteps/UploadTicketInterface.types";
 
 // Firebase imports
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  Firestore,
-} from "firebase/firestore";
+import { collection, query, getDocs } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../../../../firebase";
 import { artistNamesMatch } from "../../../../utils/artistMatcher";
@@ -28,6 +22,60 @@ import { apiFetch } from "@/lib/platform";
 interface UploadTicketInterface {
   isOpen: boolean;
   onClose: () => void;
+}
+
+// ─── Normalization helpers for event matching ───────────────────────────────
+
+const HEBREW_MONTHS: Record<string, string> = {
+  ינואר: "01",
+  פברואר: "02",
+  מרץ: "03",
+  אפריל: "04",
+  מאי: "05",
+  יוני: "06",
+  יולי: "07",
+  אוגוסט: "08",
+  ספטמבר: "09",
+  אוקטובר: "10",
+  נובמבר: "11",
+  דצמבר: "12",
+};
+
+const ENGLISH_MONTHS: Record<string, string> = {
+  jan: "01",
+  feb: "02",
+  mar: "03",
+  apr: "04",
+  may: "05",
+  jun: "06",
+  jul: "07",
+  aug: "08",
+  sep: "09",
+  oct: "10",
+  nov: "11",
+  dec: "12",
+};
+
+const normalizeString = (str: string) =>
+  str.trim().toLowerCase().replace(/\s+/g, " ");
+
+// Normalize assorted OCR date formats ("6.8.25", "06 DEC", "6 בדצמבר") to dd/mm/yyyy
+function normalizeDate(dateStr: string): string {
+  const normalized = dateStr.replace(/\./g, "/");
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(normalized)) {
+    const [d, m, y] = normalized.split("/");
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  }
+  const parts = dateStr.trim().split(/[\s/\-.]+/);
+  if (parts.length >= 2) {
+    const day = parts[0].padStart(2, "0");
+    const monthKey = parts[1].toLowerCase();
+    const month =
+      HEBREW_MONTHS[monthKey] || ENGLISH_MONTHS[monthKey.substring(0, 3)];
+    const year = parts[2] || new Date().getFullYear().toString();
+    if (month) return `${day}/${month}/${year}`;
+  }
+  return dateStr;
 }
 
 const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
@@ -51,14 +99,9 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
 
   // Save current ticket and add another
   const saveAndAddAnother = (updatedTicketData?: TicketData) => {
-    // Use provided data or current ticketData
     const dataToSave = updatedTicketData || ticketData;
-    console.log("saveAndAddAnother - saving ticket:", dataToSave);
-    // Save current ticket to the list
     setSavedTickets((prev) => [...prev, dataToSave]);
-    // Reset current ticket data
     setTicketData({});
-    // Go back to step 1
     setStep(1);
   };
 
@@ -116,7 +159,6 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     }
   };
 
-  // Enhanced nextStep function
   const nextStep = async () => {
     setIsTransitioning(true);
     setTimeout(() => {
@@ -153,17 +195,12 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     setIsTransitioning(false);
   };
 
-  // Function to update ticket data
   const updateTicketData = (updates: Partial<TicketData>) => {
-    console.log("UploadTicketDialog - updateTicketData called with:", updates);
-    setTicketData((prev) => {
-      const newData = { ...prev, ...updates };
-      console.log("UploadTicketDialog - new ticketData state:", newData);
-      return newData;
-    });
+    setTicketData((prev) => ({ ...prev, ...updates }));
   };
 
-  // Reset dialog state when closing
+  // Reset dialog state when closing (also wired to the dialog's X button so a
+  // mid-flow close never leaves stale tickets behind for the next open)
   const handleClose = () => {
     setStep(1);
     setTicketData({});
@@ -171,6 +208,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     setIsPublishing(false);
     setPublishError(null);
     setPublishSuccess(null);
+    setPublishWarning(null);
     setCanSplit(true);
     setShowAuthDialog(false);
     setBankStepSkipped(false);
@@ -178,352 +216,79 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     onClose();
   };
 
-  // Find or create event, then publish tickets
+  /**
+   * Publish every saved ticket through the server-authoritative
+   * /api/create-ticket route. The server re-runs venue verification, enforces
+   * barcode uniqueness in a transaction (409 on duplicates) and decides each
+   * ticket's status — so no client-side pre-checks are needed here.
+   */
   const publishAllTickets = async () => {
-    console.log("publishAllTickets called, savedTickets:", savedTickets);
-
     if (!db) {
-      console.error("Firebase not initialized:", { db });
       setPublishError("מסד הנתונים לא זמין כרגע");
       return false;
     }
-
+    const currentUser = getAuth().currentUser;
+    if (!currentUser) {
+      setPublishError("יש להתחבר לחשבון כדי לפרסם כרטיסים");
+      return false;
+    }
     const firestore = db;
+
     setIsPublishing(true);
     setPublishError(null);
     setPublishSuccess(null);
+    setPublishWarning(null);
 
     try {
-      console.log(`Starting to publish ${savedTickets.length} tickets`);
-      let publishedCount = 0;
-      let skippedCount = 0;
-      let verifiedCount = 0; // Auto-approved tickets
-      let needsReviewCount = 0; // Manual review needed
-      let rejectedCount = 0; // Failed verification
+      const authToken = await currentUser.getIdToken();
 
-      // Group tickets by event (artist + date + venue)
-      const ticketsByConcert = new Map<string, typeof savedTickets>();
-
+      // Group tickets by event (artist + date + venue) so each group shares
+      // an eventId and, when it holds 2+ tickets, a bundleId
+      const ticketsByEvent = new Map<string, TicketData[]>();
       for (const ticket of savedTickets) {
-        const eventKey = `${ticket.ticketDetails?.artist}-${ticket.ticketDetails?.date}-${ticket.ticketDetails?.venue}`;
-        if (!ticketsByConcert.has(eventKey)) {
-          ticketsByConcert.set(eventKey, []);
-        }
-        ticketsByConcert.get(eventKey)?.push(ticket);
+        const d = ticket.ticketDetails;
+        const key = `${d?.artist}-${d?.date}-${d?.venue}`;
+        const group = ticketsByEvent.get(key);
+        if (group) group.push(ticket);
+        else ticketsByEvent.set(key, [ticket]);
       }
 
-      console.log(`Found ${ticketsByConcert.size} unique events`);
+      // Fetch all events once and match in code — Firestore queries are
+      // case-sensitive, so flexible matching can't be done in the query
+      const allEvents = await getDocs(query(collection(firestore, "events")));
 
-      // Process each event group
-      for (const [eventKey, tickets] of ticketsByConcert) {
-        const firstTicket = tickets[0];
-        const artist = firstTicket.ticketDetails?.artist || "";
-        const date = firstTicket.ticketDetails?.date || "";
-        const venue = firstTicket.ticketDetails?.venue || "";
-        const time = firstTicket.ticketDetails?.time || "";
+      let verifiedCount = 0;
+      let needsReviewCount = 0;
+      let rejectedCount = 0;
+      let duplicateCount = 0;
 
-        console.log(`Processing event: ${artist} on ${date} at ${venue}`);
+      for (const tickets of ticketsByEvent.values()) {
+        const first = tickets[0].ticketDetails;
+        const artist = first?.artist || "";
+        const normalizedVenue = normalizeString(first?.venue || "");
+        const normalizedDate = normalizeDate(first?.date || "");
 
-        // Normalize strings for better matching
-        const normalizeString = (str: string) =>
-          str.trim().toLowerCase().replace(/\s+/g, " ");
-
-        // Normalize date to dd/mm/yyyy format
-        const normalizeDate = (dateStr: string): string => {
-          // Convert dots to slashes first
-          const normalized = dateStr.replace(/\./g, "/");
-
-          // If already in dd/mm/yyyy format (possibly single-digit), zero-pad and return
-          if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(normalized)) {
-            const [d, m, y] = normalized.split("/");
-            return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
-          }
-
-          // Try to parse other date formats
-          // Format: "DD MMM" or "DD MMMM" (e.g., "06 DEC" or "6 בדצמבר")
-          const hebrewMonths: { [key: string]: string } = {
-            ינואר: "01",
-            פברואר: "02",
-            מרץ: "03",
-            אפריל: "04",
-            מאי: "05",
-            יוני: "06",
-            יולי: "07",
-            אוגוסט: "08",
-            ספטמבר: "09",
-            אוקטובר: "10",
-            נובמבר: "11",
-            דצמבר: "12",
-          };
-
-          const englishMonths: { [key: string]: string } = {
-            jan: "01",
-            feb: "02",
-            mar: "03",
-            apr: "04",
-            may: "05",
-            jun: "06",
-            jul: "07",
-            aug: "08",
-            sep: "09",
-            oct: "10",
-            nov: "11",
-            dec: "12",
-          };
-
-          // Try parsing "DD MMM YYYY" or "DD MMM"
-          const parts = dateStr.trim().split(/[\s/\-\.]+/);
-          if (parts.length >= 2) {
-            const day = parts[0].padStart(2, "0");
-            const monthStr = parts[1].toLowerCase();
-            let month =
-              hebrewMonths[monthStr] || englishMonths[monthStr.substring(0, 3)];
-            const year = parts[2] || new Date().getFullYear().toString();
-
-            if (month) {
-              return `${day}/${month}/${year}`;
-            }
-          }
-
-          return dateStr; // Return as is if can't parse
-        };
-
-        const normalizedArtist = normalizeString(artist);
-        const normalizedVenue = normalizeString(venue);
-        const normalizedDate = normalizeDate(date);
-
-        console.log("Normalized search criteria:", {
-          artist: normalizedArtist,
-          date: normalizedDate,
-          venue: normalizedVenue,
-        });
-
-        // Fetch all events and do flexible matching (case-insensitive)
-        // This avoids Firestore case-sensitive query limitations
-        console.log("Fetching all events for flexible matching...");
-
-        const allConcertsQuery = query(collection(firestore, "events"));
-        const allConcerts = await getDocs(allConcertsQuery);
-
-        const matchingConcerts = allConcerts.docs.filter((doc) => {
+        const matchedEvent = allEvents.docs.find((doc) => {
           const data = doc.data();
-          const eventArtist = data.artist || "";
           const eventVenue = normalizeString(data.venue || "");
-          const eventDate = normalizeDate(data.date || "");
-
-          // Use smart artist matching (handles Hebrew/English variations)
-          const artistMatch = artistNamesMatch(artist, eventArtist);
-
-          // Venue: partial match — one must contain the other (handles "היכל מנורה" vs "היכל מנורה מבטחים")
-          const venueMatch =
-            eventVenue === normalizedVenue ||
-            eventVenue.includes(normalizedVenue) ||
-            normalizedVenue.includes(eventVenue);
-
-          const dateMatch = eventDate === normalizedDate;
-
-          console.log(`Comparing with event ${doc.id}:`, {
-            ticketArtist: artist,
-            eventArtist: eventArtist,
-            artistMatch,
-            venueMatch: `"${eventVenue}" ~ "${normalizedVenue}" = ${venueMatch}`,
-            dateMatch: `"${eventDate}" === "${normalizedDate}" = ${dateMatch}`,
-          });
-
-          return artistMatch && venueMatch && dateMatch;
+          return (
+            artistNamesMatch(artist, data.artist || "") &&
+            // Venue: partial match — one must contain the other
+            // (handles "היכל מנורה" vs "היכל מנורה מבטחים")
+            (eventVenue === normalizedVenue ||
+              eventVenue.includes(normalizedVenue) ||
+              normalizedVenue.includes(eventVenue)) &&
+            normalizeDate(data.date || "") === normalizedDate
+          );
         });
+        // No matching event → the ticket is created without an eventId and
+        // waits in admin review until the event is added
+        const eventId = matchedEvent?.id || null;
 
-        let eventsSnapshot = {
-          empty: matchingConcerts.length === 0,
-          docs: matchingConcerts,
-        } as any;
+        const bundleId = tickets.length > 1 ? crypto.randomUUID() : null;
 
-        if (matchingConcerts.length > 0) {
-          console.log(
-            `✅ Found ${matchingConcerts.length} matching event(s) via flexible search`,
-          );
-        } else {
-          console.log("❌ No matching events found");
-        }
-
-        let eventId: string | null = null;
-
-        if (!eventsSnapshot.empty) {
-          // Concert exists, use existing ID
-          eventId = eventsSnapshot.docs[0].id;
-          console.log(`Found existing event with ID: ${eventId}`);
-        } else {
-          // No matching event found - tickets will be marked as pending
-          console.log(
-            "Concert not found, tickets will be marked as pending...",
-          );
-        }
-
-        // Generate a bundleId for this event group if it has 2+ tickets
-        const bundleId: string | null =
-          tickets.length > 1 ? crypto.randomUUID() : null;
-        const bundleSize = tickets.length;
-
-        // Get auth token once for all API calls in this publish flow
-        // Await getIdToken() to ensure auth state is resolved before reading uid
-        const currentUser = getAuth().currentUser;
-        if (!currentUser) {
-          setPublishError("יש להתחבר לחשבון כדי לפרסם כרטיסים");
-          setIsPublishing(false);
-          return false;
-        }
-        const authToken = await currentUser.getIdToken();
-
-        // Now publish all tickets for this event
-        for (let i = 0; i < tickets.length; i++) {
-          const ticket = tickets[i];
-          console.log(
-            `Publishing ticket ${i + 1}/${tickets.length} for event ${
-              eventId || "pending"
-            }`,
-          );
-          console.log(
-            "TICKET DATA BEING PUBLISHED:",
-            JSON.stringify(ticket, null, 2),
-          );
-          console.log("TICKET ROW:", ticket.ticketDetails?.row);
-          console.log("TICKET SECTION:", ticket.ticketDetails?.section);
-          console.log("TICKET SEAT:", ticket.ticketDetails?.seat);
-
-          // 🔍 STEP 0: Check for duplicate tickets
-          console.log(" Checking for duplicate tickets...");
-          try {
-            const duplicateCheck = await apiFetch("/api/check-duplicate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                barcode: ticket.ticketDetails?.barcode || "",
-                artist: ticket.ticketDetails?.artist || "",
-                venue: ticket.ticketDetails?.venue || "",
-                date: normalizedDate,
-                time: ticket.ticketDetails?.time || "",
-                seat: ticket.ticketDetails?.seat || "",
-                row: ticket.ticketDetails?.row || "",
-                section: ticket.ticketDetails?.section || "",
-              }),
-            });
-
-            const duplicateResult = await duplicateCheck.json();
-
-            if (duplicateResult.isDuplicate) {
-              console.error("🚫 Duplicate ticket detected:", duplicateResult);
-              const matchType = duplicateResult.duplicates[0]?.matchType;
-              const existingTicket = duplicateResult.duplicates[0]?.ticket;
-
-              let errorMessage = "";
-              if (matchType === "barcode") {
-                errorMessage = `⚠️ כרטיס עם ברקוד זהה כבר קיים במערכת\n\nפרטי הכרטיס הקיים במערכת:\n• אירוע: ${
-                  existingTicket.artist
-                }\n• מקום: ${existingTicket.venue}\n• תאריך: ${
-                  existingTicket.date
-                }\n• מיקום: ${
-                  existingTicket.section ? `אזור ${existingTicket.section}` : ""
-                } ${existingTicket.row ? `שורה ${existingTicket.row}` : ""} ${
-                  existingTicket.seat ? `מושב ${existingTicket.seat}` : ""
-                }\n• סטטוס: ${
-                  existingTicket.status === "available"
-                    ? "מפורסם"
-                    : existingTicket.status === "pending_approval"
-                      ? "ממתין לאישור"
-                      : "נדחה"
-                }\n\nהכרטיס שניסית להעלות:\n• מיקום: ${
-                  ticket.ticketDetails?.section
-                    ? `אזור ${ticket.ticketDetails.section}`
-                    : ""
-                } ${
-                  ticket.ticketDetails?.row
-                    ? `שורה ${ticket.ticketDetails.row}`
-                    : ""
-                } ${
-                  ticket.ticketDetails?.seat
-                    ? `מושב ${ticket.ticketDetails.seat}`
-                    : ""
-                }\n\nלא ניתן להעלות כרטיס כפול.`;
-              } else {
-                errorMessage = `⚠️ כרטיס זהה באותו מקום כבר קיים במערכת\n\nפרטי הכרטיס הקיים במערכת:\n• ${
-                  existingTicket.artist
-                }\n• ${existingTicket.venue}\n• ${existingTicket.date} בשעה ${
-                  existingTicket.time
-                }\n• מיקום: ${
-                  existingTicket.section ? `אזור ${existingTicket.section}` : ""
-                } ${existingTicket.row ? `שורה ${existingTicket.row}` : ""} ${
-                  existingTicket.seat ? `מושב ${existingTicket.seat}` : ""
-                }\n\nהכרטיס שניסית להעלות:\n• מיקום: ${
-                  ticket.ticketDetails?.section
-                    ? `אזור ${ticket.ticketDetails.section}`
-                    : ""
-                } ${
-                  ticket.ticketDetails?.row
-                    ? `שורה ${ticket.ticketDetails.row}`
-                    : ""
-                } ${
-                  ticket.ticketDetails?.seat
-                    ? `מושב ${ticket.ticketDetails.seat}`
-                    : ""
-                }\n\nלא ניתן להעלות את אותו מקום פעמיים.`;
-              }
-
-              setPublishError(errorMessage);
-              setIsPublishing(false);
-              return false;
-            }
-
-            console.log("✅ No duplicate found, proceeding with upload");
-          } catch (error) {
-            // Fail-closed: if the duplicate check cannot be confirmed clean, block the upload.
-            // Allowing uploads on check failure would enable double-selling by timing errors.
-            console.error("❌ Duplicate check error:", error);
-            setPublishError(
-              "לא ניתן לאמת שהכרטיס אינו כפול. אנא נסה שוב.",
-            );
-            setIsPublishing(false);
-            return false;
-          }
-
-          // 🔍 STEP 1: Verify ticket with venue API
-          console.log("🔍 Calling venue verification API...");
-          let verificationResult: any = null;
-          try {
-            const verifyResponse = await apiFetch("/api/venue-verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                barcode: ticket.ticketDetails?.barcode || "",
-                artist: ticket.ticketDetails?.artist || "",
-                eventName: ticket.ticketDetails?.artist || "",
-                venue: ticket.ticketDetails?.venue || "",
-                date: normalizedDate,
-                time: ticket.ticketDetails?.time || "",
-                section: ticket.ticketDetails?.section || "",
-                row: ticket.ticketDetails?.row || "",
-                seat: ticket.ticketDetails?.seat || "",
-                isStanding: ticket.ticketDetails?.isStanding || false,
-              }),
-            });
-            if (!verifyResponse.ok) throw new Error(`venue-verify: ${verifyResponse.status}`);
-            verificationResult = await verifyResponse.json();
-            console.log("✅ Verification result:", verificationResult);
-          } catch (error) {
-            console.error("❌ Verification API error:", error);
-            // If verification fails, default to manual review
-            verificationResult = {
-              verified: false,
-              confidence: 0,
-              status: "needs_review",
-              matchedFields: [],
-              unmatchedFields: [],
-              reason:
-                "Verification service unavailable - manual review required",
-              timestamp: new Date().toISOString(),
-            };
-          }
-
-          // Upload ticket image to Firebase Storage
+        for (const ticket of tickets) {
+          // Upload the ticket image so admin review has the actual ticket
           let ticketImageUrl: string | null = null;
           if (ticket.uploadedFile) {
             try {
@@ -535,22 +300,15 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
                 body: uploadFormData,
               });
               if (uploadRes.ok) {
-                const { imageUrl } = await uploadRes.json();
-                ticketImageUrl = imageUrl;
-                console.log("✅ Uploaded ticket image to Storage");
+                ticketImageUrl = (await uploadRes.json()).imageUrl ?? null;
               } else {
-                console.warn("Failed to upload ticket image to Storage");
+                console.warn("Ticket image upload failed:", uploadRes.status);
               }
             } catch (error) {
-              console.warn("Failed to upload ticket image:", error);
+              console.warn("Ticket image upload failed:", error);
             }
           }
 
-          // Persist via the server. The server re-runs verification
-          // authoritatively, enforces barcode uniqueness, seeds mock_tickets,
-          // and sets status/verificationStatus. The client can no longer write
-          // tickets directly (Firestore rules block it), so a malicious client
-          // can't forge a "verified"/"available" listing.
           const createRes = await apiFetch("/api/create-ticket", {
             method: "POST",
             headers: {
@@ -559,8 +317,8 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
             },
             body: JSON.stringify({
               ticket: {
-                eventId: eventId || null,
-                artist: ticket.ticketDetails?.artist || "",
+                eventId,
+                artist,
                 category: ticket.ticketDetails?.category || "מוזיקה",
                 date: normalizedDate,
                 time: ticket.ticketDetails?.time || "",
@@ -577,121 +335,81 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
                   ticket.pricing?.allowPriceSuggestions || false,
                 minPrice: ticket.pricing?.minPrice || null,
                 maxPrice: ticket.pricing?.maxPrice || null,
-                extractedText: ticket.extractedText || null,
                 ticketImage: ticketImageUrl,
-                eventName: ticket.ticketDetails?.artist || "",
-                bundleId: bundleId,
+                eventName: artist,
+                bundleId,
                 canSplit: bundleId !== null ? canSplit : null,
-                bundleSize: bundleId !== null ? bundleSize : null,
+                bundleSize: bundleId !== null ? tickets.length : null,
               },
             }),
           });
 
           if (createRes.status === 409) {
-            // Duplicate barcode — server refused to list it.
-            verificationResult = {
-              ...verificationResult,
-              status: "rejected",
-              reason: "כרטיס עם ברקוד זה כבר קיים במערכת",
-            };
-          } else if (!createRes.ok) {
-            throw new Error(`create-ticket failed: ${createRes.status}`);
-          } else {
-            // The server's verification result is authoritative — use it for
-            // the success/warning tallies below.
-            const created = await createRes.json();
-            verificationResult = {
-              verified: created.verificationStatus === "verified",
-              confidence: created.confidence,
-              status: created.verificationStatus,
-              matchedFields: created.matchedFields || [],
-              unmatchedFields: created.unmatchedFields || [],
-              reason: created.reason,
-              details: created.details,
-            };
-            console.log(
-              `✅ Ticket created ${created.id}, status: ${created.status}`,
-            );
-          }
-
-          // Track verification results
-          publishedCount++;
-          if (verificationResult.status === "verified") {
-            verifiedCount++;
-          } else if (verificationResult.status === "needs_review") {
-            needsReviewCount++;
-          } else if (verificationResult.status === "rejected") {
+            // Duplicate barcode — the server refused to double-list it
+            duplicateCount++;
             rejectedCount++;
+            continue;
+          }
+          if (!createRes.ok) {
+            throw new Error(`create-ticket failed: ${createRes.status}`);
           }
 
-          // Track if event is missing
-          if (!eventId) {
-            skippedCount++;
-          }
+          const created = await createRes.json();
+          if (created.verificationStatus === "verified") verifiedCount++;
+          else if (created.verificationStatus === "rejected") rejectedCount++;
+          else needsReviewCount++;
         }
       }
 
-      console.log(
-        `Successfully processed ${publishedCount} tickets: ${verifiedCount} verified, ${needsReviewCount} needs review, ${rejectedCount} rejected`,
-      );
-      setIsPublishing(false);
+      const duplicateNote =
+        duplicateCount > 0
+          ? `${duplicateCount} כרטיסים לא פורסמו כי הברקוד שלהם כבר קיים במערכת.\n`
+          : "";
 
-      // Clear previous messages
-      setPublishError(null);
-      setPublishSuccess(null);
-      setPublishWarning(null);
-
-      // Build message based on verification results
-      // RED ERROR: If ALL tickets are rejected, show error message
+      // RED ERROR: all tickets rejected
       if (rejectedCount > 0 && verifiedCount === 0 && needsReviewCount === 0) {
-        let errorMessage = `❌ ${rejectedCount} כרטיסים נדחו\n\n`;
-        errorMessage += `הכרטיסים לא תואמים למאגר האולמות.\n`;
-        errorMessage += `אנא בדוק את הפרטים ונסה שוב.\n`;
-        errorMessage += `ניתן לראות את הסיבות בעמוד "הכרטיסים שלי".\n\n`;
-        setPublishError(errorMessage.trim());
-        setIsPublishing(false);
+        setPublishError(
+          `❌ ${rejectedCount} כרטיסים נדחו\n\n` +
+            duplicateNote +
+            `הכרטיסים לא תואמים למאגר האולמות.\n` +
+            `אנא בדוק את הפרטים ונסה שוב.\n` +
+            `ניתן לראות את הסיבות בעמוד "הכרטיסים שלי".`,
+        );
         return false;
       }
 
-      // GREEN SUCCESS: Only verified tickets (auto-approved)
+      // GREEN SUCCESS: everything auto-verified
       if (verifiedCount > 0 && needsReviewCount === 0 && rejectedCount === 0) {
-        let successMessage = `✅ ${verifiedCount} כרטיסים אומתו ופורסמו!\n\n`;
-        successMessage += `הכרטיסים אושרו אוטומטית על ידי מערכת האימות של האולם\n`;
-        successMessage += `והם כעת זמינים למכירה באתר.\n\n`;
-        setPublishSuccess(successMessage.trim());
-        setIsPublishing(false);
+        setPublishSuccess(
+          `✅ ${verifiedCount} כרטיסים אומתו ופורסמו!\n\n` +
+            `הכרטיסים אושרו אוטומטית על ידי מערכת האימות של האולם\n` +
+            `והם כעת זמינים למכירה באתר.`,
+        );
         return true;
       }
 
-      // ORANGE WARNING: Has needs_review tickets (or mixed results)
-      if (needsReviewCount > 0 || rejectedCount > 0) {
-        let warningMessage = "";
+      // ORANGE WARNING: pending review / mixed results
+      let warningMessage = "";
+      if (verifiedCount > 0) {
+        warningMessage += `${verifiedCount} כרטיסים אומתו בהצלחה ופורסמו\n\n`;
+      }
+      if (needsReviewCount > 0) {
+        warningMessage += `${needsReviewCount} כרטיסים ממתינים לאישור\n\n`;
+        warningMessage += `הכרטיסים לא תואמים במלואם למאגר האולם.\n`;
+        warningMessage += `הצוות שלנו יבדוק את הכרטיסים תוך 2-4 שעות.\n`;
+        warningMessage += `תוכל לעקוב אחרי הסטטוס בעמוד "הכרטיסים שלי".\n\n`;
+      }
+      if (rejectedCount > 0) {
+        warningMessage += `${rejectedCount} כרטיסים נדחו\n\n`;
+        warningMessage += duplicateNote;
+        warningMessage += `ניתן לראות את הסיבות בעמוד "הכרטיסים שלי".`;
+      }
 
-        if (verifiedCount > 0) {
-          warningMessage += ` ${verifiedCount} כרטיסים אומתו בהצלחה ופורסמו \n\n`;
-        }
-
-        if (needsReviewCount > 0) {
-          warningMessage += ` ${needsReviewCount} כרטיסים ממתינים לאישור\n\n`;
-          warningMessage += `הכרטיסים לא תואמים במלואם למאגר האולם.\n`;
-          warningMessage += `הצוות שלנו יבדוק את הכרטיסים תוך 2-4 שעות.\n`;
-          warningMessage += `תוכל לעקוב אחרי הסטטוס בעמוד "הכרטיסים שלי".\n\n`;
-        }
-
-        if (rejectedCount > 0) {
-          warningMessage += ` ${rejectedCount} כרטיסים נדחו\n\n`;
-          warningMessage += `חלק מהכרטיסים לא תואמים למאגר האולמות.\n`;
-          warningMessage += `ניתן לראות את הסיבות בעמוד "הכרטיסים שלי".\n\n`;
-        }
-
+      if (warningMessage) {
         setPublishWarning(warningMessage.trim());
-        setIsPublishing(false);
-        return true;
+      } else {
+        setPublishSuccess("הכרטיסים פורסמו בהצלחה!");
       }
-
-      // Default success (shouldn't reach here, but just in case)
-      setPublishSuccess("הכרטיסים פורסמו בהצלחה!");
-      setIsPublishing(false);
       return true;
     } catch (error) {
       console.error("Error publishing tickets:", error);
@@ -700,8 +418,9 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
           error instanceof Error ? error.message : "Unknown error"
         }`,
       );
-      setIsPublishing(false);
       return false;
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -788,7 +507,7 @@ const UploadTicketDialog: React.FC<UploadTicketInterface> = ({
     <>
       <AdjustableDialog
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={handleClose}
         height={steps[step - 1].height}
         width={steps[step - 1].width}
         heading={steps[step - 1].heading}

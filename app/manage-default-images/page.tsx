@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import {
   getDefaultCategoryImage,
   FALLBACK_IMAGE_SVG,
@@ -139,8 +140,11 @@ export default function ManageDefaultImagesPage() {
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-white py-12 px-4">
+      <MobileAdminChrome title="תמונות ברירת מחדל" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-white py-12 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
@@ -248,7 +252,9 @@ export default function ManageDefaultImagesPage() {
           </div>
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }

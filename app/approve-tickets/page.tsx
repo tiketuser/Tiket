@@ -7,6 +7,7 @@ import { getAuth } from "firebase/auth";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import AdminProtection from "../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import {
   artistNamesMatch,
   findBestArtistMatch,
@@ -46,6 +47,7 @@ interface Ticket {
     officialTicketId?: string;
     eventId?: string;
     ticketingSystem?: string;
+    originalPrice?: number | null;
   };
   // Admin rejection
   adminComment?: string;
@@ -142,7 +144,7 @@ export default function ApproveTicketsPage() {
   };
 
   const callTicketAction = async (
-    action: "approve" | "reject" | "link",
+    action: "approve" | "reject" | "link" | "reverify",
     ticketIds: string[],
     extra?: { adminComment?: string; eventId?: string }
   ) => {
@@ -163,6 +165,7 @@ export default function ApproveTicketsPage() {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.error || `HTTP ${res.status}`);
     }
+    return res.json().catch(() => ({}));
   };
 
   const handleApprove = async (ticket: Ticket) => {
@@ -202,6 +205,72 @@ export default function ApproveTicketsPage() {
     } catch (error) {
       console.error("Error rejecting ticket(s):", error);
       alert("שגיאה בדחיית הכרטיס");
+    } finally {
+      setProcessingTicketId(null);
+    }
+  };
+
+  // Re-run provider verification for a ticket/bundle. Verified tickets with a
+  // linked event auto-publish server-side; anything else just refreshes the
+  // verification fields so the admin decides with current data.
+  const handleReverify = async (ticket: Ticket) => {
+    const ids = getBundleTicketIds(ticket);
+    setProcessingTicketId(ticket.id);
+    try {
+      const data = await callTicketAction("reverify", ids);
+      const results: Array<{
+        id: string;
+        verificationStatus?: Ticket["verificationStatus"];
+        confidence?: number;
+        reason?: string;
+        matchedFields?: string[];
+        unmatchedFields?: string[];
+        originalPrice?: number | null;
+        ticketingSystem?: string | null;
+        statusChanged?: boolean;
+        error?: string;
+      }> = data.results || [];
+
+      const publishedIds = results.filter((r) => r.statusChanged).map((r) => r.id);
+
+      setTickets((prev) =>
+        prev
+          .filter((t) => !publishedIds.includes(t.id))
+          .map((t) => {
+            const r = results.find((x) => x.id === t.id);
+            if (!r || r.error) return t;
+            return {
+              ...t,
+              verificationStatus: r.verificationStatus,
+              verificationConfidence: r.confidence,
+              verificationDetails: {
+                matchedFields: r.matchedFields || [],
+                unmatchedFields: r.unmatchedFields || [],
+                reason: r.reason || "",
+                originalPrice: r.originalPrice,
+                ticketingSystem:
+                  r.ticketingSystem ?? t.verificationDetails?.ticketingSystem,
+              },
+            };
+          })
+      );
+
+      if (publishedIds.length > 0) {
+        alert(`✅ ${publishedIds.length} כרטיסים אומתו על ידי הספק ופורסמו אוטומטית!`);
+      } else {
+        const first = results.find((r) => !r.error);
+        const unverifiable = results.find((r) => r.error === "unverifiable");
+        alert(
+          first
+            ? `תוצאת אימות מחדש: ${first.reason || first.verificationStatus} (${first.confidence ?? 0}%)`
+            : unverifiable
+            ? String(unverifiable.reason)
+            : "לא ניתן היה לאמת מחדש"
+        );
+      }
+    } catch (error) {
+      console.error("Error re-verifying ticket(s):", error);
+      alert("שגיאה באימות מחדש");
     } finally {
       setProcessingTicketId(null);
     }
@@ -257,22 +326,30 @@ export default function ApproveTicketsPage() {
   if (loading) {
     return (
       <AdminProtection>
-        <NavBar />
-        <div className="min-h-screen bg-white py-12 px-4">
+        <MobileAdminChrome title="אישור כרטיסים" />
+        <div className="hidden md:block">
+          <NavBar />
+        </div>
+        <div className="tk-admin min-h-screen bg-white py-12 px-4">
           <div className="max-w-6xl mx-auto text-center">
             <div className="loading loading-spinner loading-lg"></div>
             <p className="mt-4">טוען כרטיסים...</p>
           </div>
         </div>
-        <Footer />
+        <div className="hidden md:block">
+          <Footer />
+        </div>
       </AdminProtection>
     );
   }
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-white py-12 px-4">
+      <MobileAdminChrome title="אישור כרטיסים" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-white py-12 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -282,20 +359,6 @@ export default function ApproveTicketsPage() {
             <p className="text-body-large text-mutedText">
               בדוק ואשר כרטיסים שהועלו על ידי משתמשים
             </p>
-
-            {/* Debug Info */}
-            <div className="mt-4 text-xs text-left bg-gray-100 p-3 rounded max-w-2xl mx-auto">
-              <p className="font-bold"> Debug Info:</p>
-              <p>Total tickets loaded: {tickets.length}</p>
-              <p>
-                pending_approval:{" "}
-                {tickets.filter((t) => t.status === "pending_approval").length}
-              </p>
-              <p>
-                pending: {tickets.filter((t) => t.status === "pending").length}
-              </p>
-              <p>Check browser console for detailed logs</p>
-            </div>
           </div>
 
           {/* Stats */}
@@ -482,6 +545,19 @@ export default function ApproveTicketsPage() {
                                   מזהה רשמי: {representative.verificationDetails.officialTicketId}
                                 </p>
                               )}
+                              {typeof representative.verificationDetails.originalPrice ===
+                                "number" && (
+                                <p className="text-xs text-gray-600">
+                                  מחיר מקורי לפי הספק: ₪
+                                  {representative.verificationDetails.originalPrice}
+                                  {representative.askingPrice >
+                                    representative.verificationDetails.originalPrice && (
+                                    <span className="text-red-600 font-semibold mr-1">
+                                      (מבוקש: ₪{representative.askingPrice} — מעל המחיר המקורי)
+                                    </span>
+                                  )}
+                                </p>
+                              )}
                               {representative.verificationDetails.matchedFields?.length > 0 && (
                                 <div className="mt-2">
                                   <p className="font-medium text-green-800 mb-1">✓ שדות תואמים:</p>
@@ -605,6 +681,18 @@ export default function ApproveTicketsPage() {
                       {/* Actions */}
                       <div className="flex gap-4 mt-4">
                         <button
+                          onClick={() => handleReverify(representative)}
+                          disabled={processingTicketId === representative.id}
+                          className="btn btn-outline"
+                          title="הרץ שוב אימות מול ספקי הכרטוס — שימושי אם הספק חובר אחרי שהכרטיס הועלה"
+                        >
+                          {processingTicketId === representative.id ? (
+                            <span className="loading loading-spinner"></span>
+                          ) : (
+                            "🔄 אמת מחדש"
+                          )}
+                        </button>
+                        <button
                           onClick={() => handleApprove(representative)}
                           disabled={processingTicketId === representative.id || !hasConcert}
                           className="btn btn-primary flex-1"
@@ -647,7 +735,9 @@ export default function ApproveTicketsPage() {
           )}
         </div>
       </div>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </AdminProtection>
   );
 }

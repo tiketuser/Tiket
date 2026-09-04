@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from './firebaseAdmin';
+import { adminAuth } from './firebaseAdmin';
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: {

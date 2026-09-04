@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AdminProtection from "../../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../../components/mobile/MobileAdminChrome";
 import NavBar from "../../components/NavBar/NavBar";
 import Footer from "../../components/Footer/Footer";
 
@@ -232,8 +233,11 @@ export default function PnLCalculator() {
 
   return (
     <AdminProtection>
-      <div className="min-h-screen bg-gray-50">
-        <NavBar />
+      <MobileAdminChrome title="מחשבון P&L" />
+      <div className="tk-admin min-h-screen bg-gray-50">
+        <div className="hidden md:block">
+          <NavBar />
+        </div>
 
         <div className="max-w-7xl mx-auto p-4 sm:p-8 space-y-10">
           {/* Header */}
@@ -488,7 +492,9 @@ export default function PnLCalculator() {
           </div>
         </div>
 
-        <Footer />
+        <div className="hidden md:block">
+          <Footer />
+        </div>
       </div>
     </AdminProtection>
   );

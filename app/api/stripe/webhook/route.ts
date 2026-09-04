@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, getPlatformFeePercent } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { transferTicketsAfterSale } from "@/lib/venueTransfer";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -145,6 +146,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   );
 
   const batch = adminDb.batch();
+  const soldTicketIds: string[] = [];
 
   for (const ticketSnap of ticketSnaps) {
     const ticketData = ticketSnap.data();
@@ -181,6 +183,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       reservedBy: null,
       reservedAt: null,
     });
+    soldTicketIds.push(ticketId);
 
     // Create one transaction record per ticket
     const transactionData: Record<string, unknown> = {
@@ -220,6 +223,20 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   console.log(
     `Payment succeeded for ${ticketIds.length} ticket(s), PaymentIntent: ${paymentIntent.id}`
   );
+
+  // Ask the issuing provider to move ownership to the buyer (Tiket Connect
+  // /tiket/transfer). Best-effort — outcomes land on each ticket's
+  // ownershipTransfer field and failures are retryable from the admin panel.
+  // The deterministic transfer_ref makes the race with confirm-payment safe.
+  try {
+    await transferTicketsAfterSale(
+      soldTicketIds,
+      { buyerId, guestEmail, guestPhone },
+      paymentIntent.id
+    );
+  } catch (err) {
+    console.error("[webhook] ownership transfer step failed:", err);
+  }
 }
 
 async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {

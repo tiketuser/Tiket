@@ -11,6 +11,7 @@ import MyTicketCard from "../components/MyTicketCard/MyTicketCard";
 import MobileMyTickets, {
   type MobileTicket,
 } from "../components/mobile/MobileMyTickets";
+import TicketBarcode from "../components/TicketBarcode/TicketBarcode";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
@@ -31,6 +32,9 @@ interface PurchasedTicket {
   amount: number;
   ticketImage?: string;
   eventImageUrl?: string;
+  /** Re-issued entry barcode from the provider (the original was voided). */
+  newBarcode?: string;
+  newBarcodeFormat?: string;
 }
 
 function parseTicketDate(dateStr: string): Date | null {
@@ -106,6 +110,12 @@ export default function MyTicketsPage() {
               // ignore missing event lookups
             }
           }
+          const transfer = ticket.ownershipTransfer;
+          const newBarcode =
+            transfer?.status === "transferred" && transfer.newBarcode
+              ? String(transfer.newBarcode)
+              : undefined;
+
           purchased.push({
             id: txDoc.id,
             ticketId: tx.ticketId,
@@ -122,6 +132,11 @@ export default function MyTicketsPage() {
             amount: tx.ticketPrice || tx.amount,
             ticketImage: ticket.ticketImage || null,
             eventImageUrl,
+            newBarcode,
+            newBarcodeFormat:
+              newBarcode && transfer.newBarcodeFormat
+                ? String(transfer.newBarcodeFormat)
+                : undefined,
           });
         })
       );
@@ -171,6 +186,8 @@ export default function MyTicketsPage() {
     amount: t.amount,
     ticketImage: t.ticketImage,
     eventImageUrl: t.eventImageUrl,
+    newBarcode: t.newBarcode,
+    newBarcodeFormat: t.newBarcodeFormat,
   }));
 
   if (loading) {
@@ -303,19 +320,34 @@ export default function MyTicketsPage() {
               </button>
             </div>
 
-            <div className="w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
-              {viewTicket.ticketImage ? (
-                <img
-                  src={viewTicket.ticketImage}
-                  alt="כרטיס"
-                  className="w-full h-auto object-contain max-h-[60vh]"
-                />
-              ) : (
-                <p className="text-mutedText text-sm py-8">אין תמונת כרטיס</p>
-              )}
-            </div>
+            {viewTicket.newBarcode ? (
+              <>
+                <div className="w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                  <TicketBarcode
+                    value={viewTicket.newBarcode}
+                    format={viewTicket.newBarcodeFormat}
+                  />
+                </div>
+                <p className="text-xs text-mutedText text-center">
+                  הכרטיס הונפק מחדש על שמך — זהו ברקוד הכניסה בתוקף. הברקוד
+                  המקורי בוטל.
+                </p>
+              </>
+            ) : (
+              <div className="w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                {viewTicket.ticketImage ? (
+                  <img
+                    src={viewTicket.ticketImage}
+                    alt="כרטיס"
+                    className="w-full h-auto object-contain max-h-[60vh]"
+                  />
+                ) : (
+                  <p className="text-mutedText text-sm py-8">אין תמונת כרטיס</p>
+                )}
+              </div>
+            )}
 
-            {viewTicket.ticketImage && (
+            {!viewTicket.newBarcode && viewTicket.ticketImage && (
               <a
                 href={viewTicket.ticketImage}
                 download

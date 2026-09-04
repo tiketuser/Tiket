@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import AdminProtection from "../../components/AdminProtection/AdminProtection";
+import MobileAdminChrome from "../../components/mobile/MobileAdminChrome";
 import NavBar from "../../components/NavBar/NavBar";
 import { apiFetch } from "@/lib/platform";
 
@@ -126,8 +127,11 @@ export default function UsersAdminPage() {
 
   return (
     <AdminProtection>
-      <NavBar />
-      <div className="min-h-screen bg-white py-12 px-4" dir="rtl">
+      <MobileAdminChrome title="ניהול משתמשים" />
+      <div className="hidden md:block">
+        <NavBar />
+      </div>
+      <div className="tk-admin min-h-screen bg-white py-12 px-4" dir="rtl">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">

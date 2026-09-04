@@ -1,0 +1,49 @@
+# goreleaser config for the Tiket Connect Agent.
+#   goreleaser release --snapshot --clean   (local/CI build → dist/)
+# CI (.github/workflows/release-agent.yml) runs the snapshot build on an
+# `agent-v*` tag and publishes dist/ to the GitHub Release. Archive names are
+# version-less on purpose, so partner docs can link one permanent URL:
+#   .../releases/latest/download/tiket-agent_linux_amd64.tar.gz
+# Artifacts ship with SHA256SUMS; partners verify before deploying
+# (see ../SECURITY.md §6). Sign the checksum file with minisign/cosign
+# when release keys are set up.
+version: 2
+
+project_name: tiket-agent
+
+# The shared protocol vectors live one dir up (../spec). goreleaser archive
+# globs can't escape the module dir with "..", so stage a copy in-tree first
+# (gitignored; see root .gitignore). Keeps the vectors inside every archive.
+before:
+  hooks:
+    - sh -c 'cp ../spec/test-vectors.json ./test-vectors.json'
+
+builds:
+  - main: ./cmd/tiket-agent
+    binary: tiket-agent
+    env: [CGO_ENABLED=0]
+    ldflags: [-s -w]
+    goos: [linux, windows, darwin]
+    goarch: [amd64, arm64]
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - name_template: "tiket-agent_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - config.example.conf
+      - src: test-vectors.json
+        dst: spec/test-vectors.json
+
+checksum:
+  name_template: SHA256SUMS
+  algorithm: sha256
+
+release:
+  draft: true

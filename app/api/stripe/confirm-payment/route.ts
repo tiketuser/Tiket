@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { getPlatformFeePercent } from "@/lib/stripe";
 import { verifyGuestToken } from "@/lib/guestToken";
+import { transferTicketsAfterSale } from "@/lib/venueTransfer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
     );
 
     const batch = adminDb.batch();
+    const soldTicketIds: string[] = [];
 
     for (const ticketSnap of ticketSnaps) {
       const ticketData = ticketSnap.data();
@@ -157,6 +159,7 @@ export async function POST(request: NextRequest) {
         reservedBy: null,
         reservedAt: null,
       });
+      soldTicketIds.push(ticketId);
 
       // Create transaction record
       const transactionData: Record<string, unknown> = {
@@ -193,6 +196,19 @@ export async function POST(request: NextRequest) {
     }
 
     await batch.commit();
+
+    // Ask the issuing provider to move ownership to the buyer. Idempotent with
+    // the webhook path via the deterministic transfer_ref; failures are stored
+    // on the ticket and retryable from the admin panel.
+    try {
+      await transferTicketsAfterSale(
+        soldTicketIds,
+        { buyerId, guestEmail, guestPhone },
+        paymentIntentId
+      );
+    } catch (err) {
+      console.error("[confirm-payment] ownership transfer step failed:", err);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

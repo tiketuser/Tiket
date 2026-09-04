@@ -85,12 +85,14 @@ export default function MobileSell({
     }
     setPublishing(true);
     setPublishError(null);
+    // Tracked outside the try so a mid-batch failure can still report the
+    // tickets that were already created (and lock out a duplicating retry).
+    let created = 0;
+    let duplicate = false;
     try {
       const token = await user.getIdToken();
       const bundleId = tickets.length > 1 ? crypto.randomUUID() : null;
       const bundleSize = tickets.length;
-      let created = 0;
-      let duplicate = false;
 
       for (let i = 0; i < tickets.length; i++) {
         const t = tickets[i];
@@ -148,7 +150,16 @@ export default function MobileSell({
       }
     } catch (err) {
       console.error("[mobile-sell] publish failed", err);
-      setPublishError("פרסום נכשל. נסה שוב.");
+      if (created > 0) {
+        // Some tickets are already live — show the partial success instead of
+        // returning to the publish button, so a retry can't re-create them.
+        setPublishedCount(created);
+        setPublishError(
+          `פורסמו ${created} מתוך ${tickets.length} כרטיסים. השאר נכשלו — נסו להעלות אותם שוב.`
+        );
+      } else {
+        setPublishError("פרסום נכשל. נסה שוב.");
+      }
     } finally {
       setPublishing(false);
     }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { isAdminUser } from "@/lib/isAdminClient";
 
 interface AdminProtectionProps {
   children: React.ReactNode;
@@ -13,21 +14,16 @@ export default function AdminProtection({ children }: AdminProtectionProps) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // List of admin emails
-  const ADMIN_EMAILS = [
-    "tiketbizzz@gmail.com",
-    "admin@tiket.com", // Admin user
-  ];
-
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && ADMIN_EMAILS.includes(user.email || "")) {
-        setIsAdmin(true);
-        setIsLoading(false);
-      } else {
-        setIsAdmin(false);
-        setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // Gate on the unforgeable `admin` custom claim — the same signal the
+      // server enforces. forceRefresh so a freshly granted admin isn't locked
+      // out of the page while their cached token is still stale.
+      const admin = await isAdminUser(user, true);
+      setIsAdmin(admin);
+      setIsLoading(false);
+      if (!admin) {
         // Redirect to home if not admin
         router.push("/");
       }
@@ -38,7 +34,7 @@ export default function AdminProtection({ children }: AdminProtectionProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="tk-admin-gate min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-heading-2-desktop font-bold text-primary mb-4">
              מאמת הרשאות...
@@ -51,7 +47,7 @@ export default function AdminProtection({ children }: AdminProtectionProps) {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="tk-admin-gate min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-heading-1-desktop font-bold text-red-600 mb-4">
              גישה נדחתה
