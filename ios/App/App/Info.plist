@@ -54,6 +54,8 @@
 			</array>
 		</dict>
 	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>האפליקציה משתמשת במצלמה כדי לצלם את הכרטיס שברצונך למכור, לצורך אימות מול מערכות הכרטוס.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
