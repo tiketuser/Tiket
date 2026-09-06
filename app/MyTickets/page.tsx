@@ -12,6 +12,7 @@ import MobileMyTickets, {
   type MobileTicket,
 } from "../components/mobile/MobileMyTickets";
 import TicketBarcode from "../components/TicketBarcode/TicketBarcode";
+import { isEventPast } from "@/utils/eventDate";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
@@ -35,14 +36,6 @@ interface PurchasedTicket {
   /** Re-issued entry barcode from the provider (the original was voided). */
   newBarcode?: string;
   newBarcodeFormat?: string;
-}
-
-function parseTicketDate(dateStr: string): Date | null {
-  if (!dateStr) return null;
-  // Format: "DD/MM/YYYY"
-  const parts = dateStr.split("/");
-  if (parts.length !== 3) return null;
-  return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
 }
 
 export default function MyTicketsPage() {
@@ -149,18 +142,8 @@ export default function MyTicketsPage() {
     }
   };
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const upcomingTickets = tickets.filter((t) => {
-    const d = parseTicketDate(t.date);
-    return d ? d >= today : true;
-  });
-
-  const pastTickets = tickets.filter((t) => {
-    const d = parseTicketDate(t.date);
-    return d ? d < today : false;
-  });
+  const upcomingTickets = tickets.filter((t) => !isEventPast(t.date));
+  const pastTickets = tickets.filter((t) => isEventPast(t.date));
 
   const seatLabel = (t: PurchasedTicket) =>
     formatSeatLocation({

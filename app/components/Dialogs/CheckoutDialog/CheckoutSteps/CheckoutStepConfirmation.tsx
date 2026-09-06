@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { TicketInfo } from "../CheckoutDialog";
 import { nis, hebDateFull } from "../../../mobile/format";
+import { hebDatePartsShort } from "@/utils/eventDate";
 
 interface CheckoutStepConfirmationProps {
   tickets: TicketInfo[];
@@ -13,27 +14,8 @@ interface CheckoutStepConfirmationProps {
 }
 
 const parseDateParts = (dateStr: string) => {
-  if (!dateStr) return { day: "", month: "" };
-  try {
-    let dateObj: Date;
-    if (dateStr.includes("/") || dateStr.includes(".")) {
-      const normalized = dateStr.replace(/\./g, "/");
-      const [d, m, y] = normalized.split("/");
-      dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-    } else {
-      dateObj = new Date(dateStr);
-    }
-    const months = [
-      "ינו׳", "פבר׳", "מרץ", "אפר׳", "מאי", "יוני",
-      "יולי", "אוג׳", "ספט׳", "אוק׳", "נוב׳", "דצמ׳",
-    ];
-    return {
-      day: dateObj.getDate().toString(),
-      month: months[dateObj.getMonth()],
-    };
-  } catch {
-    return { day: "", month: "" };
-  }
+  const parts = hebDatePartsShort(dateStr);
+  return parts ? { day: parts.day, month: parts.month } : { day: "", month: "" };
 };
 
 const CheckoutStepConfirmation: React.FC<CheckoutStepConfirmationProps> = ({

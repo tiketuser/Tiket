@@ -3,6 +3,8 @@ import { stripe, getPlatformFeePercent } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { transferTicketsAfterSale } from "@/lib/venueTransfer";
 import Stripe from "stripe";
+import { sendPushToUser } from "@/lib/push-send";
+import { payoutEligibleAt as calcPayoutEligibleAt } from "@/utils/eventDate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,20 +95,6 @@ function resolveTicketIds(metadata: Stripe.PaymentIntent["metadata"]): string[] 
   return [];
 }
 
-function calcPayoutEligibleAt(dateStr: string): Date {
-  const parts = dateStr.split("/");
-  if (parts.length === 3) {
-    const eventDate = new Date(
-      parseInt(parts[2]),
-      parseInt(parts[1]) - 1,
-      parseInt(parts[0])
-    );
-    eventDate.setDate(eventDate.getDate() + 7);
-    return eventDate;
-  }
-  return new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-}
-
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   if (!adminDb) return;
 
@@ -147,6 +135,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
 
   const batch = adminDb.batch();
   const soldTicketIds: string[] = [];
+  const soldSellerIds = new Set<string>();
 
   for (const ticketSnap of ticketSnaps) {
     const ticketData = ticketSnap.data();
@@ -170,6 +159,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     }
 
     const sellerId = ticketData.sellerId as string;
+    if (sellerId) soldSellerIds.add(sellerId);
     const ticketPriceILS = ticketData.askingPrice as number;
     const platformFeeILS = feePercent > 0 ? ticketPriceILS * (feePercent / 100) : 0;
     const sellerPayoutILS = ticketPriceILS - platformFeeILS;
@@ -220,6 +210,26 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   }
 
   await batch.commit();
+
+  // Best-effort push. Never awaited into the critical path in a way that can
+  // fail the webhook — Stripe retries on a non-2xx and we do not want a
+  // notification outage to replay a sale.
+  void (async () => {
+    for (const sellerId of soldSellerIds) {
+      await sendPushToUser(sellerId, {
+        title: "הכרטיס שלך נמכר",
+        body: "קיבלנו תשלום. הכסף ישוחרר אליך אחרי האירוע.",
+        path: "/MyListings",
+      });
+    }
+    if (buyerId) {
+      await sendPushToUser(buyerId, {
+        title: "הרכישה הושלמה",
+        body: "הכרטיסים שלך מוכנים באפליקציה.",
+        path: "/MyTickets",
+      });
+    }
+  })();
   console.log(
     `Payment succeeded for ${ticketIds.length} ticket(s), PaymentIntent: ${paymentIntent.id}`
   );

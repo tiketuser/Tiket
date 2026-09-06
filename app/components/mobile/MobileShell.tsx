@@ -3,6 +3,8 @@
 import React, { useEffect } from "react";
 import MobileBottomNav from "./MobileBottomNav";
 import { initMobileChrome, setHeroStatusBar } from "@/lib/native-chrome";
+import { initNativePush } from "@/lib/native-push";
+import { auth } from "@/firebase";
 
 export default function MobileShell({
   children,
@@ -18,6 +20,17 @@ export default function MobileShell({
     void initMobileChrome();
     void setHeroStatusBar(heroStatusBar);
   }, [heroStatusBar]);
+
+  // Ask for notification permission only once someone is signed in — a prompt
+  // on first cold launch, before the user has any reason to want alerts, gets
+  // denied and can never be asked again.
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) void initNativePush();
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <div

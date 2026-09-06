@@ -81,6 +81,12 @@ export function isAuthCancellation(err: unknown): boolean {
 }
 
 export async function signOutCrossPlatform(): Promise<void> {
+  // Unregister the push token first — it needs a valid ID token, which is gone
+  // the moment we sign out. Otherwise the device keeps receiving the previous
+  // user's notifications.
+  const { clearNativePushToken } = await import("./native-push");
+  await clearNativePushToken();
+
   if (isNative()) {
     await FirebaseAuthentication.signOut();
   }

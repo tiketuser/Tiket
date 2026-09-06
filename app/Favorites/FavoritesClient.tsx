@@ -10,6 +10,7 @@ import HeartIcon from "../../public/images/Favorites/Heart.svg";
 import Image from "next/image";
 import { DateRange } from "react-day-picker";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
+import { eventDayStart } from "@/utils/eventDate";
 
 const PAGE_SIZE = 12;
 
@@ -139,13 +140,12 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
       if (filters.venues.length > 0 && !filters.venues.includes(event.location)) return false;
 
       if (filters.dateRange?.from && filters.dateRange?.to) {
-        const normalizedDate = event.date.replace(/\./g, "/");
-        const eventDate = new Date(normalizedDate.split("/").reverse().join("-"));
+        const eventDate = eventDayStart(event.date);
         const fromDate = new Date(filters.dateRange.from);
         fromDate.setHours(0, 0, 0, 0);
         const toDate = new Date(filters.dateRange.to);
         toDate.setHours(23, 59, 59, 999);
-        if (eventDate < fromDate || eventDate > toDate) return false;
+        if (eventDate && (eventDate < fromDate || eventDate > toDate)) return false;
       }
 
       if (event.price < filters.priceRange[0] || event.price > filters.priceRange[1]) return false;

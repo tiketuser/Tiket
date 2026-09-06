@@ -33,7 +33,7 @@ const config: CapacitorConfig = {
       backgroundColor: "#F5F1E8",
       overlaysWebView: true,
     },
-    PushNotifications: {
+    FirebaseMessaging: {
       presentationOptions: ["badge", "sound", "alert"],
     },
     FirebaseAuthentication: {

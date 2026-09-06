@@ -1,6 +1,8 @@
+import { parseEventDate } from "./eventDate";
+
 /**
  * Calculate time left until an event
- * @param dateString - Date in format DD/MM/YYYY or DD.MM.YYYY
+ * @param dateString - Date in format DD/MM/YYYY, DD.MM.YYYY, or YYYY-MM-DD
  * @param timeString - Time in format HH:MM (optional)
  * @returns Hebrew string describing time until event
  */
@@ -9,20 +11,10 @@ export const calculateTimeLeft = (
   timeString?: string
 ): string => {
   try {
-    // Normalize date separator to /
-    const normalizedDate = dateString.replace(/\./g, "/");
-    const [day, month, year] = normalizedDate.split("/");
-    const [hours, minutes] = timeString
-      ? timeString.split(":")
-      : ["12", "00"];
-    
-    const eventDate = new Date(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day),
-      parseInt(hours),
-      parseInt(minutes)
-    );
+    const eventDate = parseEventDate(dateString, timeString);
+    // Unrecognized/legacy format — don't fabricate a date (would falsely read
+    // as "האירוע עבר"). Show a neutral label instead, like mobile does.
+    if (!eventDate) return "בקרוב";
 
     const now = new Date();
     const diffMs = eventDate.getTime() - now.getTime();

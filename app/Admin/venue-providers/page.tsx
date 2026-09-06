@@ -401,14 +401,14 @@ export default function VenueProvidersPage() {
     setShowDeleteConfirm(null);
   };
 
-  const handleTestConnection = async (provider: VenueProvider) => {
+  const handleTestConnection = async (provider: VenueProvider, sample?: Record<string, string>) => {
     setTestingId(provider.id);
     try {
       const token = await getIdToken();
       const res = await apiFetch("/api/admin/venue-providers/test", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ providerId: provider.id }),
+        body: JSON.stringify({ providerId: provider.id, ...(sample ? { sample } : {}) }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -1492,7 +1492,7 @@ function ProviderCard({
   onToggle: (p: VenueProvider) => void;
   onEdit: ((p: VenueProvider) => void) | null;
   onDelete: ((id: string) => void) | null;
-  onTest: ((p: VenueProvider) => void) | null;
+  onTest: ((p: VenueProvider, sample?: Record<string, string>) => void) | null;
   testingId: string | null;
   testResult?: TestResult;
   showDeleteConfirm: string | null;
@@ -1503,6 +1503,17 @@ function ProviderCard({
   const isConnect = provider.protocol === "tiket_connect";
   const stats = provider.stats;
   const [showSecurity, setShowSecurity] = useState(false);
+  const [showLookup, setShowLookup] = useState(false);
+  const [lookup, setLookup] = useState({ barcode: "", artist: "", venue: "", date: "" });
+
+  const runLookup = () => {
+    if (!onTest || !lookup.barcode.trim()) return;
+    const sample: Record<string, string> = { barcode: lookup.barcode.trim() };
+    if (lookup.artist.trim()) sample.artist = lookup.artist.trim();
+    if (lookup.venue.trim()) sample.venue = lookup.venue.trim();
+    if (lookup.date.trim()) sample.date = lookup.date.trim();
+    onTest(provider, sample);
+  };
 
   return (
     <div
@@ -1668,6 +1679,18 @@ function ProviderCard({
                 disabled={testingId === provider.id}
               >
                 {testingId === provider.id ? "בודק..." : "בדוק חיבור"}
+              </button>
+            )}
+            {onTest && (
+              <button
+                className={`text-xs border px-3 py-1 rounded-lg transition-colors font-medium ${
+                  showLookup
+                    ? "border-primary bg-secondary/30 text-primary"
+                    : "border-secondary text-mutedText hover:bg-secondary/20"
+                }`}
+                onClick={() => setShowLookup((v) => !v)}
+              >
+                בדוק ברקוד
               </button>
             )}
             {onEdit && (

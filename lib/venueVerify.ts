@@ -675,8 +675,16 @@ export interface ProviderTestResult {
  * the config cache, calls exactly one provider with a synthetic ticket, and
  * reports what actually happened. A partner answering "not_found" proves the
  * endpoint, auth and schema all work — that reads as success here.
+ *
+ * Pass `customSample` to look up a *real* barcode instead of the synthetic one:
+ * a `match`/`mismatch` outcome then proves the barcode actually exists in the
+ * partner's data (vs. the always-`not_found` synthetic probe). `_testProviderId`
+ * is always forced so the call can never be routed anywhere but this provider.
  */
-export async function testProvider(providerId: string): Promise<ProviderTestResult> {
+export async function testProvider(
+  providerId: string,
+  customSample?: Partial<VerificationRequest>,
+): Promise<ProviderTestResult> {
   if (!adminDb) {
     return { ok: false, providerName: providerId, httpStatus: null, latencyMs: 0, outcome: null, error: "Database unavailable" };
   }
@@ -694,6 +702,7 @@ export async function testProvider(providerId: string): Promise<ProviderTestResu
     venue: "בדיקת מערכת",
     date: "01/01/2030",
     time: "20:00",
+    ...customSample,
     _testProviderId: providerId,
   };
 

@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
 import type { TicketInfo } from "../Dialogs/CheckoutDialog/CheckoutDialog";
+import { hebDatePartsShort } from "@/utils/eventDate";
 
 interface SingleCardProps {
   imageSrc?: string;
@@ -98,31 +99,13 @@ const SingleCard: React.FC<SingleCardProps> = ({
       return { dayOfWeek, day, month };
     }
 
-    const normalizedDate = dateString.replace(/\./g, "/");
-    const parts = normalizedDate.split("/");
-    if (parts.length !== 3)
-      return { dayOfWeek: "-", day: dateString, month: "-" };
-
-    const [dayNum, monthNum, year] = parts.map(Number);
-    if (isNaN(dayNum) || isNaN(monthNum) || isNaN(year))
-      return { dayOfWeek: "-", day: dateString, month: "-" };
-
-    const dateObj = new Date(year, monthNum - 1, dayNum);
-    const hebrewDays = [
-      "ראשון",
-      "שני",
-      "שלישי",
-      "רביעי",
-      "חמישי",
-      "שישי",
-      "שבת",
-    ];
-
-    return {
-      dayOfWeek: hebrewDays[dateObj.getDay()],
-      day: String(dayNum),
-      month: hebrewMonths[monthNum - 1],
-    };
+    return (
+      hebDatePartsShort(dateString) ?? {
+        dayOfWeek: "-",
+        day: dateString,
+        month: "-",
+      }
+    );
   };
 
   const dateInfo = parseDateInfo(date);

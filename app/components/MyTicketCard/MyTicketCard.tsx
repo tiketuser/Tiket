@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { hebDatePartsShort } from "@/utils/eventDate";
 
 interface MyTicketCardProps {
   artist: string;
@@ -15,28 +16,13 @@ interface MyTicketCardProps {
 }
 
 function parseDateInfo(dateString: string) {
-  if (!dateString) return { dayOfWeek: "-", day: "-", month: "-" };
-
-  const hebrewMonths = [
-    "ינו׳","פבר׳","מרץ","אפר׳","מאי","יוני",
-    "יולי","אוג׳","ספט׳","אוק׳","נוב׳","דצמ׳",
-  ];
-  const hebrewDays = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
-
-  const normalized = dateString.replace(/\./g, "/");
-  const parts = normalized.split("/");
-  if (parts.length !== 3) return { dayOfWeek: "-", day: dateString, month: "-" };
-
-  const [dayNum, monthNum, year] = parts.map(Number);
-  if (isNaN(dayNum) || isNaN(monthNum) || isNaN(year))
-    return { dayOfWeek: "-", day: dateString, month: "-" };
-
-  const dateObj = new Date(year, monthNum - 1, dayNum);
-  return {
-    dayOfWeek: hebrewDays[dateObj.getDay()],
-    day: String(dayNum),
-    month: hebrewMonths[monthNum - 1],
-  };
+  return (
+    hebDatePartsShort(dateString) ?? {
+      dayOfWeek: "-",
+      day: dateString || "-",
+      month: "-",
+    }
+  );
 }
 
 const MyTicketCard: React.FC<MyTicketCardProps> = ({

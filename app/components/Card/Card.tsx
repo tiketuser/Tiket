@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { eventHref } from "@/lib/platform";
+import { formatHebrewDateLong } from "@/utils/eventDate";
 import { encodeImageUrl } from "@/utils/defaultImages";
 
 interface CardProps {
@@ -101,74 +102,12 @@ const Card: React.FC<CardProps> = ({
     }
   };
 
-  // Parse date string (format: "dd/mm/yyyy" or "dd.mm.yyyy") to Hebrew format
+  // Parse date string ("dd/mm/yyyy", "dd.mm.yyyy", or ISO) to Hebrew format
   const formatDateHebrew = (dateString: string): string => {
     if (!dateString || dateString === "undefined" || dateString === "null") {
-      console.warn("Card: Invalid date string:", dateString);
       return "תאריך לא זמין";
     }
-
-    try {
-      // Normalize date separator to /
-      const normalizedDate = dateString.replace(/\./g, "/");
-      const parts = normalizedDate.split("/");
-      if (parts.length !== 3) {
-        console.warn("Card: Invalid date format:", dateString);
-        return dateString;
-      }
-
-      const [day, month, year] = parts.map(Number);
-
-      // Validate the numbers
-      if (isNaN(day) || isNaN(month) || isNaN(year)) {
-        console.warn("Card: Invalid date numbers:", {
-          day,
-          month,
-          year,
-          original: dateString,
-        });
-        return dateString;
-      }
-
-      const dateObj = new Date(year, month - 1, day);
-
-      const hebrewDays = [
-        "ראשון",
-        "שני",
-        "שלישי",
-        "רביעי",
-        "חמישי",
-        "שישי",
-        "שבת",
-      ];
-      const hebrewMonths = [
-        "ינואר",
-        "פברואר",
-        "מרץ",
-        "אפריל",
-        "מאי",
-        "יוני",
-        "יולי",
-        "אוגוסט",
-        "ספטמבר",
-        "אוקטובר",
-        "נובמבר",
-        "דצמבר",
-      ];
-
-      const dayOfWeek = hebrewDays[dateObj.getDay()];
-      const monthName = hebrewMonths[month - 1];
-
-      return `${dayOfWeek}, ${day} ב${monthName} ${year}`;
-    } catch (error) {
-      console.error(
-        "Card: Error formatting date:",
-        error,
-        "Original:",
-        dateString,
-      );
-      return dateString;
-    }
+    return formatHebrewDateLong(dateString) ?? dateString;
   };
 
   return (
