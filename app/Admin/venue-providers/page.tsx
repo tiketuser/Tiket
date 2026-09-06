@@ -1744,6 +1744,53 @@ function ProviderCard({
         </div>
       </div>
 
+      {/* Real-barcode lookup — proves the query returns actual tickets, not just
+          the synthetic "not_found" probe. */}
+      {showLookup && onTest && (
+        <div className="mt-4 pt-4 border-t border-secondary/50">
+          <p className="text-xs text-mutedText mb-2">
+            הזן ברקוד אמיתי מהמערכת של הספק. תוצאה <span className="font-medium">match</span> מוכיחה שהכרטיס נמצא;
+            {" "}
+            <span className="font-medium">mismatch</span> = נמצא אך הפרטים לא תואמים;
+            {" "}
+            <span className="font-medium">not_found</span> = לא קיים אצל הספק.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              className="text-xs border border-secondary rounded-lg px-2 py-1.5 col-span-2"
+              placeholder="ברקוד (חובה)"
+              value={lookup.barcode}
+              onChange={(e) => setLookup((l) => ({ ...l, barcode: e.target.value }))}
+            />
+            <input
+              className="text-xs border border-secondary rounded-lg px-2 py-1.5"
+              placeholder="אמן / אירוע (רשות)"
+              value={lookup.artist}
+              onChange={(e) => setLookup((l) => ({ ...l, artist: e.target.value }))}
+            />
+            <input
+              className="text-xs border border-secondary rounded-lg px-2 py-1.5"
+              placeholder="אולם (רשות)"
+              value={lookup.venue}
+              onChange={(e) => setLookup((l) => ({ ...l, venue: e.target.value }))}
+            />
+            <input
+              className="text-xs border border-secondary rounded-lg px-2 py-1.5"
+              placeholder="תאריך DD/MM/YYYY (רשות)"
+              value={lookup.date}
+              onChange={(e) => setLookup((l) => ({ ...l, date: e.target.value }))}
+            />
+          </div>
+          <button
+            className="mt-2 text-xs bg-primary text-white hover:bg-highlight px-3 py-1.5 rounded-lg transition-colors font-medium disabled:opacity-50"
+            onClick={runLookup}
+            disabled={!lookup.barcode.trim() || testingId === provider.id}
+          >
+            {testingId === provider.id ? "בודק..." : "הרץ בדיקה"}
+          </button>
+        </div>
+      )}
+
       {/* Security & agent management */}
       {showSecurity && !isDemo && <ProviderSecurityPanel provider={provider} />}
     </div>
