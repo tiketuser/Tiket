@@ -296,9 +296,17 @@ jobs:
       - name: Build signed AAB
         run: |
           npm run cap:sync:android
-          cd android && ./gradlew bundleRelease -PversionCode=${{ github.run_number }}
+          cd android && ./gradlew bundleRelease \
+            -PversionCode=${{ github.run_number }} \
+            -PminSdkVersion=23 -PtargetSdkVersion=35 -PcompileSdkVersion=35
       - name: Verify AAB is signed
         run: jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
+      - name: Inspect AAB SDK levels (diagnostic)
+        run: |
+          curl -sL -o bundletool.jar https://github.com/google/bundletool/releases/download/1.17.2/bundletool-all-1.17.2.jar
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          echo "targetSdk=$(java -jar bundletool.jar dump manifest --bundle "$AAB" --xpath /manifest/uses-sdk/@android:targetSdkVersion)"
+          echo "minSdk=$(java -jar bundletool.jar dump manifest --bundle "$AAB" --xpath /manifest/uses-sdk/@android:minSdkVersion)"
       - name: Upload to Play (${{ needs.setup.outputs.android_track }})
         run: fastlane android ${{ needs.setup.outputs.android_track == 'production' && 'production' || 'internal' }}
 
