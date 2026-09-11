@@ -109,6 +109,7 @@ jobs:
           ANDROID_CHANGED: ${{ steps.filter.outputs.android }}
         run: |
           WEB=true; [ "$IN_WEB" = "false" ] && WEB=false
+          printf '%s' "$COMMIT_MSG" | grep -q '\[skip-web\]' && WEB=false
           OTA=true
           { [ "$IN_OTA" = "false" ] || printf '%s' "$COMMIT_MSG" | grep -q '\[skip-ota\]'; } && OTA=false
           case "$IN_ANDROID" in
