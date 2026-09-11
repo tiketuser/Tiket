@@ -7,6 +7,7 @@ import {
   getAuth,
   onAuthStateChanged,
   signOut,
+  deleteUser,
   type User,
 } from "firebase/auth";
 import {
@@ -14,6 +15,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  deleteDoc,
   query,
   where,
   limit,
@@ -210,6 +212,35 @@ export default function MobileProfile() {
       router.push("/");
     } catch (err) {
       console.error("[mobile-profile] sign-out failed", err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (
+      !window.confirm(
+        "האם אתה בטוח שברצונך למחוק את החשבון? כל הנתונים שלך יימחקו. פעולה זו אינה הפיכה.",
+      )
+    ) {
+      return;
+    }
+    const currentUser = getAuth().currentUser;
+    if (!currentUser || !db) return;
+    try {
+      await deleteDoc(doc(db, "users", currentUser.uid));
+      await deleteUser(currentUser);
+      router.push("/");
+    } catch (err) {
+      const msg =
+        err && typeof err === "object" && "message" in err
+          ? (err as { message?: string }).message
+          : String(err);
+      const requiresReauth =
+        typeof msg === "string" && msg.includes("requires-recent-login");
+      alert(
+        requiresReauth
+          ? "מטעמי אבטחה יש להתחבר מחדש לפני מחיקת החשבון. התנתק, התחבר שוב ונסה שנית."
+          : "מחיקת החשבון נכשלה: " + (msg || err),
+      );
     }
   };
 
@@ -589,6 +620,27 @@ export default function MobileProfile() {
           }}
         >
           התנתק
+        </button>
+
+        <button
+          onClick={handleDeleteAccount}
+          style={{
+            alignSelf: "center",
+            marginTop: 2,
+            padding: "8px 4px",
+            background: "none",
+            border: "none",
+            color: "var(--tk-muted)",
+            fontSize: 11,
+            fontWeight: 500,
+            fontFamily: "inherit",
+            cursor: "pointer",
+            textDecoration: "underline",
+            textUnderlineOffset: 2,
+            opacity: 0.75,
+          }}
+        >
+          מחיקת חשבון
         </button>
 
         <div
