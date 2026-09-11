@@ -124,18 +124,6 @@ async function getGalleryData(): Promise<{ cards: CardData[]; lastDocId: string 
         const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
         const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
-        // Calculate average original price for "before" price
-        const originalPrices = eventTickets
-          .map((t) => t.originalPrice || t.askingPrice)
-          .filter((p) => p && !isNaN(p) && p > minPrice);
-        const avgOriginalPrice =
-          originalPrices.length > 0
-            ? Math.round(
-                originalPrices.reduce((a, b) => a + b, 0) /
-                  originalPrices.length,
-              )
-            : Math.round(minPrice * 1.2); // Default to 20% markup if no original prices
-
         return {
           id: event.id || "",
           title: event.artist || "אמן לא ידוע",

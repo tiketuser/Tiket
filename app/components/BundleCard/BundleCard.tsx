@@ -41,7 +41,6 @@ function formatSeat(ticket: BundleTicket): string {
 
 const BundleCard: React.FC<BundleCardProps> = ({
   tickets,
-  eventTitle,
   canSplit,
   onBuyAll,
   onBuySelected,

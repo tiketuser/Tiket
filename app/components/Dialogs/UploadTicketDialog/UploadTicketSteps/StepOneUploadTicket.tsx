@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
-import CustomInput from "@/app/components/CustomInput/CustomInput";
 import EmptyImage from "../../../../../public/images/Dialogs/emptyimage.svg";
 import { apiFetch } from "@/lib/platform";
 import { getAuth } from "firebase/auth";

@@ -9,9 +9,7 @@ import {
   getDocs,
   query,
   orderBy,
-  doc,
   where,
-  updateDoc,
 } from "firebase/firestore";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
@@ -273,7 +271,7 @@ export default function AdminPage() {
       let eventsArray;
       try {
         eventsArray = JSON.parse(bulkJson);
-      } catch (error) {
+      } catch {
         setBulkMessage({
           type: "error",
           text: "JSON לא תקין. נא לבדוק את הפורמט.",

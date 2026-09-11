@@ -23,7 +23,6 @@ interface ExtendedTicketDetails {
 }
 
 const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
-  nextStep,
   prevStep,
   ticketData,
   updateTicketData,

@@ -4,8 +4,7 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { LogIn, UserPlus, Mail, LogOut, ShieldCheck, HelpCircle, FileText, Lock } from "lucide-react";
-import { cn } from "../../../lib/utils";
+import { Mail, LogOut, ShieldCheck, HelpCircle, FileText, Lock } from "lucide-react";
 import { isAdminUser } from "@/lib/isAdminClient";
 import {
   getAuth,

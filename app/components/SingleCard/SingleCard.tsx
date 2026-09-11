@@ -2,9 +2,7 @@
 
 import React, { useState } from "react";
 import PriceIcon from "../../../public/images/Home Page/Web/Price Icon.svg";
-import TimeLeftIcon from "../../../public/images/Home Page/Web/TimeLeft.svg";
 import Image from "next/image";
-import Link from "next/link";
 import CheckoutDialog from "../Dialogs/CheckoutDialog/CheckoutDialog";
 import type { TicketInfo } from "../Dialogs/CheckoutDialog/CheckoutDialog";
 import { hebDatePartsShort } from "@/utils/eventDate";
@@ -19,7 +17,6 @@ interface SingleCardProps {
   tag?: string;
   seatLocation?: string;
   ticketsLeft?: number;
-  timeLeft?: string;
   buttonAction: string;
   ticketId?: string;
   sellerId?: string;
@@ -39,7 +36,6 @@ const SingleCard: React.FC<SingleCardProps> = ({
   location,
   seatLocation,
   price,
-  timeLeft,
   buttonAction,
   ticketId,
   sellerId,
