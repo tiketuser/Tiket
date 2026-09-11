@@ -7,7 +7,6 @@ import {
   getAuth,
   onAuthStateChanged,
   signOut,
-  deleteUser,
   type User,
 } from "firebase/auth";
 import {
@@ -15,12 +14,12 @@ import {
   doc,
   getDoc,
   getDocs,
-  deleteDoc,
   query,
   where,
   limit,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
+import { apiFetch } from "@/lib/platform";
 import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
 import { hebDate, nis } from "./format";
@@ -224,23 +223,27 @@ export default function MobileProfile() {
       return;
     }
     const currentUser = getAuth().currentUser;
-    if (!currentUser || !db) return;
+    if (!currentUser) return;
     try {
-      await deleteDoc(doc(db, "users", currentUser.uid));
-      await deleteUser(currentUser);
+      // Server-side deletion (Admin SDK): removes the profile doc then the auth
+      // account, with no requires-recent-login trap that could strand a live
+      // account after the doc was already deleted.
+      const idToken = await currentUser.getIdToken();
+      const res = await apiFetch("/api/account/delete", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        throw new Error(`server responded ${res.status}`);
+      }
+      await signOut(getAuth());
       router.push("/");
     } catch (err) {
       const msg =
         err && typeof err === "object" && "message" in err
           ? (err as { message?: string }).message
           : String(err);
-      const requiresReauth =
-        typeof msg === "string" && msg.includes("requires-recent-login");
-      alert(
-        requiresReauth
-          ? "מטעמי אבטחה יש להתחבר מחדש לפני מחיקת החשבון. התנתק, התחבר שוב ונסה שנית."
-          : "מחיקת החשבון נכשלה: " + (msg || err),
-      );
+      alert("מחיקת החשבון נכשלה: " + (msg || err));
     }
   };
 
