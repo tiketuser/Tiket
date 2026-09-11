@@ -1,0 +1,311 @@
+name: Publish (web / OTA / stores)
+
+# Reusable multi-target publish pipeline. Called by deploy-staging.yml (staging)
+# and deploy.yml (production), or run manually with per-target toggles.
+#
+# Targets:
+#   web     — Docker build + Cloud Run deploy (+ Firebase Hosting for staging)
+#   ota     — build the mobile bundle and push it to the channel's GCS folder,
+#             so installed apps hot-update without a store review
+#   android — build the signed AAB and upload to a Play track (fastlane supply)
+#   ios     — cannot build for free on a private repo; prints a reminder to run
+#             `npm run release:ios` on the Mac when native iOS files changed
+#
+# Gating (per push): web + ota always run; android only when native paths change
+# or the commit message contains [build-android]/[build-native]. Override with
+# [skip-ota] or the manual dispatch toggles below.
+
+on:
+  workflow_call:
+    inputs:
+      channel: { type: string, required: true } # staging | production
+      web: { type: string, default: "true" }
+      ota: { type: string, default: "true" }
+      android: { type: string, default: "auto" } # auto | true | false
+  workflow_dispatch:
+    inputs:
+      channel:
+        type: choice
+        options: [staging, production]
+        default: staging
+      web: { type: boolean, default: true }
+      ota: { type: boolean, default: true }
+      android: { type: boolean, default: false }
+
+env:
+  PROJECT_ID: tiket-9268c
+  REGION: me-west1
+  ARTIFACT_REGISTRY: tiket-repo
+  IMAGE_NAME: tiket-app
+  OTA_BUCKET: gs://tiket-ota
+  OTA_PUBLIC_BASE: https://storage.googleapis.com/tiket-ota
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.decide.outputs.web }}
+      ota: ${{ steps.decide.outputs.ota }}
+      android: ${{ steps.decide.outputs.android }}
+      ios_changed: ${{ steps.filter.outputs.ios }}
+      channel: ${{ steps.cfg.outputs.channel }}
+      service_name: ${{ steps.cfg.outputs.service_name }}
+      tag_prefix: ${{ steps.cfg.outputs.tag_prefix }}
+      max_instances: ${{ steps.cfg.outputs.max_instances }}
+      hosting_target: ${{ steps.cfg.outputs.hosting_target }}
+      api_base_url: ${{ steps.cfg.outputs.api_base_url }}
+      android_track: ${{ steps.cfg.outputs.android_track }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Map channel → config
+        id: cfg
+        run: |
+          CH="${{ inputs.channel }}"
+          echo "channel=$CH" >> "$GITHUB_OUTPUT"
+          if [ "$CH" = "production" ]; then
+            echo "service_name=tiket-app"          >> "$GITHUB_OUTPUT"
+            echo "tag_prefix="                      >> "$GITHUB_OUTPUT"
+            echo "max_instances=10"                 >> "$GITHUB_OUTPUT"
+            echo "hosting_target="                  >> "$GITHUB_OUTPUT"
+            echo "api_base_url=https://tiket.co.il"  >> "$GITHUB_OUTPUT"
+            echo "android_track=production"          >> "$GITHUB_OUTPUT"
+          else
+            echo "service_name=tiket-app-staging"   >> "$GITHUB_OUTPUT"
+            echo "tag_prefix=staging-"              >> "$GITHUB_OUTPUT"
+            echo "max_instances=5"                  >> "$GITHUB_OUTPUT"
+            echo "hosting_target=staging"           >> "$GITHUB_OUTPUT"
+            echo "api_base_url=https://tiket-app-staging-653453593991.me-west1.run.app" >> "$GITHUB_OUTPUT"
+            echo "android_track=internal"           >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Detect native path changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            android:
+              - 'android/**'
+              - 'capacitor.config.ts'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'next.config.mjs'
+              - 'scripts/build-mobile.js'
+            ios:
+              - 'ios/**'
+              - 'capacitor.config.ts'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'next.config.mjs'
+              - 'scripts/build-mobile.js'
+
+      - name: Decide targets
+        id: decide
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          IN_WEB: ${{ inputs.web }}
+          IN_OTA: ${{ inputs.ota }}
+          IN_ANDROID: ${{ inputs.android }}
+          ANDROID_CHANGED: ${{ steps.filter.outputs.android }}
+        run: |
+          WEB=true; [ "$IN_WEB" = "false" ] && WEB=false
+          OTA=true
+          { [ "$IN_OTA" = "false" ] || printf '%s' "$COMMIT_MSG" | grep -q '\[skip-ota\]'; } && OTA=false
+          case "$IN_ANDROID" in
+            true) ANDROID=true ;;
+            false) ANDROID=false ;;
+            *)
+              if [ "$ANDROID_CHANGED" = "true" ] || printf '%s' "$COMMIT_MSG" | grep -qE '\[build-android\]|\[build-native\]'; then
+                ANDROID=true
+              else
+                ANDROID=false
+              fi ;;
+          esac
+          # Explicit escape hatch: never build Android for this push.
+          if printf '%s' "$COMMIT_MSG" | grep -qE '\[skip-android\]|\[skip-native\]'; then ANDROID=false; fi
+          echo "web=$WEB"         >> "$GITHUB_OUTPUT"
+          echo "ota=$OTA"         >> "$GITHUB_OUTPUT"
+          echo "android=$ANDROID" >> "$GITHUB_OUTPUT"
+          echo "Decided: web=$WEB ota=$OTA android=$ANDROID"
+
+  web:
+    needs: setup
+    if: needs.setup.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+      - run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+      - name: Build Docker image
+        run: |
+          IMG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}
+          docker build \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }} \
+            --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ (needs.setup.outputs.channel == 'production' && secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) || secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_STAGING || secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }} \
+            -t $IMG:${{ needs.setup.outputs.tag_prefix }}${{ github.sha }} \
+            -t $IMG:${{ needs.setup.outputs.tag_prefix }}latest \
+            .
+      - name: Push Docker image
+        run: |
+          IMG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}
+          docker push $IMG:${{ needs.setup.outputs.tag_prefix }}${{ github.sha }}
+          docker push $IMG:${{ needs.setup.outputs.tag_prefix }}latest
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ needs.setup.outputs.service_name }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.setup.outputs.tag_prefix }}${{ github.sha }}
+          flags: |
+            --port=8080
+            --memory=1Gi
+            --cpu=1
+            --min-instances=0
+            --max-instances=${{ needs.setup.outputs.max_instances }}
+            --allow-unauthenticated
+            --service-account=firebase-adminsdk-fbsvc@tiket-9268c.iam.gserviceaccount.com
+          # Staging prefers *_STAGING (test-mode) Stripe secrets when present and
+          # falls back to the shared keys until they're added — so staging never
+          # silently moves real money once you set the test secrets.
+          env_vars: |
+            NODE_ENV=production
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            STRIPE_SECRET_KEY=${{ (needs.setup.outputs.channel == 'production' && secrets.STRIPE_SECRET_KEY) || secrets.STRIPE_SECRET_KEY_STAGING || secrets.STRIPE_SECRET_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ (needs.setup.outputs.channel == 'production' && secrets.STRIPE_WEBHOOK_SECRET) || secrets.STRIPE_WEBHOOK_SECRET_STAGING || secrets.STRIPE_WEBHOOK_SECRET }}
+            PLATFORM_FEE_PERCENT=${{ secrets.PLATFORM_FEE_PERCENT }}
+            GUEST_TOKEN_SECRET=${{ secrets.GUEST_TOKEN_SECRET }}
+      - name: Remove stale env vars
+        run: |
+          gcloud run services update ${{ needs.setup.outputs.service_name }} \
+            --region=${{ env.REGION }} \
+            --remove-env-vars=GOOGLE_APPLICATION_CREDENTIALS --quiet || true
+      - name: Deploy Firebase Hosting (staging only)
+        if: needs.setup.outputs.hosting_target != ''
+        run: |
+          set +e
+          OUT=$(npx --yes firebase-tools@latest deploy \
+            --only hosting:${{ needs.setup.outputs.hosting_target }} \
+            --project ${{ env.PROJECT_ID }} --non-interactive 2>&1)
+          CODE=$?; echo "$OUT"
+          if [ $CODE -ne 0 ] && echo "$OUT" | grep -q "current active version"; then
+            echo "::notice::Hosting config unchanged — no-op."; exit 0
+          fi
+          exit $CODE
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+
+  ota:
+    needs: setup
+    if: needs.setup.outputs.ota == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NEXT_PUBLIC_OTA_CHANNEL: ${{ needs.setup.outputs.channel }}
+      NEXT_PUBLIC_MOBILE_API_BASE_URL: ${{ needs.setup.outputs.api_base_url }}
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ (needs.setup.outputs.channel == 'production' && secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) || secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_STAGING || secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+      - name: Build + publish OTA bundle
+        env:
+          OTA_CHANNEL: ${{ needs.setup.outputs.channel }}
+          OTA_VERSION: ${{ github.run_number }}
+          OTA_NOTES: ${{ github.event.head_commit.message }}
+        run: npm run ota:build
+
+  android:
+    needs: setup
+    if: needs.setup.outputs.android == 'true'
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_OTA_CHANNEL: ${{ needs.setup.outputs.channel }}
+      NEXT_PUBLIC_MOBILE_API_BASE_URL: ${{ needs.setup.outputs.api_base_url }}
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ (needs.setup.outputs.channel == 'production' && secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) || secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_STAGING || secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: false
+      - run: gem install fastlane --no-document
+      - run: npm ci
+      - name: Write signing + service-account files
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+          cat > android/keystore.properties <<EOF
+          storeFile=upload-keystore.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+          echo "$PLAY_SERVICE_ACCOUNT_JSON" > fastlane/play-service-account.json
+          echo "PLAY_SERVICE_ACCOUNT_JSON_FILE=$PWD/fastlane/play-service-account.json" >> "$GITHUB_ENV"
+      - name: Build signed AAB
+        run: |
+          npm run cap:sync:android
+          cd android && ./gradlew bundleRelease -PversionCode=${{ github.run_number }}
+      - name: Verify AAB is signed
+        run: jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
+      - name: Upload to Play (${{ needs.setup.outputs.android_track }})
+        run: fastlane android ${{ needs.setup.outputs.android_track == 'production' && 'production' || 'internal' }}
+
+  ios-note:
+    needs: setup
+    if: needs.setup.outputs.ios_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remind to cut an iOS build
+        run: |
+          echo "::warning title=iOS native build needed::Native iOS files changed. Run 'npm run release:ios' on the Mac (channel: ${{ needs.setup.outputs.channel }}) to ship a new TestFlight build. OTA cannot deliver native changes."

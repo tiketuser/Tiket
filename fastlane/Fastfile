@@ -1,0 +1,55 @@
+# Fastlane lanes for TIKET.
+#
+# Android lanes run in CI (Ubuntu) and upload the signed AAB to a Play track via
+# `supply`. The AAB is produced by `npm run android:bundle` (which runs
+# cap:sync:android → build:mobile → gradlew bundleRelease) BEFORE the lane is
+# called, so the web bundle env (channel, API base, Firebase keys) is baked in.
+#
+# The iOS lane is optional — scripts/release-ios.sh drives iOS directly today;
+# this lane exists for a future self-hosted macOS runner.
+
+default_platform(:android)
+
+AAB_PATH = "android/app/build/outputs/bundle/release/app-release.aab"
+
+platform :android do
+  desc "Upload the current release AAB to the Play internal track (staging)"
+  lane :internal do
+    # Internal testers should get the build immediately → completed (default).
+    upload_to_play_store(
+      track: "internal",
+      aab: AAB_PATH,
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "Upload the current release AAB to the Play production track"
+  lane :production do
+    upload_to_play_store(
+      track: "production",
+      aab: AAB_PATH,
+      skip_upload_apk: true,
+      # Draft + no rollout: promote/roll out manually from Play Console, mirroring
+      # the manual App Store release. Change to rollout: 0.1 for a staged push.
+      release_status: "draft",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+end
+
+platform :ios do
+  desc "Build + upload to TestFlight (for a future macOS CI runner)"
+  lane :beta do
+    build_app(
+      workspace: "ios/App/App.xcworkspace",
+      scheme: "App",
+      export_method: "app-store",
+    )
+    upload_to_testflight(skip_waiting_for_build_processing: true)
+  end
+end

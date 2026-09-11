@@ -40,6 +40,16 @@ const config: CapacitorConfig = {
       skipNativeAuth: false,
       providers: ["google.com", "apple.com"],
     },
+    // Over-the-air web-bundle updates, driven manually from lib/ota.ts against
+    // a self-hosted GCS manifest (not Capgo cloud). autoUpdate is off so we
+    // control download/apply timing; appReadyTimeout arms the crash-rollback.
+    CapacitorUpdater: {
+      autoUpdate: false,
+      appReadyTimeout: 10000,
+      responseTimeout: 20,
+      autoDeleteFailed: true,
+      autoDeletePrevious: true,
+    },
   },
 };
 
