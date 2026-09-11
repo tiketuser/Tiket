@@ -7,6 +7,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { apiFetch, searchHref } from "@/lib/platform";
+import { eventDayStart } from "@/utils/eventDate";
 import MobileShell from "./MobileShell";
 import MobileTopBar from "./MobileTopBar";
 import MobileSearchBar from "./MobileSearchBar";
@@ -163,14 +164,10 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
     if (filters.venue !== "הכל")
       result = result.filter((c) => c.location?.startsWith(filters.venue));
     if (filters.dateFrom || filters.dateTo) {
-      const parseDMY = (s: string) => {
-        const m = s?.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-        return m ? new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1])) : null;
-      };
-      const from = parseDMY(filters.dateFrom);
-      const to   = parseDMY(filters.dateTo);
+      const from = eventDayStart(filters.dateFrom);
+      const to   = eventDayStart(filters.dateTo);
       result = result.filter((c) => {
-        const cd = parseDMY(c.date);
+        const cd = eventDayStart(c.date);
         if (!cd) return true;
         if (from && cd < from) return false;
         if (to && cd > to) return false;

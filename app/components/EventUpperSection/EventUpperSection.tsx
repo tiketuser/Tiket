@@ -5,6 +5,7 @@ import Image from "next/image";
 import TicketIcon from "../../../public/images/Event Page/Web/Ticket.svg";
 import ClockIcon from "../../../public/images/Event Page/Web/Clock.svg";
 import { encodeImageUrl } from "@/utils/defaultImages";
+import { formatHebrewDateLong } from "@/utils/eventDate";
 
 interface EventUpperSectionProps {
   imageSrc: string;
@@ -23,54 +24,10 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
   time,
   availableTickets,
 }) => {
-  // Parse date string (format: "dd/mm/yyyy" or "dd.mm.yyyy") to Hebrew format
-  const formatDateHebrew = useMemo(() => {
-    return (dateString: string): string => {
-      if (!dateString) return "";
-
-      try {
-        // Normalize date separator to /
-        const normalizedDate = dateString.replace(/\./g, "/");
-        const [day, month, year] = normalizedDate.split("/").map(Number);
-        const dateObj = new Date(year, month - 1, day);
-
-        const hebrewDays = [
-          "ראשון",
-          "שני",
-          "שלישי",
-          "רביעי",
-          "חמישי",
-          "שישי",
-          "שבת",
-        ];
-        const hebrewMonths = [
-          "ינואר",
-          "פברואר",
-          "מרץ",
-          "אפריל",
-          "מאי",
-          "יוני",
-          "יולי",
-          "אוגוסט",
-          "ספטמבר",
-          "אוקטובר",
-          "נובמבר",
-          "דצמבר",
-        ];
-
-        const dayOfWeek = hebrewDays[dateObj.getDay()];
-        const monthName = hebrewMonths[month - 1];
-
-        return `${dayOfWeek}, ${day} ב${monthName} ${year}`;
-      } catch (error) {
-        return dateString;
-      }
-    };
-  }, []);
-
+  // Parse date string ("dd/mm/yyyy", "dd.mm.yyyy", or ISO) to Hebrew format
   const formattedDate = useMemo(
-    () => formatDateHebrew(date),
-    [date, formatDateHebrew],
+    () => (date ? formatHebrewDateLong(date) ?? date : ""),
+    [date],
   );
 
   return (

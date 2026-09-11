@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { getAuth, deleteUser } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import {
   doc,
   getDoc,
-  deleteDoc,
   collection,
   query,
   where,
@@ -711,10 +710,20 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 ) {
                   const auth = getAuth();
                   const user = auth.currentUser;
-                  if (user && db) {
+                  if (user) {
                     try {
-                      await deleteDoc(doc(db, "users", user.uid));
-                      await deleteUser(user);
+                      // Server-side deletion (Admin SDK): profile doc then auth
+                      // account, with no requires-recent-login trap that could
+                      // strand a live account after the doc was deleted.
+                      const idToken = await user.getIdToken();
+                      const res = await apiFetch("/api/account/delete", {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${idToken}` },
+                      });
+                      if (!res.ok) {
+                        throw new Error(`server responded ${res.status}`);
+                      }
+                      await auth.signOut();
                       window.location.reload();
                     } catch (err) {
                       const msg =

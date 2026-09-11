@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { nis, hebDate } from "./format";
+import { eventDayStart } from "@/utils/eventDate";
 
 export const PRICE_MIN = 80;
 export const PRICE_MAX = 500;
@@ -164,13 +165,8 @@ function HebrewCalendar({ dateFrom, dateTo, onSelect }: {
   const todayM = now.getMonth();
   const todayD = now.getDate();
 
-  const parseD = (s: string) => {
-    if (!s) return null;
-    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    return m ? new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1])) : null;
-  };
-  const selFrom = parseD(dateFrom);
-  const selTo   = parseD(dateTo);
+  const selFrom = eventDayStart(dateFrom);
+  const selTo   = eventDayStart(dateTo);
 
   const [viewY, setViewY] = useState(selFrom?.getFullYear() ?? todayY);
   const [viewM, setViewM] = useState(selFrom?.getMonth() ?? todayM);

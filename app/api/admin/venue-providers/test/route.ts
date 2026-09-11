@@ -36,6 +36,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing providerId" }, { status: 400 });
   }
 
-  const result = await testProvider(providerId);
+  // Optional: look up a real barcode instead of the synthetic probe. Only known
+  // string fields are forwarded; everything else (incl. _testProviderId) is
+  // ignored so the caller can't retarget or inject fields.
+  const raw = body?.sample;
+  let sample: Record<string, string> | undefined;
+  if (raw && typeof raw === "object") {
+    sample = {};
+    for (const key of ["barcode", "artist", "eventName", "venue", "date", "time"] as const) {
+      const value = raw[key];
+      if (typeof value === "string" && value.trim()) sample[key] = value.trim();
+    }
+    if (Object.keys(sample).length === 0) sample = undefined;
+  }
+
+  const result = await testProvider(providerId, sample);
   return NextResponse.json(result);
 }

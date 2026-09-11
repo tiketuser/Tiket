@@ -19,6 +19,7 @@ import {
   limit,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
+import { apiFetch } from "@/lib/platform";
 import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
 import { hebDate, nis } from "./format";
@@ -210,6 +211,39 @@ export default function MobileProfile() {
       router.push("/");
     } catch (err) {
       console.error("[mobile-profile] sign-out failed", err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (
+      !window.confirm(
+        "האם אתה בטוח שברצונך למחוק את החשבון? כל הנתונים שלך יימחקו. פעולה זו אינה הפיכה.",
+      )
+    ) {
+      return;
+    }
+    const currentUser = getAuth().currentUser;
+    if (!currentUser) return;
+    try {
+      // Server-side deletion (Admin SDK): removes the profile doc then the auth
+      // account, with no requires-recent-login trap that could strand a live
+      // account after the doc was already deleted.
+      const idToken = await currentUser.getIdToken();
+      const res = await apiFetch("/api/account/delete", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        throw new Error(`server responded ${res.status}`);
+      }
+      await signOut(getAuth());
+      router.push("/");
+    } catch (err) {
+      const msg =
+        err && typeof err === "object" && "message" in err
+          ? (err as { message?: string }).message
+          : String(err);
+      alert("מחיקת החשבון נכשלה: " + (msg || err));
     }
   };
 
@@ -589,6 +623,27 @@ export default function MobileProfile() {
           }}
         >
           התנתק
+        </button>
+
+        <button
+          onClick={handleDeleteAccount}
+          style={{
+            alignSelf: "center",
+            marginTop: 2,
+            padding: "8px 4px",
+            background: "none",
+            border: "none",
+            color: "var(--tk-muted)",
+            fontSize: 11,
+            fontWeight: 500,
+            fontFamily: "inherit",
+            cursor: "pointer",
+            textDecoration: "underline",
+            textUnderlineOffset: 2,
+            opacity: 0.75,
+          }}
+        >
+          מחיקת חשבון
         </button>
 
         <div

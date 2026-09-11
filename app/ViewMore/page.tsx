@@ -5,6 +5,7 @@ import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "../../firebase";
 import ViewMoreClient from "./ViewMoreClient";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
+import { eventDayStart } from "@/utils/eventDate";
 
 const INITIAL_PAGE_SIZE = 12;
 
@@ -146,14 +147,8 @@ async function loadViewMoreData(): Promise<ViewMoreData> {
   twoDaysFromNow.setHours(23, 59, 59, 999);
 
   const lastMinuteDeals = eventCards.filter((card) => {
-    try {
-      const normalizedDate = card.date.replace(/\./g, "/");
-      const [day, month, year] = normalizedDate.split("/").map(Number);
-      const eventDate = new Date(year, month - 1, day);
-      return eventDate >= now && eventDate <= twoDaysFromNow;
-    } catch {
-      return false;
-    }
+    const eventDate = eventDayStart(card.date);
+    return !!eventDate && eventDate >= now && eventDate <= twoDaysFromNow;
   });
 
   const recommendations = eventCards.filter((card) =>

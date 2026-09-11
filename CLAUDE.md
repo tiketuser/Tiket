@@ -68,3 +68,52 @@ Colors are dynamic via CSS variables (`--color-primary`, `--color-secondary`, `-
 - **Domain:** tiket.co.il
 - **Founders:** Ofek Amar & Aviv Nir
 - **Status:** MVP phase (Payments & Live API integration in progress)
+## App store submission status (updated 2026-09-05)
+
+### App Store Connect (Tiket IL, Apple ID 6808811502, bundle co.il.tiket.app)
+Done: Hebrew screenshots 6.5" + 6.9" (6 each), promotional text, description,
+keywords, support URL https://tiket.co.il/ContactUs, marketing URL,
+copyright "2026 Tiket", subtitle, category Entertainment / Shopping,
+age rating 4+, privacy policy URL https://tiket.co.il/Privacy,
+user privacy choices URL https://tiket.co.il/delete-account,
+App Privacy published (9 data types, all App Functionality, linked, no tracking),
+pricing free in 175 countries, availability all countries,
+manual release, App Review contact info + reviewer notes.
+
+Still open (owner only): upload build from Xcode, App Review demo account
+username/password, Content Rights declaration, DSA trader status,
+accept updated Apple Developer Program License Agreement.
+
+Note: TARGETED_DEVICE_FAMILY changed from "1,2" to "1" (iPhone only) so iPad
+screenshots are not required. Rebuild before archiving.
+Build 3 is attached to version 1.0.
+
+## Push notifications (built 2026-09-05)
+
+Push was previously non-functional end to end: no aps-environment entitlement,
+no APNs capability on the App ID, no AppDelegate remote-notification hooks,
+`initNativePush` never called from anywhere, no /api/notifications/register-token
+endpoint, and no sender.
+
+Now in place:
+- ios/App/App/App.entitlements: aps-environment = development (Xcode rewrites
+  this to production when archiving with a distribution profile)
+- Push Notifications capability enabled on App ID co.il.tiket.app
+- AppDelegate forwards didRegisterForRemoteNotifications... to NotificationCenter
+- Swapped @capacitor/push-notifications for @capacitor-firebase/messaging.
+  The old plugin returns a raw APNs token on iOS, which is not an FCM
+  registration token, so the FCM-based backend could never have delivered to it.
+- lib/native-push.ts: permission, token, tokenReceived rotation, deep-link on tap
+- lib/platform-auth.ts signOutCrossPlatform unregisters the token first
+- app/components/mobile/MobileShell.tsx registers only once signed in
+- app/api/notifications/register-token/route.ts: POST/DELETE, tokens at
+  users/{uid}/pushTokens/{hash}
+- lib/push-send.ts: sendPushToUser, prunes dead tokens, never throws
+- Stripe webhook notifies seller and buyer on payment_intent.succeeded
+
+Still needed before push works in production:
+1. Create an APNs Auth Key (.p8) at developer.apple.com > Keys and upload it to
+   Firebase console > Project settings > Cloud Messaging > Apple app config.
+   No keys exist on the account today.
+2. Run `npx cap sync` on the Mac (cap update hangs on the Linux VM), then
+   rebuild and upload a new build. Build 3 in TestFlight predates all of this.

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ResultSection from "../components/ResultSection/ResultSection";
 import SearchResultsClient from "./SearchResultsClient";
 import { DateRange } from "react-day-picker";
+import { eventDayStart } from "@/utils/eventDate";
 
 interface CardData {
   id: string;
@@ -71,16 +72,13 @@ export default function SearchResultsWrapper({
 
       // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
-        const normalizedDate = event.date.replace(/\./g, "/");
-        const eventDate = new Date(
-          normalizedDate.split("/").reverse().join("-")
-        );
+        const eventDate = eventDayStart(event.date);
         const fromDate = new Date(filters.dateRange.from);
         fromDate.setHours(0, 0, 0, 0);
         const toDate = new Date(filters.dateRange.to);
         toDate.setHours(23, 59, 59, 999);
 
-        if (eventDate < fromDate || eventDate > toDate) {
+        if (eventDate && (eventDate < fromDate || eventDate > toDate)) {
           return false;
         }
       }

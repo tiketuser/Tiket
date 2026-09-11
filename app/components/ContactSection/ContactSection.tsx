@@ -63,7 +63,7 @@ const ContactSection = () => {
               "מוזמנים לשלוח לנו אימייל בכל שעה.",
               "אנחנו משתדלים להגיב בתוך 48 שעות.",
             ]}
-            contactInfo="avivnir2004@gmail.com"
+            contactInfo="tiketbizzz@gmail.com"
           />
         </div>
       </div>

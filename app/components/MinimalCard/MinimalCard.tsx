@@ -1,4 +1,5 @@
 import React from "react";
+import { hebDatePartsShort } from "@/utils/eventDate";
 
 interface MinimalCardProps {
   title: string;
@@ -17,37 +18,11 @@ const MinimalCard: React.FC<MinimalCardProps> = ({
   price,
   width = "w-auto",
 }) => {
-  const parseDateString = (dateStr: string) => {
-    if (!dateStr) return { dayOfWeek: "חמישי", day: "15", month: "אוק׳" };
-
-    try {
-      let dateObj: Date;
-
-      if (dateStr.includes("/") || dateStr.includes(".")) {
-        const normalizedDate = dateStr.replace(/\./g, "/");
-        const [day, month, year] = normalizedDate.split("/");
-        dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      } else if (dateStr.match(/^\d+\s+\w+/)) {
-        dateObj = new Date(dateStr);
-      } else {
-        dateObj = new Date(dateStr);
-      }
-
-      const daysHebrew = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-      const monthsHebrew = ["ינו׳", "פבר׳", "מרץ", "אפר׳", "מאי", "יוני", "יולי", "אוג׳", "ספט׳", "אוק׳", "נוב׳", "דצמ׳"];
-
-      return {
-        dayOfWeek: daysHebrew[dateObj.getDay()],
-        day: dateObj.getDate().toString(),
-        month: monthsHebrew[dateObj.getMonth()],
-      };
-    } catch (error) {
-      console.error("Error parsing date:", error);
-      return { dayOfWeek: "חמישי", day: "15", month: "אוק׳" };
-    }
+  const { dayOfWeek, day, month } = hebDatePartsShort(date) ?? {
+    dayOfWeek: "חמישי",
+    day: "15",
+    month: "אוק׳",
   };
-
-  const { dayOfWeek, day, month } = parseDateString(date);
 
   return (
     <div className={`${width}`}>

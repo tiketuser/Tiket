@@ -4,23 +4,10 @@ import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { getPlatformFeePercent } from "@/lib/stripe";
 import { verifyGuestToken } from "@/lib/guestToken";
 import { transferTicketsAfterSale } from "@/lib/venueTransfer";
+import { payoutEligibleAt as calcPayoutEligibleAt } from "@/utils/eventDate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function calcPayoutEligibleAt(dateStr: string): Date {
-  const parts = dateStr.split("/");
-  if (parts.length === 3) {
-    const eventDate = new Date(
-      parseInt(parts[2]),
-      parseInt(parts[1]) - 1,
-      parseInt(parts[0])
-    );
-    eventDate.setDate(eventDate.getDate() + 7);
-    return eventDate;
-  }
-  return new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-}
 
 export async function POST(request: NextRequest) {
   try {
