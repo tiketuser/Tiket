@@ -298,7 +298,7 @@ jobs:
           npm run cap:sync:android
           cd android && ./gradlew bundleRelease \
             -PversionCode=${{ github.run_number }} \
-            -PminSdkVersion=23 -PtargetSdkVersion=35 -PcompileSdkVersion=35
+            -PminSdkVersion=23 -PtargetSdkVersion=36 -PcompileSdkVersion=36
       - name: Verify AAB is signed
         run: jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
       - name: Inspect AAB SDK levels (diagnostic)
