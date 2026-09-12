@@ -16,8 +16,6 @@ import {
   CountdownBar,
   TicketStub,
   PaySummary,
-  TermsRow,
-  PayFooter,
 } from "./CheckoutDesign";
 import { Icon } from "../../mobile/Icon";
 import { apiFetch } from "@/lib/platform";
@@ -443,152 +441,20 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             </div>
           </div>
 
-          {step === 2 &&
-            (clientSecret ? (
-              <CheckoutStepPayment
-                key={clientSecret}
-                clientSecret={clientSecret}
-                total={payTotal}
-                termsAccepted={termsAccepted}
-                onTermsChange={setTermsAccepted}
-                topSlot={payTop}
-                summarySlot={paySummary}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-              />
-            ) : (
-              <div className="flex flex-col flex-1 min-h-0">
-                <div className="flex-1 overflow-y-auto" style={{ padding: "16px 18px" }}>
-                  {payTop}
-                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-                    אופן תשלום
-                  </div>
-                  {paymentError ? (
-                    <div
-                      style={{
-                        border: "1px solid rgba(196,55,62,0.18)",
-                        background: "rgba(196,55,62,0.08)",
-                        borderRadius: 12,
-                        padding: "16px 14px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <div style={{ fontSize: 12, color: "#C4373E", marginBottom: 10 }}>
-                        {paymentError}
-                      </div>
-                      <button
-                        onClick={handleRetryIntent}
-                        style={{
-                          padding: "8px 18px",
-                          borderRadius: 999,
-                          border: "none",
-                          background: "var(--tk-ink)",
-                          color: "var(--tk-bg)",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          fontFamily: "inherit",
-                          cursor: "pointer",
-                        }}
-                      >
-                        נסה שוב
-                      </button>
-                    </div>
-                  ) : (
-                    <div
-                      className="animate-pulse"
-                      aria-hidden="true"
-                      style={{ display: "flex", flexDirection: "column", gap: 10 }}
-                    >
-                      {/* wallet / express-pay button (Apple/Google Pay, buttonHeight 48) */}
-                      <div
-                        style={{
-                          height: 48,
-                          borderRadius: 10,
-                          background: "var(--tk-line)",
-                        }}
-                      />
-                      {/* PaymentElement accordion (layout: accordion, radios, spaced).
-                          First item = selected card, expanded with card fields;
-                          the rest collapsed to a header row. */}
-                      <div
-                        style={{
-                          border: "2px solid var(--tk-line-strong)",
-                          background: "var(--tk-paper)",
-                          borderRadius: 10,
-                          padding: 12,
-                        }}
-                      >
-                        {/* header: radio · label · brand marks */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div
-                            style={{
-                              width: 18,
-                              height: 18,
-                              borderRadius: 999,
-                              border: "2px solid var(--tk-line-strong)",
-                              flexShrink: 0,
-                            }}
-                          />
-                          <div style={{ height: 10, width: 96, borderRadius: 4, background: "var(--tk-line)" }} />
-                          <div style={{ flex: 1 }} />
-                          <div style={{ display: "flex", gap: 4 }}>
-                            {[0, 1, 2].map((i) => (
-                              <div key={i} style={{ width: 26, height: 16, borderRadius: 3, background: "var(--tk-line)" }} />
-                            ))}
-                          </div>
-                        </div>
-                        {/* expanded card fields: number, then expiry + cvc */}
-                        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                          <div
-                            style={{
-                              height: 42,
-                              borderRadius: 8,
-                              background: "var(--tk-bg)",
-                              border: "1px solid var(--tk-line)",
-                            }}
-                          />
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <div style={{ flex: 1, height: 42, borderRadius: 8, background: "var(--tk-bg)", border: "1px solid var(--tk-line)" }} />
-                            <div style={{ flex: 1, height: 42, borderRadius: 8, background: "var(--tk-bg)", border: "1px solid var(--tk-line)" }} />
-                          </div>
-                        </div>
-                      </div>
-                      {/* collapsed methods — header row only */}
-                      {[0, 1].map((i) => (
-                        <div
-                          key={i}
-                          style={{
-                            border: "2px solid var(--tk-line)",
-                            background: "var(--tk-paper)",
-                            borderRadius: 10,
-                            padding: 12,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 18,
-                              height: 18,
-                              borderRadius: 999,
-                              border: "2px solid var(--tk-line)",
-                              flexShrink: 0,
-                            }}
-                          />
-                          <div style={{ height: 10, width: i === 0 ? 120 : 84, borderRadius: 4, background: "var(--tk-line)" }} />
-                          <div style={{ flex: 1 }} />
-                          <div style={{ width: 26, height: 16, borderRadius: 3, background: "var(--tk-line)" }} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {paySummary}
-                  <TermsRow checked={termsAccepted} onChange={setTermsAccepted} />
-                </div>
-                <PayFooter total={payTotal} disabled />
-              </div>
-            ))}
+          {step === 2 && (
+            <CheckoutStepPayment
+              clientSecret={clientSecret}
+              total={payTotal}
+              termsAccepted={termsAccepted}
+              onTermsChange={setTermsAccepted}
+              topSlot={payTop}
+              summarySlot={paySummary}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+              intentError={paymentError}
+              onRetryIntent={handleRetryIntent}
+            />
+          )}
 
           {step === 3 && (
             <div className="flex-1 overflow-y-auto" style={{ padding: "20px 18px 24px" }}>
