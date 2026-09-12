@@ -1523,7 +1523,7 @@ function ProviderCard({
           : "border-gray-100 opacity-60"
       }`}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
         {/* Left/main info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1562,7 +1562,7 @@ function ProviderCard({
                 {provider.connectionMode === "agent" ? (
                   <span className="font-medium text-primary">Agent — חיבור יוצא (ללא כתובת ציבורית)</span>
                 ) : (
-                  <span dir="ltr" className="font-mono">{provider.baseUrl}{provider.verifyEndpoint}</span>
+                  <span dir="ltr" className="font-mono break-all">{provider.baseUrl}{provider.verifyEndpoint}</span>
                 )}
               </div>
               <div>
@@ -1656,9 +1656,9 @@ function ProviderCard({
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col items-end gap-2 shrink-0">
+        <div className="flex flex-col items-stretch sm:items-end gap-2 sm:shrink-0 w-full sm:w-auto pt-3 sm:pt-0 border-t border-secondary/40 sm:border-t-0">
           {/* Enable toggle */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2">
             <span className="text-xs text-mutedText">{provider.enabled ? "פעיל" : "כבוי"}</span>
             <input
               type="checkbox"
@@ -1669,7 +1669,7 @@ function ProviderCard({
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-1.5 mt-1 flex-wrap justify-end">
+          <div className="flex gap-1.5 mt-1 flex-wrap justify-start sm:justify-end">
             {onTest && (
               <button
                 className="text-xs border border-secondary text-mutedText hover:bg-secondary/20 px-3 py-1 rounded-lg transition-colors font-medium"
