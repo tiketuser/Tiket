@@ -32,6 +32,7 @@ fi
 
 ASC_KEY_ID="F94XU3Y6H2"
 ASC_ISSUER_ID="eb3f94dc-ca11-413b-900d-9d4b42e430c3"
+ASC_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
 BUILD_NUMBER="$(date +%Y%m%d%H%M)"
 
 echo "→ iOS release: channel=$CHANNEL  api=$API_BASE  build=$BUILD_NUMBER"
@@ -63,12 +64,20 @@ if [ ! -f build/ExportOptions.plist ]; then
 PLIST
 fi
 
-# 4. Archive + export.
+# 4. Archive + export. Authenticate to App Store Connect with the API key so
+#    automatic signing can create/fetch the Distribution cert + a push-enabled
+#    provisioning profile without an interactive Apple-ID login / unlocked GUI
+#    keychain (headless-safe).
+ASC_AUTH=(-allowProvisioningUpdates \
+  -authenticationKeyPath "$ASC_KEY_PATH" \
+  -authenticationKeyID "$ASC_KEY_ID" \
+  -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+
 xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Release \
   -destination 'generic/platform=iOS' -archivePath build/App.xcarchive \
-  -allowProvisioningUpdates clean archive
+  "${ASC_AUTH[@]}" clean archive
 xcodebuild -exportArchive -archivePath build/App.xcarchive -exportPath build/ipa \
-  -exportOptionsPlist build/ExportOptions.plist -allowProvisioningUpdates
+  -exportOptionsPlist build/ExportOptions.plist "${ASC_AUTH[@]}"
 
 # 5. Upload to App Store Connect (auto-lands in TestFlight internal groups).
 xcrun altool --upload-app -f build/ipa/App.ipa -t ios \
