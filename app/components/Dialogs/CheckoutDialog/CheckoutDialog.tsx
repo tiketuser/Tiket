@@ -22,6 +22,7 @@ import {
 import { Icon } from "../../mobile/Icon";
 import { apiFetch } from "@/lib/platform";
 import { setHeroStatusBar } from "@/lib/native-chrome";
+import { getStripe } from "@/lib/stripe-client";
 
 export interface TicketInfo {
   ticketId: string;
@@ -92,6 +93,14 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     return () => {
       document.body.classList.remove("no-doc-scroll");
     };
+  }, [isOpen]);
+
+  // Warm Stripe.js the moment checkout opens (even during the auth step), so
+  // it downloads in parallel with the create-payment-intent request instead of
+  // serially after it. getStripe() memoizes, so this is a no-op if already
+  // loaded, and it never touches amounts — just the public publishable key.
+  useEffect(() => {
+    if (isOpen) void getStripe();
   }, [isOpen]);
 
   // Checkout covers the dark event hero with cream — flip the status-bar
