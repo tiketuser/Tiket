@@ -15,7 +15,6 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
 }) => {
   const [uploadStatus, setUploadStatus] = useState("לא זוהה קובץ");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [barcode, setBarcode] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [notATicketError, setNotATicketError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -189,15 +188,9 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
     await processFile(file);
   };
 
-  const handleBarcodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setBarcode(value);
-    updateTicketData?.({
-      ticketDetails: { ...ticketData?.ticketDetails, barcode: value },
-    });
-  };
-
-  const canProceed = ticketData?.uploadedFile || barcode.length > 0;
+  // A ticket image is required — the whole verification pipeline (Vision OCR →
+  // Gemini) runs on it, so there is no image-less path to proceed.
+  const canProceed = !!ticketData?.uploadedFile;
 
   return (
     <div className="w-full max-w-[780px] mt-2 sm:mt-4 px-3 sm:px-4 md:px-0 mx-auto">
