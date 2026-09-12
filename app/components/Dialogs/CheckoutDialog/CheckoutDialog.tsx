@@ -247,11 +247,14 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   }, [tickets, user, guestToken]);
 
   // The design shows "הכרטיס שמור לך" from the moment checkout opens —
-  // reserve (create the intent) as soon as we know who's buying.
+  // reserve (create the intent) as soon as we know who's buying. We don't
+  // gate on step===2 here: !clientSecret + intentRequested already prevent
+  // duplicates, and this fires the intent one render earlier (before the
+  // step→2 transition settles) so the payment box appears faster.
   useEffect(() => {
     if (
       isOpen &&
-      step === 2 &&
+      step !== 3 &&
       !clientSecret &&
       (user || guestToken) &&
       !intentRequested.current
@@ -483,16 +486,51 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                     </div>
                   ) : (
                     <div
-                      style={{
-                        border: "1px dashed var(--tk-line-strong)",
-                        borderRadius: 12,
-                        padding: "22px 16px",
-                        textAlign: "center",
-                        fontSize: 12,
-                        color: "var(--tk-muted)",
-                      }}
+                      className="animate-pulse"
+                      aria-hidden="true"
+                      style={{ display: "flex", flexDirection: "column", gap: 12 }}
                     >
-                      מכין תשלום מאובטח…
+                      {/* wallet / express-pay button placeholder */}
+                      <div
+                        style={{
+                          height: 48,
+                          borderRadius: 12,
+                          background: "var(--tk-line)",
+                        }}
+                      />
+                      {/* accordion-like PaymentElement card */}
+                      <div
+                        style={{
+                          border: "1px solid var(--tk-line)",
+                          background: "var(--tk-paper)",
+                          borderRadius: 12,
+                          padding: 14,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                        }}
+                      >
+                        {[0, 1, 2].map((i) => (
+                          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <div
+                              style={{
+                                height: 9,
+                                width: i === 0 ? "42%" : "30%",
+                                borderRadius: 4,
+                                background: "var(--tk-line)",
+                              }}
+                            />
+                            <div
+                              style={{
+                                height: 40,
+                                borderRadius: 8,
+                                background: "var(--tk-bg)",
+                                border: "1px solid var(--tk-line)",
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {paySummary}
