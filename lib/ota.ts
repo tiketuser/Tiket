@@ -28,6 +28,28 @@ const OTA_BASE_URL =
 const CHANNEL: "staging" | "production" =
   process.env.NEXT_PUBLIC_OTA_CHANNEL === "staging" ? "staging" : "production";
 
+/** The OTA channel this binary was built for (baked at build time). */
+export const OTA_CHANNEL = CHANNEL;
+
+/**
+ * The version of the web bundle currently running — the OTA version applied by
+ * the updater, or "builtin" for the bundle that shipped with the store binary
+ * (fresh install, before any OTA update). Used for the on-device build badge so
+ * you can confirm a staging push reached the app. Safe on web (returns "builtin").
+ */
+export async function getOtaBundleVersion(): Promise<string> {
+  try {
+    if (!isNative() || !Capacitor.isPluginAvailable("CapacitorUpdater")) {
+      return "builtin";
+    }
+    const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
+    const current = await CapacitorUpdater.current().catch(() => null);
+    return current?.bundle?.version ?? "builtin";
+  } catch {
+    return "builtin";
+  }
+}
+
 type Manifest = {
   /** Monotonic build identifier (CI run number). Larger = newer. */
   version: string;
