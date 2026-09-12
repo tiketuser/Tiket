@@ -37,6 +37,9 @@ const PaymentForm: React.FC<Omit<CheckoutStepPaymentProps, "clientSecret">> = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Undefined until ExpressCheckoutElement's onReady fires. Stays false when no
+  // wallet (Apple/Google Pay) can be shown, so we don't leave an empty gap.
+  const [walletAvailable, setWalletAvailable] = useState<boolean>(false);
 
   const handleExpressConfirm = async () => {
     if (!stripe || !elements) return;
@@ -122,16 +125,24 @@ const PaymentForm: React.FC<Omit<CheckoutStepPaymentProps, "clientSecret">> = ({
           אופן תשלום
         </div>
 
-        {/* Wallets are one-tap payments — keep them behind the terms checkbox too */}
+        {/*
+          Wallets are one-tap payments — keep them behind the terms checkbox too.
+          The element stays mounted so onReady can fire, but the container
+          collapses to zero height until a wallet (Apple/Google Pay) is actually
+          available, so users without one don't see an empty blank box.
+        */}
         <div
           style={{
             opacity: termsAccepted ? 1 : 0.45,
             pointerEvents: termsAccepted ? "auto" : "none",
-            marginBottom: 12,
+            marginBottom: walletAvailable ? 12 : 0,
+            height: walletAvailable ? "auto" : 0,
+            overflow: "hidden",
           }}
         >
           <ExpressCheckoutElement
             onConfirm={handleExpressConfirm}
+            onReady={(e) => setWalletAvailable(!!e.availablePaymentMethods)}
             options={{
               paymentMethods: {
                 applePay: "always",
