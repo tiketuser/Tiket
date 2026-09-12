@@ -39,6 +39,17 @@ interface GalleryClientProps {
   lastDocId: string | null;
 }
 
+// Local skeleton mirroring an event card: image block on top + two text lines.
+const GalleryCardSkeleton: React.FC = () => (
+  <div className="w-full rounded-2xl overflow-hidden border border-[var(--tk-line,#e5e7eb)] bg-white">
+    <div className="w-full aspect-[3/4] bg-[var(--tk-line,#e5e7eb)]" />
+    <div className="p-3">
+      <div className="h-3 w-4/5 rounded bg-[var(--tk-line,#e5e7eb)]" />
+      <div className="h-3 w-1/2 rounded bg-[var(--tk-line,#e5e7eb)] mt-2" />
+    </div>
+  </div>
+);
+
 const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: initialLastDocId }) => {
   const router = useRouter();
   const [allCards, setAllCards] = useState<CardData[]>(initialCards);
@@ -208,6 +219,16 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
         onEnter={handleSearch}
         suggestions={artistNames}
       />
+      {(isCategoryLoading || (displayedCards.length === 0 && isLoadingMore)) && (
+        <div
+          dir="rtl"
+          className="animate-pulse w-full px-2 sm:px-6 mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+        >
+          {Array.from({ length: 8 }).map((_, i) => (
+            <GalleryCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
       {displayedCards.length === 0 && !isLoadingMore && !isCategoryLoading && (
         <div className="text-center text-lg text-gray-500 py-8">
           {selectedCategory === null
@@ -215,7 +236,7 @@ const GalleryClient: React.FC<GalleryClientProps> = ({ initialCards, lastDocId: 
             : `אין אירועי ${selectedCategory} זמינים כרגע`}
         </div>
       )}
-      {displayedCards.length > 0 && (
+      {displayedCards.length > 0 && !isCategoryLoading && (
         <ResponsiveGallery
           cardsData={displayedCards}
           openLoginDialog={openLoginDialog}
