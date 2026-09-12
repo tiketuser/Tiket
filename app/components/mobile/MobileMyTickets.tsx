@@ -112,14 +112,12 @@ export default function MobileMyTickets({
           <EmptyState text="התחבר כדי לראות את הכרטיסים שלך" />
         ) : loading ? (
           <div
-            style={{
-              padding: "40px 18px",
-              textAlign: "center",
-              color: "var(--tk-muted)",
-              fontSize: 13,
-            }}
+            className="animate-pulse"
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
           >
-            טוען כרטיסים…
+            {[0, 1].map((i) => (
+              <GlassTicketSkeleton key={i} />
+            ))}
           </div>
         ) : tab === "upcoming" ? (
           <>
@@ -331,6 +329,60 @@ function QrIcon({ size = 28, color = "#0A0A0A" }: { size?: number; color?: strin
       <rect x="12.5" y="12.5" width="2" height="2" fill={color} />
       <rect x="9" y="13" width="2" height="1" fill={color} />
     </svg>
+  );
+}
+
+// Loading placeholder mirroring GlassTicketCard: tall poster with countdown +
+// price chips up top, title/meta at the bottom, and the glass stat bar with a
+// QR button — so the swap to the real ticket is seamless.
+function GlassTicketSkeleton() {
+  const chip = "rgba(255,255,255,0.5)";
+  return (
+    <div
+      style={{
+        position: "relative",
+        borderRadius: 14,
+        overflow: "hidden",
+        minHeight: 320,
+        background: "var(--tk-line)",
+        display: "flex",
+        flexDirection: "column",
+        padding: 14,
+      }}
+    >
+      {/* top row: countdown + price chips */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{ width: 128, height: 28, borderRadius: 999, background: chip }} />
+        <div style={{ width: 56, height: 24, borderRadius: 999, background: chip }} />
+      </div>
+
+      <div style={{ flex: 1 }} />
+
+      {/* title + meta */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ width: "62%", height: 22, borderRadius: 6, background: "rgba(255,255,255,0.6)" }} />
+        <div style={{ width: "44%", height: 11, borderRadius: 4, background: chip, marginTop: 8 }} />
+      </div>
+
+      {/* glass stat bar: 3 stats + QR button */}
+      <div
+        style={{
+          background: "rgba(255,255,255,0.28)",
+          borderRadius: 12,
+          padding: 12,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <div style={{ display: "flex", gap: 14, flex: 1, minWidth: 0 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ flex: 1, height: 40, borderRadius: 6, background: "rgba(255,255,255,0.45)" }} />
+          ))}
+        </div>
+        <div style={{ width: 52, height: 52, borderRadius: 10, background: "rgba(255,255,255,0.6)", flexShrink: 0 }} />
+      </div>
+    </div>
   );
 }
 
