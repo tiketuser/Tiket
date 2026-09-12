@@ -85,23 +85,40 @@ async function run(): Promise<void> {
     // plugin reverts to the previous bundle on the next launch.
     await CapacitorUpdater.notifyAppReady().catch(() => undefined);
 
-    // Stage any newer bundle now, and again each time the app is foregrounded.
+    // Stage any newer bundle now.
     await checkAndStage(CapacitorUpdater);
-    await App.addListener("resume", () => {
-      void checkAndStage(CapacitorUpdater);
+
+    // Apply a staged bundle when the app is backgrounded → the swap is seamless
+    // (no visible reload) and the user sees the new version on their next open.
+    await App.addListener("pause", () => {
+      void applyPending(CapacitorUpdater);
     });
 
-    // Apply a staged bundle when the app is next backgrounded → the swap is
-    // seamless and the user sees the new version on their following open.
-    await App.addListener("pause", () => {
-      if (pendingBundleId) {
-        void CapacitorUpdater.set({ id: pendingBundleId }).catch(
-          () => undefined,
-        );
-      }
+    // Reliable fallback: on the next foreground, apply a staged bundle if the
+    // background apply didn't take — iOS can suspend the app before the pause
+    // handler finishes, so a staged update could otherwise sit forever. Applying
+    // while the app is active is dependable (a brief reload). If nothing is
+    // staged, look for a newer bundle instead.
+    await App.addListener("resume", () => {
+      if (pendingBundleId) void applyPending(CapacitorUpdater);
+      else void checkAndStage(CapacitorUpdater);
     });
   } catch {
     // OTA must never break the app.
+  }
+}
+
+async function applyPending(
+  CapacitorUpdater: typeof import("@capgo/capacitor-updater").CapacitorUpdater,
+): Promise<void> {
+  const id = pendingBundleId;
+  if (!id) return;
+  pendingBundleId = null; // clear first so a failed set() can re-arm below
+  try {
+    // Swaps the active bundle and reloads the webview to it.
+    await CapacitorUpdater.set({ id });
+  } catch {
+    pendingBundleId = id; // retry on the next pause/resume
   }
 }
 
