@@ -9,9 +9,6 @@ import AdminProtection from "../components/AdminProtection/AdminProtection";
 import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { categoryThemes, CategoryTheme } from "../theme/categoryThemes";
 
-// Force dynamic rendering for admin pages
-export const dynamic = "force-dynamic";
-
 interface ThemeConfig {
   [category: string]: CategoryTheme;
 }

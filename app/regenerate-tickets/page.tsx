@@ -7,9 +7,6 @@ import AdminProtection from "../components/AdminProtection/AdminProtection";
 import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { apiFetch } from "@/lib/platform";
 
-// Force dynamic rendering for admin pages
-export const dynamic = "force-dynamic";
-
 export default function RegenerateTicketsPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);

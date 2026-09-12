@@ -14,9 +14,6 @@ import {
 } from "../../utils/artistMatcher";
 import { apiFetch } from "@/lib/platform";
 
-// Force dynamic rendering for admin pages
-export const dynamic = "force-dynamic";
-
 interface Ticket {
   id: string;
   eventId: string | null;
