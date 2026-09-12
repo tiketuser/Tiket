@@ -488,49 +488,90 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                     <div
                       className="animate-pulse"
                       aria-hidden="true"
-                      style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                      style={{ display: "flex", flexDirection: "column", gap: 10 }}
                     >
-                      {/* wallet / express-pay button placeholder */}
+                      {/* wallet / express-pay button (Apple/Google Pay, buttonHeight 48) */}
                       <div
                         style={{
                           height: 48,
-                          borderRadius: 12,
+                          borderRadius: 10,
                           background: "var(--tk-line)",
                         }}
                       />
-                      {/* accordion-like PaymentElement card */}
+                      {/* PaymentElement accordion (layout: accordion, radios, spaced).
+                          First item = selected card, expanded with card fields;
+                          the rest collapsed to a header row. */}
                       <div
                         style={{
-                          border: "1px solid var(--tk-line)",
+                          border: "2px solid var(--tk-line-strong)",
                           background: "var(--tk-paper)",
-                          borderRadius: 12,
-                          padding: 14,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 12,
+                          borderRadius: 10,
+                          padding: 12,
                         }}
                       >
-                        {[0, 1, 2].map((i) => (
-                          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                            <div
-                              style={{
-                                height: 9,
-                                width: i === 0 ? "42%" : "30%",
-                                borderRadius: 4,
-                                background: "var(--tk-line)",
-                              }}
-                            />
-                            <div
-                              style={{
-                                height: 40,
-                                borderRadius: 8,
-                                background: "var(--tk-bg)",
-                                border: "1px solid var(--tk-line)",
-                              }}
-                            />
+                        {/* header: radio · label · brand marks */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div
+                            style={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: 999,
+                              border: "2px solid var(--tk-line-strong)",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <div style={{ height: 10, width: 96, borderRadius: 4, background: "var(--tk-line)" }} />
+                          <div style={{ flex: 1 }} />
+                          <div style={{ display: "flex", gap: 4 }}>
+                            {[0, 1, 2].map((i) => (
+                              <div key={i} style={{ width: 26, height: 16, borderRadius: 3, background: "var(--tk-line)" }} />
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                        {/* expanded card fields: number, then expiry + cvc */}
+                        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                          <div
+                            style={{
+                              height: 42,
+                              borderRadius: 8,
+                              background: "var(--tk-bg)",
+                              border: "1px solid var(--tk-line)",
+                            }}
+                          />
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <div style={{ flex: 1, height: 42, borderRadius: 8, background: "var(--tk-bg)", border: "1px solid var(--tk-line)" }} />
+                            <div style={{ flex: 1, height: 42, borderRadius: 8, background: "var(--tk-bg)", border: "1px solid var(--tk-line)" }} />
+                          </div>
+                        </div>
                       </div>
+                      {/* collapsed methods — header row only */}
+                      {[0, 1].map((i) => (
+                        <div
+                          key={i}
+                          style={{
+                            border: "2px solid var(--tk-line)",
+                            background: "var(--tk-paper)",
+                            borderRadius: 10,
+                            padding: 12,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: 999,
+                              border: "2px solid var(--tk-line)",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <div style={{ height: 10, width: i === 0 ? 120 : 84, borderRadius: 4, background: "var(--tk-line)" }} />
+                          <div style={{ flex: 1 }} />
+                          <div style={{ width: 26, height: 16, borderRadius: 3, background: "var(--tk-line)" }} />
+                        </div>
+                      ))}
                     </div>
                   )}
                   {paySummary}
