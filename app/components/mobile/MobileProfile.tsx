@@ -721,6 +721,7 @@ export default function MobileProfile() {
 
         <div
           className="tk-mono"
+          dir="ltr"
           style={{
             textAlign: "center",
             fontSize: 9,
@@ -729,11 +730,10 @@ export default function MobileProfile() {
             padding: "4px 0 12px",
           }}
         >
-          ◆ TIKET · v1.0.0
+          {"◆ TIKET · v1.0.0"}
           {OTA_CHANNEL === "staging" && (
-            <span dir="ltr" style={{ color: "var(--tk-blue)" }}>
-              {" · staging · OTA "}
-              {otaVersion ?? "…"}
+            <span style={{ color: "var(--tk-blue)" }}>
+              {` · staging · OTA ${otaVersion ?? "…"}`}
             </span>
           )}
         </div>
