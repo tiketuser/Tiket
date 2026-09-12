@@ -52,14 +52,55 @@ export default function MobileFavorites({
 
       {loading ? (
         <div
+          className="animate-pulse"
           style={{
-            padding: "40px 18px",
-            textAlign: "center",
-            color: "var(--tk-muted)",
-            fontSize: 13,
+            padding: "14px 14px 20px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 10,
           }}
         >
-          טוען מועדפים…
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                borderRadius: 20,
+                overflow: "hidden",
+                background: "var(--tk-paper)",
+                border: "1px solid var(--tk-line)",
+              }}
+            >
+              <div style={{ height: 150, background: "var(--tk-line)" }} />
+              <div style={{ padding: 10 }}>
+                <div
+                  style={{
+                    height: 12,
+                    width: "80%",
+                    borderRadius: 4,
+                    background: "var(--tk-line)",
+                  }}
+                />
+                <div
+                  style={{
+                    height: 9,
+                    width: "55%",
+                    borderRadius: 4,
+                    background: "var(--tk-line)",
+                    marginTop: 6,
+                  }}
+                />
+                <div
+                  style={{
+                    height: 14,
+                    width: "40%",
+                    borderRadius: 4,
+                    background: "var(--tk-line)",
+                    marginTop: 8,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       ) : count === 0 ? (
         <div

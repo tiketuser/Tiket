@@ -14,6 +14,14 @@ import { eventDayStart } from "@/utils/eventDate";
 
 const PAGE_SIZE = 12;
 
+const FavoriteCardSkeleton: React.FC = () => (
+  <div className="animate-pulse flex flex-col gap-3">
+    <div className="w-full aspect-[3/4] rounded-2xl bg-gray-200" />
+    <div className="h-4 w-3/4 rounded bg-gray-200" />
+    <div className="h-3 w-1/2 rounded bg-gray-200" />
+  </div>
+);
+
 interface CardData {
   imageSrc: string;
   id: string | number;
@@ -188,9 +196,10 @@ const FavoritesClient: React.FC<FavoritesClientProps> = ({
         onFilterChange={handleFilterChange}
       />
       {!authChecked || loading ? (
-        <div className="flex flex-col items-center justify-center py-10 sm:py-20">
-          <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-primary mb-4"></div>
-          <p className="text-base sm:text-lg text-gray-600">טוען מועדפים...</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6 sm:mt-10">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <FavoriteCardSkeleton key={i} />
+          ))}
         </div>
       ) : !user ? (
         <div className="text-center text-red-500 text-lg sm:text-xl mt-6 sm:mt-10 px-4">
