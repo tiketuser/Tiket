@@ -13,6 +13,7 @@ import MobileMyTickets, {
 } from "../components/mobile/MobileMyTickets";
 import TicketBarcode from "../components/TicketBarcode/TicketBarcode";
 import { isEventPast } from "@/utils/eventDate";
+import { demoBarcodeValue, DEMO_BARCODE_FORMAT } from "@/utils/demoBarcode";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
@@ -317,17 +318,15 @@ export default function MyTicketsPage() {
                 </p>
               </>
             ) : (
-              <div className="w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
-                {viewTicket.ticketImage ? (
-                  <img
-                    src={viewTicket.ticketImage}
-                    alt="כרטיס"
-                    className="w-full h-auto object-contain max-h-[60vh]"
+              <>
+                <div className="w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                  <TicketBarcode
+                    value={demoBarcodeValue(viewTicket.id)}
+                    format={DEMO_BARCODE_FORMAT}
                   />
-                ) : (
-                  <p className="text-mutedText text-sm py-8">אין תמונת כרטיס</p>
-                )}
-              </div>
+                </div>
+                <p className="text-xs text-mutedText text-center">ברקוד כניסה</p>
+              </>
             )}
 
             {!viewTicket.newBarcode && viewTicket.ticketImage && (
