@@ -5,8 +5,6 @@ import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import MobileProfile from "../components/mobile/MobileProfile";
 
-export const dynamic = "force-dynamic";
-
 export default function ProfilePage() {
   return (
     <>

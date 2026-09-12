@@ -8,9 +8,6 @@ import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { getAuth } from "firebase/auth";
 import { apiFetch } from "@/lib/platform";
 
-// Force dynamic rendering for admin pages
-export const dynamic = "force-dynamic";
-
 interface ArtistAlias {
   canonical: string;
   hebrewName: string;

@@ -8,8 +8,6 @@ import AdminProtection from "../../components/AdminProtection/AdminProtection";
 import MobileAdminChrome from "../../components/mobile/MobileAdminChrome";
 import { apiFetch } from "@/lib/platform";
 
-export const dynamic = "force-dynamic";
-
 interface ProviderStats {
   calls: number;
   verified: number;
