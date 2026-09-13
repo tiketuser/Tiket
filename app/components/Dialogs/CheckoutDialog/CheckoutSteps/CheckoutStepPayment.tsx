@@ -320,6 +320,10 @@ const CheckoutStepPayment: React.FC<CheckoutStepPaymentProps> = ({
       mode: "payment" as const,
       amount: initialAmount,
       currency: "ils",
+      // Card only → the Payment Element shows just the card box, no Link
+      // ("save your info for 1-click") field. Must match the server
+      // PaymentIntent's payment_method_types or confirm fails.
+      paymentMethodTypes: ["card"],
       appearance: APPEARANCE,
       locale: "he" as const,
     }),

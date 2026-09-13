@@ -256,11 +256,12 @@ export async function POST(request: NextRequest) {
       amount: totalAgorot,
       currency: "ils",
       metadata,
-      automatic_payment_methods: { enabled: true },
-      ...(stripeCustomerId && {
-        customer: stripeCustomerId,
-        setup_future_usage: "on_session",
-      }),
+      // Card only — keeps the form to a plain card box: no Link "save your info"
+      // prompt and (with setup_future_usage dropped) no "save card" checkbox.
+      // Apple/Google Pay still work via the express element (card-backed).
+      // Must match the client Elements paymentMethodTypes or confirm errors.
+      payment_method_types: ["card"],
+      ...(stripeCustomerId && { customer: stripeCustomerId }),
     });
 
     return NextResponse.json({
