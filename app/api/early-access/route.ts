@@ -1,9 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/authMiddleware";
 import { adminDb } from "@/lib/firebaseAdmin";
 import * as admin from "firebase-admin";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^0\d{8,9}$/;
+
+export async function GET(request: NextRequest) {
+  const authError = await requireAdmin(request);
+  if (authError) {
+    return authError;
+  }
+
+  if (!adminDb) {
+    return NextResponse.json({ error: "השירות אינו זמין כרגע" }, { status: 503 });
+  }
+
+  try {
+    const snapshot = await adminDb
+      .collection("earlyAccessSignups")
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const signups = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        email: data.email as string,
+        phone: data.phone as string,
+        createdAt: data.createdAt?.toDate?.().toISOString() ?? null,
+      };
+    });
+
+    return NextResponse.json({ signups });
+  } catch (error) {
+    console.error("Error listing early access signups:", error);
+    return NextResponse.json({ error: "שגיאה בטעינת הרשומות" }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,10 +1,38 @@
 "use client";
 
 import React, { useState } from "react";
-import CustomInput from "../components/CustomInput/CustomInput";
+import AdjustableDialog from "../components/Dialogs/AdjustableDialog/AdjustableDialog";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^0\d{8,9}$/;
+
+const labelStyle: React.CSSProperties = {
+  fontSize: 10,
+  color: "var(--tk-muted)",
+  marginBottom: 4,
+  fontWeight: 600,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "12px",
+  border: "1px solid var(--tk-line-strong)",
+  borderRadius: 10,
+  fontSize: 13,
+  fontFamily: "inherit",
+  background: "var(--tk-bg)",
+  outline: "none",
+  color: "var(--tk-ink)",
+};
+
+const errorStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: "#B00020",
+  textAlign: "center",
+  fontWeight: 600,
+  marginTop: 4,
+};
 
 export default function EarlyAccessForm() {
   const [email, setEmail] = useState("");
@@ -53,108 +81,133 @@ export default function EarlyAccessForm() {
     }
   };
 
+  const closeDialog = () => {
+    setDone(false);
+    setEmail("");
+    setPhone("");
+  };
+
   return (
     <div
       dir="rtl"
-      className="tk-mobile min-h-screen flex flex-col items-center justify-center px-4 py-10"
+      className="tk-mobile min-h-screen flex flex-col justify-end sm:justify-center sm:items-center sm:py-10"
     >
-      <span
-        style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em" }}
-        className="mb-8"
+      <div
+        className="w-full rounded-t-[24px] sm:rounded-[20px] sm:max-w-[440px] shadow-[0_-10px_30px_rgba(0,0,0,0.18)] sm:shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
+        style={{
+          background: "var(--tk-bg)",
+          padding: "28px 20px calc(28px + var(--sab, env(safe-area-inset-bottom, 0px)))",
+          color: "var(--tk-ink)",
+        }}
       >
-        tiket<span className="tk-logo-dot">.</span>
-      </span>
-
-      <div className="w-full max-w-sm bg-white rounded-xl shadow-xlarge border border-gray-100 border-b-[4px] border-b-highlight p-6 sm:p-8">
-        {done ? (
-          <div className="text-center py-4">
-            <h1 className="text-heading-3-mobile md:text-heading-3-desktop font-bold text-strongText mb-2">
-              נרשמת בהצלחה!
-            </h1>
-            <p className="text-regular text-mutedText">
-              תודה שהצטרפתם. נעדכן אתכם באימייל וב-SMS מיד כשטיקט עולה לאוויר.
-            </p>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>
+            tiket<span className="tk-logo-dot">.</span>
           </div>
-        ) : (
-          <>
-            <h1 className="text-heading-3-mobile md:text-heading-3-desktop font-bold text-strongText text-center mb-2">
-              הצטרפו לגישה המוקדמת
-            </h1>
-            <p className="text-regular text-mutedText text-center mb-6">
-              קונים ומוכרים כרטיסים בקלות ובאופן מאובטח. השאירו אימייל וטלפון
-              ותהיו הראשונים לדעת כשאנחנו עולים לאוויר.
-            </p>
+          <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>
+            הצטרפו לגישה המוקדמת
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--tk-muted)",
+              marginTop: 6,
+              lineHeight: 1.5,
+            }}
+          >
+            קונים ומוכרים כרטיסים בקלות ובאופן מאובטח.
+            <br />
+            השאירו אימייל וטלפון ותהיו הראשונים לדעת כשעולים לאוויר.
+          </div>
+        </div>
 
-            <form onSubmit={handleSubmit} noValidate className="space-y-4">
-              <div>
-                <label
-                  htmlFor="early-access-email"
-                  className="block text-small font-medium text-strongText mb-1 text-right"
-                >
-                  אימייל
-                </label>
-                <CustomInput
-                  id="early-access-email"
-                  name="email"
-                  type="email"
-                  width="w-full"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  error={emailError}
-                  required
-                />
-                {emailError && (
-                  <p className="text-small text-red-500 mt-1 text-right">
-                    כתובת אימייל לא תקינה
-                  </p>
-                )}
-              </div>
+        <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div>
+            <div style={labelStyle}>אימייל</div>
+            <input
+              id="early-access-email"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              dir="rtl"
+              style={{
+                ...inputStyle,
+                borderColor: emailError ? "#B00020" : "var(--tk-line-strong)",
+              }}
+            />
+            {emailError && <div style={errorStyle}>כתובת אימייל לא תקינה</div>}
+          </div>
 
-              <div>
-                <label
-                  htmlFor="early-access-phone"
-                  className="block text-small font-medium text-strongText mb-1 text-right"
-                >
-                  טלפון
-                </label>
-                <CustomInput
-                  id="early-access-phone"
-                  name="phone"
-                  type="tel"
-                  width="w-full"
-                  placeholder="050-0000000"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  error={phoneError}
-                  required
-                />
-                {phoneError && (
-                  <p className="text-small text-red-500 mt-1 text-right">
-                    מספר טלפון לא תקין
-                  </p>
-                )}
-              </div>
+          <div>
+            <div style={labelStyle}>טלפון</div>
+            <input
+              id="early-access-phone"
+              type="tel"
+              placeholder="050-0000000"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              dir="rtl"
+              style={{
+                ...inputStyle,
+                borderColor: phoneError ? "#B00020" : "var(--tk-line-strong)",
+              }}
+            />
+            {phoneError && <div style={errorStyle}>מספר טלפון לא תקין</div>}
+          </div>
 
-              {errorMessage && (
-                <p className="text-small text-red-500 text-center">{errorMessage}</p>
-              )}
+          {errorMessage && <div style={errorStyle}>{errorMessage}</div>}
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="btn btn-primary w-full py-3 rounded-lg transition-colors duration-300 disabled:opacity-60"
-              >
-                {submitting ? "שולח..." : "הרשמה לגישה מוקדמת"}
-              </button>
-            </form>
-          </>
-        )}
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              width: "100%",
+              padding: 14,
+              fontSize: 14,
+              fontWeight: 700,
+              borderRadius: 12,
+              background: "var(--tk-ink)",
+              color: "#fff",
+              border: "none",
+              cursor: submitting ? "default" : "pointer",
+              opacity: submitting ? 0.6 : 1,
+              marginTop: 4,
+            }}
+          >
+            {submitting ? "שולח..." : "הרשמה לגישה מוקדמת"}
+          </button>
+        </form>
+
+        <div
+          style={{
+            fontSize: 10,
+            color: "var(--tk-muted)",
+            textAlign: "center",
+            marginTop: 20,
+            lineHeight: 1.5,
+          }}
+        >
+          © 2026 tiket.
+        </div>
       </div>
 
-      <p className="text-extra-small text-mutedText mt-8 text-center">
-        © 2026 tiket.
-      </p>
+      <AdjustableDialog
+        isOpen={done}
+        onClose={closeDialog}
+        heading="נרשמת בהצלחה!"
+        description="תודה שהצטרפתם"
+      >
+        <p className="text-regular text-mutedText text-center mb-6">
+          נעדכן אתכם באימייל וב-SMS מיד כשטיקט עולה לאוויר.
+        </p>
+        <button
+          onClick={closeDialog}
+          className="btn btn-primary px-8 py-3 rounded-lg transition-colors duration-300"
+        >
+          מעולה
+        </button>
+      </AdjustableDialog>
     </div>
   );
 }
