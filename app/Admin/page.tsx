@@ -465,6 +465,12 @@ export default function AdminPage() {
               >
                 ניהול משתמשים
               </a>
+              <a
+                href="/Admin/EarlyAccess"
+                className="inline-block px-6 py-2 bg-secondary text-primary rounded-lg hover:bg-highlight hover:text-white transition-colors font-semibold"
+              >
+                הרשמות מוקדמות
+              </a>
             </div>
           </div>
 
