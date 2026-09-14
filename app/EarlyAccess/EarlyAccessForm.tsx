@@ -34,10 +34,8 @@ const errorStyle: React.CSSProperties = {
 };
 
 export default function EarlyAccessForm() {
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [emailError, setEmailError] = useState(false);
-  const [phoneError, setPhoneError] = useState(false);
+  const [contact, setContact] = useState("");
+  const [contactError, setContactError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [done, setDone] = useState(false);
@@ -46,20 +44,20 @@ export default function EarlyAccessForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const cleanEmail = email.trim();
-    const cleanPhone = phone.replace(/[\s-]/g, "");
-    const badEmail = cleanEmail !== "" && !EMAIL_RE.test(cleanEmail);
-    const badPhone = cleanPhone !== "" && !PHONE_RE.test(cleanPhone);
+    // One field takes either kind of contact detail; an "@" is what separates
+    // the two, so the patterns can never both match the same input.
+    const trimmed = contact.trim();
+    const digits = trimmed.replace(/[\s-]/g, "");
+    const isEmail = EMAIL_RE.test(trimmed);
+    const isPhone = PHONE_RE.test(digits);
 
-    setEmailError(badEmail);
-    setPhoneError(badPhone);
-
-    if (!cleanEmail && !cleanPhone) {
-      setErrorMessage("השאירו אימייל או טלפון");
+    if (!isEmail && !isPhone) {
+      setContactError(true);
+      setErrorMessage(trimmed ? "הזינו אימייל או מספר טלפון תקין" : "השאירו אימייל או טלפון");
       return;
     }
-    if (badEmail || badPhone) return;
 
+    setContactError(false);
     setSubmitting(true);
     setErrorMessage("");
 
@@ -67,7 +65,7 @@ export default function EarlyAccessForm() {
       const res = await fetch("/api/early-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, phone: cleanPhone }),
+        body: JSON.stringify(isEmail ? { email: trimmed } : { phone: digits }),
       });
 
       const data = await res.json();
@@ -87,8 +85,7 @@ export default function EarlyAccessForm() {
 
   const closeDialog = () => {
     setDone(false);
-    setEmail("");
-    setPhone("");
+    setContact("");
   };
 
   // Fade + scale the dialog in on the tick after it mounts.
@@ -143,37 +140,27 @@ export default function EarlyAccessForm() {
 
         <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div>
-            <div style={labelStyle}>אימייל</div>
+            <div style={labelStyle}>אימייל או טלפון</div>
             <input
-              id="early-access-email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              dir="rtl"
+              id="early-access-contact"
+              type="text"
+              inputMode="email"
+              placeholder="name@example.com / 0501234567"
+              value={contact}
+              onChange={(e) => {
+                setContact(e.target.value);
+                if (contactError) {
+                  setContactError(false);
+                  setErrorMessage("");
+                }
+              }}
+              dir="ltr"
               style={{
                 ...inputStyle,
-                borderColor: emailError ? "#B00020" : "var(--tk-line-strong)",
+                textAlign: "right",
+                borderColor: contactError ? "#B00020" : "var(--tk-line-strong)",
               }}
             />
-            {emailError && <div style={errorStyle}>כתובת אימייל לא תקינה</div>}
-          </div>
-
-          <div>
-            <div style={labelStyle}>טלפון</div>
-            <input
-              id="early-access-phone"
-              type="tel"
-              placeholder="050-0000000"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              dir="rtl"
-              style={{
-                ...inputStyle,
-                borderColor: phoneError ? "#B00020" : "var(--tk-line-strong)",
-              }}
-            />
-            {phoneError && <div style={errorStyle}>מספר טלפון לא תקין</div>}
           </div>
 
           {errorMessage && <div style={errorStyle}>{errorMessage}</div>}
