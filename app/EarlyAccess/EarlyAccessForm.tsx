@@ -100,13 +100,14 @@ export default function EarlyAccessForm() {
   return (
     <div
       dir="rtl"
-      className="tk-mobile min-h-screen flex flex-col justify-end sm:justify-center sm:items-center sm:py-10"
+      className="tk-mobile min-h-screen flex items-center justify-center p-4 sm:p-10"
     >
       <div
-        className="w-full rounded-t-[24px] sm:rounded-[20px] sm:max-w-[440px] shadow-[0_-10px_30px_rgba(0,0,0,0.18)] sm:shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
+        className="w-full max-w-[400px] rounded-[20px] shadow-[0_16px_44px_rgba(0,0,0,0.12)]"
         style={{
-          background: "var(--tk-bg)",
-          padding: "28px 20px calc(28px + var(--sab, env(safe-area-inset-bottom, 0px)))",
+          background: "var(--tk-paper)",
+          border: "1px solid var(--tk-line-strong)",
+          padding: "28px 20px 24px",
           color: "var(--tk-ink)",
         }}
       >
