@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import AdjustableDialog from "../components/Dialogs/AdjustableDialog/AdjustableDialog";
+import React, { useEffect, useState } from "react";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^0\d{8,9}$/;
@@ -42,6 +41,7 @@ export default function EarlyAccessForm() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [done, setDone] = useState(false);
+  const [dialogIn, setDialogIn] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +86,16 @@ export default function EarlyAccessForm() {
     setEmail("");
     setPhone("");
   };
+
+  // Fade + scale the dialog in on the tick after it mounts.
+  useEffect(() => {
+    if (!done) {
+      setDialogIn(false);
+      return;
+    }
+    const t = setTimeout(() => setDialogIn(true), 10);
+    return () => clearTimeout(t);
+  }, [done]);
 
   return (
     <div
@@ -192,22 +202,93 @@ export default function EarlyAccessForm() {
         </div>
       </div>
 
-      <AdjustableDialog
-        isOpen={done}
-        onClose={closeDialog}
-        heading="נרשמת בהצלחה!"
-        description="תודה שהצטרפתם"
-      >
-        <p className="text-regular text-mutedText text-center mb-6">
-          נעדכן אתכם באימייל וב-SMS מיד כשטיקט עולה לאוויר.
-        </p>
-        <button
+      {done && (
+        <div
           onClick={closeDialog}
-          className="btn btn-primary px-8 py-3 rounded-lg transition-colors duration-300"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(10,10,10,0.55)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 18,
+            opacity: dialogIn ? 1 : 0,
+            transition: "opacity 200ms ease-out",
+          }}
         >
-          מעולה
-        </button>
-      </AdjustableDialog>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 320,
+              background: "var(--tk-paper)",
+              color: "var(--tk-ink)",
+              borderRadius: 16,
+              padding: "20px 20px 16px",
+              border: "1px solid var(--tk-line-strong)",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
+              transform: dialogIn ? "scale(1)" : "scale(0.94)",
+              transition: "transform 200ms cubic-bezier(.2,.8,.2,1)",
+            }}
+          >
+            <div
+              className="tk-mono"
+              style={{
+                fontSize: 9,
+                color: "var(--tk-blue)",
+                letterSpacing: "0.14em",
+                textAlign: "center",
+                marginBottom: 8,
+              }}
+            >
+              ◆ ההרשמה הושלמה
+            </div>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+                textAlign: "center",
+                marginBottom: 8,
+              }}
+            >
+              נרשמתם בהצלחה!
+            </div>
+            <div
+              style={{
+                fontSize: 12.5,
+                color: "var(--tk-muted)",
+                textAlign: "center",
+                lineHeight: 1.55,
+                marginBottom: 18,
+              }}
+            >
+              נעדכן אתכם באימייל וב-SMS מיד כשטיקט עולה לאוויר.
+            </div>
+            <button
+              onClick={closeDialog}
+              style={{
+                width: "100%",
+                padding: 12,
+                borderRadius: 10,
+                background: "var(--tk-ink)",
+                border: "none",
+                color: "#fff",
+                fontSize: 13,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: "pointer",
+              }}
+            >
+              מעולה
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
