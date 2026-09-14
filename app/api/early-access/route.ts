@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
       const data = doc.data();
       return {
         id: doc.id,
-        email: data.email as string,
-        phone: data.phone as string,
+        email: (data.email as string) ?? "",
+        phone: (data.phone as string) ?? "",
         createdAt: data.createdAt?.toDate?.().toISOString() ?? null,
       };
     });
@@ -46,11 +46,16 @@ export async function POST(request: NextRequest) {
     const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
     const cleanPhone = typeof phone === "string" ? phone.replace(/[\s-]/g, "") : "";
 
-    if (!EMAIL_RE.test(cleanEmail)) {
+    // Either contact detail is enough; whichever is supplied must be valid.
+    if (!cleanEmail && !cleanPhone) {
+      return NextResponse.json({ error: "יש להשאיר אימייל או טלפון" }, { status: 400 });
+    }
+
+    if (cleanEmail && !EMAIL_RE.test(cleanEmail)) {
       return NextResponse.json({ error: "כתובת האימייל אינה תקינה" }, { status: 400 });
     }
 
-    if (!PHONE_RE.test(cleanPhone)) {
+    if (cleanPhone && !PHONE_RE.test(cleanPhone)) {
       return NextResponse.json({ error: "מספר הטלפון אינו תקין" }, { status: 400 });
     }
 
@@ -58,14 +63,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "השירות אינו זמין כרגע" }, { status: 503 });
     }
 
-    const docId = cleanEmail.replace(/[^a-z0-9_.-]/g, "_");
+    // Keyed by email when there is one, so a repeat signup updates rather than
+    // duplicates; phone-only signups key on the (digits-only) number instead.
+    const docId = cleanEmail ? cleanEmail.replace(/[^a-z0-9_.-]/g, "_") : cleanPhone;
     const docRef = adminDb.collection("earlyAccessSignups").doc(docId);
     const existing = await docRef.get();
 
     await docRef.set(
       {
-        email: cleanEmail,
-        phone: cleanPhone,
+        ...(cleanEmail ? { email: cleanEmail } : {}),
+        ...(cleanPhone ? { phone: cleanPhone } : {}),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         ...(existing.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
       },

@@ -48,13 +48,17 @@ export default function EarlyAccessForm() {
 
     const cleanEmail = email.trim();
     const cleanPhone = phone.replace(/[\s-]/g, "");
-    const emailValid = EMAIL_RE.test(cleanEmail);
-    const phoneValid = PHONE_RE.test(cleanPhone);
+    const badEmail = cleanEmail !== "" && !EMAIL_RE.test(cleanEmail);
+    const badPhone = cleanPhone !== "" && !PHONE_RE.test(cleanPhone);
 
-    setEmailError(!emailValid);
-    setPhoneError(!phoneValid);
+    setEmailError(badEmail);
+    setPhoneError(badPhone);
 
-    if (!emailValid || !phoneValid) return;
+    if (!cleanEmail && !cleanPhone) {
+      setErrorMessage("השאירו אימייל או טלפון");
+      return;
+    }
+    if (badEmail || badPhone) return;
 
     setSubmitting(true);
     setErrorMessage("");
@@ -112,8 +116,13 @@ export default function EarlyAccessForm() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>
-            tiket<span className="tk-logo-dot">.</span>
+          {/* dir=ltr keeps the logotype dot on the right of the word; in the
+              page's RTL flow the neutral "." would otherwise flip to the left. */}
+          <div
+            dir="ltr"
+            style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}
+          >
+            TIKET<span className="tk-logo-dot">.</span>
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>
             הצטרפו לגישה המוקדמת
@@ -126,9 +135,9 @@ export default function EarlyAccessForm() {
               lineHeight: 1.5,
             }}
           >
-            קונים ומוכרים כרטיסים בקלות ובאופן מאובטח.
+            קונים ומוכרים כרטיסים באופן מאובטח.
             <br />
-            השאירו אימייל וטלפון ותהיו הראשונים לדעת כשעולים לאוויר.
+            השאירו אימייל או טלפון ותקבלו גישה מוקדמת.
           </div>
         </div>
 
@@ -199,7 +208,7 @@ export default function EarlyAccessForm() {
             lineHeight: 1.5,
           }}
         >
-          © 2026 tiket.
+          TIKET • בקרוב אצלכם
         </div>
       </div>
 
