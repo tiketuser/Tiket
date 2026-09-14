@@ -285,7 +285,7 @@ export default function EarlyAccessForm() {
                 cursor: "pointer",
               }}
             >
-              מעולה
+              סיום
             </button>
           </div>
         </div>
