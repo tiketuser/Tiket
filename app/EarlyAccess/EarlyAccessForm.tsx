@@ -98,10 +98,23 @@ export default function EarlyAccessForm() {
     return () => clearTimeout(t);
   }, [done]);
 
+  // One fixed card, never scrolled: lock the document and kill the overscroll
+  // rubber-band so the page can't be dragged around on touch.
+  useEffect(() => {
+    const { body } = document;
+    const previousOverscroll = body.style.overscrollBehavior;
+    body.classList.add("no-doc-scroll");
+    body.style.overscrollBehavior = "none";
+    return () => {
+      body.classList.remove("no-doc-scroll");
+      body.style.overscrollBehavior = previousOverscroll;
+    };
+  }, []);
+
   return (
     <div
       dir="rtl"
-      className="tk-mobile min-h-screen flex items-center justify-center p-4 sm:p-10"
+      className="tk-mobile h-[100dvh] overflow-hidden flex items-center justify-center p-4 sm:p-10"
     >
       <div
         className="w-full max-w-[400px] rounded-[20px] shadow-[0_16px_44px_rgba(0,0,0,0.12)]"
