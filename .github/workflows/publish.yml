@@ -192,6 +192,7 @@ jobs:
             STRIPE_WEBHOOK_SECRET=${{ (needs.setup.outputs.channel == 'production' && secrets.STRIPE_WEBHOOK_SECRET) || secrets.STRIPE_WEBHOOK_SECRET_STAGING || secrets.STRIPE_WEBHOOK_SECRET }}
             PLATFORM_FEE_PERCENT=${{ secrets.PLATFORM_FEE_PERCENT }}
             GUEST_TOKEN_SECRET=${{ secrets.GUEST_TOKEN_SECRET }}
+            EARLY_ACCESS_GATE=${{ needs.setup.outputs.channel == 'production' && 'on' || 'off' }}
       - name: Remove stale env vars
         run: |
           gcloud run services update ${{ needs.setup.outputs.service_name }} \

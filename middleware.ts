@@ -24,7 +24,15 @@ function gateIsUp(request: NextRequest): boolean {
   if (override === "off") return false;
   if (override === "on") return true;
 
-  const host = request.headers.get("host")?.split(":")[0].toLowerCase() ?? "";
+  // Behind Firebase Hosting the Host header is the Cloud Run service, not the
+  // public domain — the original lands in X-Forwarded-Host.
+  const host = (
+    request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? ""
+  )
+    .split(",")[0]
+    .split(":")[0]
+    .trim()
+    .toLowerCase();
   return GATED_HOSTS.has(host);
 }
 
