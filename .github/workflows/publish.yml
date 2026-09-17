@@ -67,7 +67,10 @@ jobs:
             echo "service_name=tiket-app"          >> "$GITHUB_OUTPUT"
             echo "tag_prefix="                      >> "$GITHUB_OUTPUT"
             echo "max_instances=10"                 >> "$GITHUB_OUTPUT"
-            echo "hosting_target="                  >> "$GITHUB_OUTPUT"
+            # Deploying hosting purges the Firebase CDN. Skipping it on
+            # production left stale HTML pinned at the edge (s-maxage) pointing
+            # at JS chunks a later deploy had already deleted.
+            echo "hosting_target=production"        >> "$GITHUB_OUTPUT"
             echo "api_base_url=https://tiket.co.il"  >> "$GITHUB_OUTPUT"
             echo "android_track=production"          >> "$GITHUB_OUTPUT"
           else
@@ -194,7 +197,7 @@ jobs:
           gcloud run services update ${{ needs.setup.outputs.service_name }} \
             --region=${{ env.REGION }} \
             --remove-env-vars=GOOGLE_APPLICATION_CREDENTIALS --quiet || true
-      - name: Deploy Firebase Hosting (staging only)
+      - name: Deploy Firebase Hosting (purges the CDN)
         if: needs.setup.outputs.hosting_target != ''
         run: |
           set +e
