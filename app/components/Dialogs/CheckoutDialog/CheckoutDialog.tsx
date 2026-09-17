@@ -16,12 +16,11 @@ import {
   CountdownBar,
   TicketStub,
   PaySummary,
-  TermsRow,
-  PayFooter,
 } from "./CheckoutDesign";
 import { Icon } from "../../mobile/Icon";
 import { apiFetch } from "@/lib/platform";
 import { setHeroStatusBar } from "@/lib/native-chrome";
+import { getStripe } from "@/lib/stripe-client";
 
 export interface TicketInfo {
   ticketId: string;
@@ -92,6 +91,14 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     return () => {
       document.body.classList.remove("no-doc-scroll");
     };
+  }, [isOpen]);
+
+  // Warm Stripe.js the moment checkout opens (even during the auth step), so
+  // it downloads in parallel with the create-payment-intent request instead of
+  // serially after it. getStripe() memoizes, so this is a no-op if already
+  // loaded, and it never touches amounts — just the public publishable key.
+  useEffect(() => {
+    if (isOpen) void getStripe();
   }, [isOpen]);
 
   // Checkout covers the dark event hero with cream — flip the status-bar
@@ -247,11 +254,14 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   }, [tickets, user, guestToken]);
 
   // The design shows "הכרטיס שמור לך" from the moment checkout opens —
-  // reserve (create the intent) as soon as we know who's buying.
+  // reserve (create the intent) as soon as we know who's buying. We don't
+  // gate on step===2 here: !clientSecret + intentRequested already prevent
+  // duplicates, and this fires the intent one render earlier (before the
+  // step→2 transition settles) so the payment box appears faster.
   useEffect(() => {
     if (
       isOpen &&
-      step === 2 &&
+      step !== 3 &&
       !clientSecret &&
       (user || guestToken) &&
       !intentRequested.current
@@ -431,76 +441,20 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             </div>
           </div>
 
-          {step === 2 &&
-            (clientSecret ? (
-              <CheckoutStepPayment
-                key={clientSecret}
-                clientSecret={clientSecret}
-                total={payTotal}
-                termsAccepted={termsAccepted}
-                onTermsChange={setTermsAccepted}
-                topSlot={payTop}
-                summarySlot={paySummary}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-              />
-            ) : (
-              <div className="flex flex-col flex-1 min-h-0">
-                <div className="flex-1 overflow-y-auto" style={{ padding: "16px 18px" }}>
-                  {payTop}
-                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-                    אופן תשלום
-                  </div>
-                  {paymentError ? (
-                    <div
-                      style={{
-                        border: "1px solid rgba(196,55,62,0.18)",
-                        background: "rgba(196,55,62,0.08)",
-                        borderRadius: 12,
-                        padding: "16px 14px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <div style={{ fontSize: 12, color: "#C4373E", marginBottom: 10 }}>
-                        {paymentError}
-                      </div>
-                      <button
-                        onClick={handleRetryIntent}
-                        style={{
-                          padding: "8px 18px",
-                          borderRadius: 999,
-                          border: "none",
-                          background: "var(--tk-ink)",
-                          color: "var(--tk-bg)",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          fontFamily: "inherit",
-                          cursor: "pointer",
-                        }}
-                      >
-                        נסה שוב
-                      </button>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        border: "1px dashed var(--tk-line-strong)",
-                        borderRadius: 12,
-                        padding: "22px 16px",
-                        textAlign: "center",
-                        fontSize: 12,
-                        color: "var(--tk-muted)",
-                      }}
-                    >
-                      מכין תשלום מאובטח…
-                    </div>
-                  )}
-                  {paySummary}
-                  <TermsRow checked={termsAccepted} onChange={setTermsAccepted} />
-                </div>
-                <PayFooter total={payTotal} disabled />
-              </div>
-            ))}
+          {step === 2 && (
+            <CheckoutStepPayment
+              clientSecret={clientSecret}
+              total={payTotal}
+              termsAccepted={termsAccepted}
+              onTermsChange={setTermsAccepted}
+              topSlot={payTop}
+              summarySlot={paySummary}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+              intentError={paymentError}
+              onRetryIntent={handleRetryIntent}
+            />
+          )}
 
           {step === 3 && (
             <div className="flex-1 overflow-y-auto" style={{ padding: "20px 18px 24px" }}>

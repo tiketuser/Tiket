@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, getPlatformFeePercent } from "@/lib/stripe";
+import { stripe, resolvePlatformFeePercent, computeSaleAmounts } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { transferTicketsAfterSale } from "@/lib/venueTransfer";
 import Stripe from "stripe";
@@ -124,8 +124,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     return;
   }
 
-  const parsedFee = parseFloat(platformFeePercent);
-  const feePercent = Number.isNaN(parsedFee) ? getPlatformFeePercent() : parsedFee;
+  const feePercent = resolvePlatformFeePercent(platformFeePercent);
   const expectedReservedBy = buyerId || `guest:${guestEmail}`;
 
   // Fetch all ticket documents to get per-ticket sellerId, askingPrice, date
@@ -160,9 +159,8 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
 
     const sellerId = ticketData.sellerId as string;
     if (sellerId) soldSellerIds.add(sellerId);
-    const ticketPriceILS = ticketData.askingPrice as number;
-    const platformFeeILS = feePercent > 0 ? ticketPriceILS * (feePercent / 100) : 0;
-    const sellerPayoutILS = ticketPriceILS - platformFeeILS;
+    const { ticketPriceILS, platformFeeILS, sellerPayoutILS, totalILS } =
+      computeSaleAmounts(ticketData.askingPrice as number, feePercent);
     const payoutEligibleAt = calcPayoutEligibleAt(ticketData.date || "");
 
     // Mark ticket as sold
@@ -181,7 +179,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       eventId: eventId || null,
       buyerId: buyerId || null,
       sellerId,
-      amount: ticketPriceILS + platformFeeILS,
+      amount: totalILS,
       ticketPrice: ticketPriceILS,
       platformFee: platformFeeILS,
       sellerPayout: sellerPayoutILS,

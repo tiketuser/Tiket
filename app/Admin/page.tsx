@@ -9,9 +9,7 @@ import {
   getDocs,
   query,
   orderBy,
-  doc,
   where,
-  updateDoc,
 } from "firebase/firestore";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
@@ -19,9 +17,6 @@ import AdminProtection from "../components/AdminProtection/AdminProtection";
 import MobileAdminChrome from "../components/mobile/MobileAdminChrome";
 import { getDefaultCategoryImage } from "../theme/defaultCategoryImages";
 import { apiFetch } from "@/lib/platform";
-
-// Force dynamic rendering for admin pages
-export const dynamic = "force-dynamic";
 
 interface EventFormData {
   artist: string;
@@ -273,7 +268,7 @@ export default function AdminPage() {
       let eventsArray;
       try {
         eventsArray = JSON.parse(bulkJson);
-      } catch (error) {
+      } catch {
         setBulkMessage({
           type: "error",
           text: "JSON לא תקין. נא לבדוק את הפורמט.",

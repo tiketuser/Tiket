@@ -23,7 +23,6 @@ interface ExtendedTicketDetails {
 }
 
 const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
-  nextStep,
   prevStep,
   ticketData,
   updateTicketData,
@@ -53,7 +52,6 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
     }
   );
 
-  const [isDateInPast, setIsDateInPast] = useState(false);
   const [dateError, setDateError] = useState<string>("");
   const [timeError, setTimeError] = useState<string>("");
 
@@ -108,7 +106,6 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
       // Validate the extracted date
       if (newDetails.date) {
         const validation = validateDate(newDetails.date);
-        setIsDateInPast(validation.isInPast);
         setDateError(validation.error);
       }
 
@@ -281,7 +278,6 @@ const StepThreeUploadTicket: React.FC<UploadTicketInterface> = ({
     // Check if date field was changed and validate it
     if (field === "date") {
       const validation = validateDate(value);
-      setIsDateInPast(validation.isInPast);
       setDateError(validation.error);
     }
 

@@ -11,9 +11,6 @@ import {
 } from "../theme/defaultCategoryImages";
 import { apiFetch } from "@/lib/platform";
 
-// Force dynamic rendering for admin pages
-export const dynamic = "force-dynamic";
-
 interface CategoryImageData {
   category: string;
   label: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Elements,
   ExpressCheckoutElement,
@@ -12,7 +12,13 @@ import { getStripe } from "../../../../../lib/stripe-client";
 import { PayFooter, TermsRow } from "../CheckoutDesign";
 
 interface CheckoutStepPaymentProps {
-  clientSecret: string;
+  /**
+   * The PaymentIntent client secret. NULL while it's still being created in the
+   * background — the card form is mounted and fillable before this arrives
+   * (Stripe "deferred intent" flow); it's only needed to confirm the payment.
+   */
+  clientSecret: string | null;
+  /** Buyer total in ILS — drives the pay button and the wallet/Elements amount. */
   total: number;
   termsAccepted: boolean;
   onTermsChange: (v: boolean) => void;
@@ -22,32 +28,62 @@ interface CheckoutStepPaymentProps {
   summarySlot: React.ReactNode;
   onSuccess: (paymentIntentId: string) => void;
   onError: (message: string) => void;
+  /** Set when creating the PaymentIntent failed (e.g. a ticket was taken). */
+  intentError?: string | null;
+  /** Retry creating the PaymentIntent. */
+  onRetryIntent?: () => void;
 }
 
-const PaymentForm: React.FC<Omit<CheckoutStepPaymentProps, "clientSecret">> = ({
-  total,
+type FormProps = Omit<CheckoutStepPaymentProps, "total"> & { amountAgorot: number };
+
+const PaymentForm: React.FC<FormProps> = ({
+  clientSecret,
+  amountAgorot,
   termsAccepted,
   onTermsChange,
   topSlot,
   summarySlot,
   onSuccess,
   onError,
+  intentError,
+  onRetryIntent,
 }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Undefined until ExpressCheckoutElement's onReady fires. Stays false when no
+  // wallet (Apple/Google Pay) can be shown, so we don't leave an empty gap.
+  const [walletAvailable, setWalletAvailable] = useState<boolean>(false);
 
-  const handleExpressConfirm = async () => {
-    if (!stripe || !elements) return;
+  // Reconcile the deferred amount once the server returns the authoritative
+  // total (ticket price + platform fee). The charge itself is always the
+  // server PaymentIntent's amount — this only keeps the wallet sheet / pay
+  // button in sync so Stripe's confirm-time amount check passes.
+  useEffect(() => {
+    if (elements && amountAgorot > 0) {
+      elements.update({ amount: amountAgorot });
+    }
+  }, [elements, amountAgorot]);
 
-    const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+  const confirm = async () => {
+    // clientSecret is required to confirm in the deferred flow; the button/
+    // wallet are gated on it, so this is a belt-and-suspenders guard.
+    if (!stripe || !elements || !clientSecret) return null;
+    return stripe.confirmPayment({
       elements,
+      clientSecret,
       confirmParams: {
         return_url: `${window.location.origin}/stripe/payment-complete`,
       },
       redirect: "if_required",
     });
+  };
+
+  const handleExpressConfirm = async () => {
+    const result = await confirm();
+    if (!result) return;
+    const { error: confirmError, paymentIntent } = result;
 
     if (confirmError) {
       const message =
@@ -69,7 +105,7 @@ const PaymentForm: React.FC<Omit<CheckoutStepPaymentProps, "clientSecret">> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements || !termsAccepted) return;
+    if (!stripe || !elements || !termsAccepted || !clientSecret) return;
 
     setIsProcessing(true);
     setError(null);
@@ -81,13 +117,12 @@ const PaymentForm: React.FC<Omit<CheckoutStepPaymentProps, "clientSecret">> = ({
       return;
     }
 
-    const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/stripe/payment-complete`,
-      },
-      redirect: "if_required",
-    });
+    const result = await confirm();
+    if (!result) {
+      setIsProcessing(false);
+      return;
+    }
+    const { error: confirmError, paymentIntent } = result;
 
     if (confirmError) {
       const message =
@@ -122,16 +157,60 @@ const PaymentForm: React.FC<Omit<CheckoutStepPaymentProps, "clientSecret">> = ({
           אופן תשלום
         </div>
 
-        {/* Wallets are one-tap payments — keep them behind the terms checkbox too */}
+        {intentError && (
+          <div
+            style={{
+              border: "1px solid rgba(196,55,62,0.18)",
+              background: "rgba(196,55,62,0.08)",
+              borderRadius: 12,
+              padding: "12px 14px",
+              textAlign: "center",
+              marginBottom: 12,
+            }}
+          >
+            <div style={{ fontSize: 12, color: "#C4373E", marginBottom: onRetryIntent ? 10 : 0 }}>
+              {intentError}
+            </div>
+            {onRetryIntent && (
+              <button
+                type="button"
+                onClick={onRetryIntent}
+                style={{
+                  padding: "8px 18px",
+                  borderRadius: 999,
+                  border: "none",
+                  background: "var(--tk-ink)",
+                  color: "var(--tk-bg)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                }}
+              >
+                נסה שוב
+              </button>
+            )}
+          </div>
+        )}
+
+        {/*
+          Wallets are one-tap payments — keep them behind the terms checkbox too.
+          The element stays mounted so onReady can fire, but the container
+          collapses to zero height until a wallet (Apple/Google Pay) is actually
+          available, so users without one don't see an empty blank box.
+        */}
         <div
           style={{
-            opacity: termsAccepted ? 1 : 0.45,
-            pointerEvents: termsAccepted ? "auto" : "none",
-            marginBottom: 12,
+            opacity: termsAccepted && clientSecret ? 1 : 0.45,
+            pointerEvents: termsAccepted && clientSecret ? "auto" : "none",
+            marginBottom: walletAvailable ? 12 : 0,
+            height: walletAvailable ? "auto" : 0,
+            overflow: "hidden",
           }}
         >
           <ExpressCheckoutElement
             onConfirm={handleExpressConfirm}
+            onReady={(e) => setWalletAvailable(!!e.availablePaymentMethods)}
             options={{
               paymentMethods: {
                 applePay: "always",
@@ -176,65 +255,88 @@ const PaymentForm: React.FC<Omit<CheckoutStepPaymentProps, "clientSecret">> = ({
       </div>
 
       <PayFooter
-        total={total}
-        disabled={!stripe || isProcessing || !termsAccepted}
-        processing={isProcessing}
+        total={amountAgorot / 100}
+        disabled={!stripe || !clientSecret || isProcessing || !termsAccepted}
+        processing={isProcessing || (!clientSecret && !intentError)}
       />
     </form>
   );
 };
 
+const APPEARANCE = {
+  theme: "stripe" as const,
+  variables: {
+    colorPrimary: "#B54653",
+    colorBackground: "#FBF8F1",
+    colorText: "#0A0A0A",
+    colorTextSecondary: "#6E6A60",
+    colorDanger: "#C4373E",
+    fontFamily: "Heebo, Assistant, sans-serif",
+    borderRadius: "10px",
+    spacingUnit: "4px",
+  },
+  rules: {
+    ".Input": {
+      border: "1px solid #CFC9B8",
+      backgroundColor: "#F5F1E8",
+    },
+    ".Input:focus": {
+      border: "1px solid #B54653",
+      boxShadow: "0 0 0 1px #B54653",
+    },
+    ".AccordionItem": {
+      border: "2px solid #E4DFD2",
+      backgroundColor: "#FBF8F1",
+      boxShadow: "none",
+    },
+    ".AccordionItem--selected": {
+      border: "2px solid #B54653",
+      backgroundColor: "rgba(181, 70, 83, 0.04)",
+      color: "#0A0A0A",
+    },
+    ".Label": {
+      color: "#6E6A60",
+    },
+  },
+};
+
 const CheckoutStepPayment: React.FC<CheckoutStepPaymentProps> = ({
   clientSecret,
+  total,
   ...formProps
 }) => {
   const stripePromise = getStripe();
+  const amountAgorot = Math.max(Math.round(total * 100), 1);
+
+  // Mount Elements in deferred mode with the amount only — no clientSecret — so
+  // the card form appears immediately, while the reservation + PaymentIntent are
+  // created in the background. The amount here is captured once (Elements can't
+  // change mode/currency after mount); later totals are reconciled via
+  // elements.update() inside the form. The real charge is always the
+  // server-created PaymentIntent's amount.
+  const [initialAmount] = useState(amountAgorot);
+  const options = useMemo(
+    () => ({
+      mode: "payment" as const,
+      amount: initialAmount,
+      currency: "ils",
+      // Card only → the Payment Element shows just the card box, no Link
+      // ("save your info for 1-click") field. Must match the server
+      // PaymentIntent's payment_method_types or confirm fails.
+      paymentMethodTypes: ["card"],
+      appearance: APPEARANCE,
+      locale: "he" as const,
+    }),
+    [initialAmount],
+  );
 
   return (
-    <Elements
-      stripe={stripePromise}
-      options={{
-        clientSecret,
-        appearance: {
-          theme: "stripe",
-          variables: {
-            colorPrimary: "#B54653",
-            colorBackground: "#FBF8F1",
-            colorText: "#0A0A0A",
-            colorTextSecondary: "#6E6A60",
-            colorDanger: "#C4373E",
-            fontFamily: "Heebo, Assistant, sans-serif",
-            borderRadius: "10px",
-            spacingUnit: "4px",
-          },
-          rules: {
-            ".Input": {
-              border: "1px solid #CFC9B8",
-              backgroundColor: "#F5F1E8",
-            },
-            ".Input:focus": {
-              border: "1px solid #B54653",
-              boxShadow: "0 0 0 1px #B54653",
-            },
-            ".AccordionItem": {
-              border: "2px solid #E4DFD2",
-              backgroundColor: "#FBF8F1",
-              boxShadow: "none",
-            },
-            ".AccordionItem--selected": {
-              border: "2px solid #B54653",
-              backgroundColor: "rgba(181, 70, 83, 0.04)",
-              color: "#0A0A0A",
-            },
-            ".Label": {
-              color: "#6E6A60",
-            },
-          },
-        },
-        locale: "he",
-      }}
-    >
-      <PaymentForm {...formProps} />
+    <Elements stripe={stripePromise} options={options}>
+      <PaymentForm
+        {...formProps}
+        clientSecret={clientSecret}
+        amountAgorot={amountAgorot}
+      />
     </Elements>
   );
 };

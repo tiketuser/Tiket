@@ -123,15 +123,6 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
       const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
-      // Calculate average original price
-      const originalPrices = eventTickets
-        .map((t) => t.originalPrice || t.askingPrice)
-        .filter((p) => p && !isNaN(p));
-      const avgOriginalPrice =
-        originalPrices.length > 0
-          ? originalPrices.reduce((a, b) => a + b, 0) / originalPrices.length
-          : minPrice;
-
       // Calculate time until event
       const timeLeft = calculateTimeLeft(event.date, event.time);
 

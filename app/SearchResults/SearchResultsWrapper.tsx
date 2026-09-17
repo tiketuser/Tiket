@@ -113,8 +113,6 @@ export default function SearchResultsWrapper({
   // Use filtered tickets if filters are active, otherwise use all tickets
   const displayTickets = hasActiveFilters ? filteredTickets : tickets;
 
-  const openLoginDialog = () => {};
-
   return (
     <div className="shadow-small-inner py-6 sm:py-14 px-4 sm:px-24">
       <ResultSection

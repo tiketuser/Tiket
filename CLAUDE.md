@@ -117,3 +117,47 @@ Still needed before push works in production:
    No keys exist on the account today.
 2. Run `npx cap sync` on the Mac (cap update hangs on the Linux VM), then
    rebuild and upload a new build. Build 3 in TestFlight predates all of this.
+
+## Automated app publishing pipeline (built 2026-09-11)
+
+The apps used to be orphaned from CI (they bundle a frozen `out/` snapshot,
+`webDir: "out"`, no `server.url`). Now branch pushes sync them automatically,
+with a **staging vs production** split mirroring the website.
+
+Three destinations, one reusable workflow (`.github/workflows/publish.yml`,
+called by the thin `deploy-staging.yml` / `deploy.yml`):
+- **web** — Docker → Cloud Run (`tiket-app-staging` / `tiket-app`) as before.
+- **ota** — builds the mobile bundle and pushes it to `gs://tiket-ota/ota/<channel>/`
+  (public read). Installed apps hot-update on launch/resume via `lib/ota.ts`
+  (`@capgo/capacitor-updater`, self-hosted manifest — NOT Capgo cloud). This is
+  the "instant like the website" path; runs on every push.
+- **android** — `fastlane supply` uploads a signed AAB to the Play `internal`
+  (staging) / `production` (main) track. Gated: only runs when native paths
+  change or the commit says `[build-android]`/`[build-native]`.
+- **iOS** — can't build free on a private repo; `ios-note` job just reminds you
+  to run `npm run release:ios` on the Mac.
+
+**Channel model:** staging branch → `staging` OTA channel + TestFlight internal /
+Play internal; main → `production` channel + App Store / Play production. The
+channel + backend API base are baked at build time via `NEXT_PUBLIC_OTA_CHANNEL`
+and `NEXT_PUBLIC_MOBILE_API_BASE_URL` (consumed by `lib/platform.ts`). Do NOT
+promote a staging TestFlight build to the App Store — cut prod with
+`npm run release:ios -- --prod` from `main`.
+
+**Customization:** every push does web+ota; native store builds are gated by
+path-filter + commit flags (`[build-android]`, `[build-native]`, `[skip-ota]`);
+or run `publish.yml` manually (Actions → Run workflow) with per-target toggles.
+
+**Owner setup still required:**
+- GH secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+  `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `PLAY_SERVICE_ACCOUNT_JSON`.
+- Play Console app must exist + service account granted release permission
+  (until then the `android` job will fail — gate it off or fix the SA).
+- ⚠️ Stripe: staging and prod share ONE `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`.
+  Confirm these are TEST keys before pointing testers at staging; ideally add
+  `*_TEST` secrets for the staging service.
+- Staging still shares the prod Firebase project (`tiket-9268c`). A future
+  `tiket-staging` project is a build-arg flip, not a code change.
+
+Local iOS release: `npm run release:ios` (staging) / `-- --prod` (production) —
+syncs, bumps build#, archives, uploads to TestFlight (see `scripts/release-ios.sh`).

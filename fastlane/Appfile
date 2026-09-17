@@ -1,0 +1,12 @@
+app_identifier("co.il.tiket.app")
+
+# App Store Connect (iOS lane, used by scripts/release-ios.sh when opted in).
+apple_id("6808811502")
+team_id("ZY5V3ZY2YW")
+
+# Google Play (Android supply lanes). The service-account JSON is provided via
+# the PLAY_SERVICE_ACCOUNT_JSON env var written to a file in CI.
+package_name("co.il.tiket.app")
+for_platform(:android) do
+  json_key_file(ENV["PLAY_SERVICE_ACCOUNT_JSON_FILE"] || "fastlane/play-service-account.json")
+end

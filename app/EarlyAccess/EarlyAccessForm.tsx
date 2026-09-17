@@ -34,10 +34,8 @@ const errorStyle: React.CSSProperties = {
 };
 
 export default function EarlyAccessForm() {
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [emailError, setEmailError] = useState(false);
-  const [phoneError, setPhoneError] = useState(false);
+  const [contact, setContact] = useState("");
+  const [contactError, setContactError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [done, setDone] = useState(false);
@@ -46,16 +44,20 @@ export default function EarlyAccessForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const cleanEmail = email.trim();
-    const cleanPhone = phone.replace(/[\s-]/g, "");
-    const emailValid = EMAIL_RE.test(cleanEmail);
-    const phoneValid = PHONE_RE.test(cleanPhone);
+    // One field takes either kind of contact detail; an "@" is what separates
+    // the two, so the patterns can never both match the same input.
+    const trimmed = contact.trim();
+    const digits = trimmed.replace(/[\s-]/g, "");
+    const isEmail = EMAIL_RE.test(trimmed);
+    const isPhone = PHONE_RE.test(digits);
 
-    setEmailError(!emailValid);
-    setPhoneError(!phoneValid);
+    if (!isEmail && !isPhone) {
+      setContactError(true);
+      setErrorMessage(trimmed ? "הזינו אימייל או מספר טלפון תקין" : "השאירו אימייל או טלפון");
+      return;
+    }
 
-    if (!emailValid || !phoneValid) return;
-
+    setContactError(false);
     setSubmitting(true);
     setErrorMessage("");
 
@@ -63,7 +65,7 @@ export default function EarlyAccessForm() {
       const res = await fetch("/api/early-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, phone: cleanPhone }),
+        body: JSON.stringify(isEmail ? { email: trimmed } : { phone: digits }),
       });
 
       const data = await res.json();
@@ -83,8 +85,7 @@ export default function EarlyAccessForm() {
 
   const closeDialog = () => {
     setDone(false);
-    setEmail("");
-    setPhone("");
+    setContact("");
   };
 
   // Fade + scale the dialog in on the tick after it mounts.
@@ -97,10 +98,23 @@ export default function EarlyAccessForm() {
     return () => clearTimeout(t);
   }, [done]);
 
+  // One fixed card, never scrolled: lock the document and kill the overscroll
+  // rubber-band so the page can't be dragged around on touch.
+  useEffect(() => {
+    const { body } = document;
+    const previousOverscroll = body.style.overscrollBehavior;
+    body.classList.add("no-doc-scroll");
+    body.style.overscrollBehavior = "none";
+    return () => {
+      body.classList.remove("no-doc-scroll");
+      body.style.overscrollBehavior = previousOverscroll;
+    };
+  }, []);
+
   return (
     <div
       dir="rtl"
-      className="tk-mobile min-h-screen flex items-center justify-center p-4 sm:p-10"
+      className="tk-mobile h-[100dvh] overflow-hidden flex items-center justify-center p-4 sm:p-10"
     >
       <div
         className="w-full max-w-[400px] rounded-[20px] shadow-[0_16px_44px_rgba(0,0,0,0.12)]"
@@ -112,8 +126,13 @@ export default function EarlyAccessForm() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>
-            tiket<span className="tk-logo-dot">.</span>
+          {/* dir=ltr keeps the logotype dot on the right of the word; in the
+              page's RTL flow the neutral "." would otherwise flip to the left. */}
+          <div
+            dir="ltr"
+            style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}
+          >
+            TIKET<span className="tk-logo-dot">.</span>
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>
             הצטרפו לגישה המוקדמת
@@ -126,45 +145,35 @@ export default function EarlyAccessForm() {
               lineHeight: 1.5,
             }}
           >
-            קונים ומוכרים כרטיסים בקלות ובאופן מאובטח.
+            קונים ומוכרים כרטיסים באופן מאובטח.
             <br />
-            השאירו אימייל וטלפון ותהיו הראשונים לדעת כשעולים לאוויר.
+            השאירו אימייל או טלפון ותקבלו גישה מוקדמת.
           </div>
         </div>
 
         <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div>
-            <div style={labelStyle}>אימייל</div>
+            <div style={labelStyle}>אימייל או טלפון</div>
             <input
-              id="early-access-email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              dir="rtl"
+              id="early-access-contact"
+              type="text"
+              inputMode="email"
+              placeholder="name@example.com / 0501234567"
+              value={contact}
+              onChange={(e) => {
+                setContact(e.target.value);
+                if (contactError) {
+                  setContactError(false);
+                  setErrorMessage("");
+                }
+              }}
+              dir="ltr"
               style={{
                 ...inputStyle,
-                borderColor: emailError ? "#B00020" : "var(--tk-line-strong)",
+                textAlign: "right",
+                borderColor: contactError ? "#B00020" : "var(--tk-line-strong)",
               }}
             />
-            {emailError && <div style={errorStyle}>כתובת אימייל לא תקינה</div>}
-          </div>
-
-          <div>
-            <div style={labelStyle}>טלפון</div>
-            <input
-              id="early-access-phone"
-              type="tel"
-              placeholder="050-0000000"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              dir="rtl"
-              style={{
-                ...inputStyle,
-                borderColor: phoneError ? "#B00020" : "var(--tk-line-strong)",
-              }}
-            />
-            {phoneError && <div style={errorStyle}>מספר טלפון לא תקין</div>}
           </div>
 
           {errorMessage && <div style={errorStyle}>{errorMessage}</div>}
@@ -199,7 +208,7 @@ export default function EarlyAccessForm() {
             lineHeight: 1.5,
           }}
         >
-          © 2026 tiket.
+          TIKET • בקרוב אצלכם
         </div>
       </div>
 

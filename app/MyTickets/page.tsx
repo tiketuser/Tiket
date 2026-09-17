@@ -13,6 +13,7 @@ import MobileMyTickets, {
 } from "../components/mobile/MobileMyTickets";
 import TicketBarcode from "../components/TicketBarcode/TicketBarcode";
 import { isEventPast } from "@/utils/eventDate";
+import { demoBarcodeValue, DEMO_BARCODE_FORMAT } from "@/utils/demoBarcode";
 import ArrowIcon from "../../public/images/My Tickets/Web/Arrow.svg";
 import Image from "next/image";
 
@@ -36,6 +37,37 @@ interface PurchasedTicket {
   /** Re-issued entry barcode from the provider (the original was voided). */
   newBarcode?: string;
   newBarcodeFormat?: string;
+}
+
+// Skeleton row mirroring the desktop MyTicketCard layout (date · divider ·
+// info · divider · price · button) so the swap to real tickets is seamless.
+function WebTicketCardSkeleton() {
+  return (
+    <div className="flex items-center justify-center w-full">
+      <div className="flex flex-row items-center justify-between border-b-4 border-gray-200 pt-4 pr-8 pb-4 pl-6 gap-4 sm:gap-6 md:gap-12 lg:gap-14 shadow-large flex-1 max-w-[700px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] min-h-[100px] md:min-h-[128px] bg-white">
+        {/* Date column */}
+        <div className="flex flex-col items-center justify-center gap-2 min-w-[60px] flex-shrink-0">
+          <div className="h-7 w-10 rounded bg-gray-200" />
+          <div className="h-3 w-8 rounded bg-gray-200" />
+        </div>
+        <div className="w-[3px] h-20 md:h-24 bg-gray-200 flex-shrink-0" />
+        {/* Event info */}
+        <div className="flex flex-col gap-2 flex-1 min-w-0 justify-center">
+          <div className="h-5 w-2/5 rounded bg-gray-200" />
+          <div className="h-4 w-24 rounded bg-gray-200" />
+          <div className="h-4 w-1/3 rounded bg-gray-200" />
+          <div className="h-6 w-28 rounded-md bg-gray-200" />
+        </div>
+        <div className="w-[3px] h-20 md:h-24 bg-gray-200 flex-shrink-0" />
+        {/* Price */}
+        <div className="min-w-[70px] md:min-w-[130px] flex-shrink-0 flex justify-center">
+          <div className="h-7 w-16 rounded bg-gray-200" />
+        </div>
+        {/* Button */}
+        <div className="h-[36px] md:h-[40px] min-w-[80px] md:min-w-[100px] rounded-md bg-gray-200 flex-shrink-0" />
+      </div>
+    </div>
+  );
 }
 
 export default function MyTicketsPage() {
@@ -179,10 +211,12 @@ export default function MyTicketsPage() {
         <MobileMyTickets tickets={[]} loading={true} />
         <div className="hidden md:block">
           <NavBar />
-          <div className="min-h-screen bg-white py-12 px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <div className="loading loading-spinner loading-lg"></div>
-              <p className="mt-4 text-gray-600">טוען כרטיסים...</p>
+          <TitleSubtitle title="הכרטיסים שלי" subtitle="כרטיסים שרכשתי" />
+          <div className="pt-5 md:pt-14 px-4 md:px-8 lg:px-32 pb-5 md:pb-14 shadow-small-inner w-full">
+            <div className="mt-14 flex flex-col gap-4 animate-pulse">
+              {[0, 1, 2].map((i) => (
+                <WebTicketCardSkeleton key={i} />
+              ))}
             </div>
           </div>
           <Footer />
@@ -317,17 +351,15 @@ export default function MyTicketsPage() {
                 </p>
               </>
             ) : (
-              <div className="w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
-                {viewTicket.ticketImage ? (
-                  <img
-                    src={viewTicket.ticketImage}
-                    alt="כרטיס"
-                    className="w-full h-auto object-contain max-h-[60vh]"
+              <>
+                <div className="w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                  <TicketBarcode
+                    value={demoBarcodeValue(viewTicket.id)}
+                    format={DEMO_BARCODE_FORMAT}
                   />
-                ) : (
-                  <p className="text-mutedText text-sm py-8">אין תמונת כרטיס</p>
-                )}
-              </div>
+                </div>
+                <p className="text-xs text-mutedText text-center">ברקוד כניסה</p>
+              </>
             )}
 
             {!viewTicket.newBarcode && viewTicket.ticketImage && (

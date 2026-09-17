@@ -17,6 +17,8 @@
     "cap:open:android": "cap open android",
     "android:bundle": "npm run cap:sync:android && cd android && ./gradlew bundleRelease",
     "android:apk": "npm run cap:sync:android && cd android && ./gradlew assembleRelease",
+    "ota:build": "npm run build:mobile && node scripts/ota-bundle.js",
+    "release:ios": "bash scripts/release-ios.sh",
     "mobile:ios": "cap run ios -l --external",
     "mobile:android": "cap run android -l --external"
   },
@@ -31,6 +33,7 @@
     "@capacitor/splash-screen": "^6.0.4",
     "@capacitor/status-bar": "^6.0.3",
     "@capgo/capacitor-navigation-bar": "^6.1.75",
+    "@capgo/capacitor-updater": "^6.51.15",
     "@google-cloud/vision": "^5.3.4",
     "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-progress": "^1.1.1",

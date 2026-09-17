@@ -21,9 +21,6 @@ import {
 import Image from "next/image";
 import { apiFetch } from "@/lib/platform";
 
-// Force dynamic rendering for admin pages
-export const dynamic = "force-dynamic";
-
 interface Concert {
   id: string;
   artist: string;

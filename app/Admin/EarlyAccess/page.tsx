@@ -134,10 +134,10 @@ export default function EarlyAccessAdminPage() {
                 >
                   <div className="min-w-0 text-right">
                     <div className="font-semibold text-strongText truncate text-sm">
-                      {s.email}
+                      {s.email || "—"}
                     </div>
                     <div className="text-mutedText text-xs" dir="ltr">
-                      {s.phone}
+                      {s.phone || "—"}
                     </div>
                   </div>
                   <div className="text-mutedText text-xs whitespace-nowrap flex-shrink-0">

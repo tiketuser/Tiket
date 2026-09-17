@@ -61,7 +61,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl">
-      <head></head>
+      <head>
+        {/* Warm DNS/TLS to Stripe so the checkout card form (Stripe.js +
+            PaymentElement config) loads faster once the buyer reaches payment.
+            Purely a network hint — no effect on pricing or the payment intent. */}
+        <link rel="preconnect" href="https://js.stripe.com" crossOrigin="" />
+        <link rel="preconnect" href="https://api.stripe.com" crossOrigin="" />
+        <link rel="preconnect" href="https://m.stripe.network" crossOrigin="" />
+      </head>
       <body className={`${assistant.variable} ${heebo.variable} ${jetMono.variable}`}>
         <ServiceWorkerRegister />
         <NativeDiagnostic />

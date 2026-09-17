@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
-import { getPlatformFeePercent } from "@/lib/stripe";
+import { resolvePlatformFeePercent, computeSaleAmounts } from "@/lib/stripe";
 import { verifyGuestToken } from "@/lib/guestToken";
 import { transferTicketsAfterSale } from "@/lib/venueTransfer";
 import { payoutEligibleAt as calcPayoutEligibleAt } from "@/utils/eventDate";
@@ -99,8 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, alreadyProcessed: true });
     }
 
-    const parsedFee = parseFloat(platformFeePercent);
-    const feePercent = Number.isNaN(parsedFee) ? getPlatformFeePercent() : parsedFee;
+    const feePercent = resolvePlatformFeePercent(platformFeePercent);
     const expectedReservedBy = buyerId || `guest:${guestEmail}`;
 
     // Fetch all ticket documents
@@ -133,9 +132,8 @@ export async function POST(request: NextRequest) {
       }
 
       const sellerId = ticketData.sellerId as string;
-      const ticketPriceILS = ticketData.askingPrice as number;
-      const platformFeeILS = feePercent > 0 ? ticketPriceILS * (feePercent / 100) : 0;
-      const sellerPayoutILS = ticketPriceILS - platformFeeILS;
+      const { ticketPriceILS, platformFeeILS, sellerPayoutILS, totalILS } =
+        computeSaleAmounts(ticketData.askingPrice as number, feePercent);
       const payoutEligibleAt = calcPayoutEligibleAt(ticketData.date || "");
 
       // Mark ticket as sold
@@ -154,7 +152,7 @@ export async function POST(request: NextRequest) {
         eventId: eventId || null,
         buyerId: buyerId || null,
         sellerId,
-        amount: ticketPriceILS + platformFeeILS,
+        amount: totalILS,
         ticketPrice: ticketPriceILS,
         platformFee: platformFeeILS,
         sellerPayout: sellerPayoutILS,

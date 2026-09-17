@@ -46,3 +46,36 @@ export function calculatePlatformFee(priceILS: number): number {
 export function ilsToAgorot(priceILS: number): number {
   return Math.round(priceILS * 100);
 }
+
+// Resolve the effective fee %: prefer the value captured at reservation time and
+// passed through PaymentIntent metadata; fall back to the current env default
+// when it's missing or unparseable. Shared by the webhook and confirm-payment
+// routes so both settle a sale on the exact same fee.
+export function resolvePlatformFeePercent(metadataFee?: string | null): number {
+  const parsed = parseFloat(metadataFee ?? "");
+  return Number.isNaN(parsed) ? getPlatformFeePercent() : parsed;
+}
+
+export type SaleAmounts = {
+  ticketPriceILS: number;
+  platformFeeILS: number;
+  sellerPayoutILS: number;
+  /** What the buyer paid: ticket price plus the platform fee on top. */
+  totalILS: number;
+};
+
+// Single source of truth for splitting a ticket sale into fee / seller payout /
+// buyer total. Duplicated across the webhook and confirm-payment routes before —
+// money code that must never diverge between the two settlement paths.
+export function computeSaleAmounts(
+  ticketPriceILS: number,
+  feePercent: number,
+): SaleAmounts {
+  const platformFeeILS = feePercent > 0 ? ticketPriceILS * (feePercent / 100) : 0;
+  return {
+    ticketPriceILS,
+    platformFeeILS,
+    sellerPayoutILS: ticketPriceILS - platformFeeILS,
+    totalILS: ticketPriceILS + platformFeeILS,
+  };
+}

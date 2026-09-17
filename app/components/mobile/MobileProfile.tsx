@@ -25,6 +25,7 @@ import { Icon } from "./Icon";
 import { hebDate, nis } from "./format";
 import { resolveEventImage } from "@/utils/defaultImages";
 import { isAdminUser } from "@/lib/isAdminClient";
+import { OTA_CHANNEL, getOtaBundleVersion } from "@/lib/ota";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
@@ -85,6 +86,31 @@ export default function MobileProfile() {
   const [authOpen, setAuthOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [counts, setCounts] = useState({ bought: 0, sold: 0 });
+  const [otaVersion, setOtaVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Staging-only build badge: show which OTA bundle is live so a push can be
+    // confirmed on-device. Re-checks on foreground (a staged update applies on
+    // the next resume, bumping this number).
+    if (OTA_CHANNEL !== "staging") return;
+    let cancelled = false;
+    const refresh = () =>
+      getOtaBundleVersion().then((v) => {
+        if (!cancelled) setOtaVersion(v);
+      });
+    refresh();
+    let remove: (() => void) | undefined;
+    import("@capacitor/app")
+      .then(({ App }) => App.addListener("resume", refresh))
+      .then((h) => {
+        remove = () => void h.remove();
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      remove?.();
+    };
+  }, []);
 
   useEffect(() => {
     return onAuthStateChanged(getAuth(), (u) => {
@@ -695,6 +721,7 @@ export default function MobileProfile() {
 
         <div
           className="tk-mono"
+          dir="ltr"
           style={{
             textAlign: "center",
             fontSize: 9,
@@ -703,7 +730,12 @@ export default function MobileProfile() {
             padding: "4px 0 12px",
           }}
         >
-          ◆ TIKET · v1.0.0
+          {"◆ TIKET · v1.0.0"}
+          {OTA_CHANNEL === "staging" && (
+            <span style={{ color: "var(--tk-blue)" }}>
+              {` · staging · OTA ${otaVersion ?? "…"}`}
+            </span>
+          )}
         </div>
       </div>
     </MobileShell>

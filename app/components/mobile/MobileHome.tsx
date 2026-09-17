@@ -25,6 +25,28 @@ const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
 type ApiCard = MobileEventCardData & { category?: string };
 
+// Local skeleton mirroring MobileEventCard: 150px image block + title/meta lines.
+function MobileCardSkeleton() {
+  return (
+    <div
+      style={{
+        borderRadius: 20,
+        overflow: "hidden",
+        background: "var(--tk-paper)",
+        border: "1px solid var(--tk-line)",
+      }}
+    >
+      <div style={{ height: 150, background: "var(--tk-line)" }} />
+      <div style={{ padding: 10 }}>
+        <div style={{ height: 12, width: "80%", background: "var(--tk-line)", borderRadius: 4 }} />
+        <div style={{ height: 9, width: "55%", background: "var(--tk-line)", borderRadius: 4, marginTop: 8 }} />
+        <div style={{ height: 10, width: "45%", background: "var(--tk-line)", borderRadius: 4, marginTop: 8 }} />
+        <div style={{ height: 14, width: "40%", background: "var(--tk-line)", borderRadius: 4, marginTop: 8 }} />
+      </div>
+    </div>
+  );
+}
+
 export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] }) {
   const router = useRouter();
   const [cards, setCards] = useState<ApiCard[]>(initialCards ?? []);
@@ -233,14 +255,17 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
 
       {loading ? (
         <div
+          className="animate-pulse"
           style={{
-            padding: "40px 18px",
-            textAlign: "center",
-            color: "var(--tk-muted)",
-            fontSize: 13,
+            padding: "4px 14px 20px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 10,
           }}
         >
-          טוען מופעים…
+          {Array.from({ length: 6 }).map((_, i) => (
+            <MobileCardSkeleton key={i} />
+          ))}
         </div>
       ) : filtered.length === 0 ? (
         <div

@@ -25,22 +25,15 @@ const ROOT = path.resolve(__dirname, "..");
 const STASH_DIR = path.join(ROOT, ".mobile-build-stash");
 
 // Whole directories that the mobile app does not need.
-// Admin / internal tools never ship to the consumer apps.
-// Favorites/ViewMore/EventPage/SearchResults need a server→client refactor —
-// stashed for now; will be reintroduced once converted.
+// Admin tool pages ARE shipped to the apps now (AdminProtection gates them by
+// the `admin` custom claim, so non-admins are redirected). They are all
+// `"use client"` pages that fetch at runtime, so they static-export cleanly
+// once `force-dynamic` is removed from their sources.
+// Only dev/migration-only tools that the app never links to stay stashed.
 const STASH_TARGETS = [
-  // Admin
-  path.join(ROOT, "app", "Admin"),
-  path.join(ROOT, "app", "manage-artists"),
-  path.join(ROOT, "app", "manage-categories"),
-  path.join(ROOT, "app", "manage-themes"),
-  path.join(ROOT, "app", "manage-default-images"),
-  path.join(ROOT, "app", "edit-events"),
+  // Dev/migration-only tools — not linked from the app's admin menu.
   path.join(ROOT, "app", "fix-dates"),
   path.join(ROOT, "app", "migrate"),
-  path.join(ROOT, "app", "diagnostic"),
-  path.join(ROOT, "app", "regenerate-tickets"),
-  path.join(ROOT, "app", "approve-tickets"),
   // API — runs on Cloud Run, not in mobile bundle
   path.join(ROOT, "app", "api"),
   // Dynamic-segment pages — `output: "export"` requires generateStaticParams

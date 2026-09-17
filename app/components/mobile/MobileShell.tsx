@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import MobileBottomNav from "./MobileBottomNav";
 import { initMobileChrome, setHeroStatusBar } from "@/lib/native-chrome";
 import { initNativePush } from "@/lib/native-push";
+import { initOtaUpdates } from "@/lib/ota";
 import { auth } from "@/firebase";
 
 export default function MobileShell({
@@ -20,6 +21,12 @@ export default function MobileShell({
     void initMobileChrome();
     void setHeroStatusBar(heroStatusBar);
   }, [heroStatusBar]);
+
+  // Pull any over-the-air web-bundle update for this build's channel. Runs once,
+  // guarded to native + plugin-available, and never throws.
+  useEffect(() => {
+    initOtaUpdates();
+  }, []);
 
   // Ask for notification permission only once someone is signed in — a prompt
   // on first cold launch, before the user has any reason to want alerts, gets

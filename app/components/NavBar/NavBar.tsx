@@ -4,8 +4,7 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { LogIn, UserPlus, Mail, LogOut, ShieldCheck, HelpCircle, FileText, Lock } from "lucide-react";
-import { cn } from "../../../lib/utils";
+import { Mail, LogOut, ShieldCheck, HelpCircle, FileText, Lock } from "lucide-react";
 import { isAdminUser } from "@/lib/isAdminClient";
 import {
   getAuth,
@@ -71,9 +70,9 @@ const NavBar = () => {
   const [seenListings, setSeenListings] = useState(() =>
     typeof window !== "undefined" ? parseInt(localStorage.getItem("tiket_seen_mylistings_sold") || "0") : 0
   );
-  const [seenFavorites, setSeenFavorites] = useState(() =>
-    typeof window !== "undefined" ? parseInt(localStorage.getItem("tiket_seen_favorites") || "0") : 0
-  );
+  // Favorites uses a boolean flag (not a seen-count like tickets/listings): the
+  // snapshot listener compares the live count against the localStorage baseline
+  // directly, which avoids the stale-state race a count-vs-state check would hit.
   const [hasNewFavorite, setHasNewFavorite] = useState(false);
   const hasUnseenTickets = myTicketsCount > seenTickets;
   const hasUnseenListings = myListingsCount > seenListings;
@@ -167,7 +166,6 @@ const NavBar = () => {
     const uid = user.uid;
     if (pathname === "/Favorites") {
       localStorage.setItem(`tiket_seen_favorites_${uid}`, favoritesCount.toString());
-      setSeenFavorites(favoritesCount);
       setHasNewFavorite(false);
     } else if (pathname === "/MyTickets") {
       localStorage.setItem(`tiket_seen_mytickets_${uid}`, myTicketsCount.toString());
@@ -228,10 +226,8 @@ const NavBar = () => {
           if (stored === null) {
             // No baseline yet — treat current count as seen
             localStorage.setItem(keyFav, count.toString());
-            setSeenFavorites(count);
           } else {
             const seen = parseInt(stored);
-            setSeenFavorites(seen);
             // If count is already above the stored seen (e.g. added while logged out), show dot
             if (count > seen) { setHasNewFavorite(true); }
           }
@@ -282,7 +278,7 @@ const NavBar = () => {
     setUser(null);
     // Reset all badge counts and seen states so no dots bleed to the next user
     setMyTicketsCount(0); setMyListingsCount(0); setFavoritesCount(0);
-    setSeenTickets(0); setSeenListings(0); setSeenFavorites(0); setHasNewFavorite(false);
+    setSeenTickets(0); setSeenListings(0); setHasNewFavorite(false);
     router.refresh();
   };
 
@@ -771,7 +767,7 @@ const NavBar = () => {
               onClick={(e) => {
                 setMyTicketsPopoverOpen(false);
                 if (!user) { e.preventDefault(); setPendingFavoritesRedirect(true); openLogin(); }
-                else { localStorage.setItem(`tiket_seen_favorites_${user.uid}`, favoritesCount.toString()); setSeenFavorites(favoritesCount); setHasNewFavorite(false); }
+                else { localStorage.setItem(`tiket_seen_favorites_${user.uid}`, favoritesCount.toString()); setHasNewFavorite(false); }
               }}
             >
               <div className="relative">
