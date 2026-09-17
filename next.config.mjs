@@ -59,6 +59,21 @@ const webConfig = {
         ],
       },
       {
+        // HTML documents must revalidate. Next serves prerendered pages with
+        // s-maxage=31536000, and Firebase Hosting's CDN honours it — which
+        // pinned old HTML at the edge for a year, so a deploy left visitors on
+        // JS chunk URLs that no longer existed. Hashed assets under
+        // _next/static, and anything with a file extension, keep their own
+        // caching; only extensionless document routes are matched here.
+        source: "/((?!_next/static|_next/image|.*\\.).*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
+      {
         source: "/api/:path*",
         headers: [
           {
