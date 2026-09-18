@@ -132,7 +132,7 @@ export default function EarlyAccessForm() {
             dir="ltr"
             style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}
           >
-            TIKET<span className="tk-logo-dot">.</span>
+            tiket<span className="tk-logo-dot">.</span>
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>
             הצטרפו לגישה המוקדמת
