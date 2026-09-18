@@ -456,6 +456,11 @@ const NavBar = () => {
                       ניהול משתמשים
                     </div>
                   </Link>
+                  <Link href="/Admin/EarlyAccess">
+                    <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer">
+                      הרשמות מוקדמות
+                    </div>
+                  </Link>
 
                   <Link href="/diagnostic">
                     <div className="px-4 py-2 text-right text-text-medium leading-7 hover:bg-purple-100 cursor-pointer border-t border-purple-200">
@@ -625,6 +630,7 @@ const NavBar = () => {
                   { href: "/manage-artists", label: "ניהול אמנים" },
                   { href: "/Admin/venue-providers", label: "ספקי API לאימות" },
                   { href: "/Admin/users", label: "ניהול משתמשים" },
+                  { href: "/Admin/EarlyAccess", label: "הרשמות מוקדמות" },
                   { href: "/diagnostic", label: "אבחון מערכת" },
                 ].map(({ href, label }) => (
                   <Link key={href} href={href} onClick={() => setMobileMenuOpen(false)}>
