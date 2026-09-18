@@ -7,7 +7,9 @@ const GATED_HOSTS = new Set(["tiket.co.il", "www.tiket.co.il"]);
 
 /** Still reachable while the gate is up: the signup page itself, the URLs
  *  registered with Apple in App Store Connect (privacy policy, support,
- *  privacy choices), and the claim-gated admin area. */
+ *  privacy choices), the claim-gated admin area, and /Profile — the only
+ *  sign-in entry point, without which an admin can never authenticate and
+ *  /Admin bounces them back here. */
 const ALWAYS_ALLOWED = [
   "/EarlyAccess",
   "/Privacy",
@@ -15,6 +17,7 @@ const ALWAYS_ALLOWED = [
   "/ContactUs",
   "/delete-account",
   "/Admin",
+  "/Profile",
 ];
 
 function gateIsUp(request: NextRequest): boolean {
