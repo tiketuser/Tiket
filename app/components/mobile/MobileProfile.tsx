@@ -50,6 +50,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/manage-artists", label: "ניהול אמנים" },
   { href: "/manage-default-images", label: "תמונות ברירת מחדל" },
   { href: "/Admin/users", label: "ניהול משתמשים" },
+  { href: "/Admin/EarlyAccess", label: "הרשמות מוקדמות" },
   { href: "/Admin/venue-providers", label: "ניהול ספקים" },
   { href: "/Admin/pnl-calculator", label: "מחשבון P&L" },
   { href: "/diagnostic", label: "אבחון מערכת" },
