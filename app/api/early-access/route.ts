@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       { merge: true }
     );
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, alreadyRegistered: existing.exists });
   } catch (error) {
     console.error("Error saving early access signup:", error);
     return NextResponse.json({ error: "משהו השתבש, נסו שוב" }, { status: 500 });
