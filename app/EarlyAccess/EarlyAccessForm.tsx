@@ -39,6 +39,7 @@ export default function EarlyAccessForm() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [done, setDone] = useState(false);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [dialogIn, setDialogIn] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,6 +76,7 @@ export default function EarlyAccessForm() {
         return;
       }
 
+      setAlreadyRegistered(Boolean(data.alreadyRegistered));
       setDone(true);
     } catch {
       setErrorMessage("בעיית תקשורת, נסו שוב");
@@ -255,7 +257,7 @@ export default function EarlyAccessForm() {
                 marginBottom: 8,
               }}
             >
-              ◆ ההרשמה הושלמה
+              {alreadyRegistered ? "◆ כבר ברשימה" : "◆ ההרשמה הושלמה"}
             </div>
             <div
               style={{
@@ -266,7 +268,7 @@ export default function EarlyAccessForm() {
                 marginBottom: 8,
               }}
             >
-              נרשמתם בהצלחה!
+              {alreadyRegistered ? "אתם כבר רשומים" : "נרשמתם בהצלחה!"}
             </div>
             <div
               style={{
@@ -277,7 +279,9 @@ export default function EarlyAccessForm() {
                 marginBottom: 18,
               }}
             >
-              נעדכן אתכם באימייל וב-SMS מיד כשטיקט עולה לאוויר.
+              {alreadyRegistered
+                ? "הפרטים שלכם כבר אצלנו ברשימת הגישה המוקדמת. נעדכן אתכם מיד כשנעלה לאוויר."
+                : "נעדכן אתכם באימייל וב-SMS מיד כשטיקט עולה לאוויר."}
             </div>
             <button
               onClick={closeDialog}
