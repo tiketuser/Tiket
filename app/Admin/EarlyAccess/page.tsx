@@ -5,57 +5,15 @@ import { getAuth } from "firebase/auth";
 import AdminProtection from "../../components/AdminProtection/AdminProtection";
 import MobileAdminChrome from "../../components/mobile/MobileAdminChrome";
 import NavBar from "../../components/NavBar/NavBar";
+import SourceIcon, { sourceLabel } from "../../components/SourceIcon/SourceIcon";
+import SignupRow, { channelsOf, type Signup } from "./SignupRow";
 import { apiFetch } from "@/lib/platform";
-
-interface Signup {
-  id: string;
-  email: string;
-  phone: string;
-  source: string;
-  sources: string[];
-  createdAt: string | null;
-}
-
-const SOURCE_LABELS: Record<string, string> = {
-  instagram: "אינסטגרם",
-  facebook: "פייסבוק",
-  x: "X",
-  tiktok: "טיקטוק",
-  whatsapp: "וואטסאפ",
-  telegram: "טלגרם",
-  linkedin: "לינקדאין",
-  youtube: "יוטיוב",
-  snapchat: "סנאפצ׳אט",
-  reddit: "רדיט",
-  google: "גוגל",
-  newsletter: "ניוזלטר",
-  email: "אימייל",
-  qr: "QR",
-  poster: "פוסטר",
-  flyer: "פלייר",
-};
-
-function sourceLabel(source: string): string {
-  if (!source) return "ישיר";
-  return SOURCE_LABELS[source] ?? source;
-}
 
 async function getIdToken(): Promise<string | null> {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) return null;
   return user.getIdToken();
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("he-IL", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function downloadCsv(signups: Signup[]) {
@@ -111,12 +69,10 @@ export default function EarlyAccessAdminPage() {
     (s) =>
       s.email.toLowerCase().includes(search.toLowerCase()) ||
       s.phone.includes(search) ||
-      s.sources
-        .concat(s.source || [])
-        .some((src) => sourceLabel(src).toLowerCase().includes(search.toLowerCase()))
+      channelsOf(s).some((src) => sourceLabel(src).toLowerCase().includes(search.toLowerCase()))
   );
 
-  // Signups per channel, biggest first.
+  // Signups per channel, biggest first. Doubles as the legend for the icons.
   const bySource = Object.entries(
     signups.reduce<Record<string, number>>((acc, s) => {
       const key = s.source || "";
@@ -147,8 +103,9 @@ export default function EarlyAccessAdminPage() {
               {bySource.map(([source, count]) => (
                 <span
                   key={source || "direct"}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/40 border border-secondary text-sm"
+                  className="inline-flex items-center gap-2 ps-2 pe-3 py-1.5 rounded-full bg-secondary/40 border border-secondary text-sm"
                 >
+                  <SourceIcon source={source} size={22} />
                   <span className="font-semibold text-strongText">
                     {sourceLabel(source)}
                   </span>
@@ -188,35 +145,7 @@ export default function EarlyAccessAdminPage() {
           ) : (
             <div className="space-y-3">
               {filtered.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between gap-4 bg-white border border-secondary rounded-xl shadow-sm px-5 py-4"
-                >
-                  <div className="min-w-0 text-right">
-                    <div className="font-semibold text-strongText truncate text-sm">
-                      {s.email || "—"}
-                    </div>
-                    <div className="text-mutedText text-xs" dir="ltr">
-                      {s.phone || "—"}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold whitespace-nowrap">
-                      {sourceLabel(s.source)}
-                    </span>
-                    {s.sources.length > 1 && (
-                      <span
-                        title={s.sources.map(sourceLabel).join(" · ")}
-                        className="px-2.5 py-1 rounded-full bg-highlight/15 text-highlight text-xs font-semibold whitespace-nowrap cursor-default"
-                      >
-                        {s.sources.length} ערוצים
-                      </span>
-                    )}
-                    <div className="text-mutedText text-xs whitespace-nowrap">
-                      {formatDate(s.createdAt)}
-                    </div>
-                  </div>
-                </div>
+                <SignupRow key={s.id} signup={s} />
               ))}
             </div>
           )}
