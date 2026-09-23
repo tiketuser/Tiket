@@ -25,6 +25,18 @@ const inputStyle: React.CSSProperties = {
   color: "var(--tk-ink)",
 };
 
+/** Where this visitor came from: an explicit utm_source wins, otherwise the
+ *  cookie the middleware set from a campaign short code such as /ig. */
+function readSource(): string {
+  if (typeof window === "undefined") return "";
+  const utm = new URLSearchParams(window.location.search).get("utm_source");
+  if (utm) return utm.slice(0, 40);
+  const cookie = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith("ea_src="));
+  return cookie ? decodeURIComponent(cookie.slice(7)).slice(0, 40) : "";
+}
+
 const errorStyle: React.CSSProperties = {
   fontSize: 12,
   color: "#B00020",
@@ -66,7 +78,10 @@ export default function EarlyAccessForm() {
       const res = await fetch("/api/early-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isEmail ? { email: trimmed } : { phone: digits }),
+        body: JSON.stringify({
+          ...(isEmail ? { email: trimmed } : { phone: digits }),
+          source: readSource(),
+        }),
       });
 
       const data = await res.json();
