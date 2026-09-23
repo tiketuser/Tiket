@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^0\d{8,9}$/;
@@ -53,6 +53,7 @@ export default function EarlyAccessForm() {
   const [done, setDone] = useState(false);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [dialogIn, setDialogIn] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,13 +129,40 @@ export default function EarlyAccessForm() {
     };
   }, []);
 
+  // When the keyboard opens, iOS shrinks the visual viewport and scrolls the
+  // page up to reveal the field, which pushes the top of the card off screen.
+  // Matching the shell to the visible area keeps the card put instead.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const shell = shellRef.current;
+    if (!viewport || !shell) return;
+
+    const fit = () => {
+      shell.style.height = `${viewport.height}px`;
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+    };
+
+    fit();
+    viewport.addEventListener("resize", fit);
+    viewport.addEventListener("scroll", fit);
+    return () => {
+      viewport.removeEventListener("resize", fit);
+      viewport.removeEventListener("scroll", fit);
+      shell.style.height = "";
+    };
+  }, []);
+
   return (
     <div
       dir="rtl"
-      className="tk-mobile h-[100dvh] overflow-hidden flex items-center justify-center p-4 sm:p-10"
+      ref={shellRef}
+      // m-auto on the card rather than justify-center: when the keyboard
+      // leaves less room than the card needs, centering would clip its top,
+      // whereas auto margins let it sit flush and stay reachable.
+      className="tk-mobile h-[100dvh] overflow-y-auto flex p-4 sm:p-10"
     >
       <div
-        className="w-full max-w-[400px] rounded-[20px] shadow-[0_16px_44px_rgba(0,0,0,0.12)]"
+        className="w-full max-w-[400px] m-auto rounded-[20px] shadow-[0_16px_44px_rgba(0,0,0,0.12)]"
         style={{
           background: "var(--tk-paper)",
           border: "1px solid var(--tk-line-strong)",
