@@ -138,7 +138,14 @@ export default function EarlyAccessForm() {
     if (!viewport || !shell) return;
 
     const fit = () => {
-      shell.style.height = `${viewport.height}px`;
+      // Pad by the keyboard's height rather than shrinking the shell: the
+      // shell keeps covering the whole screen, so no strip of bare page shows
+      // beneath it, while the card still centres in the space left above.
+      const keyboard = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop
+      );
+      shell.style.paddingBottom = keyboard ? `${keyboard + 16}px` : "";
       if (window.scrollY !== 0) window.scrollTo(0, 0);
     };
 
@@ -148,7 +155,7 @@ export default function EarlyAccessForm() {
     return () => {
       viewport.removeEventListener("resize", fit);
       viewport.removeEventListener("scroll", fit);
-      shell.style.height = "";
+      shell.style.paddingBottom = "";
     };
   }, []);
 
@@ -201,8 +208,16 @@ export default function EarlyAccessForm() {
             <div style={labelStyle}>אימייל או טלפון</div>
             <input
               id="early-access-contact"
+              name="email"
               type="text"
               inputMode="email"
+              // The field takes either kind of detail, but email is the common
+              // case and what Safari/Chrome can actually offer from saved data.
+              autoComplete="email"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="send"
               placeholder="name@example.com / 0501234567"
               value={contact}
               onChange={(e) => {
