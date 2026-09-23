@@ -24,11 +24,16 @@ export async function GET(request: NextRequest) {
 
     const signups = snapshot.docs.map((doc) => {
       const data = doc.data();
+      const source = (data.source as string) ?? "";
+      const stored = Array.isArray(data.sources) ? (data.sources as string[]) : [];
       return {
         id: doc.id,
         email: (data.email as string) ?? "",
         phone: (data.phone as string) ?? "",
-        source: (data.source as string) ?? "",
+        source,
+        // Documents written before channels were tracked as a list fall back
+        // to their single source, so they never look multi-channel.
+        sources: stored.length ? stored : source ? [source] : [],
         createdAt: data.createdAt?.toDate?.().toISOString() ?? null,
       };
     });
@@ -80,9 +85,14 @@ export async function POST(request: NextRequest) {
         ...(cleanEmail ? { email: cleanEmail } : {}),
         ...(cleanPhone ? { phone: cleanPhone } : {}),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        // First touch wins: a repeat signup must not rewrite the channel that
-        // originally brought them in.
+        // First touch wins for the primary channel: a repeat signup must not
+        // rewrite the one that originally brought them in. Every distinct
+        // channel they arrive from is also collected, so the admin can see
+        // when someone reached us through more than one.
         ...(cleanSource && !existing.get("source") ? { source: cleanSource } : {}),
+        ...(cleanSource
+          ? { sources: admin.firestore.FieldValue.arrayUnion(cleanSource) }
+          : {}),
         ...(existing.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
       },
       { merge: true }

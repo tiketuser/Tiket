@@ -12,6 +12,7 @@ interface Signup {
   email: string;
   phone: string;
   source: string;
+  sources: string[];
   createdAt: string | null;
 }
 
@@ -59,8 +60,14 @@ function formatDate(iso: string | null): string {
 
 function downloadCsv(signups: Signup[]) {
   const rows = [
-    ["email", "phone", "source", "createdAt"],
-    ...signups.map((s) => [s.email, s.phone, s.source || "direct", s.createdAt ?? ""]),
+    ["email", "phone", "source", "allSources", "createdAt"],
+    ...signups.map((s) => [
+      s.email,
+      s.phone,
+      s.source || "direct",
+      s.sources.join(" | "),
+      s.createdAt ?? "",
+    ]),
   ];
   const csv = rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -104,7 +111,9 @@ export default function EarlyAccessAdminPage() {
     (s) =>
       s.email.toLowerCase().includes(search.toLowerCase()) ||
       s.phone.includes(search) ||
-      sourceLabel(s.source).toLowerCase().includes(search.toLowerCase())
+      s.sources
+        .concat(s.source || [])
+        .some((src) => sourceLabel(src).toLowerCase().includes(search.toLowerCase()))
   );
 
   // Signups per channel, biggest first.
@@ -195,6 +204,14 @@ export default function EarlyAccessAdminPage() {
                     <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold whitespace-nowrap">
                       {sourceLabel(s.source)}
                     </span>
+                    {s.sources.length > 1 && (
+                      <span
+                        title={s.sources.map(sourceLabel).join(" · ")}
+                        className="px-2.5 py-1 rounded-full bg-highlight/15 text-highlight text-xs font-semibold whitespace-nowrap cursor-default"
+                      >
+                        {s.sources.length} ערוצים
+                      </span>
+                    )}
                     <div className="text-mutedText text-xs whitespace-nowrap">
                       {formatDate(s.createdAt)}
                     </div>
