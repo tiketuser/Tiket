@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         email: (data.email as string) ?? "",
         phone: (data.phone as string) ?? "",
+        source: (data.source as string) ?? "",
         createdAt: data.createdAt?.toDate?.().toISOString() ?? null,
       };
     });
@@ -41,10 +42,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, phone } = await request.json();
+    const { email, phone, source } = await request.json();
 
     const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
     const cleanPhone = typeof phone === "string" ? phone.replace(/[\s-]/g, "") : "";
+    // Free text from the client, so clamp it hard before it reaches Firestore.
+    const cleanSource =
+      typeof source === "string"
+        ? source.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40)
+        : "";
 
     // Either contact detail is enough; whichever is supplied must be valid.
     if (!cleanEmail && !cleanPhone) {
@@ -74,6 +80,9 @@ export async function POST(request: NextRequest) {
         ...(cleanEmail ? { email: cleanEmail } : {}),
         ...(cleanPhone ? { phone: cleanPhone } : {}),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        // First touch wins: a repeat signup must not rewrite the channel that
+        // originally brought them in.
+        ...(cleanSource && !existing.get("source") ? { source: cleanSource } : {}),
         ...(existing.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
       },
       { merge: true }

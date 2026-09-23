@@ -11,7 +11,32 @@ interface Signup {
   id: string;
   email: string;
   phone: string;
+  source: string;
   createdAt: string | null;
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  instagram: "אינסטגרם",
+  facebook: "פייסבוק",
+  x: "X",
+  tiktok: "טיקטוק",
+  whatsapp: "וואטסאפ",
+  telegram: "טלגרם",
+  linkedin: "לינקדאין",
+  youtube: "יוטיוב",
+  snapchat: "סנאפצ׳אט",
+  reddit: "רדיט",
+  google: "גוגל",
+  newsletter: "ניוזלטר",
+  email: "אימייל",
+  qr: "QR",
+  poster: "פוסטר",
+  flyer: "פלייר",
+};
+
+function sourceLabel(source: string): string {
+  if (!source) return "ישיר";
+  return SOURCE_LABELS[source] ?? source;
 }
 
 async function getIdToken(): Promise<string | null> {
@@ -34,8 +59,8 @@ function formatDate(iso: string | null): string {
 
 function downloadCsv(signups: Signup[]) {
   const rows = [
-    ["email", "phone", "createdAt"],
-    ...signups.map((s) => [s.email, s.phone, s.createdAt ?? ""]),
+    ["email", "phone", "source", "createdAt"],
+    ...signups.map((s) => [s.email, s.phone, s.source || "direct", s.createdAt ?? ""]),
   ];
   const csv = rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -78,8 +103,18 @@ export default function EarlyAccessAdminPage() {
   const filtered = signups.filter(
     (s) =>
       s.email.toLowerCase().includes(search.toLowerCase()) ||
-      s.phone.includes(search)
+      s.phone.includes(search) ||
+      sourceLabel(s.source).toLowerCase().includes(search.toLowerCase())
   );
+
+  // Signups per channel, biggest first.
+  const bySource = Object.entries(
+    signups.reduce<Record<string, number>>((acc, s) => {
+      const key = s.source || "";
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {})
+  ).sort((a, b) => b[1] - a[1]);
 
   return (
     <AdminProtection>
@@ -97,6 +132,22 @@ export default function EarlyAccessAdminPage() {
               כל מי שהשאיר אימייל וטלפון בעמוד ההרשמה המוקדמת ({signups.length} סה&quot;כ)
             </p>
           </div>
+
+          {bySource.length > 0 && (
+            <div className="mb-6 flex flex-wrap justify-center gap-2">
+              {bySource.map(([source, count]) => (
+                <span
+                  key={source || "direct"}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/40 border border-secondary text-sm"
+                >
+                  <span className="font-semibold text-strongText">
+                    {sourceLabel(source)}
+                  </span>
+                  <span className="font-bold text-primary">{count}</span>
+                </span>
+              ))}
+            </div>
+          )}
 
           <div className="mb-6 flex flex-col sm:flex-row gap-3">
             <input
@@ -140,8 +191,13 @@ export default function EarlyAccessAdminPage() {
                       {s.phone || "—"}
                     </div>
                   </div>
-                  <div className="text-mutedText text-xs whitespace-nowrap flex-shrink-0">
-                    {formatDate(s.createdAt)}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold whitespace-nowrap">
+                      {sourceLabel(s.source)}
+                    </span>
+                    <div className="text-mutedText text-xs whitespace-nowrap">
+                      {formatDate(s.createdAt)}
+                    </div>
                   </div>
                 </div>
               ))}
