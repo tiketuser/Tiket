@@ -53,13 +53,17 @@ const SOURCE_CODES: Record<string, string> = {
   qr: "qr", poster: "poster", flyer: "flyer",
 };
 
-/** The visitor-facing code, or null when this is not a campaign link. */
-function sourceCodeFor(pathname: string): string | null {
-  const match = /^\/([A-Za-z0-9_-]{1,24})\/?$/.exec(pathname);
+/** The channel recorded for a campaign link, or null when this is not one.
+ *  An optional second segment narrows the channel: /ig/dm records
+ *  instagram_dm, so DMs can be told apart from the profile link. Segments
+ *  exclude "_" so the separator stays unambiguous. */
+function sourceFor(pathname: string): string | null {
+  const match = /^\/([A-Za-z0-9-]{1,24})(?:\/([A-Za-z0-9-]{1,24}))?\/?$/.exec(pathname);
   if (!match) return null;
   const code = match[1].toLowerCase();
   if (RESERVED_SEGMENTS.has(code)) return null;
-  return code;
+  const channel = SOURCE_CODES[code] ?? code;
+  return match[2] ? `${channel}_${match[2].toLowerCase()}` : channel;
 }
 
 function gateIsUp(request: NextRequest): boolean {
@@ -102,15 +106,15 @@ export function middleware(request: NextRequest) {
     ALWAYS_ALLOWED.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   if (!allowed && gateIsUp(request)) {
-    // Campaign link, e.g. /ig: remember where they came from and serve the
-    // signup page by rewrite, so the address bar keeps the short URL and the
-    // visitor never sees a tag.
-    const code = sourceCodeFor(pathname);
-    if (code) {
+    // Campaign link, e.g. /ig or /ig/dm: remember where they came from and
+    // serve the signup page by rewrite, so the address bar keeps the short URL
+    // and the visitor never sees a tag.
+    const source = sourceFor(pathname);
+    if (source) {
       const url = request.nextUrl.clone();
       url.pathname = "/EarlyAccess";
       const response = NextResponse.rewrite(url);
-      response.cookies.set("ea_src", SOURCE_CODES[code] ?? code, {
+      response.cookies.set("ea_src", source, {
         path: "/",
         maxAge: 60 * 60 * 24 * 30,
         sameSite: "lax",
