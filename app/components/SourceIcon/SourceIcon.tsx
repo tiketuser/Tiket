@@ -20,9 +20,29 @@ export const SOURCE_LABELS: Record<string, string> = {
   flyer: "פלייר",
 };
 
+/** Hebrew names for the optional second segment of a campaign link. */
+const SUB_LABELS: Record<string, string> = {
+  dm: "הודעות",
+  story: "סטורי",
+  bio: "ביו",
+  post: "פוסט",
+  ad: "ממומן",
+  group: "קבוצה",
+  comment: "תגובה",
+};
+
+/** "instagram_dm" -> ["instagram", "dm"]; the middleware joins a campaign
+ *  link's two segments with "_", which a segment itself can never contain. */
+function splitSource(source: string): [string, string] {
+  const at = source.indexOf("_");
+  return at === -1 ? [source, ""] : [source.slice(0, at), source.slice(at + 1)];
+}
+
 export function sourceLabel(source: string): string {
   if (!source) return "ישיר";
-  return SOURCE_LABELS[source] ?? source;
+  const [channel, sub] = splitSource(source);
+  const base = SOURCE_LABELS[channel] ?? channel;
+  return sub ? `${base} · ${SUB_LABELS[sub] ?? sub}` : base;
 }
 
 /** Badge fill per channel, with the ink that stays legible on it. */
@@ -181,7 +201,9 @@ function glyph(source: string, ink: string) {
   }
 }
 
-/** Round, brand-coloured badge for one signup channel. */
+/** Round, brand-coloured badge for one signup channel. A narrowed channel
+ *  such as instagram_dm keeps the brand badge and gains a corner tag, so it
+ *  reads apart from the plain channel at a glance. */
 export default function SourceIcon({
   source,
   size = 26,
@@ -189,7 +211,8 @@ export default function SourceIcon({
   source: string;
   size?: number;
 }) {
-  const { bg, ink } = SOURCE_COLORS[source] ?? FALLBACK;
+  const [channel, sub] = splitSource(source);
+  const { bg, ink } = SOURCE_COLORS[channel] ?? FALLBACK;
   const label = sourceLabel(source);
 
   return (
@@ -197,12 +220,30 @@ export default function SourceIcon({
       title={label}
       aria-label={label}
       role="img"
-      className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+      className="relative inline-flex items-center justify-center rounded-full flex-shrink-0"
       style={{ width: size, height: size, background: bg }}
     >
       <svg width={size * 0.62} height={size * 0.62} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        {glyph(source, ink)}
+        {glyph(channel, ink)}
       </svg>
+      {sub && (
+        <span
+          aria-hidden="true"
+          className="absolute rounded-full font-bold leading-none"
+          style={{
+            bottom: -3,
+            left: -4,
+            padding: "2px 3px",
+            fontSize: Math.max(7, Math.round(size * 0.3)),
+            background: "#3C3E5F",
+            color: "#fff",
+            border: "1.5px solid var(--tk-paper, #fff)",
+            letterSpacing: "0.02em",
+          }}
+        >
+          {sub.slice(0, 2).toUpperCase()}
+        </span>
+      )}
     </span>
   );
 }
