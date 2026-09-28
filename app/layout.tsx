@@ -44,13 +44,15 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Tiket",
   },
+  // app/favicon.ico is prepended to these by Next. All are cut from the app
+  // icon rather than the wide wordmark, which shrinks to a sliver when square.
   icons: {
     icon: [
-      { url: "/images/tiketlogo.svg", sizes: "any", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-192.png", sizes: "192x192", type: "image/png" },
     ],
-    apple: [
-      { url: "/images/tiketlogo.svg", sizes: "any", type: "image/svg+xml" },
-    ],
+    // iOS ignores an SVG here; it needs a PNG.
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 
