@@ -201,6 +201,23 @@ function glyph(source: string, ink: string) {
   }
 }
 
+/** The bare white glyph, for places that draw their own badge around it. */
+export function SourceGlyph({
+  source,
+  size,
+  ink = "#fff",
+}: {
+  source: string;
+  size: number;
+  ink?: string;
+}) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      {glyph(source, ink)}
+    </svg>
+  );
+}
+
 /** Round, brand-coloured badge for one signup channel. A narrowed channel
  *  such as instagram_dm keeps the brand badge and gains a corner tag, so it
  *  reads apart from the plain channel at a glance. */
@@ -223,9 +240,7 @@ export default function SourceIcon({
       className="relative inline-flex items-center justify-center rounded-full flex-shrink-0"
       style={{ width: size, height: size, background: bg }}
     >
-      <svg width={size * 0.62} height={size * 0.62} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        {glyph(channel, ink)}
-      </svg>
+      <SourceGlyph source={channel} size={size * 0.62} ink={ink} />
       {sub && (
         <span
           aria-hidden="true"
