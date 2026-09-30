@@ -341,77 +341,73 @@ export default function EarlyAccessForm() {
                 color: "var(--tk-muted)",
                 textAlign: "center",
                 lineHeight: 1.55,
-                marginBottom: alreadyRegistered ? 18 : 16,
+                marginBottom: 16,
               }}
             >
               {alreadyRegistered
                 ? "הפרטים שלכם כבר אצלנו ברשימת הגישה המוקדמת. נעדכן אתכם מיד כשנעלה לאוויר."
                 : "נעדכן אתכם באימייל וב-SMS מיד כשטיקט עולה לאוויר."}
             </div>
-            {/* Only right after a new signup: the moment they have just acted.
-                A repeat submit gets the plain "already listed" note. */}
-            {!alreadyRegistered && (
+            <div
+              style={{
+                marginBottom: 18,
+                padding: "14px 12px 12px",
+                borderRadius: 14,
+                background: "var(--tk-bg)",
+                border: "1px solid var(--tk-line)",
+              }}
+            >
               <div
                 style={{
-                  marginBottom: 18,
-                  padding: "14px 12px 12px",
-                  borderRadius: 14,
-                  background: "var(--tk-bg)",
-                  border: "1px solid var(--tk-line)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textAlign: "center",
+                  marginBottom: 12,
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    textAlign: "center",
-                    marginBottom: 12,
-                  }}
-                >
-                  בינתיים, עקבו אחרינו
-                </div>
-                <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
-                  {SOCIAL_LINKS.map(({ source, label, color, href }) => (
-                    <a
-                      key={source}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                בינתיים, עקבו אחרינו
+              </div>
+              <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
+                {SOCIAL_LINKS.map(({ source, label, color, href }) => (
+                  <a
+                    key={source}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 7,
+                      textDecoration: "none",
+                      color: "var(--tk-ink-2)",
+                    }}
+                  >
+                    <span
                       style={{
+                        width: 60,
+                        height: 60,
+                        boxSizing: "border-box",
+                        borderRadius: 999,
+                        // globals.css gives .tk-mobile a squircle corner-shape,
+                        // which turns these circles into rounded squares.
+                        ...({ cornerShape: "round" } as React.CSSProperties),
+                        background: color,
+                        border: "2px solid #fff",
+                        boxShadow:
+                          "0 2px 6px rgba(10,10,10,0.15), inset 0 1px 0 rgba(255,255,255,0.35)",
                         display: "flex",
-                        flexDirection: "column",
                         alignItems: "center",
-                        gap: 7,
-                        textDecoration: "none",
-                        color: "var(--tk-ink-2)",
+                        justifyContent: "center",
                       }}
                     >
-                      <span
-                        style={{
-                          width: 60,
-                          height: 60,
-                          boxSizing: "border-box",
-                          borderRadius: 999,
-                          // globals.css gives .tk-mobile a squircle corner-shape,
-                          // which turns these circles into rounded squares.
-                          ...({ cornerShape: "round" } as React.CSSProperties),
-                          background: color,
-                          border: "2px solid #fff",
-                          boxShadow:
-                            "0 2px 6px rgba(10,10,10,0.15), inset 0 1px 0 rgba(255,255,255,0.35)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <SourceGlyph source={source} size={26} />
-                      </span>
-                      <span style={{ fontSize: 11, fontWeight: 700 }}>{label}</span>
-                    </a>
-                  ))}
-                </div>
+                      <SourceGlyph source={source} size={26} />
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700 }}>{label}</span>
+                  </a>
+                ))}
               </div>
-            )}
+            </div>
             <button
               onClick={closeDialog}
               style={{
