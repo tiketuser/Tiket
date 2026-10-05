@@ -18,6 +18,11 @@ export const SOURCE_LABELS: Record<string, string> = {
   qr: "QR",
   poster: "פוסטר",
   flyer: "פלייר",
+  chatgpt: "ChatGPT",
+  gemini: "Gemini",
+  claude: "Claude",
+  perplexity: "Perplexity",
+  copilot: "Copilot",
 };
 
 /** Hebrew names for the optional second segment of a campaign link. */
@@ -63,6 +68,11 @@ const SOURCE_COLORS: Record<string, { bg: string; ink: string }> = {
   qr: { bg: "#3C3E5F", ink: "#fff" },
   poster: { bg: "#8C5A5F", ink: "#fff" },
   flyer: { bg: "#8C5A5F", ink: "#fff" },
+  chatgpt: { bg: "#10A37F", ink: "#fff" },
+  gemini: { bg: "#9B72CB", ink: "#fff" },
+  claude: { bg: "#D97757", ink: "#fff" },
+  perplexity: { bg: "#20808D", ink: "#fff" },
+  copilot: { bg: "#0078D4", ink: "#fff" },
 };
 
 const FALLBACK = { bg: "#98A2B3", ink: "#fff" };
@@ -188,6 +198,52 @@ function glyph(source: string, ink: string) {
         <>
           <rect x="3.6" y="2.8" width="8.8" height="10.4" rx="1.4" stroke={ink} strokeWidth="1.3" />
           <path d="M5.6 5.6h4.8M5.6 8h4.8M5.6 10.4h3" stroke={ink} strokeWidth="1.2" strokeLinecap="round" />
+        </>
+      );
+    case "chatgpt":
+      return (
+        <>
+          <ellipse cx="8" cy="8" rx="2.3" ry="5.3" stroke={ink} strokeWidth="1.2" />
+          <ellipse cx="8" cy="8" rx="2.3" ry="5.3" stroke={ink} strokeWidth="1.2" transform="rotate(60 8 8)" />
+          <ellipse cx="8" cy="8" rx="2.3" ry="5.3" stroke={ink} strokeWidth="1.2" transform="rotate(120 8 8)" />
+        </>
+      );
+    case "gemini":
+      return (
+        <path
+          d="M8 1.8C8.4 5.2 10.8 7.6 14.2 8C10.8 8.4 8.4 10.8 8 14.2C7.6 10.8 5.2 8.4 1.8 8C5.2 7.6 7.6 5.2 8 1.8Z"
+          fill={ink}
+        />
+      );
+    case "claude":
+      return (
+        <path
+          d="M8 2.2v3.6M8 10.2v3.6M2.2 8h3.6M10.2 8h3.6M3.9 3.9l2.5 2.5M9.6 9.6l2.5 2.5M12.1 3.9L9.6 6.4M6.4 9.6l-2.5 2.5"
+          stroke={ink}
+          strokeWidth="1.7"
+          strokeLinecap="round"
+        />
+      );
+    case "perplexity":
+      return (
+        <path
+          d="M4 5.2h8v5.6H4zM8 2v12M4 5.2l4 3 4-3"
+          stroke={ink}
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      );
+    case "copilot":
+      return (
+        <>
+          <path
+            d="M4.4 3h7.2a2 2 0 012 2v4.4a2 2 0 01-2 2H7.4L4.6 13.6v-2.2h-.2a2 2 0 01-2-2V5a2 2 0 012-2z"
+            stroke={ink}
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+          <path d="M8 4.6c.2 1.2.9 1.9 2.1 2.1-1.2.2-1.9.9-2.1 2.1-.2-1.2-.9-1.9-2.1-2.1 1.2-.2 1.9-.9 2.1-2.1Z" fill={ink} />
         </>
       );
     default:

@@ -26,12 +26,36 @@ const inputStyle: React.CSSProperties = {
   color: "var(--tk-ink)",
 };
 
-/** Where this visitor came from: an explicit utm_source wins, otherwise the
- *  cookie the middleware set from a campaign short code such as /ig. */
+/** AI assistants whose links carry no utm tag but do send their site as the
+ *  referrer. ChatGPT tags its links itself (utm_source=chatgpt.com). */
+const AI_REFERRERS: Record<string, string> = {
+  "chatgpt.com": "chatgpt",
+  "chat.openai.com": "chatgpt",
+  "gemini.google.com": "gemini",
+  "bard.google.com": "gemini",
+  "claude.ai": "claude",
+  "perplexity.ai": "perplexity",
+  "www.perplexity.ai": "perplexity",
+  "copilot.microsoft.com": "copilot",
+};
+
+function aiReferrer(): string {
+  try {
+    return AI_REFERRERS[new URL(document.referrer).hostname] ?? "";
+  } catch {
+    return ""; // no referrer, or not a URL
+  }
+}
+
+/** Where this visitor came from: an explicit utm_source wins, then an AI
+ *  assistant that sent them on this visit, then the cookie the middleware set
+ *  from an earlier campaign short code such as /ig. */
 function readSource(): string {
   if (typeof window === "undefined") return "";
   const utm = new URLSearchParams(window.location.search).get("utm_source");
   if (utm) return utm.slice(0, 40);
+  const ai = aiReferrer();
+  if (ai) return ai;
   const cookie = document.cookie
     .split("; ")
     .find((c) => c.startsWith("ea_src="));
@@ -193,9 +217,11 @@ export default function EarlyAccessForm() {
           >
             tiket<span className="tk-logo-dot">.</span>
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>
+          {/* The page's one heading, for search engines and screen readers;
+              styled to look exactly like the line it replaced. */}
+          <h1 style={{ fontSize: 15, fontWeight: 700, margin: "14px 0 0", lineHeight: "inherit" }}>
             הצטרפו לגישה המוקדמת
-          </div>
+          </h1>
           <div
             style={{
               fontSize: 11,
