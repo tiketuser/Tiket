@@ -11,14 +11,15 @@ import Image from "next/image";
 import { DateRange } from "react-day-picker";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
 import { eventDayStart } from "@/utils/eventDate";
+import Skeleton from "../components/Skeleton/Skeleton";
 
 const PAGE_SIZE = 12;
 
 const FavoriteCardSkeleton: React.FC = () => (
-  <div className="animate-pulse flex flex-col gap-3">
-    <div className="w-full aspect-[3/4] rounded-2xl bg-gray-200" />
-    <div className="h-4 w-3/4 rounded bg-gray-200" />
-    <div className="h-3 w-1/2 rounded bg-gray-200" />
+  <div className="flex flex-col gap-3">
+    <Skeleton className="w-full aspect-[3/4] rounded-2xl" />
+    <Skeleton className="h-4 w-3/4 rounded" />
+    <Skeleton className="h-3 w-1/2 rounded" />
   </div>
 );
 

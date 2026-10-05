@@ -190,10 +190,12 @@ input:-webkit-autofill:active {
   animation: slideUp 0.3s ease-out;
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
-}
+/* Skeleton placeholder fill (app/components/Skeleton). Tailwind's
+   animate-pulse fades a shape to half opacity, so the shape has to stand a
+   clear step off its surface for the pulse to read: gray-300 on white, and
+   the strong hairline on the paper-cream mobile design. */
+.tk-skeleton { background-color: #D1D5DB; }
+.tk-mobile .tk-skeleton { background-color: var(--tk-line-strong); }
 
 /* ─── Admin pages: mobile reskin (paper-cream theme) ─────────────────
    Admin screens keep their desktop DOM + logic; below md we restyle

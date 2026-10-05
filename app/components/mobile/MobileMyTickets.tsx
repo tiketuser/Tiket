@@ -111,10 +111,7 @@ export default function MobileMyTickets({
         {notSignedIn ? (
           <EmptyState text="התחבר כדי לראות את הכרטיסים שלך" />
         ) : loading ? (
-          <div
-            className="animate-pulse"
-            style={{ display: "flex", flexDirection: "column", gap: 12 }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[0, 1].map((i) => (
               <GlassTicketSkeleton key={i} />
             ))}
@@ -337,14 +334,16 @@ function QrIcon({ size = 28, color = "#0A0A0A" }: { size?: number; color?: strin
 // QR button — so the swap to the real ticket is seamless.
 function GlassTicketSkeleton() {
   const chip = "rgba(255,255,255,0.5)";
+  // The whole card stands in for the full-bleed poster, so it is the shape
+  // that pulses (same fill and animation as <Skeleton>); the chips ride on it.
   return (
     <div
+      className="tk-skeleton animate-pulse"
       style={{
         position: "relative",
         borderRadius: 14,
         overflow: "hidden",
         minHeight: 320,
-        background: "var(--tk-line)",
         display: "flex",
         flexDirection: "column",
         padding: 14,

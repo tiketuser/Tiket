@@ -8,6 +8,7 @@ import ProfileMenu from "../../ProfileMenu/ProfileMenu";
 import UserDetails from "../../UserDetails/UserDetails";
 import Image from "next/image";
 import exitIcon from "../../../../public/images/Dialogs/exitIcon.svg";
+import Skeleton from "../../Skeleton/Skeleton";
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -112,7 +113,7 @@ const ProfileDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
           </div>
 
           {loading ? (
-            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-1" />
+            <Skeleton className="h-6 w-32 rounded mb-1" />
           ) : (
             <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
               {displayName}
