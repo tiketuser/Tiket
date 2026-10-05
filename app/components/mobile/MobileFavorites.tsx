@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import MobileShell from "./MobileShell";
 import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
+import Skeleton from "../Skeleton/Skeleton";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
@@ -52,7 +53,6 @@ export default function MobileFavorites({
 
       {loading ? (
         <div
-          className="animate-pulse"
           style={{
             padding: "14px 14px 20px",
             display: "grid",
@@ -70,34 +70,11 @@ export default function MobileFavorites({
                 border: "1px solid var(--tk-line)",
               }}
             >
-              <div style={{ height: 150, background: "var(--tk-line)" }} />
+              <Skeleton style={{ height: 150 }} />
               <div style={{ padding: 10 }}>
-                <div
-                  style={{
-                    height: 12,
-                    width: "80%",
-                    borderRadius: 4,
-                    background: "var(--tk-line)",
-                  }}
-                />
-                <div
-                  style={{
-                    height: 9,
-                    width: "55%",
-                    borderRadius: 4,
-                    background: "var(--tk-line)",
-                    marginTop: 6,
-                  }}
-                />
-                <div
-                  style={{
-                    height: 14,
-                    width: "40%",
-                    borderRadius: 4,
-                    background: "var(--tk-line)",
-                    marginTop: 8,
-                  }}
-                />
+                <Skeleton style={{ height: 12, width: "80%", borderRadius: 4 }} />
+                <Skeleton style={{ height: 9, width: "55%", borderRadius: 4, marginTop: 6 }} />
+                <Skeleton style={{ height: 14, width: "40%", borderRadius: 4, marginTop: 8 }} />
               </div>
             </div>
           ))}

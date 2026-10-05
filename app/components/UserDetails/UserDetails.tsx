@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { apiFetch } from "@/lib/platform";
+import Skeleton from "../Skeleton/Skeleton";
 
 const ISRAELI_BANKS = [
   { code: "12", name: "הפועלים" },
@@ -94,9 +95,9 @@ function InfoCard({
 
 function SkeletonCards() {
   return (
-    <div className="grid grid-cols-2 gap-3 animate-pulse">
+    <div className="grid grid-cols-2 gap-3">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="bg-gray-100 rounded-xl h-[72px]" />
+        <Skeleton key={i} className="rounded-xl h-[72px]" />
       ))}
     </div>
   );
@@ -326,9 +327,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       {section === "payment" && (
         <div className="space-y-4" dir="rtl">
           {paymentDetailsLoading ? (
-            <div className="space-y-3 animate-pulse">
-              <div className="bg-gray-100 rounded-xl h-20" />
-              <div className="bg-gray-100 rounded-xl h-12" />
+            <div className="space-y-3">
+              <Skeleton className="rounded-xl h-20" />
+              <Skeleton className="rounded-xl h-12" />
             </div>
           ) : hasPaymentDetails && !isEditing ? (
             <>
@@ -521,9 +522,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       {section === "activity" && (
         <div className="space-y-3">
           {transactionsLoading ? (
-            <div className="space-y-3 animate-pulse">
+            <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-gray-100 rounded-xl h-20" />
+                <Skeleton key={i} className="rounded-xl h-20" />
               ))}
             </div>
           ) : activityItems.length === 0 ? (

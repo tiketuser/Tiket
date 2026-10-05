@@ -20,6 +20,7 @@ import MobileFilterSheet, {
   PRICE_MIN,
   PRICE_MAX,
 } from "./MobileFilterSheet";
+import Skeleton from "../Skeleton/Skeleton";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
@@ -36,12 +37,12 @@ function MobileCardSkeleton() {
         border: "1px solid var(--tk-line)",
       }}
     >
-      <div style={{ height: 150, background: "var(--tk-line)" }} />
+      <Skeleton style={{ height: 150 }} />
       <div style={{ padding: 10 }}>
-        <div style={{ height: 12, width: "80%", background: "var(--tk-line)", borderRadius: 4 }} />
-        <div style={{ height: 9, width: "55%", background: "var(--tk-line)", borderRadius: 4, marginTop: 8 }} />
-        <div style={{ height: 10, width: "45%", background: "var(--tk-line)", borderRadius: 4, marginTop: 8 }} />
-        <div style={{ height: 14, width: "40%", background: "var(--tk-line)", borderRadius: 4, marginTop: 8 }} />
+        <Skeleton style={{ height: 12, width: "80%", borderRadius: 4 }} />
+        <Skeleton style={{ height: 9, width: "55%", borderRadius: 4, marginTop: 8 }} />
+        <Skeleton style={{ height: 10, width: "45%", borderRadius: 4, marginTop: 8 }} />
+        <Skeleton style={{ height: 14, width: "40%", borderRadius: 4, marginTop: 8 }} />
       </div>
     </div>
   );
@@ -255,7 +256,6 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
 
       {loading ? (
         <div
-          className="animate-pulse"
           style={{
             padding: "4px 14px 20px",
             display: "grid",
