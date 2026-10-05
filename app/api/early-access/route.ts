@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/authMiddleware";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { cleanSource } from "@/lib/signupSource";
 import * as admin from "firebase-admin";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -24,8 +25,10 @@ export async function GET(request: NextRequest) {
 
     const signups = snapshot.docs.map((doc) => {
       const data = doc.data();
-      const source = (data.source as string) ?? "";
-      const stored = Array.isArray(data.sources) ? (data.sources as string[]) : [];
+      const source = cleanSource(data.source);
+      const stored = Array.isArray(data.sources)
+        ? Array.from(new Set((data.sources as unknown[]).map(cleanSource).filter(Boolean)))
+        : [];
       return {
         id: doc.id,
         email: (data.email as string) ?? "",
@@ -51,11 +54,7 @@ export async function POST(request: NextRequest) {
 
     const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
     const cleanPhone = typeof phone === "string" ? phone.replace(/[\s-]/g, "") : "";
-    // Free text from the client, so clamp it hard before it reaches Firestore.
-    const cleanSource =
-      typeof source === "string"
-        ? source.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40)
-        : "";
+    const signupSource = cleanSource(source);
 
     // Either contact detail is enough; whichever is supplied must be valid.
     if (!cleanEmail && !cleanPhone) {
@@ -89,9 +88,9 @@ export async function POST(request: NextRequest) {
         // rewrite the one that originally brought them in. Every distinct
         // channel they arrive from is also collected, so the admin can see
         // when someone reached us through more than one.
-        ...(cleanSource && !existing.get("source") ? { source: cleanSource } : {}),
-        ...(cleanSource
-          ? { sources: admin.firestore.FieldValue.arrayUnion(cleanSource) }
+        ...(signupSource && !existing.get("source") ? { source: signupSource } : {}),
+        ...(signupSource
+          ? { sources: admin.firestore.FieldValue.arrayUnion(signupSource) }
           : {}),
         ...(existing.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
       },
