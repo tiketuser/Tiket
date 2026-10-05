@@ -193,9 +193,11 @@ export default function EarlyAccessForm() {
           >
             tiket<span className="tk-logo-dot">.</span>
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, marginTop: 14 }}>
+          {/* The page's one heading, for search engines and screen readers;
+              styled to look exactly like the line it replaced. */}
+          <h1 style={{ fontSize: 15, fontWeight: 700, margin: "14px 0 0", lineHeight: "inherit" }}>
             הצטרפו לגישה המוקדמת
-          </div>
+          </h1>
           <div
             style={{
               fontSize: 11,

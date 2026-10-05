@@ -45,6 +45,10 @@ const STASH_TARGETS = [
   // Middleware not supported in `output: "export"` — only used by Cloud Run
   // for /api CORS preflight.
   path.join(ROOT, "middleware.ts"),
+  // robots.txt and the sitemap are decided per request on Cloud Run
+  // (force-dynamic), and the app has no use for either.
+  path.join(ROOT, "app", "robots.ts"),
+  path.join(ROOT, "app", "sitemap.ts"),
 ];
 
 // Pages where `export const dynamic = "force-dynamic"` is defensive but blocks

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { searchIndexingOff } from "@/lib/seo";
 
 /** Hosts the early-access gate applies to. Staging and the *.run.app URLs are
  *  deliberately absent, so the full site stays browsable there. */
@@ -85,6 +86,15 @@ function gateIsUp(request: NextRequest): boolean {
   return GATED_HOSTS.has(host);
 }
 
+/** Staging serves the full site to anyone with the link; this keeps search
+ *  engines from indexing it as a second copy of Tiket. */
+function withIndexingPolicy(response: NextResponse): NextResponse {
+  if (searchIndexingOff()) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+  return response;
+}
+
 export function middleware(request: NextRequest) {
   if (request.method === "OPTIONS") {
     return new NextResponse(null, {
@@ -106,6 +116,14 @@ export function middleware(request: NextRequest) {
     ALWAYS_ALLOWED.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   if (!allowed && gateIsUp(request)) {
+    // The bare domain serves the signup page itself rather than redirecting,
+    // so search engines index tiket.co.il/ and not a redirect to elsewhere.
+    if (pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/EarlyAccess";
+      return withIndexingPolicy(NextResponse.rewrite(url));
+    }
+
     // Campaign link, e.g. /ig or /ig/dm: remember where they came from and
     // serve the signup page by rewrite, so the address bar keeps the short URL
     // and the visitor never sees a tag.
@@ -121,18 +139,18 @@ export function middleware(request: NextRequest) {
         // Read by the signup form in the browser, so not httpOnly.
         httpOnly: false,
       });
-      return response;
+      return withIndexingPolicy(response);
     }
 
     const url = request.nextUrl.clone();
-    url.pathname = "/EarlyAccess";
+    url.pathname = "/";
     // Query is kept so utm_ tags on a link to the bare domain still reach the
     // page. 307, never 308: a permanent redirect would be cached by browsers
     // and outlive the gate.
-    return NextResponse.redirect(url, 307);
+    return withIndexingPolicy(NextResponse.redirect(url, 307));
   }
 
-  return NextResponse.next();
+  return withIndexingPolicy(NextResponse.next());
 }
 
 export const config = {
