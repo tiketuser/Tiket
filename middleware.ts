@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { searchIndexingOff } from "@/lib/seo";
+import { CHANNEL_CODES } from "@/lib/signupSource";
 
 /** Hosts the early-access gate applies to. Staging and the *.run.app URLs are
  *  deliberately absent, so the full site stays browsable there. */
@@ -35,25 +36,6 @@ const RESERVED_SEGMENTS = new Set(
   ].map((s) => s.toLowerCase())
 );
 
-/** Short codes for the channels we post on, so a link can read tiket.co.il/ig
- *  instead of carrying utm_ tags. Anything not listed is still recorded, using
- *  the code itself as the source, so a new channel needs no deploy. */
-const SOURCE_CODES: Record<string, string> = {
-  ig: "instagram", insta: "instagram", instagram: "instagram",
-  fb: "facebook", facebook: "facebook",
-  x: "x", tw: "x", twitter: "x",
-  tt: "tiktok", tiktok: "tiktok",
-  wa: "whatsapp", whatsapp: "whatsapp",
-  tg: "telegram", telegram: "telegram",
-  li: "linkedin", linkedin: "linkedin",
-  yt: "youtube", youtube: "youtube",
-  sc: "snapchat", snapchat: "snapchat",
-  rd: "reddit", reddit: "reddit",
-  gg: "google", google: "google",
-  nl: "newsletter", newsletter: "newsletter", email: "email",
-  qr: "qr", poster: "poster", flyer: "flyer",
-};
-
 /** The channel recorded for a campaign link, or null when this is not one.
  *  An optional second segment narrows the channel: /ig/dm records
  *  instagram_dm, so DMs can be told apart from the profile link. Segments
@@ -63,7 +45,7 @@ function sourceFor(pathname: string): string | null {
   if (!match) return null;
   const code = match[1].toLowerCase();
   if (RESERVED_SEGMENTS.has(code)) return null;
-  const channel = SOURCE_CODES[code] ?? code;
+  const channel = CHANNEL_CODES[code] ?? code;
   return match[2] ? `${channel}_${match[2].toLowerCase()}` : channel;
 }
 
