@@ -229,6 +229,10 @@ const PaymentForm: React.FC<FormProps> = ({
               radios: true,
               spacedAccordionItems: true,
             },
+            // Card-only payment_method_types alone still leaves Link's
+            // optional "save my info" block (email, phone, name) under the
+            // card fields; this turns Link off inside the card form itself.
+            wallets: { link: "never" },
           }}
         />
 
