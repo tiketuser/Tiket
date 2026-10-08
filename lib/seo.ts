@@ -46,7 +46,29 @@ export const SITE_JSON_LD = {
       alternateName: ["טיקט", "tiket.co.il"],
       url: `${SITE_URL}/`,
       logo: `${SITE_URL}/icons/icon-512.png`,
-      description: "פלטפורמה לקנייה ומכירה מאובטחת של כרטיסים יד שנייה להופעות ואירועים בישראל.",
+      description:
+        "פלטפורמה ישראלית לקנייה ומכירה של כרטיסים יד שנייה להופעות ואירועים, עם תשלום שמוחזק בנאמנות עד אחרי האירוע.",
+      slogan: "כרטיסים בקליק",
+      founder: [
+        { "@type": "Person", name: "Ofek Amar" },
+        { "@type": "Person", name: "Aviv Nir" },
+      ],
+      areaServed: { "@type": "Country", name: "Israel" },
+      knowsAbout: [
+        "כרטיסים יד שנייה",
+        "מכירת כרטיסים להופעות",
+        "כרטיסים להופעות סולד אאוט",
+        "הגנה מעקיצות בקניית כרטיסים",
+        "Secondary ticket resale",
+      ],
+      email: "tiketbizzz@gmail.com",
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "tiketbizzz@gmail.com",
+        url: `${SITE_URL}/ContactUs`,
+        availableLanguage: ["he", "en"],
+      },
       sameAs: SOCIAL_PROFILES,
     },
     {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import EarlyAccessForm from "./EarlyAccessForm";
+import EarlyAccessInfo from "./EarlyAccessInfo";
 import { BASE_OPEN_GRAPH, OG_IMAGE } from "@/lib/seo";
 
 const TITLE = "Tiket | כרטיסים יד שנייה להופעות, בקנייה ומכירה מאובטחת";
@@ -18,5 +19,9 @@ export const metadata: Metadata = {
 };
 
 export default function EarlyAccessPage() {
-  return <EarlyAccessForm />;
+  return (
+    <EarlyAccessForm>
+      <EarlyAccessInfo />
+    </EarlyAccessForm>
+  );
 }

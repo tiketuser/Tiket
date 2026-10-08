@@ -1,0 +1,26 @@
+# Tiket (טיקט)
+
+> Tiket (טיקט, tiket.co.il) is an Israeli marketplace for buying and selling second-hand tickets to concerts, theatre, stand-up and sports events. The buyer's payment is held in escrow and released to the seller only after the event, every ticket is verified automatically before it is listed, and a cancelled event means a full refund. Tiket is in early access and launching soon; people can join the waitlist at https://tiket.co.il/.
+
+Tiket is built as the safe alternative to buying tickets from strangers in Facebook groups, Telegram channels and WhatsApp, where common scams are a seller who takes a Bit/PayBox payment and disappears, a fake screenshot of a ticket, or one ticket sold to several buyers.
+
+## Key facts
+
+- What: second-hand ticket resale (כרטיסים יד שנייה) for events in Israel, including sold-out shows (הופעות סולד אאוט)
+- Sellers: upload a ticket, it is verified automatically and listed; payout arrives 5-7 days after the event
+- Buyers: pay on the platform; money is held in escrow until after the event; full refund if the event is cancelled
+- Cost: free to join the early-access list; a service fee is charged on each purchase and shown before payment
+- Status: early access, launching soon
+- Language: Hebrew (RTL)
+
+## Pages
+
+- [Home and early-access signup, with FAQ](https://tiket.co.il/): what Tiket is, how it works, common questions
+- [Contact](https://tiket.co.il/ContactUs)
+- [Terms of use](https://tiket.co.il/Terms)
+- [Privacy policy](https://tiket.co.il/Privacy)
+
+## Social
+
+- [Instagram](https://www.instagram.com/tiket.app/)
+- [Facebook](https://www.facebook.com/tiket.co.il/)

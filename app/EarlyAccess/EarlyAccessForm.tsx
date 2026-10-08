@@ -76,7 +76,8 @@ const errorStyle: React.CSSProperties = {
   marginTop: 4,
 };
 
-export default function EarlyAccessForm() {
+/** `children` is the page's below-the-fold content, rendered on the server. */
+export default function EarlyAccessForm({ children }: { children?: React.ReactNode }) {
   const [contact, setContact] = useState("");
   const [contactError, setContactError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -147,8 +148,9 @@ export default function EarlyAccessForm() {
     return () => clearTimeout(t);
   }, [done]);
 
-  // One fixed card, never scrolled: lock the document and kill the overscroll
-  // rubber-band so the page can't be dragged around on touch.
+  // The card fills the first screen and only the shell scrolls, to the info
+  // below it: lock the document and kill the overscroll rubber-band so the
+  // page itself can't be dragged around on touch.
   useEffect(() => {
     const { body } = document;
     const previousOverscroll = body.style.overscrollBehavior;
@@ -197,8 +199,11 @@ export default function EarlyAccessForm() {
       // m-auto on the card rather than justify-center: when the keyboard
       // leaves less room than the card needs, centering would clip its top,
       // whereas auto margins let it sit flush and stay reachable.
-      className="tk-mobile h-[100dvh] overflow-y-auto flex p-4 sm:p-10"
+      className="tk-mobile h-[100dvh] overflow-y-auto scroll-smooth flex flex-col p-4 sm:p-10"
     >
+      {/* Exactly one screen tall (less the keyboard padding), so the card
+          looks the same as before and the info only starts below the fold. */}
+      <div className="min-h-full shrink-0 flex flex-col">
       <div
         className="w-full max-w-[400px] m-auto rounded-[20px] shadow-[0_16px_44px_rgba(0,0,0,0.12)]"
         style={{
@@ -304,6 +309,24 @@ export default function EarlyAccessForm() {
           TIKET • בקרוב אצלכם
         </div>
       </div>
+      {children && (
+        <a
+          href="#about"
+          style={{
+            alignSelf: "center",
+            fontSize: 11,
+            fontWeight: 600,
+            color: "var(--tk-muted)",
+            textDecoration: "none",
+            padding: "12px 12px 0",
+          }}
+        >
+          מה זה טיקט? ↓
+        </a>
+      )}
+      </div>
+
+      {children}
 
       {done && (
         <div

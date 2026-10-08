@@ -54,6 +54,12 @@
 /* tiket. logotype dot */
 .tk-logo-dot { color: var(--tk-blue); }
 
+/* Early-access FAQ: a +/- in place of the browser's disclosure triangle. */
+.tk-faq summary { list-style: none; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.tk-faq summary::-webkit-details-marker { display: none; }
+.tk-faq summary::after { content: "+"; color: var(--tk-muted); font-weight: 400; }
+.tk-faq[open] summary::after { content: "\2212"; }
+
 @media (prefers-color-scheme: light) {
   :root {
     --foreground: #171717;
