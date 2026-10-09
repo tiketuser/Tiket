@@ -1,5 +1,9 @@
+# Base images come through Google's Docker Hub mirror: the same official
+# node image, without Docker Hub's anonymous pull limit, which shared GitHub
+# runners hit often enough to fail deploys with "429 Too Many Requests".
+
 # ---- Stage 1: Install dependencies ----
-FROM node:18-alpine AS deps
+FROM mirror.gcr.io/library/node:18-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
@@ -7,7 +11,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 # ---- Stage 2: Build the Next.js app ----
-FROM node:18-alpine AS builder
+FROM mirror.gcr.io/library/node:18-alpine AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -36,7 +40,7 @@ ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 RUN npm run build
 
 # ---- Stage 3: Production runner ----
-FROM node:18-alpine AS runner
+FROM mirror.gcr.io/library/node:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
