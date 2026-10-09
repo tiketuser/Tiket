@@ -37,6 +37,9 @@ export const BASE_OPEN_GRAPH: NonNullable<Metadata["openGraph"]> = {
 export const SOCIAL_PROFILES = [
   "https://www.instagram.com/tiket.app/",
   "https://www.facebook.com/tiket.co.il/",
+  "https://www.tiktok.com/@therealtiketapp",
+  "https://www.youtube.com/@therealtiketapp",
+  "https://x.com/tiket_app",
 ];
 
 /** Who Tiket is, for search engines and AI assistants: one organisation with

@@ -3,7 +3,6 @@
 import React from "react";
 import MobileShell from "./MobileShell";
 import { MobileLegalHeader } from "./MobileLegal";
-import { Icon } from "./Icon";
 import { SourceGlyph } from "../SourceIcon/SourceIcon";
 
 type ContactRow = {
@@ -12,8 +11,6 @@ type ContactRow = {
   href?: string;
   color: string;
   glyph: React.ReactNode;
-  /** Mono suits addresses and handles; Hebrew text reads better in the body font. */
-  mono?: boolean;
 };
 
 const TALK: ContactRow[] = [
@@ -48,15 +45,26 @@ const FOLLOW: ContactRow[] = [
     color: "#1877F2",
     glyph: <SourceGlyph source="facebook" size={18} />,
   },
-];
-
-const OFFICE: ContactRow[] = [
   {
-    label: "כתובת",
-    value: "אברהם יפה 5, חולון",
-    mono: false,
-    color: "var(--tk-ink)",
-    glyph: <Icon.pin size={17} color="#fff" />,
+    label: "טיקטוק",
+    value: "@therealtiketapp",
+    href: "https://www.tiktok.com/@therealtiketapp",
+    color: "#111111",
+    glyph: <SourceGlyph source="tiktok" size={18} />,
+  },
+  {
+    label: "יוטיוב",
+    value: "@therealtiketapp",
+    href: "https://www.youtube.com/@therealtiketapp",
+    color: "#FF0000",
+    glyph: <SourceGlyph source="youtube" size={18} />,
+  },
+  {
+    label: "X",
+    value: "@tiket_app",
+    href: "https://x.com/tiket_app",
+    color: "#111111",
+    glyph: <SourceGlyph source="x" size={18} />,
   },
 ];
 
@@ -78,7 +86,7 @@ function Rows({ rows }: { rows: ContactRow[] }) {
         overflow: "hidden",
       }}
     >
-      {rows.map(({ label, value, href, color, glyph, mono = true }, i) => {
+      {rows.map(({ label, value, href, color, glyph }, i) => {
         const external = href?.startsWith("http");
         const content = (
           <>
@@ -101,12 +109,12 @@ function Rows({ rows }: { rows: ContactRow[] }) {
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ display: "block", fontSize: 12.5, fontWeight: 700 }}>{label}</span>
               <span
-                className={mono ? "tk-mono" : undefined}
+                className="tk-mono"
                 dir="auto"
                 style={{
                   display: "block",
                   textAlign: "right",
-                  fontSize: mono ? 11 : 12,
+                  fontSize: 11,
                   color: "var(--tk-ink-2)",
                   marginTop: 2,
                   overflowWrap: "anywhere",
@@ -177,10 +185,6 @@ export default function MobileContact() {
           <section>
             <h2 style={h2Style}>עקבו אחרינו</h2>
             <Rows rows={FOLLOW} />
-          </section>
-          <section>
-            <h2 style={h2Style}>המשרד</h2>
-            <Rows rows={OFFICE} />
           </section>
         </div>
 
