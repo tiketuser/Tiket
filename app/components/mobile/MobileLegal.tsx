@@ -7,6 +7,12 @@ import { Icon } from "./Icon";
 
 export type LegalSection = { title: string; body: string };
 
+const PAGES = {
+  terms: { title: "תנאי שימוש", kicker: "◆ LEGAL", stamp: "TIKET · TERMS OF USE" },
+  privacy: { title: "מדיניות פרטיות", kicker: "◆ PRIVACY", stamp: "TIKET · PRIVACY POLICY" },
+  "delete-account": { title: "מחיקת חשבון", kicker: "◆ ACCOUNT", stamp: "TIKET · DELETE ACCOUNT" },
+};
+
 export default function MobileLegal({
   kind,
   updated,
@@ -14,20 +20,18 @@ export default function MobileLegal({
   sections,
   contactEmail,
 }: {
-  kind: "terms" | "privacy";
-  updated: string;
+  kind: keyof typeof PAGES;
+  /** Shown as "עודכן לאחרונה" under the title; pages without one omit the line. */
+  updated?: string;
   intro: string;
   sections: LegalSection[];
   contactEmail: string;
 }) {
-  const isTerms = kind === "terms";
-  const title = isTerms ? "תנאי שימוש" : "מדיניות פרטיות";
-  const kicker = isTerms ? "◆ LEGAL" : "◆ PRIVACY";
-  const stamp = isTerms ? "TIKET · TERMS OF USE" : "TIKET · PRIVACY POLICY";
+  const { title, kicker, stamp } = PAGES[kind];
 
   return (
     <MobileShell showBottomNav={false}>
-      <MobileLegalHeader kicker={kicker} title={title} meta={`עודכן לאחרונה · ${updated}`} />
+      <MobileLegalHeader kicker={kicker} title={title} meta={updated && `עודכן לאחרונה · ${updated}`} />
 
       <div style={{ padding: "18px 18px 0" }}>
         <p
@@ -49,6 +53,7 @@ export default function MobileLegal({
           {sections.map((s, i) => (
             <section key={i}>
               <h2
+                dir="auto"
                 style={{
                   fontSize: 13.5,
                   fontWeight: 700,
@@ -60,6 +65,7 @@ export default function MobileLegal({
                 {s.title}
               </h2>
               <p
+                dir="auto"
                 style={{
                   fontSize: 12,
                   lineHeight: 1.75,
@@ -119,7 +125,7 @@ export function MobileLegalHeader({
 }: {
   kicker: string;
   title: string;
-  meta: string;
+  meta?: string;
 }) {
   const router = useRouter();
   return (
@@ -170,17 +176,19 @@ export function MobileLegalHeader({
           </div>
         </div>
       </div>
-      <div
-        className="tk-mono"
-        style={{
-          fontSize: 10,
-          color: "var(--tk-muted)",
-          marginTop: 8,
-          paddingInlineStart: 44,
-        }}
-      >
-        {meta}
-      </div>
+      {meta && (
+        <div
+          className="tk-mono"
+          style={{
+            fontSize: 10,
+            color: "var(--tk-muted)",
+            marginTop: 8,
+            paddingInlineStart: 44,
+          }}
+        >
+          {meta}
+        </div>
+      )}
     </div>
   );
 }

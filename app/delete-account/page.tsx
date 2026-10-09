@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
+import MobileLegal from "../components/mobile/MobileLegal";
 import {
   Trash2,
   ListChecks,
@@ -51,7 +52,14 @@ const sections = [
 
 export default function DeleteAccountPage() {
   return (
-    <div dir="rtl">
+    <>
+      <MobileLegal
+        kind="delete-account"
+        intro="תוכלו למחוק את חשבון Tiket שלכם ואת הנתונים המשויכים אליו בכל עת - מתוך האפליקציה או בפנייה אלינו במייל."
+        sections={sections.map((s) => ({ title: s.title, body: s.body }))}
+        contactEmail="tiketbizzz@gmail.com"
+      />
+    <div className="hidden md:block" dir="rtl">
       <NavBar />
 
       {/* Hero */}
@@ -100,5 +108,6 @@ export default function DeleteAccountPage() {
 
       <Footer />
     </div>
+    </>
   );
 }

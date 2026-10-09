@@ -16,7 +16,13 @@ const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
 type ApiCard = MobileEventCardData & { category?: string };
 
-export default function MobileSearchResults({ query }: { query: string }) {
+export default function MobileSearchResults({
+  query,
+  title = "תוצאות חיפוש",
+}: {
+  query: string;
+  title?: string;
+}) {
   const router = useRouter();
   const [search, setSearch] = useState(query);
   const [allCards, setAllCards] = useState<ApiCard[]>([]);
@@ -113,7 +119,7 @@ export default function MobileSearchResults({ query }: { query: string }) {
             flex: 1,
           }}
         >
-          תוצאות חיפוש
+          {title}
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "../../firebase";
 import ViewMoreClient from "./ViewMoreClient";
+import MobileSearchResults from "../components/mobile/MobileSearchResults";
 import { calculateTimeLeft } from "../../utils/timeCalculator";
 import { eventDayStart } from "@/utils/eventDate";
 
@@ -184,13 +185,19 @@ const ViewMore = () => {
   }, []);
 
   return (
-    <ViewMoreClient
-      initialCards={data.allCards}
-      lastDocId={data.lastDocId}
-      recentlyViewed={data.recentlyViewed}
-      lastMinuteDeals={data.lastMinuteDeals}
-      recommendations={data.recommendations}
-    />
+    <>
+      {/* Phones get the mobile event list unfiltered: every active event. */}
+      <MobileSearchResults query="" title="כל האירועים" />
+      <div className="hidden md:block">
+        <ViewMoreClient
+          initialCards={data.allCards}
+          lastDocId={data.lastDocId}
+          recentlyViewed={data.recentlyViewed}
+          lastMinuteDeals={data.lastMinuteDeals}
+          recommendations={data.recommendations}
+        />
+      </div>
+    </>
   );
 };
 

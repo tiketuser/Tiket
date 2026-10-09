@@ -1,6 +1,7 @@
 import React from "react";
 import NavBar from "../../components/NavBar/NavBar";
 import SearchResultsWrapper from "../SearchResultsWrapper";
+import MobileSearchResults from "../../components/mobile/MobileSearchResults";
 import { db } from "../../../firebase";
 import {
   collection,
@@ -54,10 +55,13 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
   // Handle case when db is not available
   if (!db) {
     return (
-      <div>
-        <NavBar />
-        <SearchResultsWrapper query={query} tickets={[]} artistNames={[]} />
-      </div>
+      <>
+        <MobileSearchResults query={query} />
+        <div className="hidden md:block">
+          <NavBar />
+          <SearchResultsWrapper query={query} tickets={[]} artistNames={[]} />
+        </div>
+      </>
     );
   }
 
@@ -146,14 +150,17 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
   );
 
   return (
-    <div>
-      <NavBar />
-      <SearchResultsWrapper
-        query={query}
-        tickets={eventCards}
-        artistNames={artistNames}
-      />
-    </div>
+    <>
+      <MobileSearchResults query={query} />
+      <div className="hidden md:block">
+        <NavBar />
+        <SearchResultsWrapper
+          query={query}
+          tickets={eventCards}
+          artistNames={artistNames}
+        />
+      </div>
+    </>
   );
 };
 

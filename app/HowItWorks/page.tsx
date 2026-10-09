@@ -1,5 +1,6 @@
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
+import MobileHowItWorks from "../components/mobile/MobileHowItWorks";
 import { Search, ShieldCheck, CreditCard, Ticket } from "lucide-react";
 
 const steps = [
@@ -54,7 +55,13 @@ const faqs = [
 
 export default function HowItWorksPage() {
   return (
-    <div dir="rtl">
+    <>
+      <MobileHowItWorks
+        intro="טיקט מחברת בין קונים ומוכרים בצורה מאובטחת, מהירה ושקופה - כל כרטיס מאומת, כל תשלום מוגן."
+        steps={steps.map(({ title, description }) => ({ title, description }))}
+        faqs={faqs}
+      />
+    <div className="hidden md:block" dir="rtl">
       <NavBar />
 
       {/* Hero */}
@@ -128,5 +135,6 @@ export default function HowItWorksPage() {
 
       <Footer />
     </div>
+    </>
   );
 }
