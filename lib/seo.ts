@@ -5,6 +5,11 @@ import type { Metadata } from "next";
 export const SITE_URL = "https://tiket.co.il";
 export const SITE_NAME = "Tiket";
 
+/** When the early-access page's text last changed. Bump it with the copy: it
+ *  feeds the sitemap's lastmod and the page's dateModified, which search
+ *  engines and AI assistants read as freshness. */
+export const EARLY_ACCESS_UPDATED = "2026-10-09";
+
 /** Pages render X-Robots-Tag: noindex and robots.txt blocks everything when
  *  SEARCH_INDEXING is "off", which the pipeline sets on staging. Anything
  *  else, unset included, leaves the site indexable, so a missing variable can

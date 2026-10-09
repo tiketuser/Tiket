@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { SITE_URL } from "@/lib/seo";
+import { EARLY_ACCESS_UPDATED, SITE_URL } from "@/lib/seo";
 
 /** The answers people ask ChatGPT, Google and the rest, phrased the way they
  *  ask them. Shown below the signup card and repeated as FAQPage data, so
@@ -43,7 +43,12 @@ const FAQ_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "@id": `${SITE_URL}/#faq`,
+  url: `${SITE_URL}/`,
+  name: "מה זה טיקט? שאלות נפוצות על קנייה ומכירה של כרטיסים יד שנייה",
   inLanguage: "he-IL",
+  dateModified: EARLY_ACCESS_UPDATED,
+  isPartOf: { "@id": `${SITE_URL}/#website` },
+  about: { "@id": `${SITE_URL}/#organization` },
   mainEntity: FAQS.map(({ q, a }) => ({
     "@type": "Question",
     name: q,
@@ -142,6 +147,15 @@ export default function EarlyAccessInfo() {
         <a href="/Terms" style={{ color: "inherit" }}>תנאי שימוש</a>
         {" · "}
         <a href="/Privacy" style={{ color: "inherit" }}>פרטיות</a>
+        <br />
+        עודכן{" "}
+        <time dateTime={EARLY_ACCESS_UPDATED}>
+          {new Date(EARLY_ACCESS_UPDATED).toLocaleDateString("he-IL", {
+            month: "long",
+            year: "numeric",
+            timeZone: "Asia/Jerusalem",
+          })}
+        </time>
       </p>
 
       <script
