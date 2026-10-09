@@ -20,7 +20,6 @@ export default function MobileLegal({
   sections: LegalSection[];
   contactEmail: string;
 }) {
-  const router = useRouter();
   const isTerms = kind === "terms";
   const title = isTerms ? "תנאי שימוש" : "מדיניות פרטיות";
   const kicker = isTerms ? "◆ LEGAL" : "◆ PRIVACY";
@@ -28,65 +27,7 @@ export default function MobileLegal({
 
   return (
     <MobileShell showBottomNav={false}>
-      <div
-        style={{
-          padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 16px",
-          borderBottom: "1px solid var(--tk-line)",
-          background: "var(--tk-paper)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            onClick={() => router.back()}
-            aria-label="חזרה"
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 999,
-              background: "var(--tk-paper)",
-              border: "1px solid var(--tk-line)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            <Icon.chev size={16} />
-          </button>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              className="tk-mono"
-              style={{
-                fontSize: 10,
-                color: "var(--tk-blue)",
-                letterSpacing: "0.12em",
-              }}
-            >
-              {kicker}
-            </div>
-            <div
-              style={{
-                fontSize: 19,
-                fontWeight: 800,
-                letterSpacing: "-0.03em",
-              }}
-            >
-              {title}
-            </div>
-          </div>
-        </div>
-        <div
-          className="tk-mono"
-          style={{
-            fontSize: 10,
-            color: "var(--tk-muted)",
-            marginTop: 8,
-            paddingInlineStart: 44,
-          }}
-        >
-          עודכן לאחרונה · {updated}
-        </div>
-      </div>
+      <MobileLegalHeader kicker={kicker} title={title} meta={`עודכן לאחרונה · ${updated}`} />
 
       <div style={{ padding: "18px 18px 0" }}>
         <p
@@ -166,5 +107,80 @@ export default function MobileLegal({
         </div>
       </div>
     </MobileShell>
+  );
+}
+
+/** Back button, kicker, title and a mono meta line: the top of the legal and
+ *  contact pages. */
+export function MobileLegalHeader({
+  kicker,
+  title,
+  meta,
+}: {
+  kicker: string;
+  title: string;
+  meta: string;
+}) {
+  const router = useRouter();
+  return (
+    <div
+      style={{
+        padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 16px",
+        borderBottom: "1px solid var(--tk-line)",
+        background: "var(--tk-paper)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button
+          onClick={() => router.back()}
+          aria-label="חזרה"
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 999,
+            background: "var(--tk-paper)",
+            border: "1px solid var(--tk-line)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+        >
+          <Icon.chev size={16} />
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            className="tk-mono"
+            style={{
+              fontSize: 10,
+              color: "var(--tk-blue)",
+              letterSpacing: "0.12em",
+            }}
+          >
+            {kicker}
+          </div>
+          <div
+            style={{
+              fontSize: 19,
+              fontWeight: 800,
+              letterSpacing: "-0.03em",
+            }}
+          >
+            {title}
+          </div>
+        </div>
+      </div>
+      <div
+        className="tk-mono"
+        style={{
+          fontSize: 10,
+          color: "var(--tk-muted)",
+          marginTop: 8,
+          paddingInlineStart: 44,
+        }}
+      >
+        {meta}
+      </div>
+    </div>
   );
 }
