@@ -9,7 +9,7 @@ export default function ProfilePage() {
   return (
     <>
       <MobileProfile />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
         <div
           dir="rtl"

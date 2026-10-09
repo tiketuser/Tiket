@@ -6,7 +6,7 @@ export default function SearchResultsSkeleton() {
   return (
     <>
     <MobileLoading />
-    <div className="hidden md:block">
+    <div className="hidden lg:block">
       <NavBar />
       <div className="shadow-small-inner py-6 sm:py-14 px-4 sm:px-24">
         <div className="mb-6 sm:mb-10">

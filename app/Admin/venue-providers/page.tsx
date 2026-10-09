@@ -472,7 +472,7 @@ export default function VenueProvidersPage() {
     <AdminProtection>
       <MobileAdminChrome title="ניהול ספקים" />
       <div className="tk-admin min-h-screen bg-white" dir="rtl">
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
         </div>
 
@@ -1128,7 +1128,7 @@ export default function VenueProvidersPage() {
           </div>
         </main>
 
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <Footer />
         </div>
       </div>

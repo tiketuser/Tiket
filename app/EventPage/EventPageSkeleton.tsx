@@ -83,7 +83,7 @@ export default function EventPageSkeleton() {
   return (
     <>
       <MobileEventSkeleton />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
         <div className="flex flex-col sm:flex-row w-full sm:h-[346px] lg:pl-72 lg:pr-72 md:pt-4 md:pb-4 md:pr-24 md:pl-24 sm:pr-4 sm:pl-4 pb-6 shadow-small-inner">
           <div className="flex flex-col gap-3 sm:pt-8 px-5 sm:px-0 lg:w-[600px] sm:w-[382px] sm:h-[264px] w-full">

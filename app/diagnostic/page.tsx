@@ -54,7 +54,7 @@ export default function DiagnosticPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="אבחון מערכת" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin p-8 max-w-7xl mx-auto" dir="rtl">
@@ -372,7 +372,7 @@ export default function DiagnosticPage() {
           )}
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Footer />
       </div>
     </AdminProtection>

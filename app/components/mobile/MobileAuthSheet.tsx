@@ -299,7 +299,7 @@ const MobileAuthSheet: React.FC<Props> = ({
       className={
         responsive
           ? "tk-mobile flex flex-col justify-end sm:justify-center sm:items-center"
-          : "tk-mobile md:hidden flex flex-col justify-end"
+          : "tk-mobile lg:hidden flex flex-col justify-end"
       }
       onClick={onClose}
       style={{

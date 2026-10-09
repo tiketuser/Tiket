@@ -188,7 +188,7 @@ const ViewMore = () => {
     <>
       {/* Phones get the mobile event list unfiltered: every active event. */}
       <MobileSearchResults query="" title="כל האירועים" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <ViewMoreClient
           initialCards={data.allCards}
           lastDocId={data.lastDocId}

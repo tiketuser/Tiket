@@ -342,7 +342,7 @@ export default function EditConcertsPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="עריכת אירועים" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin min-h-screen bg-white py-12 px-4">
@@ -804,7 +804,7 @@ export default function EditConcertsPage() {
           )}
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Footer />
       </div>
     </AdminProtection>

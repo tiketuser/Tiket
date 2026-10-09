@@ -83,7 +83,7 @@ export default function ManageCategoriesPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="ניהול קטגוריות" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin min-h-screen bg-background pt-24 pb-12">
@@ -188,7 +188,7 @@ export default function ManageCategoriesPage() {
           )}
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Footer />
       </div>
     </AdminProtection>

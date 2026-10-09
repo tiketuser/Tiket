@@ -157,9 +157,6 @@ function Rows({ rows }: { rows: ContactRow[] }) {
 export default function MobileContact() {
   return (
     <MobileShell showBottomNav={false}>
-      {/* The shell only fills the screen when it has a bottom nav; this short
-          page would otherwise leave bare white below it. */}
-      <div style={{ minHeight: "100dvh" }}>
       <MobileLegalHeader kicker="◆ CONTACT" title="צור קשר" meta="מענה בתוך 48 שעות" />
 
       <div style={{ padding: "18px 18px 0" }}>
@@ -200,7 +197,6 @@ export default function MobileContact() {
         >
           ◆ TIKET · CONTACT
         </div>
-      </div>
       </div>
     </MobileShell>
   );

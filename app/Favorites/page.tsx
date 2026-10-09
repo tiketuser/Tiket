@@ -156,7 +156,7 @@ const Favorites = () => {
         loading={loading}
         notSignedIn={signedIn === false}
       />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
         <FavoritesClient events={events} tickets={tickets} />
       </div>

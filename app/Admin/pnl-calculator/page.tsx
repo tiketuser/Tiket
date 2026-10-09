@@ -232,7 +232,7 @@ export default function PnLCalculator() {
     <AdminProtection>
       <MobileAdminChrome title="מחשבון P&L" />
       <div className="tk-admin min-h-screen bg-gray-50">
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
         </div>
 
@@ -489,7 +489,7 @@ export default function PnLCalculator() {
           </div>
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <Footer />
         </div>
       </div>

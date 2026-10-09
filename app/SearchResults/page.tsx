@@ -168,7 +168,7 @@ function SearchResultsContent() {
     return (
       <>
         <MobileSearchResults query={queryParam} />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <SearchResultsSkeleton />
         </div>
       </>
@@ -178,7 +178,7 @@ function SearchResultsContent() {
   return (
     <>
       <MobileSearchResults query={queryParam} />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
         <SearchResultsWrapper
           query={queryParam}

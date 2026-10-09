@@ -12,7 +12,7 @@ export default function NotFound() {
   return (
     <>
       <MobileNotFound />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
         <NotFoundHeader />
         <ContactSection />

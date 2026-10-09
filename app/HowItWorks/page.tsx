@@ -61,7 +61,7 @@ export default function HowItWorksPage() {
         steps={steps.map(({ title, description }) => ({ title, description }))}
         faqs={faqs}
       />
-    <div className="hidden md:block" dir="rtl">
+    <div className="hidden lg:block" dir="rtl">
       <NavBar />
 
       {/* Hero */}

@@ -41,9 +41,9 @@ export default function MobileShell({
 
   return (
     <div
-      className="tk-mobile md:hidden"
+      className="tk-mobile lg:hidden"
       style={{
-        minHeight: showBottomNav ? "100dvh" : undefined,
+        minHeight: "100dvh",
         background:
           "radial-gradient(circle at 50% 30%, #EAE4D3 0%, var(--tk-bg) 70%)",
         paddingBottom: showBottomNav
@@ -51,7 +51,9 @@ export default function MobileShell({
           : "var(--sab, env(safe-area-inset-bottom, 0px))",
       }}
     >
-      {children}
+      {/* The design is a phone column; on tablets it stays one, centred, with
+          the cream background filling the rest of the screen. */}
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>{children}</div>
       {showBottomNav && <MobileBottomNav />}
     </div>
   );

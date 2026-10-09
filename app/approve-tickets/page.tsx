@@ -324,7 +324,7 @@ export default function ApproveTicketsPage() {
     return (
       <AdminProtection>
         <MobileAdminChrome title="אישור כרטיסים" />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
         </div>
         <div className="tk-admin min-h-screen bg-white py-12 px-4">
@@ -333,7 +333,7 @@ export default function ApproveTicketsPage() {
             <p className="mt-4">טוען כרטיסים...</p>
           </div>
         </div>
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <Footer />
         </div>
       </AdminProtection>
@@ -343,7 +343,7 @@ export default function ApproveTicketsPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="אישור כרטיסים" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin min-h-screen bg-white py-12 px-4">
@@ -732,7 +732,7 @@ export default function ApproveTicketsPage() {
           )}
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Footer />
       </div>
     </AdminProtection>

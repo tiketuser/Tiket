@@ -9,7 +9,7 @@ import { initMobileChrome, setHeroStatusBar } from "@/lib/native-chrome";
 /**
  * Mobile chrome for admin pages: sticky paper-cream top bar (back + title +
  * admin badge) and the standard bottom nav. Pages keep a single DOM tree —
- * this only replaces NavBar/Footer below the md breakpoint.
+ * this only replaces NavBar/Footer below the lg breakpoint.
  */
 export default function MobileAdminChrome({
   title,
@@ -28,7 +28,7 @@ export default function MobileAdminChrome({
   return (
     <>
       <div
-        className="tk-mobile md:hidden"
+        className="tk-mobile lg:hidden"
         dir="rtl"
         style={{
           position: "sticky",

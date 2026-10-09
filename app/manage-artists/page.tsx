@@ -97,7 +97,7 @@ export default function ManageArtistsPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="ניהול אמנים" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin min-h-screen bg-background pt-24 pb-12">
@@ -257,7 +257,7 @@ export default function ManageArtistsPage() {
           </div>
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Footer />
       </div>
     </AdminProtection>

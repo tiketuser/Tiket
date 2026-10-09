@@ -76,9 +76,9 @@ body {
 }
 
 /* Overscroll rubber-banding reveals the document background behind the page.
-   Mobile (below md) shows the paper-cream design, so keep html/body cream
+   Below lg (phones and tablets) shows the paper-cream design, so keep html/body cream
    there — otherwise every bounce past the top/bottom flashes white. */
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   html,
   body {
     background: var(--tk-bg, #F5F1E8);
@@ -204,10 +204,10 @@ input:-webkit-autofill:active {
 .tk-mobile .tk-skeleton { background-color: var(--tk-line-strong); }
 
 /* ─── Admin pages: mobile reskin (paper-cream theme) ─────────────────
-   Admin screens keep their desktop DOM + logic; below md we restyle
+   Admin screens keep their desktop DOM + logic; below lg we restyle
    them into the tk-mobile design language. Scoped via .tk-admin so
    desktop rendering is untouched. */
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .tk-admin {
     font-family: var(--font-heebo), 'Heebo', system-ui, sans-serif;
     background: radial-gradient(circle at 50% 30%, #EAE4D3 0%, var(--tk-bg, #F5F1E8) 70%) !important;
@@ -260,7 +260,7 @@ input:-webkit-autofill:active {
 }
 
 /* Admin auth gate (loading / access denied) in the cream palette on mobile */
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .tk-admin-gate {
     background: var(--tk-bg, #F5F1E8) !important;
     font-family: var(--font-heebo), 'Heebo', system-ui, sans-serif;

@@ -210,7 +210,7 @@ export default function MyTicketsPage() {
     return (
       <>
         <MobileMyTickets tickets={[]} loading={true} />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <TitleSubtitle title="הכרטיסים שלי" subtitle="כרטיסים שרכשתי" />
           <div className="pt-5 md:pt-14 px-4 md:px-8 lg:px-32 pb-5 md:pb-14 shadow-small-inner w-full">
@@ -233,7 +233,7 @@ export default function MyTicketsPage() {
         loading={false}
         notSignedIn={signedIn === false}
       />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
       <NavBar />
       <TitleSubtitle title="הכרטיסים שלי" subtitle="כרטיסים שרכשתי" />
 
@@ -320,7 +320,7 @@ export default function MyTicketsPage() {
       {/* Ticket viewer dialog */}
       {viewTicket && (
         <div
-          className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/60 p-4"
+          className="hidden lg:flex fixed inset-0 z-50 items-center justify-center bg-black/60 p-4"
           onClick={() => setViewTicket(null)}
           dir="rtl"
         >

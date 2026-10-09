@@ -85,7 +85,7 @@ export default function MobileBottomNav() {
   return (
     <>
       <nav
-        className="tk-mobile fixed inset-x-0 bottom-0 z-40 md:hidden"
+        className="tk-mobile fixed inset-x-0 bottom-0 z-40 lg:hidden"
         style={{
           background: "rgba(251,248,241,0.96)",
           backdropFilter: "blur(14px)",

@@ -60,7 +60,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       return (
         <>
           <MobileNotice kicker="◆ EVENT" title="משהו השתבש" text="לא הצלחנו לטעון את האירוע. נסו שוב בעוד כמה דקות." />
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <NavBar />
             <div className="text-center text-red-500 text-xl mt-20">
               מסד הנתונים לא זמין כרגע
@@ -118,7 +118,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
       return (
         <>
           <MobileNotice kicker="◆ EVENT" title="האירוע לא נמצא" text={`לא מצאנו אירוע בשם "${decodedTitle}". אולי הוא הוסר או שהשם השתנה.`} />
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <NavBar />
             <div className="text-center text-red-500 text-xl mt-20">
               לא נמצא אירוע של {decodedTitle}
@@ -173,7 +173,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
               לא נמצאו כרטיסים זמינים לאירוע הזה
             </div>
           </MobileEventDetail>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <NavBar />
             <EventUpperSection
               imageSrc={event.imageUrl || "/images/Artist/default.png"}
@@ -198,7 +198,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
         <MobileEventDetail event={event} availableTickets={tickets.length}>
           <MobileTicketList tickets={tickets} event={event} />
         </MobileEventDetail>
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <EventUpperSection
             imageSrc={event.imageUrl || "/images/Artist/default.png"}
@@ -223,7 +223,7 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     return (
       <>
         <MobileNotice kicker="◆ EVENT" title="משהו השתבש" text="לא הצלחנו לטעון את האירוע. נסו שוב בעוד כמה דקות." />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <div className="text-center text-red-500 text-xl mt-20">
             שגיאה בטעינת האירוע, אנא נסה שוב מאוחר יותר

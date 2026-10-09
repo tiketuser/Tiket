@@ -229,7 +229,7 @@ const MyListings = () => {
     return (
       <>
         <MobileMyListings listings={[]} loading={true} />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <div className="min-h-screen bg-white py-12 px-4">
             <div className="max-w-4xl mx-auto text-center">
@@ -251,7 +251,7 @@ const MyListings = () => {
         notSignedIn={signedIn === false}
         onCancel={handleMobileCancel}
       />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
       <NavBar />
       <TitleSubtitle title="המודעות שלי" subtitle="מודעות שבאוויר" />
 
@@ -449,7 +449,7 @@ const MyListings = () => {
 
       {/* Cancel confirmation dialog (desktop only) */}
       {cancelTicketId && (
-        <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/50" dir="rtl">
+        <div className="hidden lg:flex fixed inset-0 z-50 items-center justify-center bg-black/50" dir="rtl">
           <div className="bg-white rounded-xl shadow-large p-6 mx-4 w-full max-w-sm flex flex-col gap-4">
             <h2 className="text-lg font-bold text-strongText text-center">ביטול מכירה</h2>
             <p className="text-sm text-mutedText text-center">
@@ -477,7 +477,7 @@ const MyListings = () => {
 
       {/* Remove sold ticket confirmation dialog */}
       {removeTicketId && (
-        <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/50" dir="rtl">
+        <div className="hidden lg:flex fixed inset-0 z-50 items-center justify-center bg-black/50" dir="rtl">
           <div className="bg-white rounded-xl shadow-large p-6 mx-4 w-full max-w-sm flex flex-col gap-4">
             <h2 className="text-lg font-bold text-strongText text-center">הסרת כרטיס</h2>
             <p className="text-sm text-mutedText text-center">

@@ -49,7 +49,7 @@ export default function RegenerateTicketsPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="יצירת כרטיסים" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin min-h-screen bg-white py-12 px-4">
@@ -281,7 +281,7 @@ export default function RegenerateTicketsPage() {
           )}
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Footer />
       </div>
     </AdminProtection>

@@ -59,7 +59,7 @@ export default function DeleteAccountPage() {
         sections={sections.map((s) => ({ title: s.title, body: s.body }))}
         contactEmail="tiketbizzz@gmail.com"
       />
-    <div className="hidden md:block" dir="rtl">
+    <div className="hidden lg:block" dir="rtl">
       <NavBar />
 
       {/* Hero */}

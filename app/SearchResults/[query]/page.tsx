@@ -57,7 +57,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
     return (
       <>
         <MobileSearchResults query={query} />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <SearchResultsWrapper query={query} tickets={[]} artistNames={[]} />
         </div>
@@ -152,7 +152,7 @@ const SearchResults = async ({ params }: { params: { query: string } }) => {
   return (
     <>
       <MobileSearchResults query={query} />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
         <SearchResultsWrapper
           query={query}

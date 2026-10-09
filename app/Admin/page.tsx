@@ -421,7 +421,7 @@ export default function AdminPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="יצירת אירועים" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin min-h-screen bg-white py-12 px-4">
@@ -941,7 +941,7 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Footer />
       </div>
     </AdminProtection>

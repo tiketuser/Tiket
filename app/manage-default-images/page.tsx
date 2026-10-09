@@ -138,7 +138,7 @@ export default function ManageDefaultImagesPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="תמונות ברירת מחדל" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin min-h-screen bg-white py-12 px-4">
@@ -249,7 +249,7 @@ export default function ManageDefaultImagesPage() {
           </div>
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Footer />
       </div>
     </AdminProtection>

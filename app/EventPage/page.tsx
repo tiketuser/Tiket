@@ -167,7 +167,7 @@ function EventPageContent() {
     return (
       <>
         <MobileNotice kicker="◆ EVENT" title="לא צוין אירוע" text="חזרו לדף הבית ובחרו אירוע." />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <div className="text-center text-red-500 text-xl mt-20">
             לא צויין אירוע
@@ -182,7 +182,7 @@ function EventPageContent() {
     return (
       <>
         <MobileNotice kicker="◆ EVENT" title="האירוע לא נמצא" text={`לא מצאנו אירוע בשם "${state.title}". אולי הוא הוסר או שהשם השתנה.`} />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <div className="text-center text-red-500 text-xl mt-20">
             לא נמצא אירוע של {state.title}
@@ -197,7 +197,7 @@ function EventPageContent() {
     return (
       <>
         <MobileNotice kicker="◆ EVENT" title="משהו השתבש" text="לא הצלחנו לטעון את האירוע. נסו שוב בעוד כמה דקות." />
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <div className="text-center text-red-500 text-xl mt-20">
             שגיאה בטעינת האירוע, אנא נסה שוב מאוחר יותר
@@ -224,7 +224,7 @@ function EventPageContent() {
             לא נמצאו כרטיסים זמינים לאירוע הזה
           </div>
         </MobileEventDetail>
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <NavBar />
           <EventUpperSection
             imageSrc={event.imageUrl || "/images/Artist/default.png"}
@@ -249,7 +249,7 @@ function EventPageContent() {
       <MobileEventDetail event={event} availableTickets={tickets.length}>
         <MobileTicketList tickets={tickets} event={event} />
       </MobileEventDetail>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
         <EventUpperSection
           imageSrc={event.imageUrl || "/images/Artist/default.png"}

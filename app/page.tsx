@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <>
       <MobileHome />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
         <HeroSection />
         <Gallery />

@@ -131,7 +131,7 @@ export default function UsersAdminPage() {
   return (
     <AdminProtection>
       <MobileAdminChrome title="ניהול משתמשים" />
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <NavBar />
       </div>
       <div className="tk-admin min-h-screen bg-white py-12 px-4" dir="rtl">
