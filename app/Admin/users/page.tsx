@@ -20,6 +20,9 @@ interface UserRecord {
 
 async function getIdToken(): Promise<string | null> {
   const auth = getAuth();
+  // After a reload Firebase restores the session asynchronously; until then
+  // currentUser is null and the list request goes out signed-out.
+  await auth.authStateReady();
   const user = auth.currentUser;
   if (!user) return null;
   return user.getIdToken();
