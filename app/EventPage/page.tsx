@@ -8,6 +8,7 @@ import EventUpperSection from "../components/EventUpperSection/EventUpperSection
 import SeatingMap from "../components/SeatingMap/SeatingMap";
 import TicketListClient from "./TicketListClient";
 import EventPageSkeleton from "./EventPageSkeleton";
+import { MobileNotice } from "../components/mobile/MobileNotFound";
 import MobileEventDetail from "../components/mobile/MobileEventDetail";
 import MobileTicketList from "../components/mobile/MobileTicketList";
 import { firestoreRestQuery } from "@/lib/firestoreRest";
@@ -164,37 +165,46 @@ function EventPageContent() {
 
   if (state.status === "no-title") {
     return (
-      <div>
-        <NavBar />
-        <div className="text-center text-red-500 text-xl mt-20">
-          לא צויין אירוע
+      <>
+        <MobileNotice kicker="◆ EVENT" title="לא צוין אירוע" text="חזרו לדף הבית ובחרו אירוע." />
+        <div className="hidden md:block">
+          <NavBar />
+          <div className="text-center text-red-500 text-xl mt-20">
+            לא צויין אירוע
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+      </>
     );
   }
 
   if (state.status === "not-found") {
     return (
-      <div>
-        <NavBar />
-        <div className="text-center text-red-500 text-xl mt-20">
-          לא נמצא אירוע של {state.title}
+      <>
+        <MobileNotice kicker="◆ EVENT" title="האירוע לא נמצא" text={`לא מצאנו אירוע בשם "${state.title}". אולי הוא הוסר או שהשם השתנה.`} />
+        <div className="hidden md:block">
+          <NavBar />
+          <div className="text-center text-red-500 text-xl mt-20">
+            לא נמצא אירוע של {state.title}
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+      </>
     );
   }
 
   if (state.status === "error") {
     return (
-      <div>
-        <NavBar />
-        <div className="text-center text-red-500 text-xl mt-20">
-          שגיאה בטעינת האירוע, אנא נסה שוב מאוחר יותר
+      <>
+        <MobileNotice kicker="◆ EVENT" title="משהו השתבש" text="לא הצלחנו לטעון את האירוע. נסו שוב בעוד כמה דקות." />
+        <div className="hidden md:block">
+          <NavBar />
+          <div className="text-center text-red-500 text-xl mt-20">
+            שגיאה בטעינת האירוע, אנא נסה שוב מאוחר יותר
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+      </>
     );
   }
 

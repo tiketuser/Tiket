@@ -83,10 +83,6 @@ const ProfileDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose }) => {
       <div className="absolute inset-0" onClick={onClose} />
 
       <div className="relative bg-white w-full sm:w-[520px] sm:max-h-[90vh] max-h-[92vh] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col animate-slideUp sm:animate-none shadow-xxlarge z-10">
-        {/* Drag handle (mobile) */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-gray-300" />
-        </div>
 
         <button
           className="absolute top-3 left-3 sm:top-4 sm:left-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-20"

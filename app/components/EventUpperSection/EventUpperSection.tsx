@@ -31,17 +31,6 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
 
   return (
     <div className="flex flex-col sm:flex-row w-full sm:h-[346px] lg:pl-72 lg:pr-72 md:pt-4 md:pb-4 md:pr-24 md:pl-24 sm:pr-4 sm:pl-4 pb-6 shadow-small-inner">
-      {/* Mobile: Image on top, centered */}
-      <div className="sm:hidden w-full flex justify-center pt-6 pb-4">
-        <Image
-          src={imageSrc}
-          alt="Event image"
-          width={310}
-          height={264}
-          className="w-[180px] h-[180px] object-cover rounded-lg"
-          priority
-        />
-      </div>
 
       {/* Event Details */}
       <div className="flex flex-col gap-2 sm:pt-8 px-5 sm:px-0 lg:w-[600px] sm:w-[382px] sm:h-[264px] w-full">
@@ -71,7 +60,7 @@ const EventUpperSection: React.FC<EventUpperSectionProps> = ({
         </div>
       </div>
       {/* Desktop: Image on right */}
-      <div className="hidden sm:flex w-full justify-end items-center">
+      <div className="flex w-full justify-end items-center">
         <Image
           src={imageSrc}
           alt="Event image"

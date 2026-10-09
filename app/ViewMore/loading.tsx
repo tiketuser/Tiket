@@ -1,9 +1,12 @@
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
+import MobileLoading from "../components/mobile/MobileLoading";
 
 export default function Loading() {
   return (
-    <div>
+    <>
+    <MobileLoading label="טוען אירועים..." />
+    <div className="hidden md:block">
       <NavBar />
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -11,5 +14,6 @@ export default function Loading() {
       </div>
       <Footer />
     </div>
+    </>
   );
 }

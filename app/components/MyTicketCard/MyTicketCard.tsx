@@ -40,60 +40,8 @@ const MyTicketCard: React.FC<MyTicketCardProps> = ({
 
   return (
     <div className="w-full" dir="rtl">
-      {/* ===== MOBILE (< sm) ===== */}
-      <div className="sm:hidden relative bg-white rounded-xl shadow-medium overflow-hidden border border-gray-100">
-        {/* Top accent bar */}
-        <div className="h-1.5 w-full bg-primary" />
-
-        {/* Main content */}
-        <div className="flex items-stretch">
-          {/* Date column */}
-          <div className="flex flex-col items-center justify-center bg-secondary/30 px-4 py-4 min-w-[64px]">
-            <span className="text-[10px] font-medium text-strongText leading-none">{dateInfo.dayOfWeek}</span>
-            <span className="text-2xl font-extrabold text-primary leading-tight">{dateInfo.day}</span>
-            <span className="text-[10px] font-medium text-strongText leading-none">{dateInfo.month}</span>
-          </div>
-
-          {/* Dotted separator */}
-          <div className="flex flex-col justify-center py-3 px-0">
-            <div className="w-px h-full border-l-2 border-dashed border-gray-300" />
-          </div>
-
-          {/* Event info */}
-          <div className="flex flex-col justify-center flex-1 px-3 py-3 gap-0.5 min-w-0">
-            <div className="flex items-center gap-2">
-              {tag && (
-                <span className="bg-highlight text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-sm leading-none flex-shrink-0">
-                  {tag}
-                </span>
-              )}
-              <span className="text-sm font-bold text-strongText leading-tight truncate">{artist}</span>
-            </div>
-            <span className="text-xs text-mutedText leading-tight truncate">{venue}</span>
-            {time && (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-mutedText leading-tight">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                {time}
-              </span>
-            )}
-            <span className="text-xs text-mutedText leading-tight">{seatLabel}</span>
-          </div>
-
-          {/* Price + button column */}
-          <div className="flex flex-col items-center justify-center gap-2 px-3 py-3 border-r border-dashed border-gray-300 flex-shrink-0">
-            <span className="text-base font-extrabold text-strongText leading-none">₪{price}</span>
-            <button
-              onClick={onButtonClick}
-              className="btn btn-primary rounded-lg min-h-0 h-8 px-3 text-white text-xs font-medium whitespace-nowrap flex items-center justify-center leading-none transition-all duration-150 hover:scale-105 hover:shadow-md active:scale-95"
-            >
-              {buttonLabel}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ===== DESKTOP (>= sm) — matches SingleCard/BundleCard style ===== */}
-      <div className="hidden sm:flex items-center justify-center w-full">
+      {/* Matches the SingleCard/BundleCard style. Phones use MobileMyTickets. */}
+      <div className="flex items-center justify-center w-full">
         <div className="flex flex-row items-center justify-between border-b-4 border-highlight pt-4 pr-8 pb-4 pl-6 gap-4 sm:gap-6 md:gap-12 lg:gap-14 shadow-large flex-1 max-w-[700px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] min-h-[100px] md:min-h-[128px] bg-white select-none">
           {/* Date column */}
           <div className="flex flex-col items-center justify-center min-w-[60px] flex-shrink-0">

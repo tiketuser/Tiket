@@ -4,7 +4,6 @@ import { Calendar } from "@/components/ui/calendar";
 import React, { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { createPortal } from "react-dom";
 
 interface CustomDateInputProps {
   placeholder: string;
@@ -25,14 +24,7 @@ const CustomDateInput: React.FC<CustomDateInputProps> = ({
 }) => {
   const [date, setDate] = useState<DateRange | undefined>(value); // No initial date range
   const [isOpen, setIsOpen] = useState(false); // Tracks dropdown visibility
-  const [isMounted, setIsMounted] = useState(false); // Track if component is mounted
   const dropdownRef = useRef<HTMLDivElement>(null); // To detect clicks outside the dropdown
-  const modalRef = useRef<HTMLDivElement>(null); // To detect clicks outside the modal
-
-  // Set mounted state
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Update internal state when controlled value changes
   useEffect(() => {
@@ -59,12 +51,7 @@ const CustomDateInput: React.FC<CustomDateInputProps> = ({
 
   const handleClickOutside = (event: MouseEvent) => {
     const target = event.target as Node;
-    // Check if click is outside both the dropdown and the modal
-    if (
-      dropdownRef.current &&
-      !dropdownRef.current.contains(target) &&
-      (!modalRef.current || !modalRef.current.contains(target))
-    ) {
+    if (dropdownRef.current && !dropdownRef.current.contains(target)) {
       setIsOpen(false);
     }
   };
@@ -122,9 +109,9 @@ const CustomDateInput: React.FC<CustomDateInputProps> = ({
           </div>
         )}
 
-        {/* Desktop: Dropdown - stays inside the component */}
+        {/* Dropdown - stays inside the component */}
         {isOpen && (
-          <div className="hidden sm:block">
+          <div>
             <Calendar
               initialFocus
               mode="range"
@@ -138,39 +125,6 @@ const CustomDateInput: React.FC<CustomDateInputProps> = ({
         )}
       </div>
 
-      {/* Mobile: Full-screen overlay - rendered as portal */}
-      {isMounted &&
-        isOpen &&
-        createPortal(
-          <div className="sm:hidden fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
-            <div
-              ref={modalRef}
-              className="bg-white rounded-xl p-6 m-4 max-h-[90vh] overflow-auto w-[95vw] max-w-md"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-primary">
-                  בחר תאריך
-                </h3>
-                <button
-                  onClick={toggleDropdown}
-                  className="text-2xl text-gray-500 hover:text-gray-700"
-                >
-                  ×
-                </button>
-              </div>
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={new Date()}
-                selected={date}
-                onSelect={handleDateChange}
-                numberOfMonths={1}
-                className="rounded-md border w-full flex justify-center"
-              />
-            </div>
-          </div>,
-          document.body
-        )}
     </>
   );
 };

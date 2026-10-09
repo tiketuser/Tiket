@@ -62,7 +62,7 @@ const RegularGallery: React.FC<RegularGalleryProps> = ({
   return (
     <div className="w-full px-0 sm:px-8 sm:mt-10 sm:mb-0 mb-20">
       {/* Grid Layout for desktop */}
-      <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
         {cardsData.map((card) => (
           <div key={card.id} className="w-full">
             <Card
@@ -76,24 +76,6 @@ const RegularGallery: React.FC<RegularGalleryProps> = ({
         {isLoadingMore && (
           <div className="col-span-4 flex justify-center py-6">
             <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-          </div>
-        )}
-      </div>
-      {/* Grid Layout for screens < sm - 2 cards per row */}
-      <div className="sm:hidden grid grid-cols-2 gap-3 w-full">
-        {cardsData.map((card) => (
-          <div key={card.id} className="w-full">
-            <Card
-              {...card}
-              openLoginDialog={openLoginDialog}
-              userFavorites={userFavorites}
-            />
-          </div>
-        ))}
-        <div ref={sentinelRef} className="col-span-2 h-1" aria-hidden="true" />
-        {isLoadingMore && (
-          <div className="col-span-2 flex justify-center py-4">
-            <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           </div>
         )}
       </div>

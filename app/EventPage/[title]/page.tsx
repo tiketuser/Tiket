@@ -3,6 +3,7 @@ import Footer from "../../components/Footer/Footer";
 import EventUpperSection from "../../components/EventUpperSection/EventUpperSection";
 import SeatingMap from "../../components/SeatingMap/SeatingMap";
 import TicketListClient from "../TicketListClient";
+import { MobileNotice } from "../../components/mobile/MobileNotFound";
 import MobileEventDetail from "../../components/mobile/MobileEventDetail";
 import MobileTicketList from "../../components/mobile/MobileTicketList";
 import dynamicImport from "next/dynamic";
@@ -57,13 +58,16 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     // Check if db is available
     if (!db) {
       return (
-        <div>
-          <NavBar />
-          <div className="text-center text-red-500 text-xl mt-20">
-            מסד הנתונים לא זמין כרגע
+        <>
+          <MobileNotice kicker="◆ EVENT" title="משהו השתבש" text="לא הצלחנו לטעון את האירוע. נסו שוב בעוד כמה דקות." />
+          <div className="hidden md:block">
+            <NavBar />
+            <div className="text-center text-red-500 text-xl mt-20">
+              מסד הנתונים לא זמין כרגע
+            </div>
+            <Footer />
           </div>
-          <Footer />
-        </div>
+        </>
       );
     }
 
@@ -112,13 +116,16 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
     // If no event found
     if (!event) {
       return (
-        <div>
-          <NavBar />
-          <div className="text-center text-red-500 text-xl mt-20">
-            לא נמצא אירוע של {decodedTitle}
+        <>
+          <MobileNotice kicker="◆ EVENT" title="האירוע לא נמצא" text={`לא מצאנו אירוע בשם "${decodedTitle}". אולי הוא הוסר או שהשם השתנה.`} />
+          <div className="hidden md:block">
+            <NavBar />
+            <div className="text-center text-red-500 text-xl mt-20">
+              לא נמצא אירוע של {decodedTitle}
+            </div>
+            <Footer />
           </div>
-          <Footer />
-        </div>
+        </>
       );
     }
 
@@ -214,13 +221,16 @@ const EventPage = async ({ params }: { params: { title: string } }) => {
   } catch (error) {
     console.error("Error fetching event:", error);
     return (
-      <div>
-        <NavBar />
-        <div className="text-center text-red-500 text-xl mt-20">
-          שגיאה בטעינת האירוע, אנא נסה שוב מאוחר יותר
+      <>
+        <MobileNotice kicker="◆ EVENT" title="משהו השתבש" text="לא הצלחנו לטעון את האירוע. נסו שוב בעוד כמה דקות." />
+        <div className="hidden md:block">
+          <NavBar />
+          <div className="text-center text-red-500 text-xl mt-20">
+            שגיאה בטעינת האירוע, אנא נסה שוב מאוחר יותר
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+      </>
     );
   }
 };

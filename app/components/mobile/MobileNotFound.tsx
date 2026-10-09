@@ -18,8 +18,17 @@ const buttonStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-/** The 404 page on phones: one centred card, like the early-access page. */
-export default function MobileNotFound() {
+/** A full-screen message card on phones, like the early-access page: the 404
+ *  page, and pages that have nothing to show (an event that doesn't exist). */
+export function MobileNotice({
+  kicker,
+  title,
+  text,
+}: {
+  kicker: string;
+  title: string;
+  text: string;
+}) {
   return (
     <MobileShell showBottomNav={false}>
       <div
@@ -52,10 +61,10 @@ export default function MobileNotFound() {
             className="tk-mono"
             style={{ fontSize: 10, color: "var(--tk-blue)", letterSpacing: "0.14em", marginTop: 18 }}
           >
-            ◆ 404
+            {kicker}
           </div>
           <h1 style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em", margin: "6px 0 0" }}>
-            העמוד לא נמצא
+            {title}
           </h1>
           <p
             style={{
@@ -65,7 +74,7 @@ export default function MobileNotFound() {
               margin: "8px 0 22px",
             }}
           >
-            יכול להיות שהכתובת שגויה או שהעמוד הועבר.
+            {text}
           </p>
 
           <Link
@@ -96,5 +105,15 @@ export default function MobileNotFound() {
         </div>
       </div>
     </MobileShell>
+  );
+}
+
+export default function MobileNotFound() {
+  return (
+    <MobileNotice
+      kicker="◆ 404"
+      title="העמוד לא נמצא"
+      text="יכול להיות שהכתובת שגויה או שהעמוד הועבר."
+    />
   );
 }

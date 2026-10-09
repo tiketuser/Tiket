@@ -1,9 +1,12 @@
 import NavBar from "../components/NavBar/NavBar";
 import Skeleton from "../components/Skeleton/Skeleton";
+import MobileLoading from "../components/mobile/MobileLoading";
 
 export default function SearchResultsSkeleton() {
   return (
-    <div>
+    <>
+    <MobileLoading />
+    <div className="hidden md:block">
       <NavBar />
       <div className="shadow-small-inner py-6 sm:py-14 px-4 sm:px-24">
         <div className="mb-6 sm:mb-10">
@@ -27,5 +30,6 @@ export default function SearchResultsSkeleton() {
         </div>
       </div>
     </div>
+    </>
   );
 }

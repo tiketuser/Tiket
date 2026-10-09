@@ -159,7 +159,7 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
   return (
     <div className="w-full px-2 sm:px-2 sm:mt-10 sm:mb-0 mb-20">
       {/* Carousel for screens >= sm */}
-      <div className="hidden sm:block overflow-hidden px-6">
+      <div className="overflow-hidden px-6">
         <Carousel
           dir="ltr"
           className="w-full relative"
@@ -202,24 +202,6 @@ const ResponsiveGallery: React.FC<ResponsiveGalleryProps> = ({
             >
               גלה עוד
             </Link>
-          </div>
-        )}
-      </div>
-      {/* Grid Layout for screens < sm - 2 cards per row */}
-      <div className="sm:hidden grid grid-cols-2 gap-2 w-full px-1 mt-4 mb-6">
-        {cardsData.map((card) => (
-          <div key={card.id} className="w-full">
-            <Card
-              {...card}
-              openLoginDialog={openLoginDialog}
-              userFavorites={userFavorites}
-            />
-          </div>
-        ))}
-        <div ref={sentinelRef} className="col-span-2 h-1" aria-hidden="true" />
-        {isLoadingMore && (
-          <div className="col-span-2 flex justify-center py-4">
-            <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           </div>
         )}
       </div>

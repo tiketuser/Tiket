@@ -6,7 +6,6 @@ import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import EmptyImage from "../../../../../public/images/Dialogs/emptyimage.svg";
 import { apiFetch } from "@/lib/platform";
 import { getAuth } from "firebase/auth";
-import { AlertTriangle } from "lucide-react";
 
 const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
   nextStep,
@@ -202,77 +201,18 @@ const StepOneUploadTicket: React.FC<UploadTicketInterface> = ({
         ודא שהתמונה ברורה ושכל פרטי הכרטיס נראים היטב.
       </p>
 
-      {/* Mobile Layout: tap-to-upload zone + status */}
-      <div className="sm:hidden mt-4 flex flex-col gap-3">
-        <input
-          ref={fileInputRef}
-          type="file"
-          id="fileUpload"
-          className="hidden"
-          accept="image/*"
-          onChange={handleFileUpload}
-        />
+      {/* Opened by the drop zone and the "choose file" button below. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        id="fileUpload"
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileUpload}
+      />
 
-        {/* Upload tap zone */}
-        <div
-          className="w-full h-[140px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors bg-gray-50 active:bg-primary/5 border-gray-300"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="object-contain h-full w-full rounded-xl"
-            />
-          ) : (
-            <>
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-              </div>
-              <p className="text-sm font-semibold text-gray-600">הקש לבחירת תמונה</p>
-              <p className="text-[11px] text-gray-400">JPG, PNG, WEBP</p>
-            </>
-          )}
-        </div>
-
-        {/* Upload button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full h-[44px] min-h-0 btn btn-outline border-2 border-primary text-primary bg-white hover:bg-primary hover:text-white text-sm font-semibold rounded-xl"
-        >
-          {previewUrl ? "החלף תמונה" : "בחר קובץ"}
-        </button>
-
-        {/* Status */}
-        {notATicketError ? (
-          <div className="bg-orange-50 border border-orange-300 rounded-lg p-3 text-right" dir="rtl">
-            <p className="text-sm font-bold text-orange-800">התמונה אינה כרטיס אירוע</p>
-            <p className="text-xs text-orange-700 mt-1">אנא העלה תמונה ברורה של כרטיס לאירוע (הופעה, ספורט, תיאטרון וכד׳).</p>
-          </div>
-        ) : ticketData?.extractionError ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
-            <p className="text-xs font-semibold text-red-700 flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" strokeWidth={1.8} /> שגיאה
-            </p>
-            <p className="text-[11px] text-red-600 mt-0.5">{uploadStatus}</p>
-          </div>
-        ) : ticketData?.isProcessing ? (
-          <div className="flex items-center justify-center gap-2 py-1">
-            <div className="loading loading-spinner loading-sm text-primary"></div>
-            <span className="text-sm text-blue-600 font-medium">מעבד את התמונה...</span>
-          </div>
-        ) : (
-          <p className={`text-xs text-center font-medium ${ticketData?.uploadedFile ? "text-primary" : "text-gray-400"}`}>
-            {uploadStatus}
-          </p>
-        )}
-      </div>
-
-      {/* Desktop Layout: Drag and drop with separate preview */}
-      <div className="hidden sm:flex w-full gap-3 sm:gap-4 mt-3 sm:mt-4">
+      {/* Drag and drop with separate preview */}
+      <div className="flex w-full gap-3 sm:gap-4 mt-3 sm:mt-4">
         {/* Upload Controls on the Left */}
         <div className="flex-1 flex flex-col justify-center gap-3">
           {/* Drag and Drop Area */}

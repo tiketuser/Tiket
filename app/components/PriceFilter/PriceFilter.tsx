@@ -2,7 +2,6 @@ import * as Slider from "@radix-ui/react-slider";
 import React, { useState, useEffect, useRef } from "react";
 import PriceLabel from "../../../public/images/SearchResult/Tooltip.svg";
 import Image from "next/image";
-import { createPortal } from "react-dom";
 
 interface PriceFilterProps {
   placeholder: string;
@@ -31,14 +30,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
 }) => {
   const [values, setValues] = useState<number[]>(defaultValue);
   const [isOpen, setIsOpen] = useState(false); // Tracks dropdown visibility
-  const [isMounted, setIsMounted] = useState(false); // Track if component is mounted
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  // Set mounted state
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Handle value change
   const handleValueChange = (value: number[]) => {
@@ -55,11 +47,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
   // Click outside handler
   const handleClickOutside = (event: MouseEvent) => {
     const target = event.target as Node;
-    if (
-      dropdownRef.current &&
-      !dropdownRef.current.contains(target) &&
-      (!modalRef.current || !modalRef.current.contains(target))
-    ) {
+    if (dropdownRef.current && !dropdownRef.current.contains(target)) {
       setIsOpen(false);
     }
   };
@@ -168,52 +156,14 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
           </div>
         )}
 
-        {/* Slider Container - Desktop only */}
+        {/* Slider Container */}
         {isOpen && (
-          <div className="hidden sm:block absolute top-full mt-1 right-0 w-[340px] h-[140px] border rounded-xl p-4 bg-zinc-50 shadow-xxlarge z-20">
+          <div className="absolute top-full mt-1 right-0 w-[340px] h-[140px] border rounded-xl p-4 bg-zinc-50 shadow-xxlarge z-20">
             <div className="relative top-[74.4px]">{renderSlider()}</div>
           </div>
         )}
       </div>
 
-      {/* Mobile: Full-screen overlay - rendered as portal */}
-      {isMounted &&
-        isOpen &&
-        createPortal(
-          <div className="sm:hidden fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
-            <div
-              ref={modalRef}
-              className="bg-white rounded-xl p-6 m-4 w-[95vw] max-w-md"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-primary">
-                  בחר טווח מחירים
-                </h3>
-                <button
-                  onClick={toggleDropdown}
-                  className="text-2xl text-gray-500 hover:text-gray-700"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="relative top-7 py-8 px-4">{renderSlider()}</div>
-
-              <div className="flex justify-between items-center mt-6 pt-4 border-t">
-                <span className="text-sm text-gray-600">
-                  טווח: {values[0]}₪ - {values[1]}₪
-                </span>
-                <button
-                  onClick={toggleDropdown}
-                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90"
-                >
-                  החל
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
     </>
   );
 };
