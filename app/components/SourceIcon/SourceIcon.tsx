@@ -13,6 +13,10 @@ export const SOURCE_LABELS: Record<string, string> = {
   snapchat: "סנאפצ׳אט",
   reddit: "רדיט",
   google: "גוגל",
+  bing: "Bing",
+  duckduckgo: "DuckDuckGo",
+  yahoo: "Yahoo",
+  threads: "Threads",
   newsletter: "ניוזלטר",
   email: "אימייל",
   qr: "QR",
@@ -45,6 +49,8 @@ function splitSource(source: string): [string, string] {
 
 export function sourceLabel(source: string): string {
   if (!source) return "ישיר";
+  // A site we have no code for, recorded from its referrer: "ref-ynet-co-il".
+  if (source.startsWith("ref-")) return source.slice(4).replace(/-/g, ".");
   const [channel, sub] = splitSource(source);
   const base = SOURCE_LABELS[channel] ?? channel;
   return sub ? `${base} · ${SUB_LABELS[sub] ?? sub}` : base;
@@ -63,6 +69,10 @@ const SOURCE_COLORS: Record<string, { bg: string; ink: string }> = {
   snapchat: { bg: "#FFFC00", ink: "#1A1A1A" },
   reddit: { bg: "#FF4500", ink: "#fff" },
   google: { bg: "#4285F4", ink: "#fff" },
+  bing: { bg: "#008373", ink: "#fff" },
+  duckduckgo: { bg: "#DE5833", ink: "#fff" },
+  yahoo: { bg: "#6001D2", ink: "#fff" },
+  threads: { bg: "#111111", ink: "#fff" },
   newsletter: { bg: "#6366f1", ink: "#fff" },
   email: { bg: "#6366f1", ink: "#fff" },
   qr: { bg: "#3C3E5F", ink: "#fff" },

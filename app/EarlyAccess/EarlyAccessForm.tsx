@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { SourceGlyph } from "../components/SourceIcon/SourceIcon";
+import { detectVisitSource } from "@/lib/signupSource";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^0\d{8,9}$/;
@@ -26,40 +27,53 @@ const inputStyle: React.CSSProperties = {
   color: "var(--tk-ink)",
 };
 
-/** AI assistants whose links carry no utm tag but do send their site as the
- *  referrer. ChatGPT tags its links itself (utm_source=chatgpt.com). */
-const AI_REFERRERS: Record<string, string> = {
-  "chatgpt.com": "chatgpt",
-  "chat.openai.com": "chatgpt",
-  "gemini.google.com": "gemini",
-  "bard.google.com": "gemini",
-  "claude.ai": "claude",
-  "perplexity.ai": "perplexity",
-  "www.perplexity.ai": "perplexity",
-  "copilot.microsoft.com": "copilot",
-};
+const CAMPAIGN_COOKIE = "ea_src";
+const LAST_SOURCE_KEY = "ea_last_source";
+const LAST_SOURCE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-function aiReferrer(): string {
+function campaignCookie(): string {
+  const c = document.cookie.split("; ").find((x) => x.startsWith(CAMPAIGN_COOKIE + "="));
+  return c ? decodeURIComponent(c.slice(CAMPAIGN_COOKIE.length + 1)).slice(0, 40) : "";
+}
+
+function rememberedSource(): string {
   try {
-    return AI_REFERRERS[new URL(document.referrer).hostname] ?? "";
+    const saved = JSON.parse(localStorage.getItem(LAST_SOURCE_KEY) || "null");
+    return saved && Date.now() - saved.at < LAST_SOURCE_TTL_MS ? String(saved.source) : "";
   } catch {
-    return ""; // no referrer, or not a URL
+    return "";
   }
 }
 
-/** Where this visitor came from: an explicit utm_source wins, then an AI
- *  assistant that sent them on this visit, then the cookie the middleware set
- *  from an earlier campaign short code such as /ig. */
-function readSource(): string {
+/** Where this visitor came from, worked out once when the page loads (the
+ *  referrer and query belong to that load). A campaign short link such as
+ *  /ig/dm stays in the address bar and is the most specific answer; then what
+ *  this load shows (utm, ad click id, referrer); then a short link from an
+ *  earlier visit; then the last channel remembered in this browser, so a
+ *  visitor who comes back days later to sign up is still attributed. */
+function landingSource(): string {
   if (typeof window === "undefined") return "";
-  const utm = new URLSearchParams(window.location.search).get("utm_source");
-  if (utm) return utm.slice(0, 40);
-  const ai = aiReferrer();
-  if (ai) return ai;
-  const cookie = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith("ea_src="));
-  return cookie ? decodeURIComponent(cookie.slice(7)).slice(0, 40) : "";
+  const onCampaignLink = !["/", "/EarlyAccess"].includes(window.location.pathname.replace(/\/$/, "") || "/");
+  const cookie = campaignCookie();
+  if (onCampaignLink && cookie) return cookie;
+  const visit = detectVisitSource(window.location.search, document.referrer);
+  if (visit) {
+    try {
+      localStorage.setItem(LAST_SOURCE_KEY, JSON.stringify({ source: visit, at: Date.now() }));
+    } catch {
+      // storage blocked: attribution still works for this visit
+    }
+    return visit;
+  }
+  return cookie || rememberedSource();
+}
+
+function referrerHost(): string {
+  try {
+    return new URL(document.referrer).host.slice(0, 100);
+  } catch {
+    return "";
+  }
 }
 
 /** Offered in the success dialog, once the signup itself is done. */
@@ -86,6 +100,11 @@ export default function EarlyAccessForm({ children }: { children?: React.ReactNo
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [dialogIn, setDialogIn] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
+  // Worked out once on load: the referrer and query belong to that page load.
+  const sourceRef = useRef("");
+  useEffect(() => {
+    sourceRef.current = landingSource();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,7 +132,8 @@ export default function EarlyAccessForm({ children }: { children?: React.ReactNo
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...(isEmail ? { email: trimmed } : { phone: digits }),
-          source: readSource(),
+          source: sourceRef.current,
+          referrer: referrerHost(),
         }),
       });
 

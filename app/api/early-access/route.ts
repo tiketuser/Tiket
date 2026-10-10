@@ -50,11 +50,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, phone, source } = await request.json();
+    const { email, phone, source, referrer } = await request.json();
 
     const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
     const cleanPhone = typeof phone === "string" ? phone.replace(/[\s-]/g, "") : "";
     const signupSource = cleanSource(source);
+    // The raw referring host, kept for checking attribution by hand.
+    const referrerHost =
+      typeof referrer === "string" && /^[a-z0-9.:-]{1,100}$/i.test(referrer) ? referrer.toLowerCase() : "";
 
     // Either contact detail is enough; whichever is supplied must be valid.
     if (!cleanEmail && !cleanPhone) {
@@ -92,6 +95,7 @@ export async function POST(request: NextRequest) {
         ...(signupSource
           ? { sources: admin.firestore.FieldValue.arrayUnion(signupSource) }
           : {}),
+        ...(referrerHost ? { lastReferrer: referrerHost } : {}),
         ...(existing.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
       },
       { merge: true }
