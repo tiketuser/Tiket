@@ -244,12 +244,15 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
+      # Versions are Unix seconds, not github.run_number: the run number belongs
+      # to whichever workflow started the run (deploy*.yml or a manual
+      # dispatch of this one), so it can go backwards, and the app only takes
+      # a bundle whose version is higher than the one it is running.
       - name: Build + publish OTA bundle
         env:
           OTA_CHANNEL: ${{ needs.setup.outputs.channel }}
-          OTA_VERSION: ${{ github.run_number }}
           OTA_NOTES: ${{ github.event.head_commit.message }}
-        run: npm run ota:build
+        run: OTA_VERSION=$(date +%s) npm run ota:build
 
   android:
     needs: setup
@@ -301,8 +304,11 @@ jobs:
       - name: Build signed AAB
         run: |
           npm run cap:sync:android
+          # Unix seconds, like the OTA version: always higher than the last
+          # upload whichever workflow runs, and under Play's 2100000000 cap
+          # until 2036.
           cd android && ./gradlew bundleRelease \
-            -PversionCode=${{ github.run_number }} \
+            -PversionCode=$(date +%s) \
             -PminSdkVersion=24 -PtargetSdkVersion=36 -PcompileSdkVersion=36
       - name: Verify AAB is signed
         run: jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
