@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/authMiddleware";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { cleanSource } from "@/lib/signupSource";
+import { notifyNewSignup } from "@/lib/signupNotify";
 import * as admin from "firebase-admin";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -100,6 +101,24 @@ export async function POST(request: NextRequest) {
       },
       { merge: true }
     );
+
+    if (!existing.exists) {
+      // Awaited rather than fired and forgotten: Cloud Run stops giving the
+      // instance CPU once the response is sent. notifyNewSignup caps its own wait.
+      const total = await adminDb
+        .collection("earlyAccessSignups")
+        .count()
+        .get()
+        .then((snap) => snap.data().count)
+        .catch(() => null);
+      await notifyNewSignup({
+        email: cleanEmail,
+        phone: cleanPhone,
+        source: signupSource,
+        referrer: referrerHost,
+        total,
+      });
+    }
 
     return NextResponse.json({ success: true, alreadyRegistered: existing.exists });
   } catch (error) {

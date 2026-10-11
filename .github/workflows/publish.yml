@@ -194,6 +194,8 @@ jobs:
             GUEST_TOKEN_SECRET=${{ secrets.GUEST_TOKEN_SECRET }}
             EARLY_ACCESS_GATE=${{ needs.setup.outputs.channel == 'production' && 'on' || 'off' }}
             SEARCH_INDEXING=${{ needs.setup.outputs.channel == 'production' && 'on' || 'off' }}
+            APP_CHANNEL=${{ needs.setup.outputs.channel }}
+            SIGNUP_NOTIFY_PASSWORD=${{ secrets.SIGNUP_NOTIFY_PASSWORD }}
       - name: Remove stale env vars
         run: |
           gcloud run services update ${{ needs.setup.outputs.service_name }} \
