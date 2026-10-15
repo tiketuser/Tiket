@@ -1,16 +1,32 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { formatSeatLocation } from "../utils/categoryConfig";
 import { db, auth } from "../../firebase";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import TitleSubtitle from "../components/TitleSubtitle/TitleSubtitle";
 import MyTicketCard from "../components/MyTicketCard/MyTicketCard";
 import MobileMyTickets, {
   type MobileTicket,
+  type MobileListingItem,
 } from "../components/mobile/MobileMyTickets";
+
+const MobileSell = dynamic(
+  () => import("../components/mobile/MobileSell"),
+  { ssr: false },
+);
 import TicketBarcode from "../components/TicketBarcode/TicketBarcode";
 import { isEventPast } from "@/utils/eventDate";
 import { demoBarcodeValue, DEMO_BARCODE_FORMAT } from "@/utils/demoBarcode";
@@ -78,6 +94,8 @@ export default function MyTicketsPage() {
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPast, setShowPast] = useState(true);
   const [viewTicket, setViewTicket] = useState<PurchasedTicket | null>(null);
+  const [listings, setListings] = useState<MobileListingItem[]>([]);
+  const [sellOpen, setSellOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth?.onAuthStateChanged((user) => {
@@ -87,15 +105,93 @@ export default function MyTicketsPage() {
         // the previous user's tickets.
         setLoading(true);
         setTickets([]);
+        setListings([]);
         fetchMyTickets(user.uid);
+        fetchMyListings(user.uid);
       } else {
         setSignedIn(false);
         setLoading(false);
         setTickets([]);
+        setListings([]);
       }
     });
     return () => unsubscribe?.();
   }, []);
+
+  // The seller's own listings (tickets they put up for sale) power the "למכירה"
+  // tab. Same query + status mapping as the MyListings page.
+  const fetchMyListings = async (uid: string) => {
+    try {
+      if (!db) return;
+      const q = query(
+        collection(db as any, "tickets"),
+        where("sellerId", "==", uid),
+      );
+      const snap = await getDocs(q);
+      const rows = await Promise.all(
+        snap.docs.map(async (d) => {
+          const t = d.data() as any;
+          let eventImageUrl: string | undefined;
+          if (t.eventId) {
+            try {
+              const ev = await getDoc(doc(db as any, "events", t.eventId));
+              const img = ev.exists() ? ev.data()?.imageUrl : undefined;
+              if (typeof img === "string" && !img.startsWith("data:")) eventImageUrl = img;
+            } catch {
+              // ignore
+            }
+          }
+          let status: MobileListingItem["status"] = "active";
+          if (t.status === "sold") status = "sold";
+          else if (t.verificationStatus === "needs_review") status = "pending";
+          else if (t.verificationStatus === "rejected") status = "rejected";
+          return {
+            id: d.id,
+            artist: t.artist || "",
+            date: t.date || "",
+            time: t.time,
+            venue: t.venue || "",
+            section: t.section,
+            row: t.row,
+            seat: t.seat,
+            isStanding: t.isStanding,
+            askingPrice: t.askingPrice ?? 0,
+            status,
+            eventImageUrl,
+            createdAt: t.createdAt?.seconds || 0,
+          } as MobileListingItem & { createdAt: number };
+        }),
+      );
+      rows.sort((a, b) => (b as any).createdAt - (a as any).createdAt);
+      setListings(rows);
+    } catch (err) {
+      console.error("Error fetching listings:", err);
+    }
+  };
+
+  const handleEditPrice = async (id: string, price: number) => {
+    if (!db) return;
+    try {
+      await updateDoc(doc(db as any, "tickets", id), { askingPrice: price });
+      setListings((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, askingPrice: price } : l)),
+      );
+    } catch (err) {
+      console.error("Error updating price:", err);
+      alert("לא ניתן לעדכן את המחיר כרגע. ייתכן שהכרטיס בתהליך רכישה או נמכר.");
+    }
+  };
+
+  const handleCancelListing = async (id: string) => {
+    if (!db) return;
+    try {
+      await deleteDoc(doc(db as any, "tickets", id));
+      setListings((prev) => prev.filter((l) => l.id !== id));
+    } catch (err) {
+      console.error("Error canceling listing:", err);
+      alert("לא ניתן לבטל את המודעה. ייתכן שהכרטיס בתהליך רכישה או נמכר.");
+    }
+  };
 
   const fetchMyTickets = async (uid: string) => {
     try {
@@ -230,9 +326,14 @@ export default function MyTicketsPage() {
     <>
       <MobileMyTickets
         tickets={mobileTickets}
+        listings={listings}
         loading={false}
         notSignedIn={signedIn === false}
+        onSell={() => setSellOpen(true)}
+        onEditPrice={handleEditPrice}
+        onCancelListing={handleCancelListing}
       />
+      <MobileSell open={sellOpen} onClose={() => setSellOpen(false)} />
       <div className="hidden lg:block">
       <NavBar />
       <TitleSubtitle title="הכרטיסים שלי" subtitle="כרטיסים שרכשתי" />

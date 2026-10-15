@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
@@ -30,70 +30,130 @@ export type MobileTicket = {
 
 type Tab = "upcoming" | "selling";
 
+export type MobileListingItem = {
+  id: string;
+  artist: string;
+  date: string;
+  time?: string;
+  venue: string;
+  section?: string;
+  row?: string | number;
+  seat?: string | number;
+  isStanding?: boolean;
+  askingPrice: number;
+  status: "active" | "pending" | "rejected" | "sold";
+  eventImageUrl?: string;
+};
+
 export default function MobileMyTickets({
   tickets,
+  listings = [],
   loading,
   notSignedIn,
+  onSell,
+  onEditPrice,
+  onCancelListing,
 }: {
   tickets: MobileTicket[];
+  listings?: MobileListingItem[];
   loading: boolean;
   notSignedIn?: boolean;
+  /** Swipe-to-sell on a purchased ticket opens the sell flow. */
+  onSell?: (ticket: MobileTicket) => void;
+  /** Save a new asking price for a listing (client Firestore updateDoc). */
+  onEditPrice?: (id: string, price: number) => void | Promise<void>;
+  /** Cancel (remove) a listing (client Firestore deleteDoc). */
+  onCancelListing?: (id: string) => void | Promise<void>;
 }) {
   const [tab, setTab] = useState<Tab>("upcoming");
   const [scanOpen, setScanOpen] = useState<MobileTicket | null>(null);
+  const [editing, setEditing] = useState<MobileListingItem | null>(null);
+  const [canceling, setCanceling] = useState<MobileListingItem | null>(null);
 
   const upcoming = tickets.filter((t) => !isPastDate(t.date));
   const past = tickets.filter((t) => isPastDate(t.date));
+  const activeListings = listings.filter((l) => l.status !== "sold");
+  const soldListings = listings.filter((l) => l.status === "sold");
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "upcoming", label: "קרובים" },
-    { id: "selling", label: "למכירה" },
+  const tabs: { id: Tab; label: string; count: number }[] = [
+    { id: "upcoming", label: "שלי", count: upcoming.length },
+    { id: "selling", label: "למכירה", count: activeListings.length },
   ];
 
   return (
     <MobileShell>
-      <div
-        style={{
-          padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 14px",
-          borderBottom: "1px solid var(--tk-line)",
-        }}
-      >
-        <div
-          style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}
-        >
+      <div style={{ padding: "calc(8px + var(--sat, env(safe-area-inset-top, 0px))) 20px 0" }}>
+        <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>
           הכרטיסים שלי
         </div>
+        {/* Sliding-pill tabs */}
         <div
           style={{
-            display: "flex",
-            gap: 4,
-            marginTop: 10,
-            padding: 3,
-            background: "var(--tk-paper)",
-            border: "1px solid var(--tk-line-strong)",
-            borderRadius: 999,
-            width: "fit-content",
+            position: "relative",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            padding: 4,
+            marginTop: 14,
+            borderRadius: "var(--r-sm)",
+            background: "var(--surface-2)",
           }}
         >
-          {tabs.map(({ id, label }) => {
-            const active = tab === id;
+          <span
+            style={{
+              position: "absolute",
+              top: 4,
+              bottom: 4,
+              right: 4,
+              width: "calc(50% - 4px)",
+              borderRadius: "calc(var(--r-sm) - 4px)",
+              background: "var(--surface)",
+              boxShadow: "0 1px 2px rgba(20,20,19,.06), 0 2px 8px rgba(20,20,19,.08)",
+              transform: tab === "upcoming" ? "translateX(0)" : "translateX(-100%)",
+              transition: "transform .28s cubic-bezier(.3,.9,.3,1)",
+            }}
+          />
+          {tabs.map(({ id, label, count }) => {
+            const on = tab === id;
             return (
               <button
                 key={id}
                 onClick={() => setTab(id)}
                 style={{
-                  padding: "6px 14px",
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  background: active ? "var(--tk-ink)" : "transparent",
-                  color: active ? "#fff" : "var(--tk-ink-2)",
-                  border: "none",
+                  position: "relative",
+                  height: 38,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 7,
+                  fontSize: 15,
+                  fontWeight: on ? 700 : 500,
+                  color: on ? "var(--ink)" : "var(--muted)",
+                  background: "transparent",
+                  border: 0,
                   cursor: "pointer",
-                  fontFamily: "inherit",
+                  transition: "color .2s",
                 }}
               >
                 {label}
+                <span
+                  className="num"
+                  style={{
+                    minWidth: 20,
+                    height: 20,
+                    padding: "0 6px",
+                    borderRadius: 999,
+                    background: on ? "var(--ink)" : "rgba(20,20,19,.08)",
+                    color: on ? "#fff" : "var(--muted)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "background .2s, color .2s",
+                  }}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
@@ -102,16 +162,16 @@ export default function MobileMyTickets({
 
       <div
         style={{
-          padding: 18,
+          padding: "18px 20px 28px",
           display: "flex",
           flexDirection: "column",
-          gap: 12,
+          gap: 16,
         }}
       >
         {notSignedIn ? (
           <EmptyState text="התחבר כדי לראות את הכרטיסים שלך" />
         ) : loading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {[0, 1].map((i) => (
               <GlassTicketSkeleton key={i} />
             ))}
@@ -119,23 +179,29 @@ export default function MobileMyTickets({
         ) : tab === "upcoming" ? (
           <>
             {upcoming.length === 0 ? (
-              <EmptyState text="אין כרטיסים קרובים" />
+              <EmptyState text="אין כרטיסים לאירועים קרובים" />
             ) : (
-              upcoming.map((t) => (
-                <GlassTicketCard
-                  key={t.id}
-                  ticket={t}
-                  onScan={() => setScanOpen(t)}
-                />
-              ))
+              upcoming.map((t) =>
+                onSell ? (
+                  <SwipeAction
+                    key={t.id}
+                    label="מכירה"
+                    armedLabel="שחרר למכירה"
+                    icon={<TagIcon />}
+                    onFire={() => onSell(t)}
+                  >
+                    <GlassTicketCard ticket={t} onScan={() => setScanOpen(t)} />
+                  </SwipeAction>
+                ) : (
+                  <GlassTicketCard key={t.id} ticket={t} onScan={() => setScanOpen(t)} />
+                ),
+              )
             )}
             {past.length > 0 && (
               <>
-                <SectionHeader
-                  kicker="היסטוריה"
-                  title="אירועים שעברו"
-                  meta={`${past.length} ${past.length === 1 ? "אירוע" : "אירועים"}`}
-                />
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", marginTop: 10 }}>
+                  אירועים שעברו
+                </div>
                 {past.map((t) => (
                   <PastTicketCard key={t.id} ticket={t} />
                 ))}
@@ -143,14 +209,65 @@ export default function MobileMyTickets({
             )}
           </>
         ) : (
-          <EmptyState text="אין מודעות פעילות" />
+          <>
+            {activeListings.length === 0 ? (
+              <EmptyState text="אין כרטיסים שמוצעים למכירה" />
+            ) : (
+              activeListings.map((l) => (
+                <ListingPosterCard
+                  key={l.id}
+                  listing={l}
+                  onEdit={onEditPrice ? () => setEditing(l) : undefined}
+                  onCancel={onCancelListing ? () => setCanceling(l) : undefined}
+                />
+              ))
+            )}
+            {soldListings.length > 0 && (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", marginTop: 10 }}>
+                  נמכרו
+                </div>
+                {soldListings.map((l) => (
+                  <SoldPosterCard key={l.id} listing={l} />
+                ))}
+              </>
+            )}
+          </>
         )}
       </div>
 
       {scanOpen && (
         <ScanModal ticket={scanOpen} onClose={() => setScanOpen(null)} />
       )}
+      {editing && (
+        <PriceEditSheet
+          listing={editing}
+          onClose={() => setEditing(null)}
+          onSave={async (price) => {
+            await onEditPrice?.(editing.id, price);
+            setEditing(null);
+          }}
+        />
+      )}
+      {canceling && (
+        <CancelDialog
+          onClose={() => setCanceling(null)}
+          onConfirm={async () => {
+            await onCancelListing?.(canceling.id);
+            setCanceling(null);
+          }}
+        />
+      )}
     </MobileShell>
+  );
+}
+
+function TagIcon() {
+  return (
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" />
+      <circle cx="7.5" cy="7.5" r="1.2" />
+    </svg>
   );
 }
 
@@ -704,6 +821,625 @@ function PastStat({
         {label}
       </div>
       <div style={{ fontSize: 14, fontWeight: 700 }}>{value || "—"}</div>
+    </div>
+  );
+}
+
+// ── Swipe-to-reveal wrapper ────────────────────────────────────────────────
+// Drag the card left to reveal an action panel; release past the trigger fires.
+function useSwipe(onFire: () => void) {
+  const [drag, setDrag] = useState(0);
+  const [live, setLive] = useState(false);
+  const start = useRef<number | null>(null);
+  const cap = useRef(false);
+  const REVEAL = 130;
+  const TRIGGER = 80;
+  const down = (e: React.PointerEvent) => {
+    start.current = e.clientX;
+    cap.current = false;
+  };
+  const move = (e: React.PointerEvent) => {
+    if (start.current == null) return;
+    const dx = e.clientX - start.current;
+    if (!cap.current) {
+      if (Math.abs(dx) < 8) return;
+      cap.current = true;
+      setLive(true);
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    }
+    setDrag(Math.min(0, Math.max(-(REVEAL + 40), dx)));
+  };
+  const up = () => {
+    if (start.current == null) return;
+    start.current = null;
+    cap.current = false;
+    setLive(false);
+    setDrag((d) => {
+      if (d < -TRIGGER) {
+        setTimeout(() => {
+          onFire();
+          setDrag(0);
+        }, 220);
+        return -REVEAL;
+      }
+      return 0;
+    });
+  };
+  return {
+    drag,
+    live,
+    armed: drag < -TRIGGER,
+    handlers: { onPointerDown: down, onPointerMove: move, onPointerUp: up, onPointerCancel: up },
+  };
+}
+
+function SwipeAction({
+  label,
+  armedLabel,
+  icon,
+  onFire,
+  children,
+}: {
+  label: string;
+  armedLabel: string;
+  icon: React.ReactNode;
+  onFire: () => void;
+  children: React.ReactNode;
+}) {
+  const sw = useSwipe(onFire);
+  return (
+    <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", background: "var(--brand)" }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          padding: "0 22px",
+          color: "#fff",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+            width: 92,
+            transform: `scale(${sw.armed ? 1.06 : 1})`,
+            transition: "transform .15s",
+          }}
+        >
+          <span
+            className="round"
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,.18)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {icon}
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 700, textAlign: "center" }}>
+            {sw.armed ? armedLabel : label}
+          </span>
+        </div>
+      </div>
+      <div
+        {...sw.handlers}
+        style={{
+          position: "relative",
+          transform: `translateX(${sw.drag}px)`,
+          transition: sw.live ? "none" : "transform .26s cubic-bezier(.2,.8,.2,1)",
+          touchAction: "pan-y",
+          userSelect: "none",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function listingSeats(l: MobileListingItem): [string, React.ReactNode][] {
+  return [
+    ["אזור", l.section || "—"],
+    ["שורה", l.isStanding ? "עמידה" : l.row ?? "—"],
+    ["מושב", l.seat ?? "—"],
+  ];
+}
+
+function GlassSeatRow({
+  seats,
+  labelColor = "rgba(255,255,255,.65)",
+  sep = "rgba(255,255,255,.18)",
+}: {
+  seats: [string, React.ReactNode][];
+  labelColor?: string;
+  sep?: string;
+}) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", padding: "12px 14px 14px" }}>
+      {seats.map(([a, b], k) => (
+        <div
+          key={a}
+          style={{ paddingInlineStart: k ? 14 : 0, borderInlineStart: k ? `1px solid ${sep}` : "none" }}
+        >
+          <div style={{ fontSize: 11, color: labelColor, fontWeight: 500 }}>{a}</div>
+          <div className="num" style={{ fontSize: 20, fontWeight: 700, marginTop: 1 }}>{b}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const STATUS_BADGE: Record<MobileListingItem["status"], { label: string } | null> = {
+  active: { label: "פעיל" },
+  pending: { label: "בבדיקה" },
+  rejected: { label: "נדחה" },
+  sold: null,
+};
+
+function ListingPosterCard({
+  listing,
+  onEdit,
+  onCancel,
+}: {
+  listing: MobileListingItem;
+  onEdit?: () => void;
+  onCancel?: () => void;
+}) {
+  const sw = useSwipe(() => onEdit?.());
+  const badge = STATUS_BADGE[listing.status];
+  const body = (
+    <div
+      {...(onEdit ? sw.handlers : {})}
+      style={{
+        position: "relative",
+        minHeight: 330,
+        borderRadius: 14,
+        overflow: "hidden",
+        background: "var(--ink)",
+        color: "#fff",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        transform: `translateX(${sw.drag}px)`,
+        transition: sw.live ? "none" : "transform .26s cubic-bezier(.2,.8,.2,1)",
+        touchAction: "pan-y",
+        userSelect: "none",
+      }}
+    >
+      <div style={{ position: "absolute", inset: 0 }}>
+        <PosterBg src={listing.eventImageUrl} />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(20,20,19,.1) 0%, rgba(20,20,19,0) 22%, rgba(20,20,19,.7) 48%, rgba(20,20,19,.94) 75%)",
+        }}
+      />
+      {onCancel && (
+        <button
+          className="press"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={onCancel}
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            height: 30,
+            padding: "0 12px",
+            borderRadius: 999,
+            background: "rgba(20,20,19,.6)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,.18)",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            fontSize: 12,
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+            cursor: "pointer",
+          }}
+        >
+          <Icon.x size={13} color="#fff" />
+          בטל מכירה
+        </button>
+      )}
+      <span
+        className="num"
+        style={{
+          position: "absolute",
+          top: 12,
+          left: 12,
+          height: 28,
+          padding: "0 11px",
+          borderRadius: 999,
+          background: "rgba(20,20,19,.6)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255,255,255,.14)",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          fontSize: 13,
+          fontWeight: 700,
+        }}
+      >
+        {nis(listing.askingPrice)}
+      </span>
+      <div style={{ position: "relative", padding: "0 18px 14px" }}>
+        {badge && listing.status !== "active" && (
+          <span
+            style={{
+              display: "inline-block",
+              height: 22,
+              padding: "0 8px",
+              borderRadius: 999,
+              background: "rgba(255,255,255,.16)",
+              fontSize: 11,
+              fontWeight: 700,
+              lineHeight: "22px",
+              marginBottom: 8,
+            }}
+          >
+            {badge.label}
+          </span>
+        )}
+        <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.05, textWrap: "balance" }}>
+          {listing.artist}
+        </div>
+        <div className="num" style={{ fontSize: 14, color: "rgba(255,255,255,.8)", marginTop: 6 }}>
+          {hebDate(listing.date)}
+          {listing.time ? ` · ${listing.time}` : ""} · {abbrevCity(listing.venue)}
+        </div>
+      </div>
+      <div
+        style={{
+          position: "relative",
+          margin: "0 10px 10px",
+          borderRadius: 12,
+          background: "rgba(255,255,255,.12)",
+          backdropFilter: "blur(18px)",
+          border: "1px solid rgba(255,255,255,.16)",
+          overflow: "hidden",
+        }}
+      >
+        <GlassSeatRow seats={listingSeats(listing)} />
+      </div>
+      {onEdit && (
+        <div style={{ position: "relative", marginTop: -4, paddingBottom: 8, textAlign: "center", fontSize: 12, color: "rgba(255,255,255,.6)" }}>
+          החלק כדי לערוך ←
+        </div>
+      )}
+    </div>
+  );
+
+  if (!onEdit) return body;
+  return (
+    <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", background: "var(--ink)" }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          padding: "0 22px",
+          color: "#fff",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+            width: 92,
+            transform: `scale(${sw.armed ? 1.06 : 1})`,
+            transition: "transform .15s",
+          }}
+        >
+          <span
+            className="round"
+            style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(255,255,255,.14)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 20h4L19 9l-4-4L4 16z" />
+              <path d="M13.5 6.5l4 4" />
+            </svg>
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 700, textAlign: "center" }}>
+            {sw.armed ? "שחרר לעריכה" : "עריכה"}
+          </span>
+        </div>
+      </div>
+      {body}
+    </div>
+  );
+}
+
+function SoldPosterCard({ listing }: { listing: MobileListingItem }) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        minHeight: 260,
+        borderRadius: 14,
+        overflow: "hidden",
+        background: "#0E0E0D",
+        color: "#fff",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+      }}
+    >
+      <div style={{ position: "absolute", inset: 0, filter: "brightness(.5) saturate(.55)" }}>
+        <PosterBg src={listing.eventImageUrl} />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(14,14,13,.35) 0%, rgba(14,14,13,.2) 25%, rgba(14,14,13,.82) 55%, #0E0E0D 85%)",
+        }}
+      />
+      <span
+        style={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          height: 30,
+          padding: "0 12px",
+          borderRadius: 999,
+          background: "#fff",
+          color: "var(--ink)",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          fontSize: 12,
+          fontWeight: 700,
+        }}
+      >
+        <Icon.check size={12} color="var(--ink)" />
+        נמכר
+      </span>
+      <span
+        className="num"
+        style={{
+          position: "absolute",
+          top: 12,
+          left: 12,
+          height: 28,
+          padding: "0 11px",
+          borderRadius: 999,
+          background: "rgba(20,20,19,.6)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255,255,255,.14)",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          fontSize: 13,
+          fontWeight: 700,
+        }}
+      >
+        {nis(listing.askingPrice)}
+      </span>
+      <div style={{ position: "relative", padding: "0 18px 12px" }}>
+        <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.05, color: "rgba(255,255,255,.88)" }}>
+          {listing.artist}
+        </div>
+        <div className="num" style={{ fontSize: 14, color: "rgba(255,255,255,.6)", marginTop: 5 }}>
+          {hebDate(listing.date)}
+          {listing.time ? ` · ${listing.time}` : ""} · {abbrevCity(listing.venue)}
+        </div>
+      </div>
+      <div
+        style={{
+          position: "relative",
+          margin: "0 10px 10px",
+          borderRadius: 12,
+          background: "rgba(255,255,255,.06)",
+          border: "1px solid rgba(255,255,255,.09)",
+          overflow: "hidden",
+        }}
+      >
+        <GlassSeatRow seats={listingSeats(listing)} labelColor="rgba(255,255,255,.45)" sep="rgba(255,255,255,.1)" />
+      </div>
+    </div>
+  );
+}
+
+// ── Price-edit sheet (עריכת מחיר) ───────────────────────────────────────────
+function PriceEditSheet({
+  listing,
+  onClose,
+  onSave,
+}: {
+  listing: MobileListingItem;
+  onClose: () => void;
+  onSave: (price: number) => void | Promise<void>;
+}) {
+  const [price, setPrice] = useState(listing.askingPrice);
+  const [shown, setShown] = useState(false);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setShown(true));
+  }, []);
+  const lo = Math.max(1, Math.round(listing.askingPrice * 0.6));
+  const hi = Math.max(lo + 10, Math.round(listing.askingPrice * 1.6));
+  const mid = listing.askingPrice;
+  const changed = price !== listing.askingPrice && price > 0;
+  const save = async () => {
+    if (!price || saving) return;
+    setSaving(true);
+    await onSave(price);
+  };
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        background: shown ? "rgba(20,20,19,.4)" : "rgba(20,20,19,0)",
+        display: "flex",
+        alignItems: "flex-end",
+        transition: "background .2s",
+      }}
+      dir="rtl"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          background: "var(--bg)",
+          borderRadius: "28px 28px 0 0",
+          padding: "10px 20px calc(30px + var(--sab, env(safe-area-inset-bottom, 0px)))",
+          transform: shown ? "none" : "translateY(100%)",
+          transition: "transform .3s cubic-bezier(.2,.8,.2,1)",
+        }}
+      >
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--line-strong)", margin: "0 auto 14px" }} />
+        <div style={{ fontSize: 17, fontWeight: 700, textAlign: "center" }}>עריכת מחיר</div>
+        <div
+          className="num"
+          style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+        >
+          {listing.artist} · אזור {listing.section || "—"} · שורה {listing.isStanding ? "עמידה" : listing.row ?? "—"}
+        </div>
+        <div style={{ textAlign: "center", padding: "14px 0 6px" }}>
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>מחיר לכרטיס</div>
+          <div
+            className="num"
+            dir="ltr"
+            style={{ marginTop: 8, fontSize: 52, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, color: price ? "var(--ink)" : "var(--line-strong)" }}
+          >
+            ₪{price || 0}
+          </div>
+        </div>
+        <input
+          type="range"
+          min={lo}
+          max={hi}
+          step={1}
+          value={Math.min(hi, Math.max(lo, price))}
+          onChange={(e) => setPrice(Number(e.target.value))}
+          style={{ width: "100%", accentColor: "var(--brand)", marginTop: 8, direction: "ltr" }}
+        />
+        <div className="num" dir="ltr" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+          <span>{nis(lo)}</span>
+          <span>{nis(hi)}</span>
+        </div>
+        <div style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", marginTop: 10 }}>
+          מחיר שוק ממוצע <span className="num" style={{ fontWeight: 600, color: "var(--ink)" }}>{nis(mid)}</span>
+        </div>
+        <div
+          className="num"
+          style={{ display: "flex", justifyContent: "space-between", padding: "14px 0", marginTop: 12, borderTop: "1px solid var(--line)", fontSize: 16, fontWeight: 700 }}
+        >
+          <span>סך התמורה</span>
+          <span>{nis(price)}</span>
+        </div>
+        <button
+          className="press"
+          disabled={!price || saving}
+          onClick={save}
+          style={{
+            width: "100%",
+            height: 52,
+            borderRadius: "var(--r-md)",
+            background: changed ? "var(--brand)" : "var(--ink)",
+            color: "#fff",
+            fontSize: 15,
+            fontWeight: 600,
+            border: "none",
+            cursor: "pointer",
+            transition: "background .2s",
+            opacity: saving ? 0.7 : 1,
+          }}
+        >
+          {saving ? "שומר…" : "שמירה"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Cancel-listing confirm dialog ───────────────────────────────────────────
+function CancelDialog({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void | Promise<void> }) {
+  const [shown, setShown] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setShown(true));
+  }, []);
+  return (
+    <div
+      onClick={onClose}
+      dir="rtl"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        background: shown ? "rgba(20,20,19,.5)" : "rgba(20,20,19,0)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 28,
+        transition: "background .2s",
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 320,
+          borderRadius: 24,
+          background: "var(--bg)",
+          padding: "24px 20px 16px",
+          textAlign: "center",
+          opacity: shown ? 1 : 0,
+          transform: shown ? "scale(1)" : "scale(.94)",
+          transition: "opacity .2s, transform .2s cubic-bezier(.2,.8,.2,1)",
+          boxShadow: "0 24px 60px rgba(20,20,19,.3)",
+        }}
+      >
+        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.01em" }}>לבטל את המכירה?</div>
+        <div className="num" style={{ fontSize: 14, color: "var(--ink-2)", lineHeight: 1.5, marginTop: 8, textWrap: "pretty" }}>
+          הכרטיס יורד מהאתר. אפשר להציע אותו למכירה שוב בכל זמן.
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 20 }}>
+          <button
+            className="press"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              await onConfirm();
+            }}
+            style={{ height: 50, borderRadius: "var(--r-md)", background: "var(--brand)", color: "#fff", fontSize: 15, fontWeight: 700, border: "none", cursor: "pointer" }}
+          >
+            {busy ? "מבטל…" : "כן, בטל מכירה"}
+          </button>
+          <button
+            className="press"
+            onClick={onClose}
+            style={{ height: 46, borderRadius: "var(--r-md)", fontSize: 15, fontWeight: 600, color: "var(--ink)", background: "transparent", border: "none", cursor: "pointer" }}
+          >
+            השאר למכירה
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
