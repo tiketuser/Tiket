@@ -1,98 +1,131 @@
-// SVG icons used across the mobile redesign. Ported from the design package.
+// SVG icons used across the mobile redesign. Shapes match the unified design
+// package (24-viewBox, round caps). Legacy keys (chev, shield, lock, pin,
+// clock, filter) are kept so non-migrated screens keep rendering.
 import React from "react";
 
 type IconProps = { size?: number; color?: string };
 
+const sv = (size: number, color: string, w = 1.75) => ({
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none" as const,
+  stroke: color,
+  strokeWidth: w,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+});
+
 export const Icon = {
   search: ({ size = 20, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
-      <circle cx="9" cy="9" r="6" stroke={color} strokeWidth="1.8" />
-      <path d="M13.5 13.5L18 18" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    <svg {...sv(size, color)}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
+  ),
+  sliders: ({ size = 20, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color)}>
+      <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+      <circle cx="16" cy="7" r="2" />
+      <circle cx="8" cy="17" r="2" />
     </svg>
   ),
   chev: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M10 4l-4 4 4 4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <svg {...sv(size, color, 2)}>
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  ),
+  chevL: ({ size = 16, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color, 2)}>
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  ),
+  chevR: ({ size = 16, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color, 2)}>
+      <path d="M9 6l6 6-6 6" />
     </svg>
   ),
   chevDown: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M4 6l4 4 4-4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <svg {...sv(size, color, 2)}>
+      <path d="M6 9l6 6 6-6" />
     </svg>
   ),
   shield: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M8 1.5l5.5 2v4.2c0 3-2.2 5.6-5.5 6.8C4.7 13.3 2.5 10.7 2.5 7.7V3.5L8 1.5z" stroke={color} strokeWidth="1.3" fill="none" />
-      <path d="M5.5 8l1.7 1.7L10.5 6.4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg {...sv(size, color, 1.4)}>
+      <path d="M12 2.5l8 3v6.3c0 4.5-3.3 8.4-8 10.2-4.7-1.8-8-5.7-8-10.2V5.5l8-3z" />
+      <path d="M8.5 12l2.5 2.5L16 9.5" />
     </svg>
   ),
   lock: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <rect x="3" y="7" width="10" height="7" rx="1.2" stroke={color} strokeWidth="1.3" />
-      <path d="M5 7V5a3 3 0 016 0v2" stroke={color} strokeWidth="1.3" />
+    <svg {...sv(size, color, 1.4)}>
+      <rect x="4.5" y="10.5" width="15" height="10.5" rx="2" />
+      <path d="M7.5 10.5V7.5a4.5 4.5 0 019 0v3" />
     </svg>
   ),
-  heart: ({ size = 16, color = "currentColor", fill = "none" }: IconProps & { fill?: string }) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill={fill}>
-      <path d="M8 13.5S2 10 2 6a3 3 0 015.5-1.6A3 3 0 0113 6c0 4-5 7.5-5 7.5z" stroke={color} strokeWidth="1.3" />
+  heart: ({ size = 20, color = "currentColor", fill = "none" }: IconProps & { fill?: string }) => (
+    <svg {...sv(size, color)} fill={fill}>
+      <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
     </svg>
   ),
   pin: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M8 14s5-4.5 5-8.5A5 5 0 003 5.5C3 9.5 8 14 8 14z" stroke={color} strokeWidth="1.3" />
-      <circle cx="8" cy="5.5" r="1.8" stroke={color} strokeWidth="1.3" />
+    <svg {...sv(size, color, 1.4)}>
+      <path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" />
+      <circle cx="12" cy="9" r="2.6" />
     </svg>
   ),
-  cal: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <rect x="2" y="3.5" width="12" height="10" rx="1.2" stroke={color} strokeWidth="1.3" />
-      <path d="M2 6.5h12M5 2v3M11 2v3" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+  cal: ({ size = 18, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color)}>
+      <rect x="4" y="5" width="16" height="15" rx="2.5" />
+      <path d="M4 10h16M8 3v4M16 3v4" />
     </svg>
   ),
   clock: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="6" stroke={color} strokeWidth="1.3" />
-      <path d="M8 4.5V8l2.5 1.5" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+    <svg {...sv(size, color, 1.4)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
     </svg>
   ),
   filter: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M2 4h12M4 8h8M6 12h4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <svg {...sv(size, color)}>
+      <path d="M3 6h18M6 12h12M10 18h4" />
     </svg>
   ),
-  x: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M4 4l8 8M12 4l-8 8" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+  x: ({ size = 20, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color)}>
+      <path d="M6 6l12 12M18 6L6 18" />
     </svg>
   ),
-  user: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="5.5" r="2.5" stroke={color} strokeWidth="1.3" />
-      <path d="M3 14c1-2.5 3-4 5-4s4 1.5 5 4" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+  check: ({ size = 16, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color, 2.2)}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
     </svg>
   ),
-  wallet: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M2.5 4.5C2.5 3.7 3.2 3 4 3h7c0.5 0 1 0.4 1 1v1.5" stroke={color} strokeWidth="1.3" strokeLinejoin="round" />
-      <rect x="1.5" y="5" width="12.5" height="8.5" rx="1.4" stroke={color} strokeWidth="1.3" />
-      <path d="M14 8.5h-2.5a1.5 1.5 0 000 3H14" stroke={color} strokeWidth="1.3" strokeLinejoin="round" />
-      <circle cx="11.5" cy="10" r="0.7" fill={color} />
+  user: ({ size = 22, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color)}>
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5 20c1.2-3.3 3.9-5 7-5s5.8 1.7 7 5" />
+    </svg>
+  ),
+  wallet: ({ size = 22, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color)}>
+      <rect x="3" y="6" width="18" height="13" rx="2.5" />
+      <path d="M16 12.5h2M3 9.5h18" />
     </svg>
   ),
   ticket: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M2 5.5a1 1 0 011-1h10a1 1 0 011 1v1.2a1.3 1.3 0 000 2.6v1.2a1 1 0 01-1 1H3a1 1 0 01-1-1V9.3a1.3 1.3 0 000-2.6V5.5z" stroke={color} strokeWidth="1.3" strokeLinejoin="round" />
-      <path d="M9 4.8v1M9 7.5v1M9 10.2v1" stroke={color} strokeWidth="1.1" strokeLinecap="round" />
+    <svg {...sv(size, color)}>
+      <path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z" />
+      <path d="M14 6v12" strokeDasharray="2 2.5" />
     </svg>
   ),
-  home: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M2.5 7L8 2.5 13.5 7v6.5a.5.5 0 01-.5.5h-3v-4h-4v4h-3a.5.5 0 01-.5-.5V7z" stroke={color} strokeWidth="1.3" strokeLinejoin="round" />
+  home: ({ size = 22, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color)}>
+      <path d="M4 10.5L12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z" />
     </svg>
   ),
-  plus: ({ size = 16, color = "currentColor" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <path d="M8 3v10M3 8h10" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  plus: ({ size = 22, color = "currentColor" }: IconProps) => (
+    <svg {...sv(size, color, 2.2)}>
+      <path d="M12 5v14M5 12h14" />
     </svg>
   ),
 };

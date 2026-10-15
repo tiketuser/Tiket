@@ -21,7 +21,7 @@ const TABS: { id: TabId; label: string; href: string; gated: boolean }[] = [
 ];
 
 function tabIcon(id: TabId, color: string) {
-  const size = 20;
+  const size = 24;
   if (id === "home") return <Icon.home size={size} color={color} />;
   if (id === "favorites") return <Icon.heart size={size} color={color} />;
   if (id === "tickets") return <Icon.wallet size={size} color={color} />;
@@ -87,9 +87,8 @@ export default function MobileBottomNav() {
       <nav
         className="tk-mobile fixed inset-x-0 bottom-0 z-40 lg:hidden"
         style={{
-          background: "rgba(251,248,241,0.96)",
-          backdropFilter: "blur(14px)",
-          borderTop: "1px solid var(--tk-line)",
+          background: "var(--bg)",
+          borderTop: "1px solid var(--line)",
           display: "grid",
           gridTemplateColumns: "repeat(5, 1fr)",
           alignItems: "center",
@@ -103,9 +102,9 @@ export default function MobileBottomNav() {
       >
         {TABS.map((t) => {
           const isActive = current === t.id;
-          const color = isActive ? "var(--tk-ink)" : "var(--tk-muted)";
+          const color = isActive ? "var(--ink)" : "var(--faint)";
           if (t.id === "sell") {
-            // Lifted sell tab — v4 variant: rotated dark square with lime plus.
+            // Lifted sell tab — unified: brand rounded square with a white plus.
             return (
               <div key={t.id} style={{ position: "relative", height: 0 }}>
                 <div
@@ -114,11 +113,11 @@ export default function MobileBottomNav() {
                     insetInlineStart: 0,
                     insetInlineEnd: 0,
                     bottom: "100%",
-                    marginBottom: -16,
+                    marginBottom: -12,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    gap: 2,
+                    gap: 3,
                     pointerEvents: "none",
                     zIndex: 5,
                   }}
@@ -126,29 +125,28 @@ export default function MobileBottomNav() {
                   <button
                     onClick={() => handleTab(t)}
                     aria-label={t.label}
+                    className="press round"
                     style={{
                       pointerEvents: "auto",
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      background: "var(--tk-ink)",
-                      color: "var(--tk-lime)",
+                      width: 48,
+                      height: 40,
+                      borderRadius: 12,
+                      background: "var(--brand)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       border: 0,
                       cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(10,10,10,0.25)",
-                      transform: "rotate(-4deg)",
+                      boxShadow: "0 4px 12px rgba(20,20,19,.18)",
                     }}
                   >
-                    <Icon.plus size={22} color="var(--tk-lime)" />
+                    <Icon.plus size={22} color="#fff" />
                   </button>
                   <span
                     style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: "var(--tk-ink)",
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      color: "var(--ink)",
                       pointerEvents: "auto",
                     }}
                   >
@@ -168,12 +166,13 @@ export default function MobileBottomNav() {
                 gap: 3,
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 10,
+                fontSize: 10.5,
                 color,
-                fontWeight: 600,
+                fontWeight: isActive ? 600 : 500,
                 padding: 0,
                 background: "transparent",
                 border: 0,
+                transition: "color .15s",
               }}
             >
               {tabIcon(t.id, color)}

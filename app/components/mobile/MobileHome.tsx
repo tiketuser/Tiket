@@ -11,7 +11,7 @@ import { eventDayStart } from "@/utils/eventDate";
 import MobileShell from "./MobileShell";
 import MobileTopBar from "./MobileTopBar";
 import MobileSearchBar from "./MobileSearchBar";
-import MobileCategoryRow from "./MobileCategoryRow";
+import MobileCategoryRow, { MOBILE_CATEGORIES } from "./MobileCategoryRow";
 import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
 import MobileFilterSheet, {
   DEFAULT_FILTERS,
@@ -29,20 +29,12 @@ type ApiCard = MobileEventCardData & { category?: string };
 // Local skeleton mirroring MobileEventCard: 150px image block + title/meta lines.
 function MobileCardSkeleton() {
   return (
-    <div
-      style={{
-        borderRadius: 20,
-        overflow: "hidden",
-        background: "var(--tk-paper)",
-        border: "1px solid var(--tk-line)",
-      }}
-    >
-      <Skeleton style={{ height: 150 }} />
-      <div style={{ padding: 10 }}>
-        <Skeleton style={{ height: 12, width: "80%", borderRadius: 4 }} />
-        <Skeleton style={{ height: 9, width: "55%", borderRadius: 4, marginTop: 8 }} />
-        <Skeleton style={{ height: 10, width: "45%", borderRadius: 4, marginTop: 8 }} />
-        <Skeleton style={{ height: 14, width: "40%", borderRadius: 4, marginTop: 8 }} />
+    <div style={{ minWidth: 0 }}>
+      <Skeleton style={{ aspectRatio: "1 / 1.08", borderRadius: "var(--r-card)" }} />
+      <div style={{ padding: "10px 2px 0" }}>
+        <Skeleton style={{ height: 14, width: "80%", borderRadius: 4 }} />
+        <Skeleton style={{ height: 11, width: "55%", borderRadius: 4, marginTop: 8 }} />
+        <Skeleton style={{ height: 13, width: "40%", borderRadius: 4, marginTop: 8 }} />
       </div>
     </div>
   );
@@ -209,28 +201,46 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
   return (
     <MobileShell>
       <MobileTopBar />
-      <MobileSearchBar
-        value={search}
-        onChange={setSearch}
-        onSubmit={onSubmitSearch}
-        onOpenFilter={() => { setFilterDraft(filters); setFilterOpen(true); }}
-        activeFilterCount={countActiveFilters(filters)}
-      />
-      <MobileCategoryRow selected={category} onSelect={setCategory} />
 
       <div
         style={{
-          padding: "0 18px 6px",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          background: "var(--bg)",
+          borderBottom: "1px solid var(--line)",
+          paddingBottom: 2,
+        }}
+      >
+        <MobileSearchBar
+          value={search}
+          onChange={setSearch}
+          onSubmit={onSubmitSearch}
+          onOpenFilter={() => { setFilterDraft(filters); setFilterOpen(true); }}
+          activeFilterCount={countActiveFilters(filters)}
+        />
+        <MobileCategoryRow selected={category} onSelect={setCategory} />
+      </div>
+
+      <div
+        style={{
+          padding: "22px 20px 14px",
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: "baseline",
         }}
       >
         <span
-          className="tk-mono"
-          style={{ fontSize: 11, color: "var(--tk-muted)" }}
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            whiteSpace: "nowrap",
+          }}
         >
-          {filtered.length} מופעים
+          {category === null
+            ? "כל המופעים"
+            : MOBILE_CATEGORIES.find((c) => c.cat === category)?.label ?? category}
         </span>
         {(category !== null || search || countActiveFilters(filters) > 0) && (
           <button
@@ -241,12 +251,14 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
               setFilterDraft(DEFAULT_FILTERS);
             }}
             style={{
-              fontSize: 11,
-              color: "var(--tk-blue)",
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--brand)",
               background: "transparent",
               border: 0,
               cursor: "pointer",
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
             }}
           >
             נקה הכל
@@ -257,10 +269,11 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
       {loading ? (
         <div
           style={{
-            padding: "4px 14px 20px",
+            padding: "0 20px 20px",
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 10,
+            gridTemplateColumns: "repeat(2, minmax(0,1fr))",
+            columnGap: 14,
+            rowGap: 24,
           }}
         >
           {Array.from({ length: 6 }).map((_, i) => (
@@ -270,10 +283,11 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
       ) : filtered.length === 0 ? (
         <div
           style={{
-            padding: "40px 18px",
+            padding: "56px 40px",
             textAlign: "center",
-            color: "var(--tk-muted)",
-            fontSize: 13,
+            color: "var(--ink)",
+            fontSize: 16,
+            fontWeight: 600,
           }}
         >
           אין תוצאות התואמות את החיפוש
@@ -281,10 +295,11 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
       ) : (
         <div
           style={{
-            padding: "4px 14px 20px",
+            padding: "0 20px 20px",
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 10,
+            gridTemplateColumns: "repeat(2, minmax(0,1fr))",
+            columnGap: 14,
+            rowGap: 24,
           }}
         >
           {filtered.map((c) => (

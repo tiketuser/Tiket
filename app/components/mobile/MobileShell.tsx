@@ -44,8 +44,7 @@ export default function MobileShell({
       className="tk-mobile lg:hidden"
       style={{
         minHeight: "100dvh",
-        background:
-          "radial-gradient(circle at 50% 30%, #EAE4D3 0%, var(--tk-bg) 70%)",
+        background: "var(--bg)",
         paddingBottom: showBottomNav
           ? "calc(80px + var(--sab, env(safe-area-inset-bottom, 0px)))"
           : "var(--sab, env(safe-area-inset-bottom, 0px))",

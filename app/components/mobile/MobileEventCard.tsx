@@ -81,24 +81,29 @@ export default function MobileEventCard({
   };
 
   const imgSrc = card.imageSrc ? encodeImageUrl(card.imageSrc) : "";
+  const city = card.location?.split(",")[1]?.trim() ?? card.location;
 
   return (
     <Link
       href={eventHref(card.title)}
       style={{
-        padding: 0,
-        textAlign: "inherit",
-        borderRadius: 20,
-        overflow: "hidden",
-        background: "var(--tk-paper)",
-        border: "1px solid var(--tk-line)",
-        position: "relative",
         display: "block",
+        minWidth: 0,
         textDecoration: "none",
         color: "inherit",
+        cursor: "pointer",
       }}
     >
-      <div style={{ position: "relative", height: 150, overflow: "hidden" }}>
+      <div
+        className="press"
+        style={{
+          position: "relative",
+          aspectRatio: "1 / 1.08",
+          borderRadius: "var(--r-card)",
+          overflow: "hidden",
+          background: "var(--surface-2)",
+        }}
+      >
         {imgSrc ? (
           <Image
             src={imgSrc}
@@ -111,16 +116,27 @@ export default function MobileEventCard({
         ) : (
           <div style={{ width: "100%", height: "100%", background: "#1A1A1A" }} />
         )}
+        {/* hairline ring over the image */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: "var(--r-card)",
+            boxShadow: "inset 0 0 0 1px rgba(20,20,19,.06)",
+            pointerEvents: "none",
+          }}
+        />
         <button
           type="button"
           onClick={toggleFav}
           aria-label={fav ? "הסר ממועדפים" : "הוסף למועדפים"}
+          className="press"
           style={{
             position: "absolute",
-            top: 8,
-            left: 8,
-            width: 28,
-            height: 28,
+            top: 4,
+            left: 4,
+            width: 40,
+            height: 40,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -128,65 +144,71 @@ export default function MobileEventCard({
             zIndex: 2,
             background: "transparent",
             border: "none",
+            filter: "drop-shadow(0 1px 2px rgba(0,0,0,.35))",
           }}
         >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill={fav ? "#B54653" : "rgba(0,0,0,0.35)"}
-            stroke="#f5f1e8"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          <svg width="22" height="22" viewBox="0 0 24 24" fill={fav ? "var(--brand)" : "rgba(20,20,19,.28)"}>
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              stroke="#fff"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </div>
-      <div style={{ padding: 10 }}>
-        {card.category && (
-          <div style={{ fontSize: 10, color: "var(--tk-muted)", marginBottom: 2 }}>
-            {card.category}
-          </div>
-        )}
+      <div style={{ padding: "10px 2px 0" }}>
         <div
           style={{
-            fontSize: 12,
-            fontWeight: 700,
-            lineHeight: 1.2,
+            fontSize: 15,
+            fontWeight: 600,
+            lineHeight: 1.3,
+            letterSpacing: "-0.005em",
+            whiteSpace: "nowrap",
             overflow: "hidden",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
+            textOverflow: "ellipsis",
           }}
         >
           {abbrevCity(card.title)}
         </div>
-        <div style={{ fontSize: 9, color: "var(--tk-muted)", marginTop: 2 }}>
-          {hebDate(card.date)} · {card.location?.split(",")[1]?.trim() ?? card.location}
+        <div
+          style={{
+            fontSize: 13,
+            color: "var(--muted)",
+            marginTop: 2,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {hebDate(card.date)} · {city}
         </div>
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 4,
-            marginTop: 4,
-            color: "var(--tk-muted)",
+            justifyContent: "space-between",
+            marginTop: 6,
           }}
         >
-          <Icon.ticket size={11} color="var(--tk-muted)" />
-          <span style={{ fontSize: 10, fontWeight: 600 }}>
-            {card.ticketsLeft} כרטיסים
+          <span className="num" style={{ fontSize: 15, fontWeight: 700 }}>
+            {card.maxPrice && card.maxPrice > card.price
+              ? `${nis(card.price)} – ${nis(card.maxPrice)}`
+              : nis(card.price)}
           </span>
-        </div>
-        <div
-          className="tk-mono"
-          style={{ fontSize: 14, fontWeight: 700, marginTop: 4 }}
-        >
-          {card.maxPrice && card.maxPrice > card.price
-            ? `${nis(card.price)} – ${nis(card.maxPrice)}`
-            : nis(card.price)}
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              fontSize: 12,
+              color: "var(--muted)",
+            }}
+          >
+            <Icon.ticket size={14} color="var(--muted)" />
+            <span className="num">{card.ticketsLeft}</span>
+          </span>
         </div>
       </div>
     </Link>

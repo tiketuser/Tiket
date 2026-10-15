@@ -60,6 +60,69 @@
 .tk-faq summary::after { content: "+"; color: var(--tk-muted); font-weight: 400; }
 .tk-faq[open] summary::after { content: "\2212"; }
 
+/* ─── Unified redesign tokens ───────────────────────────────
+   The "New"/unified mobile design (ported from claude.ai/design) runs on a
+   white canvas with its own token vocabulary. Scoped to .tk-mobile so desktop
+   is untouched. New names live alongside the legacy --tk-* set during the
+   screen-by-screen migration. */
+.tk-mobile {
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F4F2EE;
+  --ink: #141413;
+  --ink-2: #3B3A37;
+  --muted: #6F6B63;
+  --faint: #A29E95;
+  --line: #EEEBE5;
+  --line-strong: #DCD7CC;
+  --brand: #B54653;
+  --brand-dark: #933843;
+  --brand-soft: #F7EAEB;
+  --ok: #1F7A4A;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-card: 18px;
+  --shadow-sm: 0 1px 2px rgba(20,20,19,.05);
+  --shadow-md: 0 1px 2px rgba(20,20,19,.04), 0 8px 24px rgba(20,20,19,.08);
+  /* The unified canvas is flat white, not the cream radial. */
+  background: var(--bg);
+  color: var(--ink);
+
+  /* Legacy --tk-* aliases → unified palette, so screens not yet structurally
+     ported still render in the white/brand language. Scoped to .tk-mobile only,
+     so desktop (:root) and admin (.tk-admin) keep the cream values. */
+  --tk-bg: #FFFFFF;
+  --tk-paper: #FFFFFF;
+  --tk-ink: #141413;
+  --tk-ink-2: #3B3A37;
+  --tk-muted: #6F6B63;
+  --tk-line: #EEEBE5;
+  --tk-line-strong: #DCD7CC;
+  --tk-blue: #B54653;
+  --tk-blue-ink: #933843;
+  --tk-lime: #EAC4C7;
+  --tk-ok: #1F7A4A;
+}
+.tk-mobile .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.tk-mobile .press { transition: transform .12s ease, background-color .15s ease, border-color .15s ease, color .15s ease; }
+.tk-mobile .press:active { transform: scale(.97); }
+.tk-mobile .auth-in { transition: border-color .15s; }
+.tk-mobile .auth-in:focus { border-color: var(--ink) !important; }
+.tk-mobile .auth-in::placeholder { color: var(--faint); }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+/* Squircle corners where supported bump the radii up a notch. */
+@supports (corner-shape: squircle) {
+  .tk-mobile {
+    --r-sm: 16px;
+    --r-md: 22px;
+    --r-lg: 30px;
+    --r-card: 30px;
+  }
+  .tk-mobile *:not(.round) { corner-shape: squircle; }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     --foreground: #171717;

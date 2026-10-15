@@ -177,11 +177,10 @@ export default function MobileTicketList({
     setSelectedId(null);
   }, []);
 
-  // Android: the system gesture bar sits outside the webview, so paint it
-  // ink while the black buy bar is up (checkout screen is cream again).
+  // The unified buy bar is a light surface, so keep the Android system gesture
+  // bar on its default (non-ink) treatment.
   useEffect(() => {
-    const ink = selected !== null && !isCheckoutOpen;
-    void setNavBarInk(ink);
+    void setNavBarInk(false);
     return () => {
       void setNavBarInk(false);
     };
@@ -223,18 +222,19 @@ export default function MobileTicketList({
                   );
                 }
               }}
+              className="press"
               style={{
                 display: "block",
                 width: "100%",
                 textAlign: "inherit",
-                padding: isBundle ? "12px 12px 0" : 12,
-                border:
-                  "2px solid " +
-                  (isSel ? "var(--tk-blue)" : "var(--tk-line)"),
-                background: isSel
-                  ? "rgba(181, 70, 83, 0.04)"
-                  : "var(--tk-paper)",
-                borderRadius: 12,
+                padding: 0,
+                border: "none",
+                background: "transparent",
+                borderRadius: "var(--r-md)",
+                boxShadow: isSel
+                  ? "inset 0 0 0 1.5px var(--ink)"
+                  : "inset 0 0 0 1px var(--line-strong)",
+                transition: "box-shadow .15s",
                 position: "relative",
                 overflow: "hidden",
                 fontFamily: "inherit",
@@ -247,16 +247,16 @@ export default function MobileTicketList({
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 10,
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "14px 16px",
                 }}
               >
-                <div style={{ minWidth: 0 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <div
                     style={{
-                      fontSize: 14,
-                      fontWeight: 700,
-                      letterSpacing: "-0.01em",
+                      fontSize: 15,
+                      fontWeight: 600,
                     }}
                   >
                     אזור {t.section || "—"}
@@ -264,11 +264,11 @@ export default function MobileTicketList({
                     {rowLabel}
                   </div>
                   <div
-                    className="tk-mono"
+                    className="num"
                     style={{
-                      fontSize: 10,
-                      color: "var(--tk-muted)",
-                      marginTop: 3,
+                      fontSize: 13,
+                      color: "var(--muted)",
+                      marginTop: 2,
                     }}
                   >
                     {seatLabel}
@@ -276,17 +276,16 @@ export default function MobileTicketList({
                 </div>
                 <div style={{ textAlign: "left", flexShrink: 0 }}>
                   <div
-                    className="tk-mono"
-                    style={{ fontSize: 17, fontWeight: 700, lineHeight: 1 }}
+                    className="num"
+                    style={{ fontSize: 17, fontWeight: 700 }}
                   >
                     {nis(priceMain)}
                   </div>
                   <div
-                    className="tk-mono"
                     style={{
-                      fontSize: 9,
-                      color: "var(--tk-muted)",
-                      marginTop: 3,
+                      fontSize: 12,
+                      color: "var(--muted)",
+                      marginTop: 1,
                     }}
                   >
                     לכרטיס
@@ -294,15 +293,13 @@ export default function MobileTicketList({
                 </div>
               </div>
 
-              {/* Bundle strip — bleeds to the card edges, clipped by overflow:hidden */}
+              {/* Bundle strip — spans the card, clipped by overflow:hidden */}
               {isBundle && (
                 <div
-                  className="tk-mono"
                   style={{
-                    margin: "12px -12px 0",
-                    background: "var(--tk-ink)",
-                    color: "var(--tk-bg)",
-                    padding: "8px 12px",
+                    background: "var(--ink)",
+                    color: "#fff",
+                    padding: "9px 16px",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
@@ -349,27 +346,33 @@ export default function MobileTicketList({
             left: 0,
             right: 0,
             bottom: 0,
-            background: "var(--tk-ink)",
-            color: "var(--tk-bg)",
+            background: "var(--bg)",
+            borderTop: "1px solid var(--line)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: 12,
-            // Bar hugs the screen edge; the home-indicator inset becomes
-            // padding so the black fills the safe area instead of floating.
-            padding: "12px 18px calc(12px + var(--sab, env(safe-area-inset-bottom, 0px)))",
-            borderRadius: "14px 14px 0 0",
-            boxShadow: "0 -8px 20px rgba(0,0,0,0.18)",
+            padding: "12px 20px calc(16px + var(--sab, env(safe-area-inset-bottom, 0px)))",
             zIndex: 30,
           }}
           dir="rtl"
         >
           <div style={{ minWidth: 0 }}>
             <div
-              className="tk-mono"
+              className="num"
+              style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em" }}
+            >
+              {nis(
+                selected.kind === "bundle"
+                  ? selected.total
+                  : selected.ticket.askingPrice,
+              )}
+            </div>
+            <div
+              className="num"
               style={{
-                fontSize: 10,
-                opacity: 0.5,
+                fontSize: 13,
+                color: "var(--muted)",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -383,26 +386,18 @@ export default function MobileTicketList({
                       : ""
                   }`}
             </div>
-            <div
-              className="tk-mono"
-              style={{ fontSize: 20, fontWeight: 700 }}
-            >
-              {nis(
-                selected.kind === "bundle"
-                  ? selected.total
-                  : selected.ticket.askingPrice,
-              )}
-            </div>
           </div>
           <button
+            className="press"
             onClick={onContinue}
             style={{
-              background: "var(--tk-lime)",
-              color: "var(--tk-blue-ink)",
-              padding: "12px 20px",
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 700,
+              background: "var(--brand)",
+              color: "#fff",
+              height: 52,
+              padding: "0 28px",
+              borderRadius: "var(--r-md)",
+              fontSize: 15,
+              fontWeight: 600,
               border: "none",
               cursor: "pointer",
               fontFamily: "inherit",

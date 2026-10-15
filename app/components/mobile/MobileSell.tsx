@@ -318,8 +318,7 @@ export default function MobileSell({
           flexShrink: 0,
           padding: "10px 14px",
           paddingBottom: "calc(14px + var(--sab, env(safe-area-inset-bottom, 0px)))",
-          background: "rgba(245,241,232,0.95)",
-          backdropFilter: "blur(10px)",
+          background: "var(--bg)",
           borderTop: "1px solid var(--tk-line)",
         }}
       >

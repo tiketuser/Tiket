@@ -393,7 +393,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               ? "translate-y-0 sm:scale-100 opacity-100"
               : "translate-y-12 sm:translate-y-0 sm:scale-95 opacity-0"
           }`}
-          style={{ background: "var(--tk-bg)", color: "var(--tk-ink)" }}
+          style={{ background: "var(--bg)", color: "var(--ink)" }}
           dir="rtl"
         >
           {/* Header — back · תשלום · מאובטח */}
@@ -403,41 +403,41 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "14px 18px",
+              padding: "14px 16px",
               paddingTop: "calc(14px + var(--sat, env(safe-area-inset-top, 0px)))",
-              borderBottom: "1px solid var(--tk-line)",
+              borderBottom: "1px solid var(--line)",
             }}
           >
             <button
               onClick={handleClose}
               aria-label="חזרה"
-              className="transition-transform active:scale-95"
+              className="press round"
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 999,
-                background: "var(--tk-paper)",
-                border: "1px solid var(--tk-line)",
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "var(--surface-2)",
+                border: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
               }}
             >
-              <Icon.chev size={16} />
+              <Icon.chevR size={17} color="var(--ink)" />
             </button>
-            <div style={{ fontSize: 15, fontWeight: 700 }}>תשלום</div>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>תשלום</div>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 4,
-                fontSize: 11,
-                color: "var(--tk-blue)",
-                fontWeight: 600,
+                fontSize: 13,
+                color: "var(--muted)",
+                fontWeight: 500,
               }}
             >
-              <Icon.lock size={12} color="var(--tk-blue)" /> מאובטח
+              <Icon.lock size={14} color="var(--muted)" /> מאובטח
             </div>
           </div>
 
@@ -457,7 +457,7 @@ const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           )}
 
           {step === 3 && (
-            <div className="flex-1 overflow-y-auto" style={{ padding: "20px 18px 24px" }}>
+            <div className="flex-1 overflow-y-auto" style={{ padding: "20px 20px 30px" }}>
               <CheckoutStepConfirmation
                 tickets={tickets}
                 onClose={handleClose}

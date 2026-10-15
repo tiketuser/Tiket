@@ -17,70 +17,109 @@ export default function MobileSearchBar({
   activeFilterCount?: number;
 }) {
   return (
-    <div style={{ padding: "6px 18px 10px", display: "flex", gap: 8 }}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit?.();
-        }}
+    <div style={{ padding: "4px 20px 0" }}>
+      <div
         style={{
+          height: 50,
           display: "flex",
           alignItems: "center",
           gap: 10,
-          flex: 1,
-          background: "var(--tk-paper)",
-          border: "1px solid var(--tk-line-strong)",
+          paddingInlineStart: 16,
+          paddingInlineEnd: 6,
           borderRadius: 14,
-          padding: "11px 14px",
+          background: "var(--surface-2)",
         }}
       >
-        <Icon.search size={16} color="var(--tk-muted)" />
+        <Icon.search size={19} color="var(--ink-2)" />
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit?.();
+          }}
           placeholder="חפש הופעה, אמן או עיר"
           style={{
             flex: 1,
-            border: "none",
+            minWidth: 0,
+            height: "100%",
+            border: 0,
             outline: "none",
             background: "transparent",
-            fontSize: 13,
+            fontSize: 15,
             fontFamily: "inherit",
-            color: "var(--tk-ink)",
-            minWidth: 0,
+            color: "var(--ink)",
           }}
         />
-      </form>
-      {onOpenFilter && (
-        <button
-          onClick={onOpenFilter}
-          aria-label="סינון"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            padding: "0 14px",
-            borderRadius: 14,
-            flexShrink: 0,
-            fontSize: 12,
-            fontWeight: 600,
-            border:
-              "1px solid " +
-              (activeFilterCount ? "var(--tk-blue)" : "var(--tk-line-strong)"),
-            background: activeFilterCount ? "var(--tk-blue)" : "var(--tk-paper)",
-            color: activeFilterCount ? "#fff" : "var(--tk-ink)",
-          }}
-        >
-          <Icon.filter
-            size={14}
-            color={activeFilterCount ? "#fff" : "currentColor"}
-          />
-          {activeFilterCount > 0 && (
-            <span className="tk-mono">{activeFilterCount}</span>
-          )}
-        </button>
-      )}
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            aria-label="נקה"
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: "50%",
+              background: "var(--faint)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: 0,
+              cursor: "pointer",
+            }}
+          >
+            <Icon.x size={12} color="#fff" />
+          </button>
+        )}
+        {onOpenFilter && (
+          <>
+            <span style={{ width: 1, height: 22, background: "var(--line-strong)" }} />
+            <button
+              type="button"
+              className="press"
+              onClick={onOpenFilter}
+              aria-label="סינון"
+              style={{
+                position: "relative",
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: activeFilterCount ? "var(--ink)" : "transparent",
+                border: 0,
+                cursor: "pointer",
+              }}
+            >
+              <Icon.sliders size={19} color={activeFilterCount ? "#fff" : "var(--ink)"} />
+              {activeFilterCount > 0 && (
+                <span
+                  className="num"
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    left: -4,
+                    minWidth: 17,
+                    height: 17,
+                    padding: "0 4px",
+                    borderRadius: 9,
+                    background: "var(--brand)",
+                    color: "#fff",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 0 2px var(--surface-2)",
+                  }}
+                >
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 // Design-language building blocks for the checkout screen ("תשלום" in the
 // Tiket design project). Shared by CheckoutDialog (loading state) and
 // CheckoutStepPayment (live Stripe form) so both render the same layout.
+// Styled to the unified redesign (white canvas, --brand, squircle radii).
 
 import React from "react";
 import Image from "next/image";
@@ -20,20 +21,31 @@ export function CountdownBar({
   return (
     <div
       style={{
-        background: "var(--tk-ink)",
-        color: "var(--tk-bg)",
-        padding: "10px 14px",
-        borderRadius: 10,
+        height: 44,
+        padding: "0 14px",
+        borderRadius: "var(--r-sm)",
+        background: "var(--surface-2)",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 14,
       }}
     >
-      <span style={{ fontSize: 12 }}>הכרטיס שמור לך</span>
       <span
-        className={urgent ? "tk-mono animate-pulse" : "tk-mono"}
-        style={{ fontSize: 14, fontWeight: 700, color: "var(--tk-lime)" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          fontSize: 14,
+          color: "var(--ink-2)",
+        }}
+      >
+        <Icon.clock size={18} color="var(--ink-2)" />
+        הכרטיסים שמורים לך
+      </span>
+      <span
+        className={urgent ? "num animate-pulse" : "num"}
+        style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}
       >
         {display}
       </span>
@@ -57,80 +69,112 @@ function seatsValue(tickets: TicketInfo[]): string {
   return contiguous ? `${first}-${last}` : seats.join(", ");
 }
 
-function Mini({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="tk-mono" style={{ fontSize: 9, color: "var(--tk-muted)" }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 14, fontWeight: 700 }}>{value}</div>
-    </div>
-  );
-}
-
 export function TicketStub({ tickets }: { tickets: TicketInfo[] }) {
   const first = tickets[0];
   if (!first) return null;
   const hasSeatInfo =
     first.section != null || first.row != null || first.seat != null || first.isStanding;
   const seatCount = tickets.length;
+  const venueParts = (first.venue || "").split(",").map((p) => p.trim());
 
   return (
-    <div
-      style={{
-        background: "var(--tk-paper)",
-        border: "1px solid var(--tk-line-strong)",
-        borderRadius: 12,
-        overflow: "hidden",
-        marginBottom: 14,
-      }}
-    >
-      {first.imageUrl && (
-        <div style={{ position: "relative", width: "100%", height: 150, background: "#1A1A1A" }}>
-          <Image
-            src={first.imageUrl}
-            alt={first.title}
-            fill
-            sizes="100vw"
-            style={{ objectFit: "cover" }}
-            unoptimized
-          />
+    <div style={{ marginBottom: 2 }}>
+      {/* Compact event row */}
+      <div
+        style={{
+          display: "flex",
+          gap: 14,
+          alignItems: "center",
+          padding: "4px 0 18px",
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
+        <div
+          style={{
+            position: "relative",
+            width: 64,
+            height: 64,
+            borderRadius: 14,
+            overflow: "hidden",
+            background: "var(--surface-2)",
+            flex: "0 0 auto",
+          }}
+        >
+          {first.imageUrl && (
+            <Image
+              src={first.imageUrl}
+              alt={first.title}
+              fill
+              sizes="64px"
+              style={{ objectFit: "cover" }}
+              unoptimized
+            />
+          )}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {first.title}
+          </div>
+          <div className="num" style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
+            {hebDate(first.date)}
+            {first.time ? ` · ${first.time}` : ""}
+          </div>
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>
+            {venueParts.filter(Boolean).join(", ")}
+          </div>
+        </div>
+      </div>
+
+      {/* Seat detail grid */}
+      {hasSeatInfo ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0,1fr))",
+            padding: "14px 0",
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          {[
+            ["אזור", first.section || "—"],
+            ["שורה", first.row != null ? String(first.row) : "—"],
+            [seatCount > 1 ? "מושבים" : "מושב", seatsValue(tickets)],
+          ].map(([label, value], i) => (
+            <div
+              key={label}
+              style={{
+                paddingInlineStart: i ? 14 : 0,
+                borderInlineStart: i ? "1px solid var(--line)" : "none",
+              }}
+            >
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>{label}</div>
+              <div className="num" style={{ fontSize: 16, fontWeight: 600, marginTop: 1 }}>
+                {value}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          className="num"
+          style={{
+            fontSize: 13,
+            color: "var(--muted)",
+            padding: "14px 0",
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          {first.seatLocation}
         </div>
       )}
-      <div style={{ padding: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 700 }}>{first.title}</div>
-        <div style={{ fontSize: 10, color: "var(--tk-muted)", marginBottom: 10 }}>
-          {hebDate(first.date)}
-          {first.time ? ` · ${first.time}` : ""} · {first.venue?.split(",")[0]?.trim()}
-        </div>
-        {hasSeatInfo ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 8,
-              paddingTop: 8,
-              borderTop: "1px dashed var(--tk-line-strong)",
-            }}
-          >
-            <Mini label="אזור" value={first.section || "—"} />
-            <Mini label="שורה" value={first.row != null ? String(first.row) : "—"} />
-            <Mini label={seatCount > 1 ? "מושבים" : "מושב"} value={seatsValue(tickets)} />
-          </div>
-        ) : (
-          <div
-            className="tk-mono"
-            style={{
-              fontSize: 11,
-              color: "var(--tk-muted)",
-              paddingTop: 8,
-              borderTop: "1px dashed var(--tk-line-strong)",
-            }}
-          >
-            {first.seatLocation}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -145,56 +189,61 @@ export function PaySummary({
   total: number;
 }) {
   const subtotal = tickets.reduce((s, t) => s + t.price, 0);
+  const row = {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "4px 0",
+    fontSize: 15,
+    color: "var(--ink-2)",
+  } as const;
   return (
     <div style={{ marginTop: 14 }}>
+      <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.01em", marginBottom: 10 }}>
+        סיכום
+      </div>
+      <div style={row}>
+        <span>
+          כרטיס × <span className="num">{tickets.length}</span>
+        </span>
+        <span className="num">{nis(subtotal)}</span>
+      </div>
+      {platformFee > 0 && (
+        <div style={row}>
+          <span>עמלת שירות</span>
+          <span className="num">{nis(platformFee)}</span>
+        </div>
+      )}
       <div
         style={{
-          background: "var(--tk-paper)",
-          border: "1px solid var(--tk-line)",
-          borderRadius: 10,
-          padding: 12,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginTop: 10,
+          paddingTop: 14,
+          borderTop: "1px solid var(--line)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0" }}>
-          <span style={{ fontSize: 12, color: "var(--tk-muted)" }}>
-            כרטיס × {tickets.length}
-          </span>
-          <span className="tk-mono" style={{ fontSize: 13 }}>
-            {nis(subtotal)}
-          </span>
-        </div>
-        {platformFee > 0 && (
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0" }}>
-            <span style={{ fontSize: 12, color: "var(--tk-muted)" }}>עמלת שירות</span>
-            <span className="tk-mono" style={{ fontSize: 13 }}>
-              {nis(platformFee)}
-            </span>
-          </div>
-        )}
-        <div style={{ height: 1, background: "var(--tk-line)", margin: "8px 0" }} />
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 13, fontWeight: 700 }}>סה״כ</span>
-          <span className="tk-mono" style={{ fontSize: 18, fontWeight: 700 }}>
-            {nis(total)}
-          </span>
-        </div>
+        <span style={{ fontSize: 16, fontWeight: 700 }}>סה״כ</span>
+        <span className="num" style={{ fontSize: 20, fontWeight: 700 }}>
+          {nis(total)}
+        </span>
       </div>
 
       <div
         style={{
           marginTop: 14,
           padding: 12,
-          background: "rgba(181, 70, 83, 0.05)",
-          borderRadius: 10,
+          background: "var(--brand-soft)",
+          borderRadius: "var(--r-sm)",
           display: "flex",
           gap: 10,
           alignItems: "flex-start",
         }}
       >
         <span style={{ flexShrink: 0, marginTop: 1 }}>
-          <Icon.shield size={16} color="var(--tk-blue)" />
+          <Icon.shield size={16} color="var(--brand)" />
         </span>
-        <div style={{ fontSize: 11, color: "var(--tk-ink-2)", lineHeight: 1.5 }}>
+        <div style={{ fontSize: 11.5, color: "var(--ink-2)", lineHeight: 1.5 }}>
           הכסף מוחזק בנאמנות ומועבר למוכר רק אחרי האירוע. אם המופע מבוטל — החזר
           מלא אוטומטית.
         </div>
@@ -213,14 +262,14 @@ export function TermsRow({
   return (
     <label
       className="flex items-center gap-2.5 cursor-pointer select-none"
-      style={{ fontSize: 12.5, color: "var(--tk-ink-2)", marginTop: 14 }}
+      style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 14 }}
     >
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         className="w-4 h-4 cursor-pointer flex-shrink-0"
-        style={{ accentColor: "var(--tk-blue)" }}
+        style={{ accentColor: "var(--brand)" }}
       />
       <span>אני מאשר את תנאי השימוש ומדיניות הביטולים</span>
     </label>
@@ -244,26 +293,25 @@ export function PayFooter({
     <div
       style={{
         flexShrink: 0,
-        padding: "10px 14px calc(14px + var(--sab, env(safe-area-inset-bottom, 0px)))",
-        background: "rgba(245, 241, 232, 0.96)",
-        backdropFilter: "blur(10px)",
-        borderTop: "1px solid var(--tk-line)",
+        padding: "12px 20px calc(16px + var(--sab, env(safe-area-inset-bottom, 0px)))",
+        background: "var(--bg)",
+        borderTop: "1px solid var(--line)",
       }}
     >
       <button
         type={type}
         onClick={onClick}
         disabled={disabled}
-        className="transition-transform active:scale-[0.99] disabled:cursor-not-allowed"
+        className="press disabled:cursor-not-allowed"
         style={{
           width: "100%",
-          padding: 14,
-          borderRadius: 999,
+          height: 52,
+          borderRadius: "var(--r-md)",
           border: "none",
-          background: disabled ? "var(--tk-line-strong)" : "var(--tk-blue)",
-          color: disabled ? "var(--tk-muted)" : "#fff",
-          fontSize: 14,
-          fontWeight: 700,
+          background: disabled ? "var(--line-strong)" : "var(--brand)",
+          color: disabled ? "var(--muted)" : "#fff",
+          fontSize: 15,
+          fontWeight: 600,
           fontFamily: "inherit",
           display: "flex",
           alignItems: "center",
@@ -282,8 +330,8 @@ export function PayFooter({
           </>
         ) : (
           <>
-            <Icon.lock size={14} color={disabled ? "var(--tk-muted)" : "#fff"} />
-            שלם {nis(total)} באבטחה
+            <Icon.lock size={16} color={disabled ? "var(--muted)" : "#fff"} />
+            שלם <span className="num">{nis(total)}</span> באבטחה
           </>
         )}
       </button>

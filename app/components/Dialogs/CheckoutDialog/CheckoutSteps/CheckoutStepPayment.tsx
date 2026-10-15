@@ -150,11 +150,11 @@ const PaymentForm: React.FC<FormProps> = ({
       className="flex flex-col flex-1 min-h-0 w-full"
       dir="rtl"
     >
-      <div className="flex-1 overflow-y-auto" style={{ padding: "16px 18px" }}>
+      <div className="flex-1 overflow-y-auto" style={{ padding: "16px 20px" }}>
         {topSlot}
 
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-          אופן תשלום
+        <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.01em", margin: "22px 0 12px" }}>
+          אמצעי תשלום
         </div>
 
         {intentError && (
@@ -179,8 +179,8 @@ const PaymentForm: React.FC<FormProps> = ({
                   padding: "8px 18px",
                   borderRadius: 999,
                   border: "none",
-                  background: "var(--tk-ink)",
-                  color: "var(--tk-bg)",
+                  background: "var(--ink)",
+                  color: "#fff",
                   fontSize: 12,
                   fontWeight: 700,
                   fontFamily: "inherit",
@@ -271,35 +271,35 @@ const APPEARANCE = {
   theme: "stripe" as const,
   variables: {
     colorPrimary: "#B54653",
-    colorBackground: "#FBF8F1",
-    colorText: "#0A0A0A",
-    colorTextSecondary: "#6E6A60",
+    colorBackground: "#FFFFFF",
+    colorText: "#141413",
+    colorTextSecondary: "#6F6B63",
     colorDanger: "#C4373E",
     fontFamily: "Heebo, Assistant, sans-serif",
-    borderRadius: "10px",
+    borderRadius: "12px",
     spacingUnit: "4px",
   },
   rules: {
     ".Input": {
-      border: "1px solid #CFC9B8",
-      backgroundColor: "#F5F1E8",
+      border: "1px solid #DCD7CC",
+      backgroundColor: "#FFFFFF",
     },
     ".Input:focus": {
       border: "1px solid #B54653",
       boxShadow: "0 0 0 1px #B54653",
     },
     ".AccordionItem": {
-      border: "2px solid #E4DFD2",
-      backgroundColor: "#FBF8F1",
+      border: "1px solid #EEEBE5",
+      backgroundColor: "#FFFFFF",
       boxShadow: "none",
     },
     ".AccordionItem--selected": {
-      border: "2px solid #B54653",
-      backgroundColor: "rgba(181, 70, 83, 0.04)",
-      color: "#0A0A0A",
+      border: "1.5px solid #141413",
+      backgroundColor: "#FFFFFF",
+      color: "#141413",
     },
     ".Label": {
-      color: "#6E6A60",
+      color: "#6F6B63",
     },
   },
 };
