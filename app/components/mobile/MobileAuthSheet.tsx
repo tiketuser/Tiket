@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   signInWithEmailAndPassword,
@@ -18,6 +18,7 @@ import {
 } from "../../../lib/platform-auth";
 import { isIOS } from "../../../lib/platform";
 import { Logo } from "./MobileTopBar";
+import { useSwipeToClose } from "./useSwipeToClose";
 
 type AuthMode = "login" | "signup";
 
@@ -150,7 +151,7 @@ const MobileAuthSheet: React.FC<Props> = ({
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [guestLocalError, setGuestLocalError] = useState("");
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const swipe = useSwipeToClose(onClose);
   const router = useRouter();
 
   // Slide-up animation: mount with translateY(100%), then translateY(0) after 10ms tick.
@@ -407,12 +408,12 @@ const MobileAuthSheet: React.FC<Props> = ({
         position: "fixed",
         inset: 0,
         zIndex: 70,
-        background: mounted ? "rgba(20,20,19,.4)" : "rgba(20,20,19,0)",
+        background: mounted ? `rgba(20,20,19,${0.4 * swipe.progress})` : "rgba(20,20,19,0)",
         transition: "background 200ms ease-out",
       }}
     >
       <div
-        ref={sheetRef}
+        ref={swipe.ref}
         dir="rtl"
         onClick={(e) => e.stopPropagation()}
         className={
@@ -422,8 +423,8 @@ const MobileAuthSheet: React.FC<Props> = ({
         }
         style={{
           background: "var(--surface)",
-          transform: mounted ? "translateY(0)" : "translateY(100%)",
-          transition: "transform 280ms cubic-bezier(.2,.8,.2,1)",
+          transform: mounted ? `translateY(${swipe.offset}px)` : "translateY(100%)",
+          transition: swipe.offset || !mounted ? swipe.transition : "transform 280ms cubic-bezier(.2,.8,.2,1)",
           maxHeight: "92vh",
           display: "flex",
           flexDirection: "column",

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import MobileShell from "./MobileShell";
 import { Icon } from "./Icon";
+import { useSwipeToClose } from "./useSwipeToClose";
 import { hebDate, timeUntil, isPastDate, nis, abbrevCity } from "./format";
 import { encodeImageUrl } from "@/utils/defaultImages";
 import TicketBarcode from "../TicketBarcode/TicketBarcode";
@@ -1272,6 +1273,7 @@ function PriceEditSheet({
   const [price, setPrice] = useState(listing.askingPrice);
   const [shown, setShown] = useState(false);
   const [saving, setSaving] = useState(false);
+  const swipe = useSwipeToClose(onClose);
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
   }, []);
@@ -1291,7 +1293,7 @@ function PriceEditSheet({
         position: "fixed",
         inset: 0,
         zIndex: 1000,
-        background: shown ? "rgba(20,20,19,.4)" : "rgba(20,20,19,0)",
+        background: shown ? `rgba(20,20,19,${0.4 * swipe.progress})` : "rgba(20,20,19,0)",
         display: "flex",
         alignItems: "flex-end",
         transition: "background .2s",
@@ -1299,14 +1301,15 @@ function PriceEditSheet({
       dir="rtl"
     >
       <div
+        ref={swipe.ref}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%",
           background: "var(--bg)",
           borderRadius: "28px 28px 0 0",
           padding: "10px 20px calc(30px + var(--sab, env(safe-area-inset-bottom, 0px)))",
-          transform: shown ? "none" : "translateY(100%)",
-          transition: "transform .3s cubic-bezier(.2,.8,.2,1)",
+          transform: shown ? `translateY(${swipe.offset}px)` : "translateY(100%)",
+          transition: swipe.offset ? swipe.transition : "transform .3s cubic-bezier(.2,.8,.2,1)",
         }}
       >
         <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--line-strong)", margin: "0 auto 14px" }} />

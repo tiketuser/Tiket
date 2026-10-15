@@ -5,6 +5,7 @@ import { updateProfile, type User } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { apiFetch } from "@/lib/platform";
+import { useSwipeToClose } from "./useSwipeToClose";
 import { ISRAELI_BANKS } from "../Dialogs/UploadTicketDialog/UploadTicketSteps/StepFourBankDetails";
 
 export type ProfileSheet = "personal" | "bank";
@@ -282,6 +283,7 @@ export default function MobileProfileSheet({
   user: User;
   onClose: () => void;
 }) {
+  const swipe = useSwipeToClose(onClose);
   return (
     <div
       className="tk-mobile"
@@ -290,16 +292,19 @@ export default function MobileProfileSheet({
         position: "fixed",
         inset: 0,
         zIndex: 60,
-        background: "rgba(20,20,19,.4)",
+        background: `rgba(20,20,19,${0.4 * swipe.progress})`,
         display: "flex",
         alignItems: "flex-end",
         animation: "fadeIn .2s",
       }}
     >
       <div
+        ref={swipe.ref}
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
         style={{
+          transform: swipe.offset ? `translateY(${swipe.offset}px)` : undefined,
+          transition: swipe.transition,
           width: "100%",
           maxWidth: 640,
           margin: "0 auto",

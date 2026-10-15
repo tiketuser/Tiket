@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { nis, hebDate } from "./format";
 import { eventDayStart } from "@/utils/eventDate";
+import { useSwipeToClose } from "./useSwipeToClose";
 
 export const PRICE_MIN = 80;
 export const PRICE_MAX = 500;
@@ -427,6 +428,7 @@ function PriceRange({
       {/* Track */}
       <div
         ref={trackRef}
+        data-no-swipe
         onPointerMove={onPointerMove}
         onPointerUp={() => { dragRef.current = null; }}
         onPointerCancel={() => { dragRef.current = null; }}
@@ -513,21 +515,25 @@ export default function MobileFilterSheet({
   onApply: () => void;
   onReset: () => void;
 }) {
+  const swipe = useSwipeToClose(onClose);
   return (
     <div
       onClick={onClose}
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.45)",
+        background: `rgba(0,0,0,${0.45 * swipe.progress})`,
         zIndex: 50,
         display: "flex",
         alignItems: "flex-end",
       }}
     >
       <div
+        ref={swipe.ref}
         onClick={(e) => e.stopPropagation()}
         style={{
+          transform: `translateY(${swipe.offset}px)`,
+          transition: swipe.transition,
           background: "var(--tk-bg)",
           width: "100%",
           borderRadius: "24px 24px 0 0",
