@@ -405,9 +405,19 @@ function Countdown({ date, time }: { date: string; time?: string }) {
   );
 }
 
-function GlassStat({ label, value }: { label: string; value: React.ReactNode }) {
+function GlassStat({
+  label,
+  value,
+  grow,
+}: {
+  label: string;
+  value: React.ReactNode;
+  /** The section name: takes the spare width and wraps instead of cutting off. */
+  grow?: boolean;
+}) {
+  const long = grow && typeof value === "string" && value.length > 8;
   return (
-    <div style={{ flex: 1, minWidth: 0 }}>
+    <div style={grow ? { flex: "1 1 auto", minWidth: 0 } : { flex: "0 0 auto", minWidth: 40 }}>
       <div
         className="tk-mono"
         style={{ fontSize: 9, opacity: 0.7, letterSpacing: "0.12em" }}
@@ -416,13 +426,13 @@ function GlassStat({ label, value }: { label: string; value: React.ReactNode }) 
       </div>
       <div
         style={{
-          fontSize: 18,
+          fontSize: long ? 15 : 18,
+          lineHeight: 1.2,
           fontWeight: 800,
           marginTop: 2,
           letterSpacing: "-0.02em",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          whiteSpace: grow ? "normal" : "nowrap",
+          overflowWrap: "anywhere",
         }}
       >
         {value || "—"}
@@ -617,7 +627,7 @@ function GlassTicketCard({
           }}
         >
           <div style={{ display: "flex", gap: 14, flex: 1, minWidth: 0 }}>
-            <GlassStat label="אזור" value={ticket.section} />
+            <GlassStat label="אזור" value={ticket.section} grow />
             <div
               style={{ width: 1, background: "rgba(255,255,255,0.2)" }}
             />
@@ -767,7 +777,7 @@ function PastTicketCard({ ticket }: { ticket: MobileTicket }) {
             justifyContent: "space-between",
           }}
         >
-          <div style={{ display: "flex", gap: 14 }}>
+          <div style={{ display: "flex", gap: 14, minWidth: 0, flex: 1 }}>
             <PastStat label="אזור" value={ticket.section} />
             <PastStat
               label="שורה"
@@ -814,14 +824,14 @@ function PastStat({
   value: React.ReactNode;
 }) {
   return (
-    <div>
+    <div style={{ minWidth: 0 }}>
       <div
         className="tk-mono"
         style={{ fontSize: 9, opacity: 0.65, letterSpacing: "0.12em" }}
       >
         {label}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 700 }}>{value || "—"}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, overflowWrap: "anywhere" }}>{value || "—"}</div>
     </div>
   );
 }
@@ -965,14 +975,26 @@ function GlassSeatRow({
   sep?: string;
 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", padding: "12px 14px 14px" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto auto", columnGap: 14, padding: "12px 14px 14px" }}>
       {seats.map(([a, b], k) => (
         <div
           key={a}
-          style={{ paddingInlineStart: k ? 14 : 0, borderInlineStart: k ? `1px solid ${sep}` : "none" }}
+          style={{ minWidth: k ? 44 : 0, paddingInlineStart: k ? 14 : 0, borderInlineStart: k ? `1px solid ${sep}` : "none" }}
         >
           <div style={{ fontSize: 11, color: labelColor, fontWeight: 500 }}>{a}</div>
-          <div className="num" style={{ fontSize: 20, fontWeight: 700, marginTop: 1 }}>{b}</div>
+          <div
+            className="num"
+            style={{
+              fontSize: !k && typeof b === "string" && b.length > 8 ? 16 : 20,
+              lineHeight: 1.2,
+              fontWeight: 700,
+              marginTop: 1,
+              whiteSpace: k ? "nowrap" : "normal",
+              overflowWrap: "anywhere",
+            }}
+          >
+            {b}
+          </div>
         </div>
       ))}
     </div>

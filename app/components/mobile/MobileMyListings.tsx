@@ -344,7 +344,7 @@ function ListingCard({
           }}
         >
           <div style={{ display: "flex", gap: 14, flex: 1, minWidth: 0 }}>
-            <SmallStat label="אזור" value={l.section || "—"} />
+            <SmallStat label="אזור" value={l.section || "—"} grow />
             <div style={{ width: 1, background: "rgba(255,255,255,0.2)" }} />
             <SmallStat label="שורה" value={l.row ?? "—"} />
             <div style={{ width: 1, background: "rgba(255,255,255,0.2)" }} />
@@ -459,12 +459,16 @@ function StatusPill({
 function SmallStat({
   label,
   value,
+  grow,
 }: {
   label: string;
   value: React.ReactNode;
+  /** The section name: takes the spare width and wraps instead of cutting off. */
+  grow?: boolean;
 }) {
+  const long = grow && typeof value === "string" && value.length > 8;
   return (
-    <div style={{ flex: 1, minWidth: 0 }}>
+    <div style={grow ? { flex: "1 1 auto", minWidth: 0 } : { flex: "0 0 auto", minWidth: 40 }}>
       <div
         className="tk-mono"
         style={{ fontSize: 9, opacity: 0.7, letterSpacing: "0.12em" }}
@@ -473,16 +477,16 @@ function SmallStat({
       </div>
       <div
         style={{
-          fontSize: 18,
+          fontSize: long ? 15 : 18,
+          lineHeight: 1.2,
           fontWeight: 800,
           marginTop: 2,
           letterSpacing: "-0.02em",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          whiteSpace: grow ? "normal" : "nowrap",
+          overflowWrap: "anywhere",
         }}
       >
-        {value}
+        {value || "—"}
       </div>
     </div>
   );
