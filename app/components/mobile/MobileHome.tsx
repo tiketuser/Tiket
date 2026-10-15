@@ -7,7 +7,6 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { apiFetch, searchHref } from "@/lib/platform";
-import { eventDayStart } from "@/utils/eventDate";
 import MobileShell from "./MobileShell";
 import MobileTopBar from "./MobileTopBar";
 import MobileSearchBar from "./MobileSearchBar";
@@ -17,8 +16,8 @@ import MobileFilterSheet, {
   DEFAULT_FILTERS,
   FilterState,
   countActiveFilters,
-  PRICE_MIN,
-  PRICE_MAX,
+  applyCardFilters,
+  citiesAndVenues,
 } from "./MobileFilterSheet";
 import Skeleton from "../Skeleton/Skeleton";
 
@@ -146,51 +145,12 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
     return () => obs.disconnect();
   }, [loading, hasMore, loadMore]);
 
-  // Split "venue, city" location strings into separate lists
-  const { cities, venues } = useMemo(() => {
-    const citySet = new Set<string>();
-    const venueSet = new Set<string>();
-    for (const c of cards) {
-      if (!c.location) continue;
-      const parts = c.location.split(",").map((p) => p.trim());
-      venueSet.add(parts[0]);
-      if (parts[1]) citySet.add(parts[1]);
-    }
-    return {
-      cities: Array.from(citySet),
-      venues: Array.from(venueSet),
-    };
-  }, [cards]);
+  const { cities, venues } = useMemo(() => citiesAndVenues(cards), [cards]);
 
-  const filtered = useMemo(() => {
-    let result = cards;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((c) =>
-        `${c.title} ${c.location}`.toLowerCase().includes(q),
-      );
-    }
-    if (filters.priceMin > PRICE_MIN)
-      result = result.filter((c) => c.price >= filters.priceMin);
-    if (filters.priceMax < PRICE_MAX)
-      result = result.filter((c) => c.price <= filters.priceMax);
-    if (filters.city !== "הכל")
-      result = result.filter((c) => c.location?.includes(filters.city));
-    if (filters.venue !== "הכל")
-      result = result.filter((c) => c.location?.startsWith(filters.venue));
-    if (filters.dateFrom || filters.dateTo) {
-      const from = eventDayStart(filters.dateFrom);
-      const to   = eventDayStart(filters.dateTo);
-      result = result.filter((c) => {
-        const cd = eventDayStart(c.date);
-        if (!cd) return true;
-        if (from && cd < from) return false;
-        if (to && cd > to) return false;
-        return true;
-      });
-    }
-    return result;
-  }, [cards, search, filters]);
+  const filtered = useMemo(
+    () => applyCardFilters(cards, search, filters),
+    [cards, search, filters],
+  );
 
   const onSubmitSearch = useCallback(() => {
     if (search.trim()) router.push(searchHref(search.trim()));

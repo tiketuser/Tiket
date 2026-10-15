@@ -26,6 +26,7 @@ import { hebDate, nis } from "./format";
 import { resolveEventImage } from "@/utils/defaultImages";
 import { isAdminUser } from "@/lib/isAdminClient";
 import { OTA_CHANNEL, getOtaBundleVersion } from "@/lib/ota";
+import MobileProfileSheet, { type ProfileSheet } from "./MobileProfileSheets";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
@@ -88,6 +89,8 @@ export default function MobileProfile() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [counts, setCounts] = useState({ bought: 0, sold: 0 });
   const [otaVersion, setOtaVersion] = useState<string | null>(null);
+  const [tab, setTab] = useState<"orders" | "acct">("orders");
+  const [sheet, setSheet] = useState<ProfileSheet | null>(null);
 
   useEffect(() => {
     // Staging-only build badge: show which OTA bundle is live so a push can be
@@ -274,506 +277,420 @@ export default function MobileProfile() {
     }
   };
 
+  const memberSince = user?.metadata.creationTime
+    ? new Date(user.metadata.creationTime).getFullYear()
+    : null;
+
   if (authReady && !user) {
     return (
       <MobileShell>
         <div
           style={{
-            padding: "calc(60px + var(--sat, env(safe-area-inset-top, 0px))) 24px 60px",
+            padding: "calc(70px + var(--sat, env(safe-area-inset-top, 0px))) 32px 60px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 18,
+            gap: 14,
             textAlign: "center",
           }}
         >
-          <div
+          <span
+            className="round"
             style={{
-              width: 80,
-              height: 80,
+              width: 92,
+              height: 92,
               borderRadius: "50%",
-              background: "var(--tk-paper)",
-              border: "1px solid var(--tk-line-strong)",
+              background: "var(--surface-2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "var(--tk-muted)",
+              color: "var(--muted)",
             }}
           >
-            <Icon.user size={36} />
-          </div>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
-              התחבר לחשבון שלך
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--tk-muted)",
-                maxWidth: 240,
-                lineHeight: 1.5,
-              }}
-            >
-              גש להיסטוריה שלך, מועדפים, וכרטיסים שקנית או מכרת
-            </div>
+            <Icon.user size={38} />
+          </span>
+          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em" }}>התחברו לחשבון</div>
+          <div style={{ fontSize: 14, color: "var(--muted)", maxWidth: 260, lineHeight: 1.5 }}>
+            נדרש חשבון כדי לצפות בפרופיל, בהזמנות ובכרטיסים שקניתם או מכרתם
           </div>
           <button
+            className="press"
             onClick={() => setAuthOpen(true)}
             style={{
-              padding: "11px 22px",
-              borderRadius: 999,
-              background: "var(--tk-ink)",
+              marginTop: 6,
+              height: 48,
+              padding: "0 28px",
+              borderRadius: "var(--r-md)",
+              background: "var(--brand)",
               color: "#fff",
               border: "none",
               cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 700,
+              fontSize: 15,
+              fontWeight: 600,
               fontFamily: "inherit",
             }}
           >
-            התחבר
+            התחברות
           </button>
         </div>
-        <AuthDialog isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+        <AuthDialog
+          isOpen={authOpen}
+          onClose={() => setAuthOpen(false)}
+          contextLabel="נדרש חשבון כדי לצפות בפרופיל"
+        />
       </MobileShell>
     );
   }
 
+  const accountRows: { key: ProfileSheet; label: string; sub?: string; icon: React.ReactNode }[] = [
+    { key: "personal", label: "פרטים אישיים", sub: user?.email || undefined, icon: <Icon.user size={17} /> },
+    { key: "bank", label: "חשבון לקבלת תשלומים", icon: <BankIcon /> },
+  ];
+
   return (
     <MobileShell>
-      {/* Hero */}
-      <div
-        style={{
-          padding: "calc(20px + var(--sat, env(safe-area-inset-top, 0px))) 18px 22px",
-          borderBottom: "1px solid var(--tk-line)",
-          background: "var(--tk-bg)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 12,
-              background: "var(--tk-ink)",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 24,
-              fontWeight: 800,
-              letterSpacing: "-0.02em",
-              flexShrink: 0,
-              overflow: "hidden",
-            }}
-          >
-            {user?.photoURL ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.photoURL}
-                alt={user.displayName || ""}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              initials
-            )}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h1
+      <div style={{ paddingTop: "calc(64px + var(--sat, env(safe-area-inset-top, 0px)))", paddingBottom: 28 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "0 20px" }}>
+          <div style={{ position: "relative" }}>
+            <span
+              className="round"
               style={{
-                fontSize: 22,
+                width: 92,
+                height: 92,
+                borderRadius: "50%",
+                background: "var(--ink)",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 30,
                 fontWeight: 800,
-                margin: 0,
-                letterSpacing: "-0.03em",
-                lineHeight: 1.1,
-                whiteSpace: "nowrap",
                 overflow: "hidden",
-                textOverflow: "ellipsis",
               }}
             >
-              {user?.displayName || "משתמש Tiket"}
-            </h1>
-            <div
-              className="tk-mono"
+              {user?.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photoURL} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                initials
+              )}
+            </span>
+            <button
+              className="press round"
+              aria-label="עריכת פרטים אישיים"
+              onClick={() => setSheet("personal")}
               style={{
-                fontSize: 11,
-                color: "var(--tk-muted)",
-                marginTop: 4,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "var(--bg)",
+                border: "1px solid var(--line-strong)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "var(--ink)",
               }}
-              dir="ltr"
             >
-              {user?.email || ""}
-            </div>
+              <PenIcon />
+            </button>
           </div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", margin: "12px 0 0" }}>
+            {user?.displayName || "משתמש Tiket"}
+          </h1>
+          <div className="num" style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
+            {memberSince ? `חבר מאז ${memberSince}` : user?.email || ""}
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", margin: "18px 36px 0", textAlign: "center" }}>
+          {[
+            [counts.bought, "כרטיסים שקניתי"],
+            [counts.sold, "כרטיסים שמכרתי"],
+          ].map(([n, label], k) => (
+            <div key={label} style={{ borderInlineStart: k ? "1px solid var(--line-strong)" : "none" }}>
+              <div className="num" style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>
+                {n}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 5 }}>{label}</div>
+            </div>
+          ))}
         </div>
 
         <div
+          role="tablist"
           style={{
-            marginTop: 18,
             display: "grid",
-            gridTemplateColumns: "1fr 1px 1fr",
-            gap: 0,
-            alignItems: "stretch",
-            padding: "12px 6px",
+            gridTemplateColumns: "1fr 1fr",
+            margin: "18px 20px 6px",
+            padding: 4,
+            borderRadius: 999,
+            background: "var(--surface-2)",
           }}
         >
-          <ProfileStat num={counts.bought} label="כרטיסים שקניתי" />
-          <div
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(to bottom, var(--tk-line-strong) 0 4px, transparent 4px 8px)",
-            }}
-          />
-          <ProfileStat num={counts.sold} label="כרטיסים שמכרתי" />
-        </div>
-      </div>
-
-      <div
-        style={{
-          padding: "18px 18px 0",
-          display: "flex",
-          flexDirection: "column",
-          gap: 18,
-        }}
-      >
-        {/* Orders history */}
-        <section>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              justifyContent: "space-between",
-              marginBottom: 10,
-            }}
-          >
-            <div style={sectionTitleStyle}>היסטוריית הזמנות</div>
+          {([
+            ["orders", "הזמנות"],
+            ["acct", "חשבון"],
+          ] as const).map(([k, label]) => (
             <button
-              onClick={() => router.push("/MyTickets")}
+              key={k}
+              role="tab"
+              aria-selected={tab === k}
+              className="press round"
+              onClick={() => setTab(k)}
               style={{
-                background: "none",
+                height: 38,
+                borderRadius: 999,
                 border: "none",
-                fontSize: 11,
-                color: "var(--tk-blue)",
+                fontSize: 14,
                 fontWeight: 600,
+                fontFamily: "inherit",
                 cursor: "pointer",
+                background: tab === k ? "var(--bg)" : "transparent",
+                boxShadow: tab === k ? "var(--shadow-sm)" : "none",
+                color: tab === k ? "var(--ink)" : "var(--muted)",
               }}
             >
-              הצג הכל
+              {label}
             </button>
-          </div>
-          <div
-            style={{
-              background: "var(--tk-paper)",
-              border: "1px solid var(--tk-line-strong)",
-              borderRadius: 14,
-              overflow: "hidden",
-            }}
-          >
+          ))}
+        </div>
+
+        {tab === "orders" ? (
+          <div style={{ padding: "6px 20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
             {orders.length === 0 ? (
-              <div
-                style={{
-                  padding: "20px 14px",
-                  textAlign: "center",
-                  color: "var(--tk-muted)",
-                  fontSize: 12,
-                }}
-              >
+              <div style={{ padding: "36px 20px", textAlign: "center", color: "var(--muted)", fontSize: 14 }}>
                 עדיין אין הזמנות
               </div>
             ) : (
-              orders.map((o, i) => (
+              orders.map((o) => (
                 <div
                   key={o.id}
                   style={{
+                    position: "relative",
+                    height: 84,
+                    borderRadius: "var(--r-md)",
+                    overflow: "hidden",
+                    color: "#fff",
                     display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "12px 14px",
-                    borderTop: i === 0 ? "none" : "1px solid var(--tk-line)",
+                    alignItems: "flex-end",
+                    padding: "0 14px 12px",
+                    gap: 10,
+                    background: "var(--ink)",
                   }}
                 >
-                  <div
-                    style={{
-                      width: 38,
-                      height: 50,
-                      borderRadius: 4,
-                      background: "#1A1A1A",
-                      flexShrink: 0,
-                      overflow: "hidden",
-                    }}
-                  >
-                    {o.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={o.imageUrl}
-                        alt={o.artist || ""}
+                  {o.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={o.imageUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                  )}
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(270deg, rgba(20,20,19,.85) 0%, rgba(20,20,19,.35) 100%)" }} />
+                  <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, ...ellipsis }}>{o.artist || "אירוע"}</div>
+                    <div className="num" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: 0.85 }}>
+                      <span
+                        className="round"
                         style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: o.status === "נמכר" ? "#7FD3A3" : "rgba(255,255,255,.7)",
                         }}
                       />
-                    ) : null}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {o.artist}
-                    </div>
-                    <div
-                      className="tk-mono"
-                      style={{
-                        fontSize: 10,
-                        color: "var(--tk-muted)",
-                        marginTop: 2,
-                      }}
-                    >
-                      {o.when}
+                      {o.status} · {o.when}
                       {o.date ? ` · ${hebDate(o.date)}` : ""}
                     </div>
                   </div>
-                  <div style={{ textAlign: "start" }}>
-                    <div
-                      className="tk-mono"
-                      style={{ fontSize: 13, fontWeight: 700 }}
-                    >
-                      {nis(o.amount)}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        marginTop: 2,
-                        color:
-                          o.status === "נמכר"
-                            ? "var(--tk-blue)"
-                            : "var(--tk-muted)",
-                      }}
-                    >
-                      {o.status}
-                    </div>
-                  </div>
+                  <span
+                    className="num"
+                    style={{
+                      position: "relative",
+                      height: 28,
+                      padding: "0 11px",
+                      borderRadius: 999,
+                      background: "rgba(20,20,19,.55)",
+                      backdropFilter: "blur(8px)",
+                      WebkitBackdropFilter: "blur(8px)",
+                      display: "flex",
+                      alignItems: "center",
+                      fontSize: 13,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {o.status === "נמכר" ? "+" : ""}
+                    {nis(o.amount)}
+                  </span>
                 </div>
               ))
             )}
-          </div>
-        </section>
-
-        {/* Admin panel — only for accounts with the `admin` custom claim */}
-        {isAdmin && (
-          <section>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                marginBottom: 10,
-              }}
-            >
-              <Icon.shield size={14} color="var(--tk-blue)" />
-              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--tk-ink)" }}>
-                ניהול מערכת
-              </span>
-              <span
-                className="tk-mono"
+            {orders.length > 0 && (
+              <button
+                onClick={() => router.push("/MyTickets")}
                 style={{
-                  fontSize: 9,
-                  color: "var(--tk-muted)",
-                  letterSpacing: "0.12em",
+                  alignSelf: "center",
+                  marginTop: 4,
+                  padding: "8px 4px",
+                  background: "none",
+                  border: "none",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--brand)",
+                  fontFamily: "inherit",
+                  cursor: "pointer",
                 }}
-                dir="ltr"
               >
-                ADMIN
-              </span>
-            </div>
-            <div
+                לכל הכרטיסים
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={{ padding: "6px 4px 0" }}>
+            {accountRows.map((r, i) => (
+              <AccountRow
+                key={r.key}
+                first={i === 0}
+                icon={r.icon}
+                label={r.label}
+                sub={r.sub}
+                onClick={() => setSheet(r.key)}
+              />
+            ))}
+
+            {isAdmin && (
+              <div style={{ marginTop: 22 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 16px 6px", fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>
+                  <Icon.shield size={14} color="var(--brand)" />
+                  ניהול מערכת
+                </div>
+                {ADMIN_LINKS.map((link, i) => (
+                  <AccountRow key={link.href} first={i === 0} label={link.label} onClick={() => router.push(link.href)} />
+                ))}
+              </div>
+            )}
+
+            <button
+              className="press"
+              onClick={handleSignOut}
               style={{
-                background: "var(--tk-paper)",
-                border: "1px solid var(--tk-line-strong)",
-                borderRadius: 14,
-                overflow: "hidden",
+                display: "block",
+                margin: "22px auto 0",
+                height: 44,
+                padding: "0 20px",
+                background: "transparent",
+                border: "none",
+                fontSize: 15,
+                fontWeight: 600,
+                fontFamily: "inherit",
+                color: "var(--brand)",
+                cursor: "pointer",
               }}
             >
-              {ADMIN_LINKS.map((link, i) => (
-                <button
-                  key={link.href}
-                  onClick={() => router.push(link.href)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    width: "100%",
-                    padding: "13px 14px",
-                    background: "transparent",
-                    border: "none",
-                    borderTop: i === 0 ? "none" : "1px solid var(--tk-line)",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    color: "var(--tk-ink)",
-                    textAlign: "start",
-                  }}
-                >
-                  <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>
-                    {link.label}
-                  </span>
-                  <Icon.chev size={14} color="var(--tk-muted)" />
-                </button>
-              ))}
+              התנתק
+            </button>
+            <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 14, marginTop: 8, fontSize: 12, color: "var(--muted)" }}>
+              <button onClick={() => router.push("/Terms")} style={legalLink}>
+                תנאי שימוש
+              </button>
+              <button onClick={() => router.push("/Privacy")} style={legalLink}>
+                מדיניות פרטיות
+              </button>
+              <button onClick={handleDeleteAccount} style={legalLink}>
+                מחיקת חשבון
+              </button>
             </div>
-          </section>
+            <div className="num" dir="ltr" style={{ textAlign: "center", fontSize: 11, color: "var(--faint)", padding: "14px 0 4px" }}>
+              {"tiket v1.0.0"}
+              {OTA_CHANNEL === "staging" && ` · staging · OTA ${otaVersion ?? "…"}`}
+            </div>
+          </div>
         )}
-
-        <button
-          onClick={handleSignOut}
-          style={{
-            marginTop: 4,
-            padding: "14px",
-            background: "transparent",
-            border: "1px solid var(--tk-line-strong)",
-            borderRadius: 12,
-            color: "var(--tk-blue)",
-            fontSize: 13,
-            fontWeight: 700,
-            fontFamily: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          התנתק
-        </button>
-
-        <button
-          onClick={handleDeleteAccount}
-          style={{
-            alignSelf: "center",
-            marginTop: 2,
-            padding: "8px 4px",
-            background: "none",
-            border: "none",
-            color: "var(--tk-muted)",
-            fontSize: 11,
-            fontWeight: 500,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            textDecoration: "underline",
-            textUnderlineOffset: 2,
-            opacity: 0.75,
-          }}
-        >
-          מחיקת חשבון
-        </button>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            padding: "6px 0 2px",
-            fontSize: 10,
-            color: "var(--tk-muted)",
-            opacity: 0.7,
-          }}
-        >
-          <button
-            onClick={() => router.push("/Terms")}
-            style={{
-              background: "none",
-              border: "none",
-              padding: 0,
-              margin: 0,
-              font: "inherit",
-              color: "inherit",
-              cursor: "pointer",
-              textDecoration: "underline",
-              textUnderlineOffset: 2,
-            }}
-          >
-            תנאי שימוש
-          </button>
-          <span aria-hidden style={{ opacity: 0.5 }}>·</span>
-          <button
-            onClick={() => router.push("/Privacy")}
-            style={{
-              background: "none",
-              border: "none",
-              padding: 0,
-              margin: 0,
-              font: "inherit",
-              color: "inherit",
-              cursor: "pointer",
-              textDecoration: "underline",
-              textUnderlineOffset: 2,
-            }}
-          >
-            מדיניות פרטיות
-          </button>
-        </div>
-
-        <div
-          className="tk-mono"
-          dir="ltr"
-          style={{
-            textAlign: "center",
-            fontSize: 9,
-            color: "var(--tk-muted)",
-            letterSpacing: "0.12em",
-            padding: "4px 0 12px",
-          }}
-        >
-          {"◆ TIKET · v1.0.0"}
-          {OTA_CHANNEL === "staging" && (
-            <span style={{ color: "var(--tk-blue)" }}>
-              {` · staging · OTA ${otaVersion ?? "…"}`}
-            </span>
-          )}
-        </div>
       </div>
+
+      {sheet && user && <MobileProfileSheet sheet={sheet} user={user} onClose={() => setSheet(null)} />}
     </MobileShell>
   );
 }
 
-const sectionTitleStyle: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 700,
-  marginBottom: 10,
-  color: "var(--tk-ink)",
+const ellipsis: React.CSSProperties = { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+
+const legalLink: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  font: "inherit",
+  color: "inherit",
+  cursor: "pointer",
 };
 
-function ProfileStat({ num, label }: { num: number; label: string }) {
+function AccountRow({
+  icon,
+  label,
+  sub,
+  first,
+  onClick,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  sub?: string;
+  first: boolean;
+  onClick: () => void;
+}) {
   return (
-    <div
+    <button
+      className="press"
+      onClick={onClick}
       style={{
+        width: "100%",
+        minHeight: icon ? 58 : 50,
+        padding: "10px 16px",
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
-        padding: "4px 12px",
-        textAlign: "center",
+        gap: 14,
+        textAlign: "right",
+        background: "transparent",
+        border: "none",
+        borderTop: first ? "none" : "1px solid var(--line)",
+        fontFamily: "inherit",
+        color: "var(--ink)",
+        cursor: "pointer",
       }}
     >
-      <div
-        style={{
-          fontSize: 28,
-          fontWeight: 800,
-          letterSpacing: "-0.03em",
-          lineHeight: 1,
-        }}
-      >
-        {num}
+      {icon && (
+        <span
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 11,
+            background: "var(--surface-2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flex: "0 0 auto",
+          }}
+        >
+          {icon}
+        </span>
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 500 }}>{label}</div>
+        {sub && <div className="num" style={{ fontSize: 13, color: "var(--muted)", marginTop: 1, ...ellipsis }}>{sub}</div>}
       </div>
-      <div style={{ fontSize: 11, fontWeight: 600, marginTop: 6 }}>
-        {label}
-      </div>
-    </div>
+      <Icon.chev size={16} color="var(--faint)" />
+    </button>
   );
 }
+
+const PenIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+  </svg>
+);
+
+const BankIcon = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9.5L12 4l9 5.5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18" />
+  </svg>
+);

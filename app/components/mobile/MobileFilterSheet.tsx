@@ -35,6 +35,44 @@ export function countActiveFilters(f: FilterState): number {
   );
 }
 
+/** Applies the home-screen search box and filter sheet to a list of cards. */
+export function applyCardFilters<
+  T extends { title: string; location?: string; price: number; date: string },
+>(cards: T[], search: string, filters: FilterState): T[] {
+  let result = cards;
+  const q = search.trim().toLowerCase();
+  if (q) result = result.filter((c) => `${c.title} ${c.location ?? ""}`.toLowerCase().includes(q));
+  if (filters.priceMin > PRICE_MIN) result = result.filter((c) => c.price >= filters.priceMin);
+  if (filters.priceMax < PRICE_MAX) result = result.filter((c) => c.price <= filters.priceMax);
+  if (filters.city !== "הכל") result = result.filter((c) => c.location?.includes(filters.city));
+  if (filters.venue !== "הכל") result = result.filter((c) => c.location?.startsWith(filters.venue));
+  if (filters.dateFrom || filters.dateTo) {
+    const from = eventDayStart(filters.dateFrom);
+    const to = eventDayStart(filters.dateTo);
+    result = result.filter((c) => {
+      const cd = eventDayStart(c.date);
+      if (!cd) return true;
+      if (from && cd < from) return false;
+      if (to && cd > to) return false;
+      return true;
+    });
+  }
+  return result;
+}
+
+/** Splits "venue, city" location strings into the filter sheet's city and venue lists. */
+export function citiesAndVenues(cards: { location?: string }[]) {
+  const citySet = new Set<string>();
+  const venueSet = new Set<string>();
+  for (const c of cards) {
+    if (!c.location) continue;
+    const parts = c.location.split(",").map((p) => p.trim());
+    venueSet.add(parts[0]);
+    if (parts[1]) citySet.add(parts[1]);
+  }
+  return { cities: Array.from(citySet), venues: Array.from(venueSet) };
+}
+
 // ─── Chevron ─────────────────────────────────────────────
 function Chevron({ open }: { open: boolean }) {
   return (

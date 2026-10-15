@@ -1,14 +1,47 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import MobileShell from "./MobileShell";
+import MobileTopBar from "./MobileTopBar";
+import MobileSearchBar from "./MobileSearchBar";
+import MobileCategoryRow, { MOBILE_CATEGORIES } from "./MobileCategoryRow";
 import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
+import MobileFilterSheet, {
+  DEFAULT_FILTERS,
+  FilterState,
+  applyCardFilters,
+  citiesAndVenues,
+  countActiveFilters,
+} from "./MobileFilterSheet";
 import Skeleton from "../Skeleton/Skeleton";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
+const gridStyle: React.CSSProperties = {
+  padding: "0 20px 20px",
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0,1fr))",
+  columnGap: 14,
+  rowGap: 24,
+};
+
+const outlineButton: React.CSSProperties = {
+  marginTop: 16,
+  height: 42,
+  padding: "0 18px",
+  borderRadius: 10,
+  border: "1px solid var(--ink)",
+  background: "transparent",
+  color: "var(--ink)",
+  fontSize: 14,
+  fontWeight: 600,
+  fontFamily: "inherit",
+  cursor: "pointer",
+};
+
+/** The favorites tab: the home screen's search, categories and filters over
+ *  the events the user has hearted. */
 export default function MobileFavorites({
   events,
   loading,
@@ -18,157 +51,156 @@ export default function MobileFavorites({
   loading: boolean;
   notSignedIn?: boolean;
 }) {
-  const router = useRouter();
   const [authOpen, setAuthOpen] = useState(false);
   const openLogin = useCallback(() => setAuthOpen(true), []);
+  const [category, setCategory] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [filterDraft, setFilterDraft] = useState<FilterState>(DEFAULT_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  const count = events.length;
+  const { cities, venues } = useMemo(() => citiesAndVenues(events), [events]);
+  const filtered = useMemo(() => {
+    const inCategory = category ? events.filter((e) => e.category === category) : events;
+    return applyCardFilters(inCategory, search, filters);
+  }, [events, category, search, filters]);
+
+  const activeFilters = countActiveFilters(filters);
+  const dirty = category !== null || search !== "" || activeFilters > 0;
+  const clearAll = () => {
+    setCategory(null);
+    setSearch("");
+    setFilters(DEFAULT_FILTERS);
+    setFilterDraft(DEFAULT_FILTERS);
+  };
+  const categoryLabel = MOBILE_CATEGORIES.find((c) => c.cat === category)?.label ?? category;
 
   return (
     <MobileShell>
+      <MobileTopBar />
+
       <div
         style={{
-          padding: "calc(14px + var(--sat, env(safe-area-inset-top, 0px))) 18px 14px",
-          borderBottom: "1px solid var(--tk-line)",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          background: "var(--bg)",
+          borderBottom: "1px solid var(--line)",
+          paddingBottom: 2,
         }}
       >
-        <div
-          style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}
+        <MobileSearchBar
+          value={search}
+          onChange={setSearch}
+          onOpenFilter={() => {
+            setFilterDraft(filters);
+            setFilterOpen(true);
+          }}
+          activeFilterCount={activeFilters}
+        />
+        <MobileCategoryRow selected={category} onSelect={setCategory} />
+      </div>
+
+      <div
+        style={{
+          padding: "22px 20px 14px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+        }}
+      >
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            whiteSpace: "nowrap",
+          }}
         >
-          המועדפים שלי
-        </div>
-        <div
-          className="tk-mono"
-          style={{ fontSize: 11, color: "var(--tk-muted)", marginTop: 4 }}
-        >
-          {notSignedIn
-            ? "התחבר כדי לראות את המועדפים שלך"
-            : loading
-              ? "טוען…"
-              : count === 0
-                ? "אין מועדפים עדיין"
-                : `${count} ${count === 1 ? "מופע" : "מופעים"}`}
-        </div>
+          {category === null ? "מועדפים" : `מועדפים · ${categoryLabel}`}
+        </h1>
+        {dirty && (
+          <button
+            onClick={clearAll}
+            style={{
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--brand)",
+              background: "transparent",
+              border: 0,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+            }}
+          >
+            נקה הכל
+          </button>
+        )}
       </div>
 
       {loading ? (
-        <div
-          style={{
-            padding: "14px 14px 20px",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 10,
-          }}
-        >
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                borderRadius: 20,
-                overflow: "hidden",
-                background: "var(--tk-paper)",
-                border: "1px solid var(--tk-line)",
-              }}
-            >
-              <Skeleton style={{ height: 150 }} />
-              <div style={{ padding: 10 }}>
-                <Skeleton style={{ height: 12, width: "80%", borderRadius: 4 }} />
-                <Skeleton style={{ height: 9, width: "55%", borderRadius: 4, marginTop: 6 }} />
-                <Skeleton style={{ height: 14, width: "40%", borderRadius: 4, marginTop: 8 }} />
+        <div style={gridStyle}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} style={{ minWidth: 0 }}>
+              <Skeleton style={{ aspectRatio: "1 / 1.08", borderRadius: "var(--r-card)" }} />
+              <div style={{ padding: "10px 2px 0" }}>
+                <Skeleton style={{ height: 14, width: "80%", borderRadius: 4 }} />
+                <Skeleton style={{ height: 11, width: "55%", borderRadius: 4, marginTop: 8 }} />
+                <Skeleton style={{ height: 13, width: "40%", borderRadius: 4, marginTop: 8 }} />
               </div>
             </div>
           ))}
         </div>
-      ) : count === 0 ? (
-        <div
-          style={{
-            padding: "60px 30px",
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: "50%",
-              background: "var(--tk-paper)",
-              border: "1px solid var(--tk-line-strong)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--tk-muted)"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
+      ) : filtered.length === 0 ? (
+        <div style={{ padding: "56px 40px", textAlign: "center" }}>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>
+            {notSignedIn
+              ? "התחברו כדי לשמור מופעים במועדפים"
+              : dirty
+                ? "אין תוצאות התואמות את החיפוש"
+                : "עוד לא סימנת מופעים כמועדפים"}
           </div>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
-              {notSignedIn ? "התחבר כדי לשמור מועדפים" : "עדיין אין מועדפים"}
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--tk-muted)",
-                maxWidth: 240,
-                lineHeight: 1.5,
-              }}
-            >
-              לחץ על הלב בכרטיסי המופעים כדי לשמור אותם כאן ולקבל התראות
-            </div>
-          </div>
-          <button
-            onClick={() => router.push("/")}
-            style={{
-              marginTop: 8,
-              padding: "11px 22px",
-              borderRadius: 999,
-              background: "var(--tk-ink)",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 700,
-              fontFamily: "inherit",
-            }}
-          >
-            גלה מופעים
-          </button>
+          {notSignedIn ? (
+            <button className="press" onClick={openLogin} style={outlineButton}>
+              התחברות
+            </button>
+          ) : (
+            dirty && (
+              <button className="press" onClick={clearAll} style={outlineButton}>
+                נקה הכל
+              </button>
+            )
+          )}
         </div>
       ) : (
-        <div
-          style={{
-            padding: "14px 14px 20px",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 10,
-          }}
-        >
-          {events.map((e) => (
-            <MobileEventCard
-              key={e.id}
-              card={e}
-              initialFavorited={true}
-              openLoginDialog={openLogin}
-            />
+        <div style={gridStyle}>
+          {filtered.map((e) => (
+            <MobileEventCard key={e.id} card={e} initialFavorited openLoginDialog={openLogin} />
           ))}
         </div>
       )}
 
       <AuthDialog isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+
+      {filterOpen && (
+        <MobileFilterSheet
+          draft={filterDraft}
+          setDraft={setFilterDraft}
+          cities={cities}
+          venues={venues}
+          onClose={() => setFilterOpen(false)}
+          onApply={() => {
+            setFilters(filterDraft);
+            setFilterOpen(false);
+          }}
+          onReset={() => {
+            setFilterDraft(DEFAULT_FILTERS);
+            setFilters(DEFAULT_FILTERS);
+          }}
+        />
+      )}
     </MobileShell>
   );
 }

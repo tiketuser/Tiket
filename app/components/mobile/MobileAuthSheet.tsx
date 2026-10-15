@@ -17,6 +17,7 @@ import {
   isAuthCancellation,
 } from "../../../lib/platform-auth";
 import { isIOS } from "../../../lib/platform";
+import { Logo } from "./MobileTopBar";
 
 type AuthMode = "login" | "signup";
 
@@ -66,22 +67,65 @@ function firebaseErrorToHebrew(code: string): string {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
-  padding: "12px",
-  border: "1px solid var(--tk-line-strong)",
-  borderRadius: 10,
-  fontSize: 13,
+  height: 44,
+  padding: "0 14px",
+  border: "1px solid var(--line-strong)",
+  borderRadius: "var(--r-sm)",
+  fontSize: 15,
   fontFamily: "inherit",
-  background: "var(--tk-bg)",
+  background: "var(--surface)",
   outline: "none",
-  color: "var(--tk-ink)",
+  color: "var(--ink)",
+  textAlign: "right",
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 10,
-  color: "var(--tk-muted)",
-  marginBottom: 4,
+  fontSize: 12,
+  color: "var(--ink-2)",
+  marginBottom: 5,
   fontWeight: 600,
 };
+
+const socialStyle: React.CSSProperties = {
+  width: "100%",
+  height: 44,
+  borderRadius: "var(--r-md)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+  fontSize: 15,
+  fontWeight: 600,
+  fontFamily: "inherit",
+};
+
+const linkButton: React.CSSProperties = {
+  display: "block",
+  margin: "14px auto 0",
+  background: "transparent",
+  border: "none",
+  fontSize: 13,
+  fontWeight: 600,
+  color: "var(--muted)",
+  textDecoration: "underline",
+  textUnderlineOffset: 3,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  padding: 4,
+};
+
+const EyeIcon = ({ off }: { off: boolean }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    {off ? (
+      <path d="M10.6 5.6A9.6 9.6 0 0 1 12 5.5C18 5.5 21.5 12 21.5 12a17 17 0 0 1-2.6 3.4M6.6 6.6C3.9 8.4 2.5 12 2.5 12S6 18.5 12 18.5c1.9 0 3.5-.6 4.9-1.5M9.9 9.9a3 3 0 0 0 4.2 4.2M3.5 3.5l17 17" />
+    ) : (
+      <>
+        <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+        <circle cx="12" cy="12" r="3" />
+      </>
+    )}
+  </svg>
+);
 
 const MobileAuthSheet: React.FC<Props> = ({
   isOpen,
@@ -101,6 +145,7 @@ const MobileAuthSheet: React.FC<Props> = ({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const [guestOpen, setGuestOpen] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
@@ -294,6 +339,62 @@ const MobileAuthSheet: React.FC<Props> = ({
     }
   };
 
+  const login = mode === "login";
+  const valid = guestOpen
+    ? EMAIL_RE.test(guestEmail.trim()) && guestPhone.replace(/\D/g, "").length >= 9
+    : login
+      ? EMAIL_RE.test(email.trim()) && password.length >= 6
+      : EMAIL_RE.test(email.trim()) &&
+        password.length >= 6 &&
+        name.trim().split(/\s+/).length >= 2 &&
+        phone.replace(/\D/g, "").length >= 9;
+
+  const field = (
+    label: string,
+    input: React.ReactNode,
+    extra?: React.ReactNode,
+  ) => (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div style={labelStyle}>{label}</div>
+        {extra}
+      </div>
+      {input}
+    </div>
+  );
+
+  const primary = (label: string, props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button
+      className="press"
+      disabled={submitting}
+      {...props}
+      style={{
+        width: "100%",
+        height: 48,
+        marginTop: 16,
+        borderRadius: "var(--r-md)",
+        background: valid ? "var(--brand)" : "var(--ink)",
+        transition: "background .2s",
+        color: "#fff",
+        border: "none",
+        fontSize: 15,
+        fontWeight: 600,
+        fontFamily: "inherit",
+        cursor: submitting ? "default" : "pointer",
+        opacity: submitting ? 0.6 : 1,
+      }}
+    >
+      {submitting ? "..." : label}
+    </button>
+  );
+
+  const errorLine = (text: string | null | undefined) =>
+    text ? (
+      <div style={{ marginTop: 12, fontSize: 13, color: "var(--brand)", textAlign: "center", fontWeight: 600 }}>
+        {text}
+      </div>
+    ) : null;
+
   return (
     <div
       className={
@@ -306,11 +407,8 @@ const MobileAuthSheet: React.FC<Props> = ({
         position: "fixed",
         inset: 0,
         zIndex: 70,
-        background: mounted ? "rgba(10,10,10,0.45)" : "rgba(10,10,10,0)",
-        backdropFilter: mounted ? "blur(10px)" : "blur(0px)",
-        WebkitBackdropFilter: mounted ? "blur(10px)" : "blur(0px)",
-        transition:
-          "background 240ms ease-out, backdrop-filter 240ms ease-out, -webkit-backdrop-filter 240ms ease-out",
+        background: mounted ? "rgba(20,20,19,.4)" : "rgba(20,20,19,0)",
+        transition: "background 200ms ease-out",
       }}
     >
       <div
@@ -319,504 +417,274 @@ const MobileAuthSheet: React.FC<Props> = ({
         onClick={(e) => e.stopPropagation()}
         className={
           responsive
-            ? "w-full rounded-t-[24px] sm:w-[440px] sm:max-w-[92vw] sm:rounded-[20px]"
+            ? "w-full rounded-t-[24px] sm:w-[440px] sm:max-w-[92vw] sm:rounded-[24px]"
             : "w-full rounded-t-[24px]"
         }
         style={{
-          background: "var(--tk-bg)",
-          padding: "12px 20px calc(26px + var(--sab, env(safe-area-inset-bottom, 0px)))",
-          boxShadow: "0 -10px 30px rgba(0,0,0,0.18)",
+          background: "var(--surface)",
           transform: mounted ? "translateY(0)" : "translateY(100%)",
-          transition: "transform 320ms cubic-bezier(.2,.8,.2,1)",
+          transition: "transform 280ms cubic-bezier(.2,.8,.2,1)",
           maxHeight: "92vh",
-          overflowY: "auto",
-          color: "var(--tk-ink)",
+          display: "flex",
+          flexDirection: "column",
+          color: "var(--ink)",
         }}
       >
-        {/* drag handle + close */}
+        <div style={{ padding: "8px 0 0" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--line-strong)", margin: "0 auto" }} />
+        </div>
         <div
           style={{
-            position: "relative",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: 12,
+            overflowY: "auto",
+            padding: "8px 20px calc(24px + var(--sab, env(safe-area-inset-bottom, 0px)))",
           }}
         >
-          <div
-            style={{
-              width: 40,
-              height: 4,
-              background: "var(--tk-line-strong)",
-              borderRadius: 999,
-            }}
-          />
-          <button
-            onClick={onClose}
-            aria-label="סגור"
-            style={{
-              position: "absolute",
-              insetInlineEnd: 0,
-              top: -2,
-              width: 28,
-              height: 28,
-              borderRadius: 999,
-              background: "var(--tk-paper)",
-              border: "1px solid var(--tk-line)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        {/* brand + headline */}
-        <div style={{ marginBottom: 14 }}>
-          <div
-            style={{
-              fontSize: 26,
-              fontWeight: 800,
-              letterSpacing: "-0.03em",
-              lineHeight: 1,
-            }}
-          >
-            tiket<span style={{ color: "var(--tk-blue)" }}>.</span>
-          </div>
-          <div
-            style={{
-              fontSize: 14,
-              color: "var(--tk-ink-2)",
-              marginTop: 6,
-              fontWeight: 600,
-            }}
-          >
-            {guestOpen
-              ? "המשך כאורח"
-              : mode === "login"
-                ? "שמחים שחזרת"
-                : "הצטרף לקהילה"}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--tk-muted)", marginTop: 2 }}>
-            {guestOpen
-              ? "בלי חשבון — הכרטיסים יישלחו אליך למייל אחרי הרכישה"
-              : contextLabel ||
-                (mode === "login"
-                  ? "התחבר כדי להמשיך"
-                  : "פתח חשבון בכמה שניות")}
-          </div>
-        </div>
-
-        {/* Guest view replaces the login/signup content entirely */}
-        {!guestOpen && (
-          <>
-        {/* mode toggle pill */}
-        <div
-          style={{
-            display: "flex",
-            gap: 4,
-            padding: 3,
-            background: "var(--tk-paper)",
-            border: "1px solid var(--tk-line-strong)",
-            borderRadius: 999,
-            marginBottom: 14,
-          }}
-        >
-          {[
-            ["login", "התחברות"] as const,
-            ["signup", "הרשמה"] as const,
-          ].map(([id, label]) => (
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Logo size={24} />
+              <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: "-0.02em", marginTop: 8 }}>
+                {guestOpen ? "המשך כאורח" : login ? "שמחים שחזרת" : "הצטרף לקהילה"}
+              </div>
+              <div style={{ fontSize: 14, color: "var(--muted)", marginTop: 2, textWrap: "pretty" } as React.CSSProperties}>
+                {guestOpen
+                  ? "בלי חשבון - הכרטיסים יישלחו אליך למייל אחרי הרכישה"
+                  : contextLabel || (login ? "התחבר כדי להמשיך" : "פתח חשבון בכמה שניות")}
+              </div>
+            </div>
             <button
-              key={id}
               type="button"
-              onClick={() => setMode(id)}
+              onClick={onClose}
+              aria-label="סגור"
+              className="round"
               style={{
-                flex: 1,
-                padding: "9px 14px",
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 600,
-                background: mode === id ? "var(--tk-ink)" : "transparent",
-                color: mode === id ? "#fff" : "var(--tk-ink-2)",
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "var(--surface-2)",
                 border: "none",
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* form */}
-        <form onSubmit={handleSubmit} noValidate>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {mode === "signup" && (
-              <div>
-                <div style={labelStyle}>שם מלא</div>
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="ישראל ישראלי"
-                  autoComplete="name"
-                  dir="rtl"
-                  style={inputStyle}
-                />
-              </div>
-            )}
-            <div>
-              <div style={labelStyle}>אימייל</div>
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                type="email"
-                autoComplete="email"
-                dir="ltr"
-                style={{ ...inputStyle, textAlign: "right" }}
-              />
-            </div>
-            {mode === "signup" && (
-              <div>
-                <div style={labelStyle}>טלפון</div>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="050-0000000"
-                  type="tel"
-                  autoComplete="tel"
-                  dir="ltr"
-                  style={{ ...inputStyle, textAlign: "right" }}
-                />
-              </div>
-            )}
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                }}
-              >
-                <div style={labelStyle}>סיסמה</div>
-                {mode === "login" && (
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    style={{
-                      fontSize: 10,
-                      color: "var(--tk-blue)",
-                      fontWeight: 600,
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    שכחתי סיסמה
-                  </button>
-                )}
-              </div>
-              <input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                type="password"
-                autoComplete={
-                  mode === "login" ? "current-password" : "new-password"
-                }
-                style={inputStyle}
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div
-              style={{
-                marginTop: 12,
-                fontSize: 12,
-                color: "#B00020",
-                textAlign: "center",
-                fontWeight: 600,
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{
-              width: "100%",
-              padding: 14,
-              fontSize: 14,
-              fontWeight: 700,
-              marginTop: 14,
-              borderRadius: 12,
-              background: "var(--tk-ink)",
-              color: "#fff",
-              border: "none",
-              cursor: submitting ? "default" : "pointer",
-              opacity: submitting ? 0.6 : 1,
-              fontFamily: "inherit",
-              transition: "opacity 150ms ease",
-            }}
-          >
-            {submitting
-              ? "..."
-              : mode === "login"
-              ? "התחבר"
-              : "צור חשבון"}
-          </button>
-        </form>
-
-        {/* divider */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            margin: "16px 0",
-          }}
-        >
-          <div
-            style={{ flex: 1, height: 1, background: "var(--tk-line-strong)" }}
-          />
-          <span
-            className="tk-mono"
-            style={{
-              fontSize: 9,
-              letterSpacing: "0.18em",
-              color: "var(--tk-muted)",
-            }}
-          >
-            או
-          </span>
-          <div
-            style={{ flex: 1, height: 1, background: "var(--tk-line-strong)" }}
-          />
-        </div>
-
-        {/* socials */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {showApple && (
-            <button
-              type="button"
-              onClick={handleApple}
-              disabled={submitting}
-              style={{
-                padding: 12,
-                borderRadius: 10,
-                background: "var(--tk-ink)",
-                color: "#fff",
-                border: "1px solid var(--tk-ink)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 8,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: submitting ? "default" : "pointer",
-                fontFamily: "inherit",
-                opacity: submitting ? 0.6 : 1,
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
-                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-              </svg>
-              המשך עם Apple
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleGoogle}
-            disabled={submitting}
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              background: "var(--tk-paper)",
-              border: "1px solid var(--tk-line-strong)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--tk-ink)",
-              cursor: submitting ? "default" : "pointer",
-              fontFamily: "inherit",
-              opacity: submitting ? 0.6 : 1,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.99 10.99 0 0 0 1 12c0 1.77.42 3.44 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            המשך עם Google
-          </button>
-        </div>
-          </>
-        )}
-
-        {/* Guest checkout — small by design, shown only in the purchase flow */}
-        {onGuest &&
-          (guestOpen ? (
-            <div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div>
-                  <div style={labelStyle}>אימייל</div>
-                  <input
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    type="email"
-                    autoComplete="email"
-                    dir="ltr"
-                    style={{ ...inputStyle, textAlign: "right" }}
-                  />
-                </div>
-                <div>
-                  <div style={labelStyle}>טלפון</div>
-                  <input
-                    value={guestPhone}
-                    onChange={(e) => setGuestPhone(e.target.value)}
-                    placeholder="050-0000000"
-                    type="tel"
-                    autoComplete="tel"
-                    dir="ltr"
-                    style={{ ...inputStyle, textAlign: "right" }}
-                  />
-                </div>
-              </div>
-              {(guestLocalError || guestError) && (
-                <div
-                  style={{
-                    marginTop: 10,
-                    fontSize: 12,
-                    color: "#B00020",
-                    textAlign: "center",
-                    fontWeight: 600,
-                  }}
-                >
-                  {guestLocalError || guestError}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={handleGuestSubmit}
-                disabled={submitting}
-                style={{
-                  width: "100%",
-                  padding: 14,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  marginTop: 14,
-                  borderRadius: 12,
-                  background: "var(--tk-ink)",
-                  color: "#fff",
-                  border: "none",
-                  cursor: submitting ? "default" : "pointer",
-                  opacity: submitting ? 0.6 : 1,
-                  fontFamily: "inherit",
-                }}
-              >
-                {submitting ? "..." : "המשך כאורח"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setGuestOpen(false);
-                  setGuestLocalError("");
-                }}
-                style={{
-                  display: "block",
-                  margin: "14px auto 0",
-                  background: "transparent",
-                  border: "none",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--tk-muted)",
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  padding: 4,
-                }}
-              >
-                חזרה להתחברות
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setGuestOpen(true)}
-              style={{
-                display: "block",
-                margin: "14px auto 0",
-                background: "transparent",
-                border: "none",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--tk-muted)",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
+                flex: "0 0 auto",
                 cursor: "pointer",
-                fontFamily: "inherit",
-                padding: 4,
+                color: "var(--ink)",
               }}
             >
-              או המשך כאורח בלי חשבון
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
             </button>
-          ))}
+          </div>
 
-        <div
-          style={{
-            marginTop: 16,
-            fontSize: 10,
-            color: "var(--tk-muted)",
-            textAlign: "center",
-            lineHeight: 1.5,
-          }}
-        >
-          ע״י המשך אתה מסכים ל
-          <span style={{ color: "var(--tk-ink)", fontWeight: 600 }}>
-            תנאי השימוש
-          </span>{" "}
-          ו
-          <span style={{ color: "var(--tk-ink)", fontWeight: 600 }}>
-            מדיניות הפרטיות
-          </span>
+          {!guestOpen && (
+            <>
+              <div
+                role="tablist"
+                style={{
+                  position: "relative",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  padding: 3,
+                  borderRadius: "var(--r-sm)",
+                  background: "var(--surface-2)",
+                  marginBottom: 14,
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 3,
+                    bottom: 3,
+                    right: 3,
+                    width: "calc(50% - 3px)",
+                    borderRadius: 10,
+                    background: "#fff",
+                    boxShadow: "0 1px 3px rgba(20,20,19,.1)",
+                    transform: login ? "none" : "translateX(-100%)",
+                    transition: "transform .22s cubic-bezier(.2,.8,.2,1)",
+                  }}
+                />
+                {([["login", "התחברות"], ["signup", "הרשמה"]] as const).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === id}
+                    onClick={() => setMode(id)}
+                    style={{
+                      position: "relative",
+                      height: 34,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: mode === id ? "var(--ink)" : "var(--muted)",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      transition: "color .15s",
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <form onSubmit={handleSubmit} noValidate>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {!login &&
+                    field(
+                      "שם מלא",
+                      <input className="auth-in" value={name} onChange={(e) => setName(e.target.value)} placeholder="ישראל ישראלי" autoComplete="name" style={inputStyle} />,
+                    )}
+                  {field(
+                    "אימייל",
+                    <input className="auth-in" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" type="email" autoComplete="email" dir="ltr" style={inputStyle} />,
+                  )}
+                  {!login &&
+                    field(
+                      "טלפון",
+                      <input className="auth-in" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="050-0000000" type="tel" autoComplete="tel" dir="ltr" style={inputStyle} />,
+                    )}
+                  {field(
+                    "סיסמה",
+                    <div style={{ position: "relative" }}>
+                      <input
+                        className="auth-in"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        type={showPw ? "text" : "password"}
+                        autoComplete={login ? "current-password" : "new-password"}
+                        style={{ ...inputStyle, paddingInlineEnd: 44 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw((v) => !v)}
+                        aria-label={showPw ? "הסתר סיסמה" : "הצג סיסמה"}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: 44,
+                          height: 44,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "var(--muted)",
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <EyeIcon off={showPw} />
+                      </button>
+                    </div>,
+                    login && (
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: "var(--brand)",
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: 0,
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        שכחתי סיסמה
+                      </button>
+                    ),
+                  )}
+                </div>
+                {errorLine(error)}
+                {primary(login ? "התחבר" : "צור חשבון", { type: "submit" })}
+              </form>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
+                <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
+                <span style={{ fontSize: 13, color: "var(--muted)" }}>או</span>
+                <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {showApple && (
+                  <button
+                    type="button"
+                    className="press"
+                    onClick={handleApple}
+                    disabled={submitting}
+                    style={{ ...socialStyle, background: "var(--ink)", color: "#fff", border: "none", cursor: "pointer" }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff">
+                      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                    </svg>
+                    המשך עם Apple
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="press"
+                  onClick={handleGoogle}
+                  disabled={submitting}
+                  style={{ ...socialStyle, background: "transparent", border: "1px solid var(--line-strong)", color: "var(--ink)", cursor: "pointer" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.99 10.99 0 0 0 1 12c0 1.77.42 3.44 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  </svg>
+                  המשך עם Google
+                </button>
+              </div>
+            </>
+          )}
+
+          {onGuest &&
+            (guestOpen ? (
+              <div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {field(
+                    "אימייל",
+                    <input className="auth-in" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="you@example.com" type="email" autoComplete="email" dir="ltr" style={inputStyle} />,
+                  )}
+                  {field(
+                    "טלפון",
+                    <input className="auth-in" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} placeholder="050-0000000" type="tel" autoComplete="tel" dir="ltr" style={inputStyle} />,
+                  )}
+                </div>
+                {errorLine(guestLocalError || guestError)}
+                {primary("המשך כאורח", { type: "button", onClick: handleGuestSubmit })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGuestOpen(false);
+                    setGuestLocalError("");
+                  }}
+                  style={linkButton}
+                >
+                  חזרה להתחברות
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setGuestOpen(true)} style={linkButton}>
+                או המשך כאורח בלי חשבון
+              </button>
+            ))}
+
+          <div style={{ marginTop: 14, fontSize: 12, color: "var(--muted)", textAlign: "center", lineHeight: 1.6 }}>
+            בהמשך אתה מסכים ל
+            <a href="/Terms" target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink)", fontWeight: 600, textDecoration: "none" }}>
+              תנאי השימוש
+            </a>
+            {" "}ול
+            <a href="/Privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink)", fontWeight: 600, textDecoration: "none" }}>
+              מדיניות הפרטיות
+            </a>
+          </div>
         </div>
       </div>
     </div>

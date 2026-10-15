@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { UploadTicketInterface } from "./UploadTicketInterface.types";
 import { apiFetch } from "@/lib/platform";
 
-const ISRAELI_BANKS = [
+export const ISRAELI_BANKS = [
   { code: "12", name: "הפועלים" },
   { code: "10", name: "לאומי" },
   { code: "11", name: "דיסקונט" },

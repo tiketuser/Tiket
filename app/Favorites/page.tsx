@@ -18,6 +18,7 @@ interface Event {
   venue: string;
   imageUrl: string;
   status: string;
+  category?: string;
 }
 
 interface Ticket {
@@ -56,7 +57,7 @@ const Favorites = () => {
         if (cancelled) return;
 
         const nextEvents: Event[] = eventsSnapshot.docs
-          .map((doc) => {
+          .map((doc): Event => {
             const data = doc.data();
             return {
               id: doc.id,
@@ -67,6 +68,7 @@ const Favorites = () => {
               venue: data.venue,
               imageUrl: data.imageUrl,
               status: data.status,
+              category: data.category as string | undefined,
             };
           })
           .filter(
@@ -146,6 +148,7 @@ const Favorites = () => {
         location: e.venue,
         price: minPriceByEvent.get(e.id) || 0,
         ticketsLeft: ticketCountByEvent[e.id] || 0,
+        category: e.category || "מוזיקה",
       }));
   }, [events, tickets, favIds]);
 

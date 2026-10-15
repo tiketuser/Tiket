@@ -16,28 +16,35 @@ export default function MobileTopBar({ title }: { title?: string }) {
       {title ? (
         <span style={{ fontSize: 18, fontWeight: 700 }}>{title}</span>
       ) : (
-        <span
-          style={{
-            fontSize: 25,
-            fontWeight: 800,
-            letterSpacing: "-0.04em",
-            direction: "ltr",
-            display: "inline-flex",
-            alignItems: "baseline",
-          }}
-        >
-          tiket
-          <span
-            style={{
-              width: 5.5,
-              height: 5.5,
-              borderRadius: "50%",
-              background: "var(--brand)",
-              marginLeft: 1.5,
-            }}
-          />
-        </span>
+        <Logo size={25} />
       )}
     </div>
+  );
+}
+
+/** The lowercase "tiket" wordmark with the brand dot. */
+export function Logo({ size = 22 }: { size?: number }) {
+  return (
+    <span
+      style={{
+        fontSize: size,
+        fontWeight: 800,
+        letterSpacing: "-0.04em",
+        direction: "ltr",
+        display: "inline-flex",
+        alignItems: "baseline",
+      }}
+    >
+      tiket
+      <span
+        style={{
+          width: size * 0.22,
+          height: size * 0.22,
+          borderRadius: "50%",
+          background: "var(--brand)",
+          marginLeft: size * 0.06,
+        }}
+      />
+    </span>
   );
 }
