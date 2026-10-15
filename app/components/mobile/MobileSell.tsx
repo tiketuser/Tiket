@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { apiFetch } from "@/lib/platform";
-import { Icon } from "./Icon";
 import { nis } from "./format";
 
 type Step = 0 | 1 | 2;
@@ -165,1137 +164,680 @@ export default function MobileSell({
     }
   }, [bundleOnly, price, tickets]);
 
+  const [kp, setKp] = useState(false);
+  const [kpFresh, setKpFresh] = useState(false);
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    setKp(false);
+    setTyping(false);
+  }, [open]);
+
   if (!open) return null;
 
-  return (
+  const n = tickets.length;
+  const total = price * n;
+  const payout = Math.round(total * SELLER_PAYOUT_RATE);
+  const titles = ["העלאת כרטיס", "קביעת מחיר", "אישור ופרסום"];
+  const codeOk = barcodeDraft.trim().length >= 6;
+  const kpPress = (k: string) => {
+    if (k === "del") {
+      setPrice(Math.floor((price || 0) / 10));
+      setKpFresh(false);
+      return;
+    }
+    const base = kpFresh ? "" : String(price || "");
+    const next = parseInt(base + k, 10);
+    if (next <= 99999) setPrice(next);
+    setKpFresh(false);
+  };
+
+  const fileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="application/pdf,image/*"
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        if (f) addPdfTicket(f);
+        setTyping(false);
+        e.target.value = "";
+      }}
+      style={{ display: "none" }}
+    />
+  );
+
+  const shell = (children: React.ReactNode, background = "var(--bg)") => (
     <div
       className="tk-mobile"
+      dir="rtl"
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 50,
-        background: "var(--tk-bg)",
+        background,
+        color: "var(--ink)",
         display: "flex",
         flexDirection: "column",
+        overflowY: "auto",
         animation: "fadeIn 160ms ease-out",
       }}
-      dir="rtl"
     >
-      {/* Header */}
-      <div
-        style={{
-          padding: "14px 18px 16px",
-          borderBottom: "1px solid var(--tk-line)",
-          paddingTop: "calc(14px + var(--sat, env(safe-area-inset-top, 0px)))",
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 12,
-          }}
-        >
-          <button
-            onClick={goBack}
-            aria-label={step === 0 ? "סגור" : "חזרה"}
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 999,
-              background: "var(--tk-paper)",
-              border: "1px solid var(--tk-line)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
-            <Icon.chev size={16} />
-          </button>
-          <div>
-            <div
-              className="tk-mono"
-              style={{
-                fontSize: 10,
-                color: "var(--tk-blue)",
-                letterSpacing: "0.1em",
-              }}
-            >
-              שלב {step + 1}/3
-            </div>
-            <div
-              style={{
-                fontSize: 17,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {step === 0
-                ? "העלה כרטיס"
-                : step === 1
-                  ? "קבע מחיר"
-                  : "אשר ופרסם"}
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 3 }}>
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              style={{
-                flex: 1,
-                height: 4,
-                borderRadius: 2,
-                background:
-                  i <= step ? "var(--tk-blue)" : "var(--tk-line-strong)",
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Body */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: 18,
-          paddingBottom: 100,
-        }}
-      >
-        {step === 0 && (
-          <StepUpload
-            tickets={tickets}
-            removeTicket={removeTicket}
-            showAdd={showAdd}
-            setShowAdd={setShowAdd}
-            barcodeDraft={barcodeDraft}
-            setBarcodeDraft={setBarcodeDraft}
-            onAddBarcode={addBarcodeTicket}
-            onSelectFile={() => fileInputRef.current?.click()}
-          />
-        )}
-        {step === 1 && (
-          <StepPrice
-            price={price}
-            setPrice={setPrice}
-            ticketsCount={tickets.length}
-            bundleOnly={bundleOnly}
-            setBundleOnly={setBundleOnly}
-          />
-        )}
-        {step === 2 && (
-          <StepReview
-            tickets={tickets}
-            price={price}
-            bundleOnly={bundleOnly}
-            published={publishedCount}
-            error={publishError}
-          />
-        )}
-      </div>
-
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="application/pdf,image/*"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) addPdfTicket(f);
-          e.target.value = "";
-        }}
-        style={{ display: "none" }}
-      />
-
-      {/* Footer action */}
-      <div
-        style={{
-          flexShrink: 0,
-          padding: "10px 14px",
-          paddingBottom: "calc(14px + var(--sab, env(safe-area-inset-bottom, 0px)))",
-          background: "var(--bg)",
-          borderTop: "1px solid var(--tk-line)",
-        }}
-      >
-        {step < 2 ? (
-          <button
-            onClick={goNext}
-            disabled={step === 0 && !canAdvanceFromUpload}
-            style={{
-              width: "100%",
-              padding: 14,
-              fontSize: 14,
-              fontWeight: 700,
-              borderRadius: 999,
-              border: "none",
-              background:
-                step === 0 && !canAdvanceFromUpload
-                  ? "var(--tk-line-strong)"
-                  : "var(--tk-ink)",
-              color: "#fff",
-              cursor:
-                step === 0 && !canAdvanceFromUpload ? "default" : "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            המשך לשלב הבא
-          </button>
-        ) : publishedCount != null ? (
-          <button
-            onClick={onClose}
-            style={{
-              width: "100%",
-              padding: 14,
-              fontSize: 14,
-              fontWeight: 700,
-              borderRadius: 999,
-              border: "none",
-              background: "var(--tk-ink)",
-              color: "#fff",
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            סגור
-          </button>
-        ) : (
-          <button
-            onClick={publish}
-            disabled={publishing}
-            style={{
-              width: "100%",
-              padding: 14,
-              fontSize: 14,
-              fontWeight: 700,
-              borderRadius: 999,
-              border: "none",
-              background: "var(--tk-blue)",
-              color: "#fff",
-              cursor: publishing ? "default" : "pointer",
-              fontFamily: "inherit",
-              opacity: publishing ? 0.75 : 1,
-            }}
-          >
-            {publishing ? "מפרסם…" : "פרסם למכירה"}
-          </button>
-        )}
+      <div style={{ width: "100%", maxWidth: 640, margin: "0 auto", minHeight: "100%", display: "flex", flexDirection: "column" }}>
+        {children}
       </div>
     </div>
   );
-}
 
-// ─── Step 0: Upload ────────────────────────────────────────────
-function StepUpload({
-  tickets,
-  removeTicket,
-  showAdd,
-  setShowAdd,
-  barcodeDraft,
-  setBarcodeDraft,
-  onAddBarcode,
-  onSelectFile,
-}: {
-  tickets: FileTicket[];
-  removeTicket: (i: number) => void;
-  showAdd: boolean;
-  setShowAdd: (v: boolean) => void;
-  barcodeDraft: string;
-  setBarcodeDraft: (v: string) => void;
-  onAddBarcode: () => void;
-  onSelectFile: () => void;
-}) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Already-added tickets */}
-      {tickets.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div
-            className="tk-mono"
-            style={{
-              fontSize: 10,
-              color: "var(--tk-muted)",
-              letterSpacing: "0.1em",
-            }}
-          >
-            כרטיסים שהתקבלו · {tickets.length}
-          </div>
-          {tickets.map((t, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: 12,
-                borderRadius: 12,
-                background: "rgba(11,122,62,0.06)",
-                border: "1px solid rgba(11,122,62,0.25)",
-              }}
-            >
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  background: "var(--tk-ok)",
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M3 8l3.5 3.5L13 5"
-                    stroke="#fff"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>
-                  כרטיס {i + 1} התקבל
-                </div>
-                <div
-                  className="tk-mono"
-                  dir="ltr"
-                  style={{
-                    fontSize: 10,
-                    color: "var(--tk-muted)",
-                    marginTop: 2,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    textAlign: "right",
-                  }}
-                >
-                  {t.kind === "pdf" ? "◆ PDF · " : "◆ ברקוד · "}
-                  {t.label}
-                </div>
-              </div>
-              <button
-                onClick={() => removeTicket(i)}
-                aria-label="הסר"
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 999,
-                  background: "transparent",
-                  border: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                }}
-              >
-                <Icon.x size={14} color="var(--tk-muted)" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Add-another trigger when there's already a ticket */}
-      {tickets.length > 0 && !showAdd && (
-        <button
-          onClick={() => setShowAdd(true)}
-          style={{
-            padding: "12px 14px",
-            borderRadius: 12,
-            border: "1.5px dashed var(--tk-line-strong)",
-            background: "transparent",
-            color: "var(--tk-ink)",
-            fontSize: 13,
-            fontWeight: 600,
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            cursor: "pointer",
-          }}
-        >
-          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
-          <span>הוסף עוד כרטיס</span>
-        </button>
-      )}
-
-      {/* Upload UI — visible when no tickets yet OR user clicked "add another" */}
-      {(tickets.length === 0 || showAdd) && (
-        <UploadInputs
-          barcodeDraft={barcodeDraft}
-          setBarcodeDraft={setBarcodeDraft}
-          onAddBarcode={onAddBarcode}
-          onSelectFile={onSelectFile}
-          onCancel={tickets.length > 0 ? () => setShowAdd(false) : undefined}
-        />
-      )}
-    </div>
-  );
-}
-
-function UploadInputs({
-  barcodeDraft,
-  setBarcodeDraft,
-  onAddBarcode,
-  onSelectFile,
-  onCancel,
-}: {
-  barcodeDraft: string;
-  setBarcodeDraft: (v: string) => void;
-  onAddBarcode: () => void;
-  onSelectFile: () => void;
-  onCancel?: () => void;
-}) {
-  return (
-    <>
-      <div
-        style={{
-          border: "1px solid var(--tk-line-strong)",
-          borderRadius: 14,
-          padding: 14,
-          background: "var(--tk-paper)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 4,
-          }}
-        >
-          <QrIcon size={16} />
-          <div style={{ fontSize: 13, fontWeight: 700 }}>הזן ברקוד ידנית</div>
-        </div>
-        <div
-          style={{ fontSize: 11, color: "var(--tk-muted)", marginBottom: 10 }}
-        >
-          העתק את מספר הברקוד מתחתית הכרטיס
-        </div>
-        <input
-          placeholder="487612390542"
-          inputMode="numeric"
-          value={barcodeDraft}
-          onChange={(e) => setBarcodeDraft(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "12px 14px",
-            borderRadius: 10,
-            border: "1px solid var(--tk-line-strong)",
-            background: "#fff",
-            fontFamily: "var(--font-jet-mono), monospace",
-            fontSize: 14,
-            letterSpacing: "0.18em",
-            textAlign: "center",
-            boxSizing: "border-box",
-            direction: "ltr",
-            outline: "none",
-          }}
-        />
-        <button
-          onClick={onAddBarcode}
-          disabled={!barcodeDraft.trim()}
-          style={{
-            marginTop: 10,
-            width: "100%",
-            padding: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            borderRadius: 999,
-            border: "none",
-            background: barcodeDraft.trim()
-              ? "var(--tk-ink)"
-              : "var(--tk-line-strong)",
-            color: "#fff",
-            cursor: barcodeDraft.trim() ? "pointer" : "default",
-            fontFamily: "inherit",
-          }}
-        >
-          אשר ברקוד
-        </button>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginTop: 10,
-            fontSize: 10.5,
-            color: "var(--tk-muted)",
-          }}
-        >
-          <Icon.shield size={12} color="var(--tk-blue)" />
-          <span>אימות אוטומטי מול חברת הכרטוס</span>
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          color: "var(--tk-muted)",
-          fontSize: 11,
-        }}
-      >
-        <div style={{ flex: 1, height: 1, background: "var(--tk-line-strong)" }} />
-        <span>או</span>
-        <div style={{ flex: 1, height: 1, background: "var(--tk-line-strong)" }} />
-      </div>
-
-      <div
-        style={{
-          border: "2px dashed var(--tk-line-strong)",
-          borderRadius: 14,
-          padding: "32px 16px",
-          textAlign: "center",
-          background: "var(--tk-paper)",
-        }}
-      >
-        <div
-          style={{
-            margin: "0 auto 12px",
-            width: 48,
-            height: 48,
-            borderRadius: 999,
-            background: "var(--tk-ink)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <UploadIcon />
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 600 }}>העלה PDF או תמונה</div>
-        <div style={{ fontSize: 11, color: "var(--tk-muted)", marginTop: 4 }}>
-          עד 10MB · אוטומטית מוסתר מידע אישי
-        </div>
-        <button
-          onClick={onSelectFile}
-          style={{
-            marginTop: 14,
-            padding: "10px 20px",
-            fontSize: 13,
-            fontWeight: 700,
-            borderRadius: 999,
-            border: "none",
-            background: "var(--tk-ink)",
-            color: "#fff",
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          בחר קובץ
-        </button>
-      </div>
-
-      {onCancel && (
-        <button
-          onClick={onCancel}
-          style={{
-            padding: 8,
-            background: "transparent",
-            border: "none",
-            color: "var(--tk-muted)",
-            fontSize: 12,
-            fontFamily: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          ביטול
-        </button>
-      )}
-    </>
-  );
-}
-
-// ─── Step 1: Price ─────────────────────────────────────────────
-function StepPrice({
-  price,
-  setPrice,
-  ticketsCount,
-  bundleOnly,
-  setBundleOnly,
-}: {
-  price: number;
-  setPrice: (n: number) => void;
-  ticketsCount: number;
-  bundleOnly: boolean;
-  setBundleOnly: (v: boolean) => void;
-}) {
-  const total = price * Math.max(ticketsCount, 1);
-  const fillPct = ((price - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
-
-  return (
-    <div>
-      <div
-        className="tk-mono"
-        style={{ fontSize: 10, color: "var(--tk-muted)", marginBottom: 6 }}
-      >
-        המחיר שלך לכרטיס
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: 4,
-          marginBottom: ticketsCount > 1 ? 4 : 16,
-        }}
-      >
-        <span
-          className="tk-mono"
-          style={{
-            fontSize: 44,
-            fontWeight: 700,
-            letterSpacing: "-0.03em",
-          }}
-        >
-          {nis(price)}
-        </span>
-        <span
-          className="tk-mono"
-          style={{ fontSize: 12, color: "var(--tk-muted)" }}
-        >
-          / כרטיס
-        </span>
-      </div>
-      {ticketsCount > 1 && (
-        <div
-          className="tk-mono"
-          style={{ fontSize: 11, color: "var(--tk-muted)", marginBottom: 16 }}
-        >
-          {nis(total)} לכל {ticketsCount} הכרטיסים יחד
-        </div>
-      )}
-      <input
-        type="range"
-        min={PRICE_MIN}
-        max={PRICE_MAX}
-        value={price}
-        onChange={(e) => setPrice(parseInt(e.target.value, 10))}
-        style={
-          {
-            width: "100%",
-            height: 6,
-            borderRadius: 999,
-            background: `linear-gradient(to left, var(--tk-blue) 0%, var(--tk-blue) ${fillPct}%, var(--tk-line-strong) ${fillPct}%, var(--tk-line-strong) 100%)`,
-            outline: "none",
-            appearance: "none",
-            WebkitAppearance: "none",
-          } as React.CSSProperties
-        }
-      />
-      <div
-        className="tk-mono"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: 10,
-          color: "var(--tk-muted)",
-          marginTop: 6,
-        }}
-      >
-        <span>{nis(PRICE_MIN)}</span>
-        <span>שוק חי {nis(225)}</span>
-        <span>{nis(PRICE_MAX)}</span>
-      </div>
-
-      <div
-        style={{
-          marginTop: 14,
-          background: "var(--tk-paper)",
-          border: "1px solid var(--tk-line-strong)",
-          borderRadius: 12,
-          padding: 14,
-        }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 10 }}>
-          מה תקבל
-        </div>
-        {ticketsCount > 1 && (
-          <MRow
-            label={`מחיר × ${ticketsCount}`}
-            value={`${ticketsCount} × ${nis(price)}`}
-            muted
-          />
-        )}
-        <MRow label="סה״כ" value={nis(total)} />
-        <MRow
-          label="עמלת פלטפורמה"
-          value={`-${nis(total - Math.round(total * SELLER_PAYOUT_RATE))}`}
-          muted
-        />
-        <div
-          style={{
-            height: 1,
-            background: "var(--tk-line)",
-            margin: "8px 0",
-          }}
-        />
-        <MRow
-          label="תשלום אליך"
-          value={nis(Math.round(total * SELLER_PAYOUT_RATE))}
-          strong
-        />
-      </div>
-
-      {ticketsCount > 1 && (
-        <div
-          style={{
-            marginTop: 14,
-            padding: 14,
-            background: "var(--tk-paper)",
-            border: "1px solid var(--tk-line-strong)",
-            borderRadius: 12,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>
-                מכור רק כחבילה
-              </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--tk-muted)",
-                  marginTop: 2,
-                }}
-              >
-                {ticketsCount} כרטיסים יימכרו יחד לקונה אחד
-              </div>
-            </div>
-            <button
-              onClick={() => setBundleOnly(!bundleOnly)}
-              aria-pressed={bundleOnly}
-              style={{
-                width: 44,
-                height: 26,
-                borderRadius: 999,
-                background: bundleOnly
-                  ? "var(--tk-blue)"
-                  : "var(--tk-line-strong)",
-                border: "none",
-                position: "relative",
-                cursor: "pointer",
-                flexShrink: 0,
-                padding: 0,
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 3,
-                  insetInlineStart: bundleOnly ? 21 : 3,
-                  width: 20,
-                  height: 20,
-                  borderRadius: 999,
-                  background: "#fff",
-                  transition: "inset-inline-start 160ms",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
-                }}
-              />
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Step 2: Review ────────────────────────────────────────────
-function StepReview({
-  tickets,
-  price,
-  bundleOnly,
-  published,
-  error,
-}: {
-  tickets: FileTicket[];
-  price: number;
-  bundleOnly: boolean;
-  published: number | null;
-  error: string | null;
-}) {
-  if (published != null) {
-    return (
-      <div
-        style={{
-          padding: "30px 18px",
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 14,
-        }}
-      >
-        <div
-          style={{
-            width: 72,
-            height: 72,
-            borderRadius: "50%",
-            background: "var(--tk-ok)",
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M5 12l5 5 9-11"
-              stroke="#fff"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
-            המודעה נשלחה לאימות
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--tk-muted)",
-              maxWidth: 260,
-              lineHeight: 1.5,
-            }}
-          >
-            {published === 1
-              ? "הכרטיס שלך נשלח לאימות מול חברת הכרטוס. נעדכן אותך ברגע שיאושר ויעלה לאוויר."
-              : `${published} הכרטיסים שלך נשלחו לאימות מול חברת הכרטוס. נעדכן אותך ברגע שיאושרו ויעלו לאוויר.`}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const total = price * Math.max(tickets.length, 1);
-  const payout = Math.round(total * SELLER_PAYOUT_RATE);
-
-  return (
-    <div>
-      {/* Pending-verification stub card (replaces the design's glass preview,
-          since the event/seat aren't known until verification completes) */}
-      <div
-        style={{
-          position: "relative",
-          borderRadius: 14,
-          overflow: "hidden",
-          minHeight: 280,
-          color: "#fff",
-          marginBottom: 14,
-          background: "var(--tk-ink)",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage:
-              "repeating-linear-gradient(-45deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 18px)",
-          }}
-        />
+  /* ── published ─────────────────────────────────────────── */
+  if (publishedCount != null) {
+    return shell(
+      <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", color: "#fff", overflow: "hidden" }}>
+        <style>{"@keyframes usRise{from{opacity:0;transform:translateY(28px) scale(.94) rotate(-2deg)}to{opacity:1;transform:translateY(0) scale(.92) rotate(-2deg)}}@keyframes usFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}"}</style>
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 60% at 50% 30%, rgba(181,70,83,.45) 0%, rgba(14,14,13,0) 70%)" }} />
         <div
           style={{
             position: "relative",
-            padding: 14,
+            flex: 1,
             display: "flex",
             flexDirection: "column",
-            minHeight: 280,
+            padding: "calc(30px + var(--sat, env(safe-area-inset-top, 0px))) 20px calc(30px + var(--sab, env(safe-area-inset-bottom, 0px)))",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: 8,
-            }}
-          >
+          <div style={{ textAlign: "center", animation: "usFade .5s ease both" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 28, padding: "0 12px", borderRadius: 999, background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.14)", fontSize: 12, fontWeight: 600 }}>
+              <span className="round" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--brand)", boxShadow: "0 0 0 3px rgba(181,70,83,.3)" }} />
+              נשלח לאימות
+            </span>
+            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.1, marginTop: 14 }}>
+              {publishedCount > 1 ? "הכרטיסים הועלו" : "הכרטיס הועלה"}
+            </div>
+            <div style={{ fontSize: 15, color: "rgba(255,255,255,.65)", marginTop: 8, lineHeight: 1.5 }}>
+              נאמת אותו מול מערכת הכרטוס ונפרסם אותו.
+              <br />
+              נעדכן אותך ברגע שיימכר.
+            </div>
+            {publishError && (
+              <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: "#F2B8BF" }}>{publishError}</div>
+            )}
+          </div>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
             <div
               style={{
-                background: "rgba(255,255,255,0.10)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "#fff",
-                borderRadius: 999,
-                padding: "6px 10px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 11,
+                width: "100%",
+                maxWidth: 360,
+                animation: "usRise .7s cubic-bezier(.2,.9,.3,1) .1s both",
+                filter: "drop-shadow(0 30px 40px rgba(0,0,0,.5))",
               }}
             >
+              <div style={{ borderRadius: 26, background: "#fff", color: "var(--ink)", padding: "22px 22px 18px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: ".12em", color: "var(--muted)" }}>
+                  <span className="round" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)" }} />
+                  TIKET
+                </div>
+                <div className="num" style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, marginTop: 14 }}>
+                  {nis(price)}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+                  {publishedCount > 1 ? `לכרטיס · ${publishedCount} כרטיסים` : "לכרטיס"}
+                </div>
+                <div style={{ borderTop: "1.5px dashed var(--line-strong)", margin: "16px -22px 12px" }} />
+                <div dir="ltr" style={{ height: 30, display: "flex", alignItems: "stretch", gap: 2, justifyContent: "center" }}>
+                  {BARS.map((w, i) => (
+                    <span key={i} style={{ width: w * 1.6, borderRadius: 0.5, background: "var(--ink)" }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, animation: "usFade .5s ease .35s both" }}>
+            <a
+              href="/MyTickets"
+              className="press"
+              style={{ width: "100%", height: 52, borderRadius: "var(--r-md)", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}
+            >
+              לכרטיסים שלי
+            </a>
+            <button onClick={onClose} style={{ ...plainButton, width: "100%", height: 46, fontSize: 15, fontWeight: 500, color: "rgba(255,255,255,.75)" }}>
+              סגירה
+            </button>
+          </div>
+        </div>
+      </div>,
+      "#0E0E0D",
+    );
+  }
+
+  /* ── review & publish ──────────────────────────────────── */
+  if (step === 2) {
+    const mode = n > 1 ? (bundleOnly ? "חבילה בלבד" : "בנפרד או יחד") : "כרטיס בודד";
+    const row = (k: string, v: React.ReactNode) => (
+      <div key={k} style={{ minHeight: 54, display: "grid", gridTemplateColumns: "96px minmax(0,1fr)", alignItems: "center", gap: 8, borderTop: "1px solid var(--line)" }}>
+        <span style={{ fontSize: 13, color: "var(--muted)" }}>{k}</span>
+        <span className="num" style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v}</span>
+      </div>
+    );
+    return shell(
+      <>
+        <div style={{ position: "relative", height: 260, flex: "0 0 auto", overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(90% 90% at 70% 20%, rgba(181,70,83,.55) 0%, rgba(20,20,19,0) 70%)" }} />
+          <div dir="ltr" aria-hidden="true" style={{ position: "absolute", left: 24, right: 24, bottom: 60, height: 70, display: "flex", alignItems: "stretch", justifyContent: "center", gap: 3, opacity: 0.12 }}>
+            {BARS.concat(BARS).map((w, i) => (
+              <span key={i} style={{ width: w * 2.2, background: "#fff" }} />
+            ))}
+          </div>
+          <div style={{ position: "absolute", top: "calc(10px + var(--sat, env(safe-area-inset-top, 0px)))", right: 0, left: 0, height: 52, padding: "0 16px", display: "flex", alignItems: "center" }}>
+            <button className="press round" onClick={() => setStep(1)} aria-label="חזרה" style={{ ...roundButton, background: "rgba(255,255,255,.14)", color: "#fff" }}>
+              <ChevRight />
+            </button>
+          </div>
+        </div>
+        <div style={{ flex: 1, marginTop: -28, position: "relative", borderRadius: "28px 28px 0 0", background: "var(--bg)", padding: "10px 20px calc(30px + var(--sab, env(safe-area-inset-bottom, 0px)))", display: "flex", flexDirection: "column" }}>
+          <div style={{ width: 36, height: 5, borderRadius: 3, background: "var(--line-strong)", margin: "0 auto 14px" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>אישור ופרסום</div>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 }}>
+              <ShieldIcon size={13} color="var(--muted)" />
+              יאומת לפני פרסום
+            </span>
+          </div>
+          {row("כרטיסים", n)}
+          {row("מחיר לכרטיס", nis(price))}
+          {row("אופן מכירה", mode)}
+          {row("עמלת שירות", `-${nis(total - payout)}`)}
+          {row("מועד תשלום", "5-7 ימים אחרי האירוע")}
+          <div className="num" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "16px 0", borderTop: "1px solid var(--line)" }}>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>
+              סך התמורה
+              {n > 1 && <span style={{ fontSize: 12, fontWeight: 500, color: "var(--muted)" }}>{` · ${n} × ${nis(price)}`}</span>}
+            </span>
+            <span style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>{nis(payout)}</span>
+          </div>
+          {publishError && (
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--brand)", textAlign: "center", marginBottom: 12 }}>{publishError}</div>
+          )}
+          <div style={{ flex: 1 }} />
+          <SwipeToConfirm
+            busy={publishing}
+            onConfirm={publish}
+            label={
+              <>
+                {publishing ? "מפרסם…" : "החלק לפרסום"}
+                {!publishing && <span className="num" style={{ marginInlineStart: 6 }}>{`· ${nis(total)}`}</span>}
+              </>
+            }
+          />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontSize: 11, color: "var(--faint)", marginTop: 10 }}>
+            <ShieldIcon size={11} color="var(--faint)" />
+            התשלום יועבר אליך 5-7 ימים אחרי האירוע
+          </div>
+        </div>
+      </>,
+      "#141413",
+    );
+  }
+
+  /* ── upload & price ────────────────────────────────────── */
+  return shell(
+    <>
+      <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", paddingTop: "var(--sat, env(safe-area-inset-top, 0px))" }}>
+        <div style={{ height: 52, padding: "0 16px", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}>
+          <button className="press round" onClick={goBack} aria-label={step ? "חזרה" : "סגירה"} style={roundButton}>
+            {step ? <ChevRight /> : <XIcon size={17} />}
+          </button>
+          <span style={{ fontSize: 17, fontWeight: 700 }}>{titles[step]}</span>
+          <span />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 4, padding: "0 20px 10px" }}>
+          {titles.map((t, i) => (
+            <span key={t} className="round" style={{ height: 4, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
               <span
+                className="round"
                 style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 999,
-                  background: "var(--tk-lime)",
+                  display: "block",
+                  height: "100%",
+                  width: i < step ? "100%" : i === step ? "66.67%" : "0%",
+                  background: "var(--brand)",
+                  borderRadius: 2,
+                  transition: "width .35s ease",
                 }}
               />
-              <span style={{ opacity: 0.85, fontWeight: 600 }}>
-                בהמתנה לאימות
-              </span>
-            </div>
-            <div
-              className="tk-mono"
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#fff",
-                background: "rgba(255,255,255,0.16)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: 999,
-                padding: "6px 10px",
-              }}
-            >
-              {nis(price)}
-            </div>
-          </div>
-
-          <div style={{ flex: 1 }} />
-
-          <div style={{ marginBottom: 10 }}>
-            <div
-              className="tk-mono"
-              style={{
-                fontSize: 10,
-                opacity: 0.6,
-                letterSpacing: "0.18em",
-                marginBottom: 6,
-              }}
-            >
-              ◆ TIKET · PENDING
-            </div>
-            <div
-              style={{
-                fontSize: 22,
-                fontWeight: 800,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              הכרטיס יזוהה אוטומטית
-            </div>
-            <div
-              className="tk-mono"
-              style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}
-            >
-              פרטי המופע יעודכנו לאחר אימות מול חברת הכרטוס
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "rgba(255,255,255,0.08)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255,255,255,0.14)",
-              borderRadius: 12,
-              padding: 12,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <div>
-              <div
-                className="tk-mono"
-                style={{
-                  fontSize: 9,
-                  opacity: 0.6,
-                  letterSpacing: "0.12em",
-                }}
-              >
-                כרטיסים
-              </div>
-              <div
-                style={{ fontSize: 18, fontWeight: 800, marginTop: 2 }}
-              >
-                {tickets.length}
-              </div>
-            </div>
-            <div>
-              <div
-                className="tk-mono"
-                style={{
-                  fontSize: 9,
-                  opacity: 0.6,
-                  letterSpacing: "0.12em",
-                  textAlign: "end",
-                }}
-              >
-                סוג העלאה
-              </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  marginTop: 2,
-                  textAlign: "end",
-                }}
-              >
-                {tickets.every((t) => t.kind === "barcode")
-                  ? "ברקוד"
-                  : tickets.every((t) => t.kind === "pdf")
-                    ? "PDF / תמונה"
-                    : "מעורב"}
-              </div>
-            </div>
-          </div>
+            </span>
+          ))}
         </div>
       </div>
 
-      {/* Receipt */}
-      <div
-        style={{
-          background: "var(--tk-paper)",
-          border: "1px solid var(--tk-line)",
-          borderRadius: 12,
-          padding: 14,
-        }}
-      >
-        {(
-          [
-            ["כמות:", `${tickets.length}`],
-            ["מחיר לכרטיס:", nis(price)],
-            ...(tickets.length > 1
-              ? ([
-                  ["סה״כ:", nis(total)],
-                  [
-                    "אופן מכירה:",
-                    bundleOnly ? "חבילה — יחד" : "ניתן לפיצול",
-                  ],
-                ] as const)
-              : []),
-            ["תשלום אליך (נטו):", nis(payout)],
-          ] as const
-        ).map(([k, v], i, a) => (
-          <div
-            key={k}
-            style={{
-              display: "flex",
-              justifyContent: "flex-start",
-              gap: 8,
-              padding: "7px 0",
-              borderBottom:
-                i < a.length - 1 ? "1px dashed var(--tk-line-strong)" : "none",
-              fontSize: 12,
-            }}
-          >
-            <span style={{ color: "var(--tk-muted)" }}>{k}</span>
-            <span style={{ fontWeight: 600 }}>{v}</span>
-          </div>
-        ))}
+      <div style={{ flex: 1, padding: "12px 20px 24px" }}>
+        {step === 0 && (
+          <>
+            <div style={{ margin: "6px 0 18px" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: n ? "var(--muted)" : "var(--brand)" }}>
+                {n ? (n > 1 ? `${n} כרטיסים` : "כרטיס אחד") : "שלב 1 מתוך 3"}
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.15, marginTop: 4, textWrap: "balance" } as React.CSSProperties}>
+                {n ? "הכרטיסים שלך" : "איך תרצה להוסיף את הכרטיס?"}
+              </div>
+            </div>
+
+            {n > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
+                {tickets.map((t, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      borderRadius: 18,
+                      boxShadow: "inset 0 0 0 1px var(--line-strong)",
+                      animation: "fadeIn .3s ease",
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0, padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: ".12em", color: "var(--muted)" }}>
+                        <span className="round" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)" }} />
+                        TIKET
+                      </div>
+                      <div className="num" style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8, minWidth: 0 }}>
+                        <span style={{ fontSize: 17, fontWeight: 700, whiteSpace: "nowrap" }}>כרטיס {i + 1}</span>
+                        <span dir="ltr" style={{ fontSize: 14, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {t.kind === "pdf" ? t.label : `ברקוד ${t.label}`}
+                        </span>
+                      </div>
+                    </div>
+                    <button onClick={() => removeTicket(i)} aria-label="הסר" style={{ ...plainButton, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--faint)" }}>
+                      <XIcon size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {(n === 0 || showAdd) && (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 10 }}>
+                  <UploadTile kind="file" active={false} label="העלאה" sub="PDF או צילום מסך" onClick={() => fileInputRef.current?.click()} />
+                  <UploadTile kind="code" active={typing} label="ברקוד" sub="הקלד את המספר" onClick={() => setTyping((v) => !v)} />
+                </div>
+                {typing && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 10, animation: "fadeIn .2s ease" }}>
+                    <div style={{ flex: 1, height: 50, display: "flex", alignItems: "center", padding: "0 14px", borderRadius: "var(--r-md)", background: "var(--surface-2)" }}>
+                      <input
+                        value={barcodeDraft}
+                        onChange={(e) => setBarcodeDraft(e.target.value)}
+                        placeholder="487612390542"
+                        inputMode="numeric"
+                        dir="ltr"
+                        className="num"
+                        autoFocus
+                        style={{ flex: 1, minWidth: 0, border: 0, outline: "none", background: "transparent", fontSize: 16, letterSpacing: ".08em", color: "var(--ink)", fontFamily: "inherit" }}
+                      />
+                    </div>
+                    <button
+                      className="press"
+                      disabled={!codeOk}
+                      onClick={() => {
+                        addBarcodeTicket();
+                        setTyping(false);
+                      }}
+                      style={{ ...plainButton, height: 50, padding: "0 18px", borderRadius: "var(--r-md)", background: "var(--ink)", color: "#fff", fontSize: 14, fontWeight: 600, opacity: codeOk ? 1 : 0.35 }}
+                    >
+                      אישור
+                    </button>
+                  </div>
+                )}
+                {showAdd && (
+                  <button
+                    onClick={() => {
+                      setShowAdd(false);
+                      setTyping(false);
+                    }}
+                    style={{ ...plainButton, width: "100%", height: 44, marginTop: 4, fontSize: 14, color: "var(--muted)" }}
+                  >
+                    ביטול
+                  </button>
+                )}
+              </>
+            )}
+
+            {n > 0 && !showAdd && (
+              <button
+                className="press"
+                onClick={() => setShowAdd(true)}
+                style={{ ...plainButton, width: "100%", height: 50, borderRadius: 16, border: "1.5px dashed var(--line-strong)", color: "var(--ink)", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+              >
+                <PlusIcon />
+                הוסף כרטיס
+              </button>
+            )}
+
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 22, fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
+              <span style={{ flex: "0 0 auto", display: "flex" }}>
+                <ShieldIcon size={16} color="var(--muted)" />
+              </span>
+              <span>אנחנו מאמתים כל כרטיס מול מערכת הכרטוס של המופע ומעבירים אותו על שם הקונה.</span>
+            </div>
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <div style={{ textAlign: "center", padding: "14px 0 6px" }}>
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>מחיר לכרטיס</div>
+              <button
+                onClick={() => {
+                  setKp(true);
+                  setKpFresh(true);
+                }}
+                aria-label="עריכת מחיר"
+                className="num"
+                dir="ltr"
+                style={{
+                  ...plainButton,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: 8,
+                  padding: "2px 10px",
+                  borderRadius: 14,
+                  fontSize: 52,
+                  fontWeight: 800,
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1,
+                  color: price ? "var(--ink)" : "var(--line-strong)",
+                  background: kp ? "var(--surface-2)" : "transparent",
+                  transition: "background .2s",
+                }}
+              >
+                ₪{price || 0}
+                {kp && <span style={{ width: 3, height: 44, marginInlineStart: 3, borderRadius: 2, background: "var(--brand)", animation: "usBlink 1s steps(2) infinite" }} />}
+              </button>
+              <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 2 }}>{kp ? "הקלד מחיר" : "הקש לעריכה"}</div>
+              {n > 1 && (
+                <div className="num" style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+                  {nis(total)} ל-{n} כרטיסים
+                </div>
+              )}
+            </div>
+
+            <div style={{ padding: "18px 0 6px" }}>
+              <div style={{ position: "relative", height: 28 }}>
+                <input
+                  className="us-range"
+                  type="range"
+                  min={PRICE_MIN}
+                  max={PRICE_MAX}
+                  step={1}
+                  value={Math.max(PRICE_MIN, Math.min(PRICE_MAX, price))}
+                  onChange={(e) => setPrice(parseInt(e.target.value, 10))}
+                  aria-label="מחיר"
+                  style={{ "--fill": `${((Math.max(PRICE_MIN, Math.min(PRICE_MAX, price)) - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%` } as React.CSSProperties}
+                />
+              </div>
+              <div className="num" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--faint)", marginTop: 4 }}>
+                <span>{nis(PRICE_MIN)}</span>
+                <span>{nis(PRICE_MAX)}</span>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 18, borderTop: "1px solid var(--line)" }}>
+              {n > 1 && <TotalRow label={`מחיר × ${n}`} value={nis(total)} />}
+              <TotalRow label="עמלת שירות" value={`-${nis(total - payout)}`} />
+              <div className="num" style={{ display: "flex", justifyContent: "space-between", padding: "14px 0", fontSize: 16, fontWeight: 700 }}>
+                <span>סך התמורה</span>
+                <span>{nis(payout)}</span>
+              </div>
+            </div>
+
+            {n > 1 && (
+              <button
+                onClick={() => setBundleOnly(!bundleOnly)}
+                style={{ ...plainButton, width: "100%", marginTop: 6, padding: 14, borderRadius: "var(--r-md)", background: "var(--surface-2)", display: "flex", alignItems: "center", gap: 12, textAlign: "right" }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600 }}>מכירה כחבילה בלבד</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>כל {n} הכרטיסים יימכרו לקונה אחד</div>
+                </div>
+                <span role="switch" aria-checked={bundleOnly} style={{ position: "relative", width: 44, height: 26, borderRadius: 9, background: bundleOnly ? "var(--brand)" : "var(--line-strong)", transition: "background .2s", flex: "0 0 auto" }}>
+                  <span style={{ position: "absolute", top: 3, right: bundleOnly ? 3 : 21, width: 20, height: 20, borderRadius: 7, background: "#fff", transition: "right .2s", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }} />
+                </span>
+              </button>
+            )}
+          </>
+        )}
       </div>
 
-      {error && (
+      {fileInput}
+
+      {kp && step === 1 ? (
+        <div style={{ position: "sticky", bottom: 0, zIndex: 6 }}>
+          <style>{"@keyframes usKpUp{from{transform:translateY(100%)}to{transform:none}}@keyframes usBlink{50%{opacity:0}}"}</style>
+          <div onClick={() => setKp(false)} style={{ position: "absolute", bottom: "100%", right: 0, left: 0, height: 2000, background: "rgba(20,20,19,.04)" }} />
+          <div style={{ position: "relative", padding: "10px 20px calc(28px + var(--sab, env(safe-area-inset-bottom, 0px)))", background: "var(--bg)", borderRadius: "22px 22px 0 0", boxShadow: "0 -10px 30px rgba(20,20,19,.08)", animation: "usKpUp .25s cubic-bezier(.2,.8,.2,1)" }}>
+            <div className="num" style={{ padding: "2px 8px 10px", fontSize: 13, color: "var(--muted)" }}>
+              {n > 1 ? `${nis(total)} ל-${n} כרטיסים` : `תקבל ${nis(payout)}`}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 8 }}>
+              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "del", "0", "ok"].map((k) =>
+                k === "ok" ? (
+                  <button key={k} className="press" onClick={() => setKp(false)} style={{ ...plainButton, height: 52, borderRadius: 12, background: "var(--brand)", color: "#fff", fontSize: 17, fontWeight: 700 }}>
+                    אשר
+                  </button>
+                ) : (
+                  <button
+                    key={k}
+                    className="press"
+                    onClick={() => kpPress(k)}
+                    aria-label={k === "del" ? "מחק" : k}
+                    style={{ ...plainButton, height: 52, borderRadius: 12, background: k === "del" ? "transparent" : "var(--surface-2)", fontSize: 22, fontWeight: 600, color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    {k === "del" ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 5H9l-6 7 6 7h12z" />
+                        <path d="M17 9l-6 6M11 9l6 6" />
+                      </svg>
+                    ) : (
+                      <span className="num">{k}</span>
+                    )}
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ position: "sticky", bottom: 0, padding: "12px 20px calc(16px + var(--sab, env(safe-area-inset-bottom, 0px)))", background: "var(--bg)", borderTop: "1px solid var(--line)" }}>
+          <button
+            className="press"
+            disabled={!n || (step === 1 && !price)}
+            onClick={goNext}
+            style={{ ...plainButton, width: "100%", height: 52, borderRadius: "var(--r-md)", background: "var(--ink)", color: "#fff", fontSize: 15, fontWeight: 600, opacity: n && (step !== 1 || price) ? 1 : 0.35 }}
+          >
+            המשך
+          </button>
+        </div>
+      )}
+    </>,
+  );
+}
+
+const BARS = [3, 1, 2, 1, 3, 2, 1, 1, 3, 1, 2, 3, 1, 2, 1, 3, 1, 1, 2, 3, 1, 2];
+
+const plainButton: React.CSSProperties = {
+  border: "none",
+  background: "transparent",
+  padding: 0,
+  fontFamily: "inherit",
+  color: "inherit",
+  cursor: "pointer",
+};
+
+const roundButton: React.CSSProperties = {
+  ...plainButton,
+  width: 36,
+  height: 36,
+  borderRadius: "50%",
+  background: "var(--surface-2)",
+  color: "var(--ink)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+function TotalRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="num" style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--line)", fontSize: 14, color: "var(--ink-2)" }}>
+      <span>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
+
+function UploadTile({
+  kind,
+  active,
+  label,
+  sub,
+  onClick,
+}: {
+  kind: "file" | "code";
+  active: boolean;
+  label: string;
+  sub: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className="press"
+      onClick={onClick}
+      style={{
+        ...plainButton,
+        aspectRatio: "1 / 1.08",
+        padding: 16,
+        borderRadius: 22,
+        textAlign: "right",
+        background: active ? "#141413" : "var(--surface)",
+        color: active ? "#fff" : "var(--ink)",
+        boxShadow: active ? "none" : "0 0 0 1px var(--line), 0 8px 22px rgba(20,20,19,.05)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        transition: "background .2s, color .2s",
+      }}
+    >
+      {kind === "code" ? (
+        <div dir="ltr" style={{ height: 44, display: "flex", alignItems: "stretch", gap: 2 }}>
+          {BARS.map((w, i) => (
+            <span key={i} style={{ width: w * 1.4, borderRadius: 0.5, background: active ? "#fff" : "var(--ink)", opacity: active ? 1 : 0.85 }} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ position: "relative", width: 44, height: 50 }}>
+          <span style={{ position: "absolute", inset: "4px -6px -2px 6px", borderRadius: 8, background: "var(--surface-2)", transform: "rotate(-8deg)" }} />
+          <span style={{ position: "absolute", inset: 0, borderRadius: 8, background: "var(--surface)", boxShadow: "0 0 0 1.5px var(--ink)", display: "flex", flexDirection: "column", gap: 4, padding: "14px 8px 0" }}>
+            <i style={{ height: 3, borderRadius: 2, background: "var(--brand)", width: "70%" }} />
+            <i style={{ height: 3, borderRadius: 2, background: "var(--line-strong)" }} />
+            <i style={{ height: 3, borderRadius: 2, background: "var(--line-strong)", width: "55%" }} />
+          </span>
+        </div>
+      )}
+      <div>
+        <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.01em" }}>{label}</div>
+        <div style={{ fontSize: 12, color: active ? "rgba(255,255,255,.6)" : "var(--muted)", marginTop: 3 }}>{sub}</div>
+      </div>
+    </button>
+  );
+}
+
+/** A pill the seller drags to the end to confirm, like the checkout's swipe-to-pay. */
+function SwipeToConfirm({
+  busy,
+  onConfirm,
+  label,
+}: {
+  busy: boolean;
+  onConfirm: () => void;
+  label: React.ReactNode;
+}) {
+  const track = useRef<HTMLDivElement>(null);
+  const [x, setX] = useState(0);
+  const [drag, setDrag] = useState<number | null>(null);
+  const K = 50;
+  const max = () => (track.current ? track.current.offsetWidth : 300) - K - 8;
+  useEffect(() => {
+    if (!busy) setX(0);
+  }, [busy]);
+  const down = (e: React.PointerEvent) => {
+    if (busy) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag(e.clientX + x);
+  };
+  const move = (e: React.PointerEvent) => {
+    if (drag == null) return;
+    setX(Math.max(0, Math.min(max(), drag - e.clientX)));
+  };
+  const up = () => {
+    if (drag == null) return;
+    setDrag(null);
+    if (x >= max() * 0.88) {
+      setX(max());
+      onConfirm();
+    } else setX(0);
+  };
+  const p = x / max();
+  const anim = drag == null ? ".3s cubic-bezier(.2,.8,.2,1)" : "0s";
+  return (
+    <div ref={track} style={{ position: "relative", height: 58, borderRadius: 999, background: "#141413", overflow: "hidden", touchAction: "none" }}>
+      <div style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: busy ? "100%" : x + K + 8, background: "var(--brand)", borderRadius: 999, opacity: busy || x > 0 || drag != null ? 1 : 0, transition: `width ${anim}, opacity .2s` }} />
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#fff", fontSize: 15, fontWeight: 700, paddingInlineStart: busy ? 0 : 44, opacity: busy ? 1 : Math.max(0, 1 - p * 1.3) }}>
+        {label}
+      </div>
+      {!busy && (
         <div
-          style={{
-            marginTop: 12,
-            padding: "10px 12px",
-            borderRadius: 10,
-            background: "rgba(181,70,83,0.08)",
-            border: "1px solid rgba(181,70,83,0.25)",
-            color: "var(--tk-blue)",
-            fontSize: 12,
+          onPointerDown={down}
+          onPointerMove={move}
+          onPointerUp={up}
+          onPointerCancel={up}
+          role="button"
+          aria-label="החלק לפרסום"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") onConfirm();
           }}
+          style={{ position: "absolute", top: 4, right: 4 + x, width: K, height: K, borderRadius: 16, background: "#fff", cursor: "grab", transition: `right ${anim}`, boxShadow: "0 3px 6px rgba(0,0,0,.28)", display: "flex", alignItems: "center", justifyContent: "center", color: "#141413" }}
         >
-          {error}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Bits ──────────────────────────────────────────────────────
-function MRow({
-  label,
-  value,
-  muted,
-  strong,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-  strong?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "3px 0",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 12,
-          color: muted ? "var(--tk-muted)" : "var(--tk-ink)",
-        }}
-      >
-        {label}
-      </span>
-      <span
-        className="tk-mono"
-        style={{
-          fontSize: strong ? 17 : 13,
-          fontWeight: strong ? 700 : 500,
-        }}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
+const ChevRight = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 6l6 6-6 6" />
+  </svg>
+);
 
-function QrIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <rect x="1.5" y="1.5" width="5" height="5" stroke="var(--tk-ink)" strokeWidth="1.2" />
-      <rect x="9.5" y="1.5" width="5" height="5" stroke="var(--tk-ink)" strokeWidth="1.2" />
-      <rect x="1.5" y="9.5" width="5" height="5" stroke="var(--tk-ink)" strokeWidth="1.2" />
-      <rect x="3.5" y="3.5" width="1" height="1" fill="var(--tk-ink)" />
-      <rect x="11.5" y="3.5" width="1" height="1" fill="var(--tk-ink)" />
-      <rect x="3.5" y="11.5" width="1" height="1" fill="var(--tk-ink)" />
-      <rect x="9" y="9" width="2" height="2" fill="var(--tk-ink)" />
-    </svg>
-  );
-}
+const XIcon = ({ size }: { size: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+    <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+);
 
-function UploadIcon() {
+const PlusIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+function ShieldIcon({ size, color }: { size: number; color: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M10 14V4m0 0l-3.5 3.5M10 4l3.5 3.5"
-        stroke="#fff"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3 13v3a1 1 0 001 1h12a1 1 0 001-1v-3"
-        stroke="#fff"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z" />
+      <path d="M9 12l2 2 4-4" />
     </svg>
   );
 }
