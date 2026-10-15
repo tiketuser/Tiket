@@ -16,6 +16,7 @@ import { eventHref } from "@/lib/platform";
 import { encodeImageUrl } from "@/utils/defaultImages";
 import { Icon } from "./Icon";
 import { hebDate, nis, abbrevCity } from "./format";
+import Skeleton from "../Skeleton/Skeleton";
 
 export type MobileEventCardData = {
   id: string | number;
@@ -212,5 +213,48 @@ export default function MobileEventCard({
         </div>
       </div>
     </Link>
+  );
+}
+
+/** The 2-column card grid used by Home, Favorites and search results. */
+export const MOBILE_CARD_GRID: React.CSSProperties = {
+  padding: "0 20px 20px",
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0,1fr))",
+  columnGap: 14,
+  rowGap: 24,
+};
+
+/** Loading placeholder with MobileEventCard's exact box: square-ish image,
+ *  then title, date · city, and the price / ticket-count row at their real
+ *  line heights, so cards don't jump when data lands. */
+export function MobileEventCardSkeleton() {
+  const line = (height: number, barHeight: number, width: string, marginTop = 0) => (
+    <div style={{ height, marginTop, display: "flex", alignItems: "center" }}>
+      <Skeleton style={{ height: barHeight, width, borderRadius: 4 }} />
+    </div>
+  );
+  return (
+    <div style={{ minWidth: 0 }}>
+      <Skeleton style={{ aspectRatio: "1 / 1.08", borderRadius: "var(--r-card)" }} />
+      <div style={{ padding: "10px 2px 0" }}>
+        {line(19.5, 14, "78%")}
+        {line(19, 11, "55%", 2)}
+        <div style={{ height: 22, marginTop: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Skeleton style={{ height: 14, width: 44, borderRadius: 4 }} />
+          <Skeleton style={{ height: 11, width: 26, borderRadius: 4 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function MobileEventGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div style={MOBILE_CARD_GRID}>
+      {Array.from({ length: count }).map((_, i) => (
+        <MobileEventCardSkeleton key={i} />
+      ))}
+    </div>
   );
 }

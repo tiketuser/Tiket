@@ -21,6 +21,7 @@ import {
 import { db } from "../../../firebase";
 import { apiFetch } from "@/lib/platform";
 import MobileShell from "./MobileShell";
+import Skeleton from "../Skeleton/Skeleton";
 import { Icon } from "./Icon";
 import { hebDate, nis } from "./format";
 import { resolveEventImage } from "@/utils/defaultImages";
@@ -88,6 +89,7 @@ export default function MobileProfile() {
   const [authOpen, setAuthOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [counts, setCounts] = useState({ bought: 0, sold: 0 });
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [otaVersion, setOtaVersion] = useState<string | null>(null);
   const [tab, setTab] = useState<"orders" | "acct">("orders");
   const [sheet, setSheet] = useState<ProfileSheet | null>(null);
@@ -128,6 +130,7 @@ export default function MobileProfile() {
     // Clear the previous account's data on any auth change so a shared device
     // never shows one user's orders/counts to the next signed-in user.
     setOrders([]);
+    setOrdersLoading(Boolean(user && db));
     setCounts({ bought: 0, sold: 0 });
     if (!user || !db) return;
     let cancelled = false;
@@ -222,6 +225,8 @@ export default function MobileProfile() {
         setOrders(orderItems);
       } catch (err) {
         console.error("[mobile-profile] fetch orders failed", err);
+      } finally {
+        if (!cancelled) setOrdersLoading(false);
       }
     })();
     return () => {
@@ -281,7 +286,9 @@ export default function MobileProfile() {
     ? new Date(user.metadata.creationTime).getFullYear()
     : null;
 
-  if (authReady && !user) {
+  if (!authReady) return <ProfileSkeleton />;
+
+  if (!user) {
     return (
       <MobileShell>
         <div
@@ -412,9 +419,13 @@ export default function MobileProfile() {
             [counts.sold, "כרטיסים שמכרתי"],
           ].map(([n, label], k) => (
             <div key={label} style={{ borderInlineStart: k ? "1px solid var(--line-strong)" : "none" }}>
-              <div className="num" style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>
-                {n}
-              </div>
+              {ordersLoading ? (
+                <Skeleton style={{ width: 30, height: 30, borderRadius: 8, margin: "2px auto" }} />
+              ) : (
+                <div className="num" style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.035em", lineHeight: 1 }}>
+                  {n}
+                </div>
+              )}
               <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 5 }}>{label}</div>
             </div>
           ))}
@@ -461,7 +472,9 @@ export default function MobileProfile() {
 
         {tab === "orders" ? (
           <div style={{ padding: "6px 20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
-            {orders.length === 0 ? (
+            {ordersLoading ? (
+              [0, 1, 2].map((i) => <OrderCardSkeleton key={i} />)
+            ) : orders.length === 0 ? (
               <div style={{ padding: "36px 20px", textAlign: "center", color: "var(--muted)", fontSize: 14 }}>
                 עדיין אין הזמנות
               </div>
@@ -609,6 +622,53 @@ export default function MobileProfile() {
       </div>
 
       {sheet && user && <MobileProfileSheet sheet={sheet} user={user} onClose={() => setSheet(null)} />}
+    </MobileShell>
+  );
+}
+
+/** Same 84px image card as an order row, with the title, status line and
+ *  amount pill as placeholders. */
+function OrderCardSkeleton() {
+  return (
+    <div
+      className="tk-skeleton animate-pulse"
+      style={{ height: 84, borderRadius: "var(--r-md)", display: "flex", alignItems: "flex-end", gap: 10, padding: "0 14px 12px" }}
+    >
+      <div style={{ flex: 1 }}>
+        <div style={{ width: "52%", height: 16, borderRadius: 5, margin: "3px 0", background: "rgba(255,255,255,.6)" }} />
+        <div style={{ width: "36%", height: 10, borderRadius: 4, marginTop: 7, background: "rgba(255,255,255,.5)" }} />
+      </div>
+      <div style={{ width: 62, height: 28, borderRadius: 999, background: "rgba(255,255,255,.5)" }} />
+    </div>
+  );
+}
+
+/** Before the session is restored: avatar, name, stats, tabs and order cards
+ *  in their real positions. */
+function ProfileSkeleton() {
+  return (
+    <MobileShell>
+      <div style={{ paddingTop: "calc(64px + var(--sat, env(safe-area-inset-top, 0px)))", paddingBottom: 28 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "0 20px" }}>
+          <Skeleton className="round" style={{ width: 92, height: 92, borderRadius: "50%" }} />
+          <Skeleton style={{ width: 150, height: 22, borderRadius: 7, marginTop: 16 }} />
+          <Skeleton style={{ width: 88, height: 11, borderRadius: 4, marginTop: 9 }} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", margin: "18px 36px 0" }}>
+          {[0, 1].map((k) => (
+            <div key={k} style={{ display: "flex", flexDirection: "column", alignItems: "center", borderInlineStart: k ? "1px solid var(--line-strong)" : "none" }}>
+              <Skeleton style={{ width: 30, height: 30, borderRadius: 8, margin: "2px 0" }} />
+              <Skeleton style={{ width: 86, height: 10, borderRadius: 4, marginTop: 9 }} />
+            </div>
+          ))}
+        </div>
+        <div style={{ margin: "18px 20px 6px", height: 46, borderRadius: 999, background: "var(--surface-2)" }} />
+        <div style={{ padding: "6px 20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+          {[0, 1, 2].map((i) => (
+            <OrderCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
     </MobileShell>
   );
 }

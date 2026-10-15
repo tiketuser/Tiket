@@ -152,7 +152,7 @@ export default function MobileMyTickets({
                     transition: "background .2s, color .2s",
                   }}
                 >
-                  {count}
+                  {loading ? "" : count}
                 </span>
               </button>
             );

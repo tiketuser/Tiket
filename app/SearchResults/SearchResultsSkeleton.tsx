@@ -1,11 +1,11 @@
 import NavBar from "../components/NavBar/NavBar";
 import Skeleton from "../components/Skeleton/Skeleton";
-import MobileLoading from "../components/mobile/MobileLoading";
+import { MobileSearchResultsSkeleton } from "../components/mobile/MobileSearchResults";
 
 export default function SearchResultsSkeleton() {
   return (
     <>
-    <MobileLoading />
+    <MobileSearchResultsSkeleton />
     <div className="hidden lg:block">
       <NavBar />
       <div className="shadow-small-inner py-6 sm:py-14 px-4 sm:px-24">

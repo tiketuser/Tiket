@@ -9,7 +9,12 @@ import { db } from "../../../firebase";
 import { apiFetch, searchHref } from "@/lib/platform";
 import MobileShell from "./MobileShell";
 import MobileSearchBar from "./MobileSearchBar";
-import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
+import MobileEventCard, {
+  MobileEventCardData,
+  MobileEventGridSkeleton,
+  MOBILE_CARD_GRID,
+} from "./MobileEventCard";
+import Skeleton from "../Skeleton/Skeleton";
 import { Icon } from "./Icon";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
@@ -86,101 +91,100 @@ export default function MobileSearchResults({
 
   return (
     <MobileShell>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "calc(10px + var(--sat, env(safe-area-inset-top, 0px))) 18px 10px",
-        }}
-      >
-        <button
-          onClick={() => router.push("/")}
-          aria-label="חזרה"
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 999,
-            background: "var(--tk-paper)",
-            border: "1px solid var(--tk-line)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-        >
-          <Icon.chev size={16} />
-        </button>
-        <div
-          style={{
-            fontSize: 18,
-            fontWeight: 800,
-            letterSpacing: "-0.03em",
-            flex: 1,
-          }}
-        >
-          {title}
-        </div>
-      </div>
+      <SearchHeader title={title} onBack={() => router.push("/")} />
 
-      <MobileSearchBar
-        value={search}
-        onChange={setSearch}
-        onSubmit={onSubmitSearch}
-      />
-
-      <div style={{ padding: "0 18px 6px" }}>
-        <span
-          className="tk-mono"
-          style={{ fontSize: 11, color: "var(--tk-muted)" }}
-        >
-          {filtered.length} תוצאות{query ? ` עבור "${query}"` : ""}
-        </span>
-      </div>
+      <MobileSearchBar value={search} onChange={setSearch} onSubmit={onSubmitSearch} />
 
       {loading ? (
-        <div
-          style={{
-            padding: "40px 18px",
-            textAlign: "center",
-            color: "var(--tk-muted)",
-            fontSize: 13,
-          }}
-        >
-          טוען מופעים…
-        </div>
-      ) : filtered.length === 0 ? (
-        <div
-          style={{
-            padding: "40px 18px",
-            textAlign: "center",
-            color: "var(--tk-muted)",
-            fontSize: 13,
-          }}
-        >
-          אין תוצאות התואמות את החיפוש
-        </div>
+        <>
+          <CountLine />
+          <MobileEventGridSkeleton />
+        </>
       ) : (
-        <div
-          style={{
-            padding: "4px 14px 20px",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 10,
-          }}
-        >
-          {filtered.map((c) => (
-            <MobileEventCard
-              key={c.id}
-              card={c}
-              initialFavorited={userFavorites.has(c.id)}
-              openLoginDialog={openLogin}
-            />
-          ))}
-        </div>
+        <>
+          <CountLine>
+            {filtered.length} תוצאות{query ? ` עבור "${query}"` : ""}
+          </CountLine>
+          {filtered.length === 0 ? (
+            <div style={{ padding: "56px 40px", textAlign: "center", fontSize: 16, fontWeight: 600 }}>
+              אין תוצאות התואמות את החיפוש
+            </div>
+          ) : (
+            <div style={MOBILE_CARD_GRID}>
+              {filtered.map((c) => (
+                <MobileEventCard
+                  key={c.id}
+                  card={c}
+                  initialFavorited={userFavorites.has(c.id)}
+                  openLoginDialog={openLogin}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <AuthDialog isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+    </MobileShell>
+  );
+}
+
+function SearchHeader({ title, onBack }: { title: string; onBack?: () => void }) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
+        alignItems: "center",
+        height: 52,
+        padding: "0 16px",
+        marginTop: "var(--sat, env(safe-area-inset-top, 0px))",
+      }}
+    >
+      <button
+        className="press round"
+        onClick={onBack}
+        aria-label="חזרה"
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: "50%",
+          background: "var(--surface-2)",
+          border: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          color: "var(--ink)",
+        }}
+      >
+        <Icon.chevR size={17} />
+      </button>
+      <h1 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>{title}</h1>
+      <span />
+    </div>
+  );
+}
+
+/** The results count under the search box; empty children keep its height
+ *  while loading so the grid below doesn't move. */
+function CountLine({ children }: { children?: React.ReactNode }) {
+  return (
+    <div style={{ padding: "16px 20px 14px", height: 19, boxSizing: "content-box", fontSize: 13, color: "var(--muted)" }}>
+      {children ?? <Skeleton style={{ width: 110, height: 11, borderRadius: 4, marginTop: 4 }} />}
+    </div>
+  );
+}
+
+/** Route-level loading state for search and "all events": the same header,
+ *  search box and card grid as MobileSearchResults, with nothing loaded. */
+export function MobileSearchResultsSkeleton({ title = "תוצאות חיפוש" }: { title?: string }) {
+  return (
+    <MobileShell>
+      <SearchHeader title={title} />
+      <MobileSearchBar value="" onChange={() => undefined} />
+      <CountLine />
+      <MobileEventGridSkeleton />
     </MobileShell>
   );
 }

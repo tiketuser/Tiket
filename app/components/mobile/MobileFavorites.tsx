@@ -6,7 +6,11 @@ import MobileShell from "./MobileShell";
 import MobileTopBar from "./MobileTopBar";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileCategoryRow, { MOBILE_CATEGORIES } from "./MobileCategoryRow";
-import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
+import MobileEventCard, {
+  MobileEventCardData,
+  MobileEventGridSkeleton,
+  MOBILE_CARD_GRID,
+} from "./MobileEventCard";
 import MobileFilterSheet, {
   DEFAULT_FILTERS,
   FilterState,
@@ -14,17 +18,8 @@ import MobileFilterSheet, {
   citiesAndVenues,
   countActiveFilters,
 } from "./MobileFilterSheet";
-import Skeleton from "../Skeleton/Skeleton";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
-
-const gridStyle: React.CSSProperties = {
-  padding: "0 20px 20px",
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0,1fr))",
-  columnGap: 14,
-  rowGap: 24,
-};
 
 const outlineButton: React.CSSProperties = {
   marginTop: 16,
@@ -141,18 +136,7 @@ export default function MobileFavorites({
       </div>
 
       {loading ? (
-        <div style={gridStyle}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} style={{ minWidth: 0 }}>
-              <Skeleton style={{ aspectRatio: "1 / 1.08", borderRadius: "var(--r-card)" }} />
-              <div style={{ padding: "10px 2px 0" }}>
-                <Skeleton style={{ height: 14, width: "80%", borderRadius: 4 }} />
-                <Skeleton style={{ height: 11, width: "55%", borderRadius: 4, marginTop: 8 }} />
-                <Skeleton style={{ height: 13, width: "40%", borderRadius: 4, marginTop: 8 }} />
-              </div>
-            </div>
-          ))}
-        </div>
+        <MobileEventGridSkeleton count={4} />
       ) : filtered.length === 0 ? (
         <div style={{ padding: "56px 40px", textAlign: "center" }}>
           <div style={{ fontSize: 16, fontWeight: 600 }}>
@@ -175,7 +159,7 @@ export default function MobileFavorites({
           )}
         </div>
       ) : (
-        <div style={gridStyle}>
+        <div style={MOBILE_CARD_GRID}>
           {filtered.map((e) => (
             <MobileEventCard key={e.id} card={e} initialFavorited openLoginDialog={openLogin} />
           ))}

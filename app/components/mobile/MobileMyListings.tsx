@@ -135,16 +135,7 @@ export default function MobileMyListings({
         {notSignedIn ? (
           <EmptyBox text="התחבר כדי לראות את המודעות שלך" />
         ) : loading ? (
-          <div
-            style={{
-              padding: "40px 18px",
-              textAlign: "center",
-              color: "var(--tk-muted)",
-              fontSize: 13,
-            }}
-          >
-            טוען מודעות…
-          </div>
+          [0, 1].map((i) => <ListingCardSkeleton key={i} />)
         ) : list.length === 0 ? (
           <EmptyBox
             text={
@@ -185,6 +176,33 @@ export default function MobileMyListings({
         />
       )}
     </MobileShell>
+  );
+}
+
+// Mirrors ListingCard: a 260px poster that pulses, the status pill and price
+// chip on top, title and meta at the bottom, and the section/row/seat bar.
+function ListingCardSkeleton() {
+  const chip = "rgba(255,255,255,0.5)";
+  return (
+    <div
+      className="tk-skeleton animate-pulse"
+      style={{ borderRadius: 14, minHeight: 260, padding: 14, display: "flex", flexDirection: "column" }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{ width: 92, height: 28, borderRadius: 999, background: chip }} />
+        <div style={{ width: 58, height: 30, borderRadius: 999, background: chip }} />
+      </div>
+      <div style={{ flex: 1 }} />
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ width: "58%", height: 20, margin: "3px 0", borderRadius: 6, background: "rgba(255,255,255,0.6)" }} />
+        <div style={{ width: "42%", height: 11, borderRadius: 4, background: chip, marginTop: 9 }} />
+      </div>
+      <div style={{ background: "rgba(255,255,255,0.28)", borderRadius: 12, padding: 12, display: "flex", gap: 14 }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{ flex: 1, height: 42, borderRadius: 6, background: "rgba(255,255,255,0.45)" }} />
+        ))}
+      </div>
+    </div>
   );
 }
 

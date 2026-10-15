@@ -1,11 +1,11 @@
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
-import MobileLoading from "../components/mobile/MobileLoading";
+import { MobileSearchResultsSkeleton } from "../components/mobile/MobileSearchResults";
 
 export default function Loading() {
   return (
     <>
-    <MobileLoading label="טוען אירועים..." />
+    <MobileSearchResultsSkeleton title="כל האירועים" />
     <div className="hidden lg:block">
       <NavBar />
       <div className="flex flex-col items-center justify-center min-h-screen">

@@ -1,76 +1,84 @@
+import React from "react";
 import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer/Footer";
 import MobileShell from "../components/mobile/MobileShell";
 import Skeleton from "../components/Skeleton/Skeleton";
 
-// Placeholder blocks use the design line color on the paper-cream background,
-// mirroring MobileEventDetail's layout so the swap to real content is seamless.
+// Mirrors MobileEventDetail block for block (320px poster, title, date and
+// venue rows with icon chips, seat map card, listing cards) so the swap to
+// real content doesn't shift anything.
 function MobileEventSkeleton() {
+  const row: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    padding: "14px 0",
+    borderBottom: "1px solid var(--line)",
+  };
+  // A bar centred in a box of the real text's line height.
+  const line = (lineHeight: number, barHeight: number, width: string | number, extra?: React.CSSProperties) => (
+    <div style={{ height: lineHeight, display: "flex", alignItems: "center", ...extra }}>
+      <Skeleton style={{ width, height: barHeight, borderRadius: 5 }} />
+    </div>
+  );
   return (
-    <MobileShell showBottomNav={false}>
-      <div>
-        {/* Poster */}
-        <Skeleton style={{ width: "100%", height: 320 }} />
+    <MobileShell showBottomNav={false} heroStatusBar>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <Skeleton style={{ width: "100%", height: 320, borderRadius: 0 }} />
 
-        {/* Title + stats */}
-        <div style={{ padding: "18px 18px 0" }}>
-          <Skeleton style={{ width: 56, height: 10, borderRadius: 6 }} />
-          <Skeleton style={{ width: "70%", height: 28, borderRadius: 8, margin: "8px 0 16px" }} />
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 8,
-              padding: "14px 0",
-              borderTop: "1px dashed var(--tk-line-strong)",
-              borderBottom: "1px dashed var(--tk-line-strong)",
-            }}
-          >
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <Skeleton style={{ width: 52, height: 52, borderRadius: 14 }} />
-                <Skeleton style={{ width: 28, height: 8, borderRadius: 4 }} />
-                <Skeleton style={{ width: 56, height: 12, borderRadius: 4 }} />
+        <div style={{ padding: "20px 20px 0" }}>
+          {line(30, 24, "68%")}
+          <div style={{ marginTop: 16, borderTop: "1px solid var(--line)" }}>
+            {[0, 1].map((i) => (
+              <div key={i} style={row}>
+                <Skeleton style={{ width: 40, height: 40, borderRadius: 12, flex: "0 0 auto" }} />
+                <div style={{ flex: 1 }}>
+                  {line(22.5, 14, i ? "45%" : "55%")}
+                  {line(19.5, 11, i ? "25%" : "18%", { marginTop: 1 })}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Seat map */}
-        <div style={{ padding: "18px 18px 0" }}>
-          <Skeleton style={{ width: 90, height: 16, borderRadius: 6, marginBottom: 12 }} />
+        <div style={{ padding: "24px 20px 0" }}>
+          {line(25.5, 16, 92, { marginBottom: 12 })}
           <div
             style={{
-              height: 190,
-              borderRadius: 16,
-              background: "var(--tk-paper)",
-              border: "1px solid var(--tk-line)",
+              borderRadius: "var(--r-md)",
+              padding: "12px 8px 8px",
+              border: "1px solid var(--line)",
             }}
-          />
+          >
+            <Skeleton style={{ width: "100%", aspectRatio: "400 / 260", borderRadius: 10 }} />
+          </div>
         </div>
 
-        {/* Ticket rows */}
-        <div style={{ padding: "18px 18px 24px" }}>
-          <Skeleton style={{ width: 120, height: 14, borderRadius: 6, marginBottom: 10 }} />
+        <div style={{ padding: "24px 20px 24px" }}>
+          {line(25.5, 16, 132, { marginBottom: 12 })}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
                 style={{
-                  height: 64,
-                  borderRadius: 12,
-                  background: "var(--tk-paper)",
-                  border: "2px solid var(--tk-line)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  padding: "14px 16px",
+                  borderRadius: "var(--r-md)",
+                  boxShadow: "inset 0 0 0 1px var(--line-strong)",
                 }}
-              />
+              >
+                <div style={{ flex: 1 }}>
+                  {line(22.5, 14, "50%")}
+                  {line(19.5, 11, "30%", { marginTop: 2 })}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                  {line(25.5, 16, 52)}
+                  {line(18, 10, 34, { marginTop: 1 })}
+                </div>
+              </div>
             ))}
           </div>
         </div>

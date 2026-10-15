@@ -11,7 +11,11 @@ import MobileShell from "./MobileShell";
 import MobileTopBar from "./MobileTopBar";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileCategoryRow, { MOBILE_CATEGORIES } from "./MobileCategoryRow";
-import MobileEventCard, { MobileEventCardData } from "./MobileEventCard";
+import MobileEventCard, {
+  MobileEventCardData,
+  MobileEventGridSkeleton,
+  MOBILE_CARD_GRID,
+} from "./MobileEventCard";
 import MobileFilterSheet, {
   DEFAULT_FILTERS,
   FilterState,
@@ -19,25 +23,10 @@ import MobileFilterSheet, {
   applyCardFilters,
   citiesAndVenues,
 } from "./MobileFilterSheet";
-import Skeleton from "../Skeleton/Skeleton";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
 type ApiCard = MobileEventCardData & { category?: string };
-
-// Local skeleton mirroring MobileEventCard: 150px image block + title/meta lines.
-function MobileCardSkeleton() {
-  return (
-    <div style={{ minWidth: 0 }}>
-      <Skeleton style={{ aspectRatio: "1 / 1.08", borderRadius: "var(--r-card)" }} />
-      <div style={{ padding: "10px 2px 0" }}>
-        <Skeleton style={{ height: 14, width: "80%", borderRadius: 4 }} />
-        <Skeleton style={{ height: 11, width: "55%", borderRadius: 4, marginTop: 8 }} />
-        <Skeleton style={{ height: 13, width: "40%", borderRadius: 4, marginTop: 8 }} />
-      </div>
-    </div>
-  );
-}
 
 export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] }) {
   const router = useRouter();
@@ -227,19 +216,7 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
       </div>
 
       {loading ? (
-        <div
-          style={{
-            padding: "0 20px 20px",
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0,1fr))",
-            columnGap: 14,
-            rowGap: 24,
-          }}
-        >
-          {Array.from({ length: 6 }).map((_, i) => (
-            <MobileCardSkeleton key={i} />
-          ))}
-        </div>
+        <MobileEventGridSkeleton />
       ) : filtered.length === 0 ? (
         <div
           style={{
@@ -253,15 +230,7 @@ export default function MobileHome({ initialCards }: { initialCards?: ApiCard[] 
           אין תוצאות התואמות את החיפוש
         </div>
       ) : (
-        <div
-          style={{
-            padding: "0 20px 20px",
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0,1fr))",
-            columnGap: 14,
-            rowGap: 24,
-          }}
-        >
+        <div style={MOBILE_CARD_GRID}>
           {filtered.map((c) => (
             <MobileEventCard
               key={c.id}
