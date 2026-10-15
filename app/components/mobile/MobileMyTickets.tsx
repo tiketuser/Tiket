@@ -12,6 +12,8 @@ import { demoBarcodeValue, DEMO_BARCODE_FORMAT } from "@/utils/demoBarcode";
 
 export type MobileTicket = {
   id: string;
+  eventId?: string;
+  category?: string;
   artist: string;
   date: string;
   time?: string;

@@ -3,7 +3,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { apiFetch } from "@/lib/platform";
-import { nis } from "./format";
+import { hebDate, nis } from "./format";
+import type { MobileTicket } from "./MobileMyTickets";
+import { encodeImageUrl } from "@/utils/defaultImages";
 
 type Step = 0 | 1 | 2;
 type FileTicket =
@@ -18,9 +20,13 @@ const SELLER_PAYOUT_RATE = 0.93;
 export default function MobileSell({
   open,
   onClose,
+  resale,
 }: {
   open: boolean;
   onClose: () => void;
+  /** A ticket bought on Tiket being put back on sale (swipe-to-sell in My
+   *  Tickets): the upload step is skipped and the flow opens on the price. */
+  resale?: MobileTicket | null;
 }) {
   const [step, setStep] = useState<Step>(0);
   const [tickets, setTickets] = useState<FileTicket[]>([]);
@@ -36,16 +42,20 @@ export default function MobileSell({
   // Reset state every time the sheet re-opens
   useEffect(() => {
     if (!open) return;
-    setStep(0);
-    setTickets([]);
+    setStep(resale ? 1 : 0);
+    setTickets(
+      resale
+        ? [{ kind: "barcode", label: resale.newBarcode || resale.artist }]
+        : [],
+    );
     setBarcodeDraft("");
     setShowAdd(false);
-    setPrice(220);
+    setPrice(resale?.amount || 220);
     setBundleOnly(true);
     setPublishing(false);
     setPublishError(null);
     setPublishedCount(null);
-  }, [open]);
+  }, [open, resale]);
 
   const addPdfTicket = (file?: File) => {
     const n = tickets.filter((t) => t.kind === "pdf").length + 1;
@@ -72,7 +82,7 @@ export default function MobileSell({
     setStep((s) => (s < 2 ? ((s + 1) as Step) : s));
   };
   const goBack = () => {
-    if (step === 0) onClose();
+    if (step === 0 || (resale && step === 1)) onClose();
     else setStep((s) => ((s - 1) as Step));
   };
 
@@ -118,14 +128,35 @@ export default function MobileSell({
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            ticket: {
-              askingPrice: price,
-              barcode: t.kind === "barcode" ? t.label : null,
-              ticketImage,
-              bundleId,
-              canSplit: bundleId ? !bundleOnly : null,
-              bundleSize: bundleId ? bundleSize : null,
-            },
+            ticket: resale
+              ? {
+                  // Full details, so the server can verify it with the
+                  // ticketing provider like any other listing. The re-issued
+                  // barcode is the one that's valid now (the old one was voided).
+                  askingPrice: price,
+                  eventId: resale.eventId ?? null,
+                  category: resale.category,
+                  artist: resale.artist,
+                  date: resale.date,
+                  time: resale.time,
+                  venue: resale.venue,
+                  section: resale.section,
+                  block: resale.block,
+                  row: resale.row != null ? String(resale.row) : undefined,
+                  seat: resale.seat != null ? String(resale.seat) : undefined,
+                  isStanding: Boolean(resale.isStanding),
+                  barcode: resale.newBarcode ?? null,
+                  ticketImage: resale.ticketImage ?? null,
+                  originalPrice: resale.amount ?? null,
+                }
+              : {
+                  askingPrice: price,
+                  barcode: t.kind === "barcode" ? t.label : null,
+                  ticketImage,
+                  bundleId,
+                  canSplit: bundleId ? !bundleOnly : null,
+                  bundleSize: bundleId ? bundleSize : null,
+                },
           }),
         });
 
@@ -162,7 +193,7 @@ export default function MobileSell({
     } finally {
       setPublishing(false);
     }
-  }, [bundleOnly, price, tickets]);
+  }, [bundleOnly, price, tickets, resale]);
 
   const [kp, setKp] = useState(false);
   const [kpFresh, setKpFresh] = useState(false);
@@ -178,7 +209,28 @@ export default function MobileSell({
   const n = tickets.length;
   const total = price * n;
   const payout = Math.round(total * SELLER_PAYOUT_RATE);
-  const titles = ["העלאת כרטיס", "קביעת מחיר", "אישור ופרסום"];
+  // A resale skips the upload step, so its progress bar has two steps.
+  const titles = resale
+    ? ["קביעת מחיר", "אישור ופרסום"]
+    : ["העלאת כרטיס", "קביעת מחיר", "אישור ופרסום"];
+  const stepIndex = resale ? step - 1 : step;
+  // Slider range: around what was paid for a resale, else the usual range
+  // (stretched if a typed price goes past it).
+  const rangeLo = resale?.amount ? Math.max(1, Math.round(resale.amount * 0.5)) : PRICE_MIN;
+  const rangeHi = Math.max(
+    resale?.amount ? Math.round(resale.amount * 1.6) : PRICE_MAX,
+    price,
+    rangeLo + 10,
+  );
+  const seatLine = resale
+    ? [
+        resale.section && `אזור ${resale.section}`,
+        resale.isStanding ? "עמידה" : resale.row != null && resale.row !== "" && `שורה ${resale.row}`,
+        !resale.isStanding && resale.seat != null && resale.seat !== "" && `מושב ${resale.seat}`,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
   const codeOk = barcodeDraft.trim().length >= 6;
   const kpPress = (k: string) => {
     if (k === "del") {
@@ -314,18 +366,25 @@ export default function MobileSell({
     const row = (k: string, v: React.ReactNode) => (
       <div key={k} style={{ minHeight: 54, display: "grid", gridTemplateColumns: "96px minmax(0,1fr)", alignItems: "center", gap: 8, borderTop: "1px solid var(--line)" }}>
         <span style={{ fontSize: 13, color: "var(--muted)" }}>{k}</span>
-        <span className="num" style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v}</span>
+        <span className="num" style={{ fontSize: 14, fontWeight: 600, padding: "10px 0", lineHeight: 1.4, overflowWrap: "anywhere" }}>{v}</span>
       </div>
     );
     return shell(
       <>
         <div style={{ position: "relative", height: 260, flex: "0 0 auto", overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(90% 90% at 70% 20%, rgba(181,70,83,.55) 0%, rgba(20,20,19,0) 70%)" }} />
-          <div dir="ltr" aria-hidden="true" style={{ position: "absolute", left: 24, right: 24, bottom: 60, height: 70, display: "flex", alignItems: "stretch", justifyContent: "center", gap: 3, opacity: 0.12 }}>
-            {BARS.concat(BARS).map((w, i) => (
-              <span key={i} style={{ width: w * 2.2, background: "#fff" }} />
-            ))}
-          </div>
+          {resale?.eventImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={encodeImageUrl(resale.eventImageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: 0.7 }} />
+          ) : (
+            <>
+              <div style={{ position: "absolute", inset: 0, background: "radial-gradient(90% 90% at 70% 20%, rgba(181,70,83,.55) 0%, rgba(20,20,19,0) 70%)" }} />
+              <div dir="ltr" aria-hidden="true" style={{ position: "absolute", left: 24, right: 24, bottom: 60, height: 70, display: "flex", alignItems: "stretch", justifyContent: "center", gap: 3, opacity: 0.12 }}>
+                {BARS.concat(BARS).map((w, i) => (
+                  <span key={i} style={{ width: w * 2.2, background: "#fff" }} />
+                ))}
+              </div>
+            </>
+          )}
           <div style={{ position: "absolute", top: "calc(10px + var(--sat, env(safe-area-inset-top, 0px)))", right: 0, left: 0, height: 52, padding: "0 16px", display: "flex", alignItems: "center" }}>
             <button className="press round" onClick={() => setStep(1)} aria-label="חזרה" style={{ ...roundButton, background: "rgba(255,255,255,.14)", color: "#fff" }}>
               <ChevRight />
@@ -334,16 +393,28 @@ export default function MobileSell({
         </div>
         <div style={{ flex: 1, marginTop: -28, position: "relative", borderRadius: "28px 28px 0 0", background: "var(--bg)", padding: "10px 20px calc(30px + var(--sab, env(safe-area-inset-bottom, 0px)))", display: "flex", flexDirection: "column" }}>
           <div style={{ width: 36, height: 5, borderRadius: 3, background: "var(--line-strong)", margin: "0 auto 14px" }} />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>אישור ופרסום</div>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, minWidth: 0, lineHeight: 1.3 }}>
+              {resale ? resale.artist : "אישור ופרסום"}
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", flex: "0 0 auto" }}>
               <ShieldIcon size={13} color="var(--muted)" />
               יאומת לפני פרסום
             </span>
           </div>
-          {row("כרטיסים", n)}
-          {row("מחיר לכרטיס", nis(price))}
-          {row("אופן מכירה", mode)}
+          {resale ? (
+            <>
+              {seatLine && row("מקום", seatLine)}
+              {row("מועד", [resale.date && hebDate(resale.date), resale.time].filter(Boolean).join(" · "))}
+              {row("מחיר", nis(price))}
+            </>
+          ) : (
+            <>
+              {row("כרטיסים", n)}
+              {row("מחיר לכרטיס", nis(price))}
+              {row("אופן מכירה", mode)}
+            </>
+          )}
           {row("עמלת שירות", `-${nis(total - payout)}`)}
           {row("מועד תשלום", "5-7 ימים אחרי האירוע")}
           <div className="num" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "16px 0", borderTop: "1px solid var(--line)" }}>
@@ -382,13 +453,13 @@ export default function MobileSell({
     <>
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", paddingTop: "var(--sat, env(safe-area-inset-top, 0px))" }}>
         <div style={{ height: 52, padding: "0 16px", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}>
-          <button className="press round" onClick={goBack} aria-label={step ? "חזרה" : "סגירה"} style={roundButton}>
-            {step ? <ChevRight /> : <XIcon size={17} />}
+          <button className="press round" onClick={goBack} aria-label={stepIndex ? "חזרה" : "סגירה"} style={roundButton}>
+            {stepIndex ? <ChevRight /> : <XIcon size={17} />}
           </button>
-          <span style={{ fontSize: 17, fontWeight: 700 }}>{titles[step]}</span>
+          <span style={{ fontSize: 17, fontWeight: 700 }}>{titles[stepIndex]}</span>
           <span />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 4, padding: "0 20px 10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${titles.length},1fr)`, gap: 4, padding: "0 20px 10px" }}>
           {titles.map((t, i) => (
             <span key={t} className="round" style={{ height: 4, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
               <span
@@ -396,7 +467,7 @@ export default function MobileSell({
                 style={{
                   display: "block",
                   height: "100%",
-                  width: i < step ? "100%" : i === step ? "66.67%" : "0%",
+                  width: i < stepIndex ? "100%" : i === stepIndex ? "66.67%" : "0%",
                   background: "var(--brand)",
                   borderRadius: 2,
                   transition: "width .35s ease",
@@ -521,6 +592,22 @@ export default function MobileSell({
 
         {step === 1 && (
           <>
+            {resale && (
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "4px 0 16px", borderBottom: "1px solid var(--line)" }}>
+                <span style={{ width: 52, height: 52, borderRadius: 14, overflow: "hidden", flex: "0 0 auto", background: "var(--surface-2)" }}>
+                  {resale.eventImageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={encodeImageUrl(resale.eventImageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  )}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{resale.artist}</div>
+                  <div className="num" style={{ fontSize: 13, color: "var(--muted)", marginTop: 1 }}>
+                    {[resale.date && hebDate(resale.date), resale.time, seatLine].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+              </div>
+            )}
             <div style={{ textAlign: "center", padding: "14px 0 6px" }}>
               <div style={{ fontSize: 13, color: "var(--muted)" }}>מחיר לכרטיס</div>
               <button
@@ -552,6 +639,11 @@ export default function MobileSell({
                 {kp && <span style={{ width: 3, height: 44, marginInlineStart: 3, borderRadius: 2, background: "var(--brand)", animation: "usBlink 1s steps(2) infinite" }} />}
               </button>
               <div style={{ fontSize: 11, color: "var(--faint)", marginTop: 2 }}>{kp ? "הקלד מחיר" : "הקש לעריכה"}</div>
+              {resale?.amount ? (
+                <div className="num" style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+                  שילמת {nis(resale.amount)}
+                </div>
+              ) : null}
               {n > 1 && (
                 <div className="num" style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
                   {nis(total)} ל-{n} כרטיסים
@@ -564,18 +656,18 @@ export default function MobileSell({
                 <input
                   className="us-range"
                   type="range"
-                  min={PRICE_MIN}
-                  max={PRICE_MAX}
+                  min={rangeLo}
+                  max={rangeHi}
                   step={1}
-                  value={Math.max(PRICE_MIN, Math.min(PRICE_MAX, price))}
+                  value={Math.max(rangeLo, Math.min(rangeHi, price))}
                   onChange={(e) => setPrice(parseInt(e.target.value, 10))}
                   aria-label="מחיר"
-                  style={{ "--fill": `${((Math.max(PRICE_MIN, Math.min(PRICE_MAX, price)) - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%` } as React.CSSProperties}
+                  style={{ "--fill": `${((Math.max(rangeLo, Math.min(rangeHi, price)) - rangeLo) / (rangeHi - rangeLo)) * 100}%` } as React.CSSProperties}
                 />
               </div>
               <div className="num" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--faint)", marginTop: 4 }}>
-                <span>{nis(PRICE_MIN)}</span>
-                <span>{nis(PRICE_MAX)}</span>
+                <span>{nis(rangeLo)}</span>
+                <span>{nis(rangeHi)}</span>
               </div>
             </div>
 

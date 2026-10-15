@@ -38,6 +38,7 @@ import Skeleton from "../components/Skeleton/Skeleton";
 interface PurchasedTicket {
   id: string; // transaction id
   ticketId: string;
+  eventId?: string;
   artist: string;
   date: string;
   venue: string;
@@ -96,6 +97,8 @@ export default function MyTicketsPage() {
   const [viewTicket, setViewTicket] = useState<PurchasedTicket | null>(null);
   const [listings, setListings] = useState<MobileListingItem[]>([]);
   const [sellOpen, setSellOpen] = useState(false);
+  // The purchased ticket being put back on sale (swipe-to-sell), if any.
+  const [sellPreset, setSellPreset] = useState<MobileTicket | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth?.onAuthStateChanged((user) => {
@@ -241,6 +244,7 @@ export default function MyTicketsPage() {
           purchased.push({
             id: txDoc.id,
             ticketId: tx.ticketId,
+            eventId: ticket.eventId || undefined,
             artist: ticket.artist || "",
             date: ticket.date || "",
             venue: ticket.venue || "",
@@ -286,6 +290,8 @@ export default function MyTicketsPage() {
 
   const mobileTickets: MobileTicket[] = tickets.map((t) => ({
     id: t.id,
+    eventId: t.eventId,
+    category: t.category,
     artist: t.artist,
     date: t.date,
     time: t.time,
@@ -329,11 +335,21 @@ export default function MyTicketsPage() {
         listings={listings}
         loading={false}
         notSignedIn={signedIn === false}
-        onSell={() => setSellOpen(true)}
+        onSell={(t) => {
+          setSellPreset(t);
+          setSellOpen(true);
+        }}
         onEditPrice={handleEditPrice}
         onCancelListing={handleCancelListing}
       />
-      <MobileSell open={sellOpen} onClose={() => setSellOpen(false)} />
+      <MobileSell
+        open={sellOpen}
+        resale={sellPreset}
+        onClose={() => {
+          setSellOpen(false);
+          setSellPreset(null);
+        }}
+      />
       <div className="hidden lg:block">
       <NavBar />
       <TitleSubtitle title="הכרטיסים שלי" subtitle="כרטיסים שרכשתי" />
