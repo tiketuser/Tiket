@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { Icon } from "./Icon";
+import { forgetTabScroll, useTabScrollMemory } from "./useTabScrollMemory";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 const MobileSell = dynamic(() => import("./MobileSell"), { ssr: false });
@@ -20,12 +21,48 @@ const TABS: { id: TabId; label: string; href: string; gated: boolean }[] = [
   { id: "profile", label: "פרופיל", href: "/Profile", gated: true },
 ];
 
-function tabIcon(id: TabId, color: string) {
-  const size = 24;
-  if (id === "home") return <Icon.home size={size} color={color} />;
-  if (id === "favorites") return <Icon.heart size={size} color={color} />;
-  if (id === "tickets") return <Icon.wallet size={size} color={color} />;
-  if (id === "profile") return <Icon.user size={size} color={color} />;
+// Tab icons from the design (New.html TabBar): outlined when idle, filled
+// in ink on the active tab.
+function tabIcon(id: TabId, color: string, on: boolean) {
+  const p = {
+    width: 24,
+    height: 24,
+    viewBox: "0 0 24 24",
+    fill: on ? color : "none",
+    stroke: color,
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  if (id === "home")
+    return (
+      <svg {...p}>
+        <path d="M3.8 10.4c0-.7.3-1.3.9-1.7l6.1-4.6a2 2 0 0 1 2.4 0l6.1 4.6c.6.4.9 1 .9 1.7v7.8a2.2 2.2 0 0 1-2.2 2.2h-3.2v-4.9a1.2 1.2 0 0 0-1.2-1.2h-2.2a1.2 1.2 0 0 0-1.2 1.2v4.9H6a2.2 2.2 0 0 1-2.2-2.2z" />
+      </svg>
+    );
+  if (id === "favorites")
+    return (
+      <svg {...p}>
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+    );
+  if (id === "tickets")
+    return (
+      <svg {...p} fill="none">
+        <path d="M5.5 7l9.6-3a1.8 1.8 0 0 1 2.3 1.7V7" />
+        <rect x="3" y="7" width="18" height="13" rx="3.4" fill={on ? color : "none"} />
+        <path d="M21 11.2h-3.4a2 2 0 0 0 0 4H21" fill={on ? "var(--bg)" : "none"} stroke={on ? "var(--bg)" : color} />
+        <circle cx="17.6" cy="13.2" r=".6" fill={color} stroke="none" />
+      </svg>
+    );
+  if (id === "profile")
+    return (
+      <svg {...p}>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4.6 20.4c.9-3.5 3.8-5.4 7.4-5.4s6.5 1.9 7.4 5.4a.8.8 0 0 1-.8 1H5.4a.8.8 0 0 1-.8-1z" />
+      </svg>
+    );
   return null;
 }
 
@@ -54,6 +91,9 @@ export default function MobileBottomNav() {
   const router = useRouter();
   const pathname = usePathname() || "/";
   const current = activeTab(pathname);
+  // Scroll memory only on the tab roots themselves (not event pages etc.).
+  const tabRoot = TABS.some((t) => t.href && t.href === pathname);
+  useTabScrollMemory(pathname, tabRoot);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [sellOpen, setSellOpen] = useState(false);
@@ -75,11 +115,16 @@ export default function MobileBottomNav() {
       runAuthed(() => setSellOpen(true));
       return;
     }
-    if (!t.gated) {
-      router.push(t.href);
+    // Tapping the tab you're on scrolls it back to the top, like native apps.
+    if (pathname === t.href) {
+      forgetTabScroll(t.href);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    runAuthed(() => router.push(t.href));
+    // scroll:false so the target tab can restore its own position.
+    const go = () => router.push(t.href, { scroll: false });
+    if (!t.gated) go();
+    else runAuthed(go);
   };
 
   return (
@@ -175,7 +220,7 @@ export default function MobileBottomNav() {
                 transition: "color .15s",
               }}
             >
-              {tabIcon(t.id, color)}
+              {tabIcon(t.id, color, isActive)}
               <span>{t.label}</span>
             </button>
           );
