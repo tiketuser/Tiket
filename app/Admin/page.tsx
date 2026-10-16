@@ -434,8 +434,8 @@ export default function AdminPage() {
             <p className="text-text-large text-mutedText">
               צור אירוע חדש במערכת
             </p>
-            {/* Link to manage default images */}
-            <div className="mt-4 flex gap-3 justify-center flex-wrap">
+            {/* Shortcuts to the other admin pages (on phones the Profile admin grid does this) */}
+            <div className="mt-4 hidden lg:flex gap-3 justify-center flex-wrap">
               <a
                 href="/manage-default-images"
                 className="inline-block px-6 py-2 bg-secondary text-primary rounded-lg hover:bg-highlight hover:text-white transition-colors font-semibold"

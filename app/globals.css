@@ -49,7 +49,7 @@
   letter-spacing: -0.01em;
 }
 .tk-mobile *::-webkit-scrollbar { display: none; }
-.tk-mobile * { scrollbar-width: none; -ms-overflow-style: none; corner-shape: squircle; }
+.tk-mobile * { scrollbar-width: none; -ms-overflow-style: none; }
 
 /* tiket. logotype dot */
 .tk-logo-dot { color: var(--tk-blue); }
@@ -275,69 +275,107 @@ input:-webkit-autofill:active {
 .tk-skeleton { background-color: #D1D5DB; }
 .tk-mobile .tk-skeleton { background-color: #EDEAE4; }
 
-/* ─── Admin pages: mobile reskin (paper-cream theme) ─────────────────
-   Admin screens keep their desktop DOM + logic; below lg we restyle
-   them into the tk-mobile design language. Scoped via .tk-admin so
-   desktop rendering is untouched. */
+/* ─── Admin pages: mobile reskin (unified white design) ────────────────
+   Admin screens keep their desktop DOM + logic; below lg we restyle them
+   into the unified mobile language (white canvas, warm hairlines, squircle
+   radii, ink headings). Scoped via .tk-admin so desktop is untouched. */
 @media (max-width: 1023px) {
-  .tk-admin {
+  .tk-admin,
+  .tk-admin-gate {
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-2: #F4F2EE;
+    --ink: #141413;
+    --ink-2: #3B3A37;
+    --muted: #6F6B63;
+    --line: #EEEBE5;
+    --line-strong: #DCD7CC;
+    --brand: #B54653;
+    --brand-soft: #F7EAEB;
     font-family: var(--font-heebo), 'Heebo', system-ui, sans-serif;
-    background: radial-gradient(circle at 50% 30%, #EAE4D3 0%, var(--tk-bg, #F5F1E8) 70%) !important;
-    color: var(--tk-ink, #0A0A0A);
+    background: var(--bg) !important;
+    color: var(--ink);
     -webkit-font-smoothing: antialiased;
-    padding-top: 18px !important;
+  }
+  .tk-admin {
+    padding-top: 16px !important;
     padding-bottom: calc(96px + var(--sab, env(safe-area-inset-bottom, 0px))) !important;
     min-height: 100dvh;
   }
-  /* Cards / modals: white surfaces become paper */
-  .tk-admin .bg-white { background-color: var(--tk-paper, #FBF8F1) !important; }
-  .tk-admin .bg-gray-50 { background-color: var(--tk-bg, #F5F1E8) !important; }
-  /* Hairlines in the cream palette */
+  /* Surfaces: white cards on a hairline, soft grey for secondary panels */
+  .tk-admin .bg-white { background-color: var(--surface) !important; }
+  .tk-admin .bg-gray-50,
+  .tk-admin .bg-gray-100,
+  .tk-admin .bg-background { background-color: var(--surface-2) !important; }
+  .tk-admin .border,
+  .tk-admin .border-2,
   .tk-admin .border-secondary,
   .tk-admin .border-gray-100,
   .tk-admin .border-gray-200,
-  .tk-admin .border-gray-300 { border-color: var(--tk-line-strong, #CFC9B8) !important; }
-  /* Soft paper shadows instead of heavy elevation */
+  .tk-admin .border-gray-300 { border-color: var(--line) !important; }
+  .tk-admin .shadow,
+  .tk-admin .shadow-sm,
   .tk-admin .shadow-md,
   .tk-admin .shadow-lg,
   .tk-admin .shadow-large,
   .tk-admin .shadow-xlarge,
   .tk-admin .shadow-xxlarge,
-  .tk-admin .shadow-2xl { box-shadow: 0 1px 2px rgba(60, 50, 30, 0.08) !important; }
+  .tk-admin .shadow-2xl { box-shadow: 0 1px 2px rgba(20,20,19,.04), 0 6px 18px rgba(20,20,19,.06) !important; }
+  .tk-admin .rounded-3xl,
   .tk-admin .rounded-2xl,
-  .tk-admin .rounded-xl { border-radius: 14px !important; }
-  /* Inputs: paper surface, calmer border, 16px font so iOS doesn't zoom.
+  .tk-admin .rounded-xl { border-radius: 18px !important; }
+  .tk-admin .rounded-lg,
+  .tk-admin .rounded-md { border-radius: 12px !important; }
+  /* Type: ink headings at phone sizes, warm grey secondary text */
+  .tk-admin h1, .tk-admin h2, .tk-admin h3 { color: var(--ink) !important; letter-spacing: -0.02em; }
+  .tk-admin .text-mutedText,
+  .tk-admin .text-gray-500,
+  .tk-admin .text-gray-600 { color: var(--muted) !important; }
+  .tk-admin .text-heading-1-desktop { font-size: 24px !important; line-height: 1.25 !important; }
+  .tk-admin .text-heading-2-desktop { font-size: 21px !important; line-height: 1.25 !important; }
+  .tk-admin .text-heading-3-desktop { font-size: 18px !important; line-height: 1.3 !important; }
+  .tk-admin .text-heading-4-desktop { font-size: 16px !important; line-height: 1.35 !important; }
+  .tk-admin .text-text-large,
+  .tk-admin .text-body-large { font-size: 15px !important; line-height: 1.5 !important; }
+  /* Buttons: brand-soft chips for secondary actions */
+  .tk-admin .bg-secondary { background-color: var(--brand-soft) !important; color: var(--brand) !important; }
+  .tk-admin button, .tk-admin a { -webkit-tap-highlight-color: transparent; }
+  /* Inputs: white, warm hairline, 44px tall, 16px text so iOS doesn't zoom.
      Checkbox/radio/range/color keep their native/DaisyUI look. */
-  .tk-admin input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  .tk-admin input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
   .tk-admin select,
   .tk-admin textarea {
-    background-color: var(--tk-paper, #FBF8F1);
-    border-color: var(--tk-line-strong, #CFC9B8) !important;
-    border-radius: 10px;
+    background-color: var(--surface) !important;
+    border: 1px solid var(--line-strong) !important;
+    border-radius: 12px !important;
+    min-height: 44px;
     font-size: 16px;
+    color: var(--ink);
+    outline: none;
+    box-shadow: none !important;
+    transition: border-color .15s;
   }
-  /* Desktop heading scale is far too large on a phone */
-  .tk-admin .text-heading-1-desktop { font-size: 26px !important; line-height: 1.25 !important; }
-  .tk-admin .text-heading-2-desktop { font-size: 22px !important; line-height: 1.25 !important; }
-  .tk-admin .text-heading-3-desktop { font-size: 19px !important; line-height: 1.3 !important; }
-  .tk-admin .text-heading-4-desktop { font-size: 16px !important; line-height: 1.35 !important; }
+  .tk-admin input:focus, .tk-admin select:focus, .tk-admin textarea:focus { border-color: var(--ink) !important; }
+  .tk-admin ::placeholder { color: #A29E95; }
   /* Wide data tables scroll sideways instead of breaking the layout */
   .tk-admin table {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+  .tk-admin thead, .tk-admin th { background-color: var(--surface-2) !important; color: var(--ink-2); }
+  .tk-admin td, .tk-admin th { border-color: var(--line) !important; }
   /* Fixed-navbar offset is meaningless once NavBar is hidden on mobile */
-  .tk-admin.pt-24 { padding-top: 18px !important; }
-}
-
-/* Admin auth gate (loading / access denied) in the cream palette on mobile */
-@media (max-width: 1023px) {
-  .tk-admin-gate {
-    background: var(--tk-bg, #F5F1E8) !important;
-    font-family: var(--font-heebo), 'Heebo', system-ui, sans-serif;
+  .tk-admin.pt-24 { padding-top: 16px !important; }
+  @supports (corner-shape: squircle) {
+    .tk-admin .rounded-3xl, .tk-admin .rounded-2xl, .tk-admin .rounded-xl,
+    .tk-admin .rounded-lg, .tk-admin .rounded-md,
+    .tk-admin input, .tk-admin select, .tk-admin textarea { corner-shape: squircle; }
   }
+
+  /* Admin auth gate (checking permissions / access denied) */
   .tk-admin-gate .text-heading-1-desktop,
-  .tk-admin-gate .text-heading-2-desktop { font-size: 22px !important; line-height: 1.3 !important; }
+  .tk-admin-gate .text-heading-2-desktop { font-size: 21px !important; line-height: 1.3 !important; color: var(--ink) !important; }
+  .tk-admin-gate .text-mutedText { color: var(--muted) !important; }
 }
 

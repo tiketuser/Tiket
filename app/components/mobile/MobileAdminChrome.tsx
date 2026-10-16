@@ -7,8 +7,8 @@ import { Icon } from "./Icon";
 import { initMobileChrome, setHeroStatusBar } from "@/lib/native-chrome";
 
 /**
- * Mobile chrome for admin pages: sticky paper-cream top bar (back + title +
- * admin badge) and the standard bottom nav. Pages keep a single DOM tree —
+ * Mobile chrome for admin pages: sticky white top bar (back, centered title,
+ * admin tag) and the standard bottom nav. Pages keep a single DOM tree —
  * this only replaces NavBar/Footer below the lg breakpoint.
  */
 export default function MobileAdminChrome({
@@ -34,78 +34,74 @@ export default function MobileAdminChrome({
           position: "sticky",
           top: 0,
           zIndex: 40,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding:
-            "calc(12px + var(--sat, env(safe-area-inset-top, 0px))) 16px 12px",
-          background: "rgba(245,241,232,0.96)",
+          paddingTop: "var(--sat, env(safe-area-inset-top, 0px))",
+          background: "rgba(255,255,255,0.94)",
           backdropFilter: "blur(14px)",
           WebkitBackdropFilter: "blur(14px)",
-          borderBottom: "1px solid var(--tk-line)",
+          borderBottom: "1px solid var(--line)",
         }}
       >
-        <button
-          onClick={() => router.push(backHref)}
-          aria-label="חזרה"
+        <div
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 999,
-            background: "var(--tk-paper)",
-            border: "1px solid var(--tk-line-strong)",
-            display: "flex",
+            height: 52,
+            padding: "0 16px",
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
             alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            flexShrink: 0,
+            gap: 8,
           }}
         >
-          <Icon.chev size={16} />
-        </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
+          <button
+            className="press round"
+            onClick={() => router.push(backHref)}
+            aria-label="חזרה"
             style={{
-              fontSize: 16,
-              fontWeight: 800,
-              letterSpacing: "-0.02em",
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              background: "var(--surface-2)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "var(--ink)",
+            }}
+          >
+            <Icon.chevR size={17} />
+          </button>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 17,
+              fontWeight: 700,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              maxWidth: "52vw",
             }}
           >
             {title}
-          </div>
-          <div
-            className="tk-mono"
+          </h1>
+          <span
             style={{
-              fontSize: 9,
-              color: "var(--tk-muted)",
-              letterSpacing: "0.14em",
-              marginTop: 2,
+              justifySelf: "end",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              height: 26,
+              padding: "0 10px",
+              borderRadius: 999,
+              background: "var(--brand-soft)",
+              color: "var(--brand)",
+              fontSize: 12,
+              fontWeight: 600,
             }}
-            dir="ltr"
           >
-            ◆ TIKET ADMIN
-          </div>
+            <Icon.shield size={12} />
+            ניהול
+          </span>
         </div>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "5px 10px",
-            borderRadius: 999,
-            background: "var(--tk-lime)",
-            color: "var(--tk-blue-ink)",
-            fontSize: 10,
-            fontWeight: 700,
-            flexShrink: 0,
-          }}
-        >
-          <Icon.shield size={12} />
-          ניהול
-        </span>
       </div>
       <MobileBottomNav />
     </>

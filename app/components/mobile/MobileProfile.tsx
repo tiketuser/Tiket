@@ -28,6 +28,7 @@ import { resolveEventImage } from "@/utils/defaultImages";
 import { isAdminUser } from "@/lib/isAdminClient";
 import { OTA_CHANNEL, getOtaBundleVersion } from "@/lib/ota";
 import MobileProfileSheet, { type ProfileSheet } from "./MobileProfileSheets";
+import MobileAdminGrid from "./MobileAdminGrid";
 
 const AuthDialog = dynamic(() => import("./MobileAuthSheet"), { ssr: false });
 
@@ -42,21 +43,6 @@ type Order = {
 };
 
 
-const ADMIN_LINKS: { href: string; label: string }[] = [
-  { href: "/Admin", label: "יצירת אירועים" },
-  { href: "/edit-events", label: "עריכת אירועים" },
-  { href: "/approve-tickets", label: "אישור כרטיסים" },
-  { href: "/regenerate-tickets", label: "יצירת כרטיסים" },
-  { href: "/manage-categories", label: "ניהול קטגוריות" },
-  { href: "/manage-themes", label: "צבע קטגוריות" },
-  { href: "/manage-artists", label: "ניהול אמנים" },
-  { href: "/manage-default-images", label: "תמונות ברירת מחדל" },
-  { href: "/Admin/users", label: "ניהול משתמשים" },
-  { href: "/Admin/EarlyAccess", label: "הרשמות מוקדמות" },
-  { href: "/Admin/venue-providers", label: "ניהול ספקים" },
-  { href: "/Admin/pnl-calculator", label: "מחשבון P&L" },
-  { href: "/diagnostic", label: "אבחון מערכת" },
-];
 
 function relativeWhen(ts: number | null): string {
   if (!ts) return "";
@@ -91,7 +77,7 @@ export default function MobileProfile() {
   const [counts, setCounts] = useState({ bought: 0, sold: 0 });
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [otaVersion, setOtaVersion] = useState<string | null>(null);
-  const [tab, setTab] = useState<"orders" | "acct">("orders");
+  const [tab, setTab] = useState<"orders" | "acct" | "admin">("orders");
   const [sheet, setSheet] = useState<ProfileSheet | null>(null);
 
   useEffect(() => {
@@ -435,7 +421,7 @@ export default function MobileProfile() {
           role="tablist"
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: isAdmin ? "1fr 1fr 1fr" : "1fr 1fr",
             margin: "18px 20px 6px",
             padding: 4,
             borderRadius: 999,
@@ -445,6 +431,7 @@ export default function MobileProfile() {
           {([
             ["orders", "הזמנות"],
             ["acct", "חשבון"],
+            ...(isAdmin ? ([["admin", "ניהול"]] as const) : []),
           ] as const).map(([k, label]) => (
             <button
               key={k}
@@ -558,6 +545,14 @@ export default function MobileProfile() {
               </button>
             )}
           </div>
+        ) : tab === "admin" && isAdmin ? (
+          <div style={{ padding: "10px 20px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 2px 10px", fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>
+              <Icon.shield size={14} color="var(--brand)" />
+              ניהול מערכת
+            </div>
+            <MobileAdminGrid />
+          </div>
         ) : (
           <div style={{ padding: "6px 4px 0" }}>
             {accountRows.map((r, i) => (
@@ -571,17 +566,6 @@ export default function MobileProfile() {
               />
             ))}
 
-            {isAdmin && (
-              <div style={{ marginTop: 22 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 16px 6px", fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>
-                  <Icon.shield size={14} color="var(--brand)" />
-                  ניהול מערכת
-                </div>
-                {ADMIN_LINKS.map((link, i) => (
-                  <AccountRow key={link.href} first={i === 0} label={link.label} onClick={() => router.push(link.href)} />
-                ))}
-              </div>
-            )}
 
             <button
               className="press"
